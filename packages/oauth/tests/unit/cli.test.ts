@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as cli from '../../src/cli.ts';
 
 /** The e2e CLI types this module by hand; the names it calls must exist here. */
-describe('@e2edev/oauth/cli', () => {
+describe('@e2e-cpp/oauth/cli', () => {
   it('exports the entry points the e2e CLI calls', () => {
     expect(typeof cli.runLogin).toBe('function');
     expect(typeof cli.runLogout).toBe('function');

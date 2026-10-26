@@ -1,6 +1,6 @@
 /**
- * The user-level telemetry preferences: `~/.config/e2e/telemetry.json`
- * (`$XDG_CONFIG_HOME/e2e` when set, `%APPDATA%\e2e` on Windows). The file
+ * The user-level telemetry preferences: `~/.config/e2e-cpp/telemetry.json`
+ * (`$XDG_CONFIG_HOME/e2e-cpp` when set, `%APPDATA%\e2e-cpp` on Windows). The file
  * holds the opt-out, the random id every event from this machine is
  * attributed to, the salt that keeps a hashed path unrecoverable, and which
  * notice was shown when. Nothing in it names the person or the machine: the
@@ -48,10 +48,10 @@ export function telemetryConfigDir(
 ): string {
   if (platform === 'win32') {
     const appData = envValue(env, 'APPDATA') ?? path.join(os.homedir(), 'AppData', 'Roaming');
-    return path.join(appData, 'e2e');
+    return path.join(appData, 'e2e-cpp');
   }
   const configHome = envValue(env, 'XDG_CONFIG_HOME') ?? path.join(os.homedir(), '.config');
-  return path.join(configHome, 'e2e');
+  return path.join(configHome, 'e2e-cpp');
 }
 
 /** Keeps only the fields this version knows, each with the type it expects. */

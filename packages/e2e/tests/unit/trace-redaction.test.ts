@@ -1,8 +1,7 @@
 /**
  * Trace archive redaction: JSON records are rewritten value by value and other
  * text as text, in every encoding a trace spells a value; binary entries are
- * carried byte for byte unless they hold a secret, in which case they are
- * dropped; an untouched archive keeps its bytes; every listed segment is
+ * withheld because their rendered content cannot be inspected for secrets; an untouched archive keeps its bytes; every listed segment is
  * covered; an archive that cannot be rewritten takes the whole trace with it;
  * a path outside the attempt directory is refused before anything is touched.
  */
@@ -65,7 +64,7 @@ function entriesOf(file: string): Map<string, Buffer> {
 }
 
 describe('redactTraceArchives', () => {
-  it('rewrites every text entry in every encoding and carries binary entries as they were', async () => {
+  it('rewrites every text entry in every encoding and withholds unprovable binary entries', async () => {
     const dir = attemptDir();
     const file = path.join(dir, 'trace', 'trace.zip');
     writeFileSync(file, traceArchive());
@@ -74,12 +73,8 @@ describe('redactTraceArchives', () => {
     await redactTraceArchives(dir, ['trace/trace.zip'], new SecretLedger([['member', SECRET]]));
 
     const after = entriesOf(file);
-    expect([...after.keys()]).toEqual([...before.keys()]);
+    expect([...after.keys()]).toEqual([...before.keys()].filter((name) => name !== 'screencast/clean.jpeg'));
     for (const [name, bytes] of after) {
-      if (name === 'screencast/clean.jpeg') {
-        expect(bytes.equals(before.get(name)!)).toBe(true);
-        continue;
-      }
       const text = bytes.toString('utf8');
       expect(text, name).not.toContain(SECRET);
       expect(text, name).not.toContain(JSON.stringify(SECRET).slice(1, -1));
@@ -134,7 +129,7 @@ describe('redactTraceArchives', () => {
     );
   });
 
-  it('drops a binary entry that holds a secret and keeps one that does not', async () => {
+  it('drops binary entries whether or not secret text occurs in their bytes', async () => {
     const dir = attemptDir();
     const file = path.join(dir, 'trace', 'trace.zip');
     writeFileSync(
@@ -149,8 +144,7 @@ describe('redactTraceArchives', () => {
     await redactTraceArchives(dir, ['trace/trace.zip'], new SecretLedger([['member', SECRET]]));
 
     const after = entriesOf(file);
-    expect([...after.keys()]).toEqual(['trace.trace', 'screencast/clean.jpeg']);
-    expect(after.get('screencast/clean.jpeg')!.equals(FRAME_CLEAN)).toBe(true);
+    expect([...after.keys()]).toEqual(['trace.trace']);
   });
 
   it('leaves an archive with nothing to redact untouched, and rewrites every listed segment', async () => {

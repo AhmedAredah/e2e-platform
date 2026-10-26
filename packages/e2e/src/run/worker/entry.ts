@@ -15,6 +15,8 @@ import { loadAiSdk } from '../../agent/ai-sdk.ts';
 import { AiTraceRecorder, registerAiTraceRecorder } from '../../internal/ai-trace.ts';
 import { DebugTrace } from '../../internal/debug.ts';
 import { classifyError, ConfigurationError, serializeError } from '../../internal/errors.ts';
+import { StreamingRedactor } from '../../internal/output-redaction.ts';
+import { redactJson } from '../../internal/redact.ts';
 import { processSecrets, registerStaticSecrets } from '../secrecy.ts';
 import { SessionStore } from '../sessions.ts';
 import type {
@@ -44,7 +46,7 @@ function send(message: WorkerToMain): Promise<void> {
       new Promise<void>((resolve) => {
         try {
           if (process.send === undefined || !process.connected) resolve();
-          else process.send(message, undefined, undefined, () => resolve());
+          else process.send(redactJson(message, processSecrets.redact), undefined, undefined, () => resolve());
         } catch {
           // channel already closed; nothing left to deliver
           resolve();
@@ -61,7 +63,10 @@ function send(message: WorkerToMain): Promise<void> {
  */
 const OUTPUT_HIGH_WATER = 64;
 
+const flushOutput: (() => void)[] = [];
+
 function exitAfterFlush(code: 0 | 1): void {
+  for (const flush of flushOutput) flush();
   const exit = (): void => process.exit(code);
   setTimeout(exit, FLUSH_GRACE_MS).unref();
   void outbox.then(exit);
@@ -83,14 +88,18 @@ function captureOutput(pairInFlight: () => OutputMessage['pair']): void {
     [process.stderr, 'stderr'],
   ] as const) {
     type Done = (error?: Error | null) => void;
+    const redactor = new StreamingRedactor(processSecrets);
+    flushOutput.push(() => {
+      const text = redactor.flush();
+      if (text !== '') void send({ type: 'output', pair: pairInFlight(), stream: name, text });
+    });
     let pending = 0;
     let needsDrain = false;
     const write = (chunk: string | Uint8Array, encoding?: BufferEncoding | Done, callback?: Done): boolean => {
       const done = typeof encoding === 'function' ? encoding : callback;
-      const text =
-        typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString(typeof encoding === 'string' ? encoding : 'utf8');
+      const text = redactor.write(typeof chunk === 'string' && typeof encoding === 'string' ? Buffer.from(chunk, encoding) : chunk);
       pending += 1;
-      void send({ type: 'output', pair: pairInFlight(), stream: name, text: processSecrets.redact(text) }).then(() => {
+      void (text === '' ? Promise.resolve() : send({ type: 'output', pair: pairInFlight(), stream: name, text })).then(() => {
         pending -= 1;
         if (done !== undefined) done();
         if (needsDrain && pending < OUTPUT_HIGH_WATER) {
@@ -216,6 +225,7 @@ function main(): void {
       const debug = new DebugTrace(message.bootstrap.debug);
       const aiTrace = message.bootstrap.aiTrace ? new AiTraceRecorder() : undefined;
       const emit = (outbound: WorkerToMain): void => {
+        if (outbound.type === 'unit-done' || outbound.type === 'shutdown-done') for (const flush of flushOutput) flush();
         if (outbound.type !== 'unit-done' && outbound.type !== 'shutdown-done') {
           send(outbound);
           return;

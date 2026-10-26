@@ -1,0 +1,7 @@
+e2e-cpp terminal adapter
+
+This extension is distributed under the MIT License in LICENSE.
+The separately distributed core derives from TesterArmy e2e at its MIT revision
+e9c2914c6d8f8d664d820b13a1fa454e9247e94b and retains its upstream notices.
+Terminal parsing uses @xterm/headless and @xterm/addon-unicode11 (MIT).
+Optional PTY support uses node-pty (MIT). Their notices remain applicable.

@@ -70,11 +70,11 @@ describe('reportRun', () => {
       { label: 'GitHub', text: 'https://github.com/octo/app/pull/41#issuecomment-5' },
     ]);
     const summary = d.written['/summary.md'];
-    expect(summary).toContain('### 🔴 e2e: 1 failed');
-    expect(summary).not.toContain('<!-- e2e-github');
+    expect(summary).toContain('### 🔴 e2e-cpp: 1 failed');
+    expect(summary).not.toContain('<!-- e2e-cpp-github');
     expect(d.calls.map((call) => call.method)).toEqual(['GET', 'POST']);
     const body = postedBody(d.calls);
-    expect(body.startsWith('<!-- e2e-github project=dev.example.shop workflow=e2e job=test -->\n')).toBe(true);
+    expect(body.startsWith('<!-- e2e-cpp-github project=dev.example.shop workflow=e2e-cpp job=test -->\n')).toBe(true);
     expect(body).toContain('[tests/shop flows/cart.e2e.ts:9](https://github.com/octo/app/blob/head-sha/tests/shop%20flows/cart.e2e.ts#L9)');
     expect(body).toContain('[screenshot](https://github.com/octo/app/actions/runs/99)');
     expect(body).toContain('[run artifacts](https://github.com/octo/app/actions/runs/99)');
@@ -83,18 +83,18 @@ describe('reportRun', () => {
   it('adds the key to the marker, encoded, so matrix replicas keep their own comments', async () => {
     const d = deps({ ...actionsEnv, GITHUB_TOKEN: 'ghs' });
     await reportRun(failedRun, signal, { key: 'firefox --> 2' }, d.deps);
-    expect(postedBody(d.calls).startsWith('<!-- e2e-github project=dev.example.shop workflow=e2e job=test key=firefox%20--%3E%202 -->\n')).toBe(true);
+    expect(postedBody(d.calls).startsWith('<!-- e2e-cpp-github project=dev.example.shop workflow=e2e-cpp job=test key=firefox%20--%3E%202 -->\n')).toBe(true);
     const blank = deps({ ...actionsEnv, GITHUB_TOKEN: 'ghs' });
     await reportRun(failedRun, signal, { key: '' }, blank.deps);
-    expect(postedBody(blank.calls).startsWith('<!-- e2e-github project=dev.example.shop workflow=e2e job=test -->\n')).toBe(true);
+    expect(postedBody(blank.calls).startsWith('<!-- e2e-cpp-github project=dev.example.shop workflow=e2e-cpp job=test -->\n')).toBe(true);
     // A long key is cut the same way every run, so the marker stays bounded and findable.
     const long = deps({ ...actionsEnv, GITHUB_TOKEN: 'ghs' });
     await reportRun(failedRun, signal, { key: 'k'.repeat(5_000) }, long.deps);
-    expect(postedBody(long.calls).startsWith(`<!-- e2e-github project=dev.example.shop workflow=e2e job=test key=${'k'.repeat(200)} -->\n`)).toBe(true);
+    expect(postedBody(long.calls).startsWith(`<!-- e2e-cpp-github project=dev.example.shop workflow=e2e-cpp job=test key=${'k'.repeat(200)} -->\n`)).toBe(true);
     // The cut is on the encoded form and never inside a percent escape, so emoji cannot outgrow the marker.
     const emoji = deps({ ...actionsEnv, GITHUB_TOKEN: 'ghs', GITHUB_WORKFLOW: '💥'.repeat(300), GITHUB_JOB: 'ü'.repeat(300) });
     await reportRun(failedRun, signal, { key: '💥'.repeat(300) }, emoji.deps);
-    const marker = /^<!-- e2e-github [^\n]* -->/.exec(postedBody(emoji.calls))?.[0] ?? '';
+    const marker = /^<!-- e2e-cpp-github [^\n]* -->/.exec(postedBody(emoji.calls))?.[0] ?? '';
     expect(marker.length).toBeGreaterThan(0);
     expect(marker.length).toBeLessThanOrEqual(1_024);
     expect(marker).toMatch(/ key=(?:%[0-9A-F]{2})+ -->$/);

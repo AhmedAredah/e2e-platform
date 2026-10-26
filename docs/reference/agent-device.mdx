@@ -3,14 +3,14 @@ title: agent-device
 description: Mobile engine options and the device fixture for iOS and Android.
 ---
 
-`@e2edev/agent-device` drives iOS simulators and Android emulators through
+`@e2e-cpp/agent-device` drives iOS simulators and Android emulators through
 [agent-device](https://github.com/callstack/agent-device). `agent`, `app`,
 `screen`, and `expect` work as they do everywhere; this page covers what is
 specific to a device target. Import `test` from the package to have `device`
 typed, and declare `requires: ['device']` in a suite that also runs on the
 web.
 
-Choose **Mobile (iOS/Android)** in `e2e init` to add the package with a
+Choose **Mobile (iOS/Android)** in `e2e-cpp init` to add the package with a
 Settings example. iOS needs Xcode and a simulator; Android needs the Android
 SDK and an emulator.
 
@@ -20,10 +20,10 @@ installation is needed.
 ## Engine
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
-import { agentDeviceTools } from '@e2edev/agent-device/tools';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
+import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
 import { gateway } from 'ai';
 
 const iphone = agentDevice({ platform: 'ios', app: 'Settings' });
@@ -133,8 +133,8 @@ split a target's files across devices, pass a pool and set `workers` to at
 least its size.
 
 ```ts
-import type { E2EConfig } from 'e2e';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { agentDevice } from '@e2e-cpp/agent-device';
 
 const iphones = agentDevice({
   platform: 'ios',

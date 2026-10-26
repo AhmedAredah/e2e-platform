@@ -376,7 +376,7 @@ describe('select', () => {
 
   it('explains empty discovery with the globs, the root, and any look-alike files', () => {
     expect(() => select(emptyCollection(), config())).toThrow(
-      'no test file matched "tests/**/*.e2e.ts" under /root; create tests/example.e2e.ts (e2e init writes one), or set tests in the config; pass --pass-with-no-tests to allow this',
+      'no test file matched "tests/**/*.e2e.ts" under /root; create tests/example.e2e.ts (e2e-cpp init writes one), or set tests in the config; pass --pass-with-no-tests to allow this',
     );
     expect(() =>
       select(emptyCollection(['tests/login.test.ts', 'tests/a.spec.ts', 'tests/b.spec.ts', 'tests/c.spec.ts']), config()),
@@ -389,7 +389,7 @@ describe('select', () => {
   it('points at the import when a matched file registered no tests', async () => {
     const col = await collection(() => {});
     expect(() => select(col, config())).toThrow(
-      "tests/a.e2e.ts registered no tests; import { test } from 'e2e' (or from the engine package) and call test() at the top level of the module",
+      "tests/a.e2e.ts registered no tests; import { test } from '@e2e-cpp/core' (or from the engine package) and call test() at the top level of the module",
     );
   });
 

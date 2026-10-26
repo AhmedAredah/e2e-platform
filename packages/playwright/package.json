@@ -1,9 +1,9 @@
 {
-  "name": "@e2edev/playwright",
-  "version": "0.11.0-canary-20260917213813",
+  "name": "@e2e-cpp/playwright",
+  "version": "0.1.0",
   "description": "Playwright browser engine for e2e agentic end-to-end testing",
   "keywords": [
-    "e2e",
+    "@e2e-cpp/core",
     "testing",
     "agentic",
     "end-to-end",
@@ -12,18 +12,9 @@
   ],
   "license": "MIT",
   "contributors": [
-    "Oskar Kwaśniewski <oskar@tester.army>",
+    "Oskar Kwa\u015bniewski <oskar@tester.army>",
     "Szymon Rybczak <szymon@tester.army>"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tester-army/e2e.git",
-    "directory": "packages/playwright"
-  },
-  "bugs": {
-    "url": "https://github.com/tester-army/e2e/issues"
-  },
-  "homepage": "https://github.com/tester-army/e2e/tree/main/packages/playwright#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
@@ -38,7 +29,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
@@ -49,12 +41,12 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "e2e": "0.15.0-canary-20260917213813",
+    "@e2e-cpp/core": ">=0.1.0 <1.0.0",
     "playwright": ">=1.63.0 <2"
   },
   "devDependencies": {
     "@types/node": "26.4.1",
-    "e2e": "workspace:*",
+    "@e2e-cpp/core": "workspace:*",
     "@types/pngjs": "6.0.5",
     "pngjs": "7.0.0",
     "playwright": "1.63.0",
@@ -62,6 +54,6 @@
     "vitest": "5.0.0"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.22.3 || >=24.8.0"
   }
 }

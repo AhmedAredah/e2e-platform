@@ -1,7 +1,7 @@
 /** Registers the closed-root masking selector in a CDP default context. */
 
 import type { BrowserContext, Page } from 'playwright';
-import { EngineError } from 'e2e/engine';
+import { EngineError } from '@e2e-cpp/core/engine';
 import { connectionAbort, type ConnectionBudget } from './operation-budget.ts';
 import { CLOSED_SHADOW_ROOTS_KEY, CLOSED_SHADOW_SELECTOR_ENGINE, CLOSED_SHADOW_SELECTOR_ENGINE_SOURCE } from './read-node.ts';
 

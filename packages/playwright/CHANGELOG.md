@@ -1,4 +1,4 @@
-# @e2edev/playwright
+# @e2e-cpp/playwright
 
 ## 0.11.0-canary-20260917213813
 
@@ -82,13 +82,13 @@
 
 ### Minor Changes
 
-- [#290](https://github.com/tester-army/e2e/pull/290) [`799b29f`](https://github.com/tester-army/e2e/commit/799b29fbfa0444589b66bc0e59ab0b83ededf50c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Origin allowlists are gone, everywhere. `playwright({ allowedOrigins })` gated typed navigation only; a click, a redirect, or a popup reached any origin regardless, so the list guarded nothing and had to be spelled out for every subdomain a sign-in flow touched. `allowedOrigins` on a credential or a secret gated where a password could be typed; a secret is only ever typed into a field the step was handed, a password only into a password field, so that gate guarded against a model mistake at the cost of configuring every flow that leaves the app's domain, a third-party sign-in included. `app.open()`, the agent's `navigate`, and `web.goto` open any http(s) URL, `file:`, `data:`, and `javascript:` stay `POLICY_DENIED`, and a secret fills wherever the test or the step directs it. `credentials` entries are `{ username, password }`; `secrets` entries are a string or a provider, the `{ value }` object form is gone. `type_secret` now works on a device target too. What still keys on the site of `url` (its registrable domain) is invisible to config: the browser engine's `headers` reach the site and no other host, and child frames off the site stay out of observations. `basicAuth` answers a challenge from any origin, as Playwright's own `httpCredentials` does. Engine contract: `EngineAppInfo.allowedOrigins` became `site?: string`, `EngineAppDeclaration` lost `allowedOrigins`, and `sameSite`/`siteOf` are exported from `e2e/engine`. `playwright({ allowedOrigins })` fails at config load. If a threat model ever calls for an allowlist again, it comes back as an opt-in.
+- [#290](https://github.com/tester-army/e2e/pull/290) [`799b29f`](https://github.com/tester-army/e2e/commit/799b29fbfa0444589b66bc0e59ab0b83ededf50c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Origin allowlists are gone, everywhere. `playwright({ allowedOrigins })` gated typed navigation only; a click, a redirect, or a popup reached any origin regardless, so the list guarded nothing and had to be spelled out for every subdomain a sign-in flow touched. `allowedOrigins` on a credential or a secret gated where a password could be typed; a secret is only ever typed into a field the step was handed, a password only into a password field, so that gate guarded against a model mistake at the cost of configuring every flow that leaves the app's domain, a third-party sign-in included. `app.open()`, the agent's `navigate`, and `web.goto` open any http(s) URL, `file:`, `data:`, and `javascript:` stay `POLICY_DENIED`, and a secret fills wherever the test or the step directs it. `credentials` entries are `{ username, password }`; `secrets` entries are a string or a provider, the `{ value }` object form is gone. `type_secret` now works on a device target too. What still keys on the site of `url` (its registrable domain) is invisible to config: the browser engine's `headers` reach the site and no other host, and child frames off the site stay out of observations. `basicAuth` answers a challenge from any origin, as Playwright's own `httpCredentials` does. Engine contract: `EngineAppInfo.allowedOrigins` became `site?: string`, `EngineAppDeclaration` lost `allowedOrigins`, and `sameSite`/`siteOf` are exported from `@e2e-cpp/core/engine`. `playwright({ allowedOrigins })` fails at config load. If a threat model ever calls for an allowlist again, it comes back as an opt-in.
 
 - [#291](https://github.com/tester-army/e2e/pull/291) [`abf1958`](https://github.com/tester-army/e2e/commit/abf19588677070fb86234f735614c40b7677e755) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: follows the reshaped engine contract. `playwright({ testIdAttribute })` names the attribute `getByTestId` and observed `testId` values read (default `data-testid`); the root config key `screen.testIdAttribute` no longer exists. `app.restart()` and `app.clearState()` land on a blank page and the runner reopens the app. Observations carry one `root` node (the document, id `root`) and `location` (the page URL).
   
   Fixed: `screen.getByTestId` now honors the configured attribute; it used Playwright's process-wide default before.
 
-- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `e2e`. `@e2edev/e2e` is retired and deprecated on npm; every import, config, and peer range now names `e2e` (`e2e`, `e2e/agent`, `e2e/engine`). The engines and the GitHub reporter declare their peer dependency on `e2e`, so a project on `@e2edev/e2e` must switch the runner to `e2e` when it takes these versions. The CLI keeps its `e2e` bin name.
+- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `@e2e-cpp/core`. `@e2e-cpp/e2e` is retired and deprecated on npm; every import, config, and peer range now names `@e2e-cpp/core` (`@e2e-cpp/core`, `@e2e-cpp/core/agent`, `@e2e-cpp/core/engine`). The engines and the GitHub reporter declare their peer dependency on `@e2e-cpp/core`, so a project on `@e2e-cpp/e2e` must switch the runner to `@e2e-cpp/core` when it takes these versions. The CLI keeps its `@e2e-cpp/core` bin name.
 
 ### Patch Changes
 
@@ -176,7 +176,7 @@
 
 - [#226](https://github.com/tester-army/e2e/pull/226) [`adbc92c`](https://github.com/tester-army/e2e/commit/adbc92c928c6d1d28e65773ccbe58876f4de14a4) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Both engines declare their platform on the handle: `web` for playwright, the
   `platform` option for agent-device. A target that names them no longer has to
-  repeat it. Both engines now require `@e2edev/e2e` 0.8 or newer (peer range
+  repeat it. Both engines now require `@e2e-cpp/e2e` 0.8 or newer (peer range
   `>=0.8.0 <1`): an older runner rejects `platform` as an unknown engine key,
   and could still send `states.hidden` in a role query, which these engines no
   longer read.
@@ -213,8 +213,8 @@
 
 ### Patch Changes
 
-- [#194](https://github.com/tester-army/e2e/pull/194) [`d9ecd33`](https://github.com/tester-army/e2e/commit/d9ecd338d8f7c34f79395c874c2f975fe55094eb) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Both engines now require `@e2edev/e2e` 0.5.0 or newer. They import
-  `@e2edev/e2e/engine`, which 0.5.0 introduced (0.4.x shipped `/backend`), so
+- [#194](https://github.com/tester-army/e2e/pull/194) [`d9ecd33`](https://github.com/tester-army/e2e/commit/d9ecd338d8f7c34f79395c874c2f975fe55094eb) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Both engines now require `@e2e-cpp/e2e` 0.5.0 or newer. They import
+  `@e2e-cpp/e2e/engine`, which 0.5.0 introduced (0.4.x shipped `/backend`), so
   the old `>=0.4.0` range allowed an install whose every import failed.
 
 - [#205](https://github.com/tester-army/e2e/pull/205) [`76aaeb1`](https://github.com/tester-army/e2e/commit/76aaeb16b642c12d8a6f4dfb3d899a579b814e44) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Release observation metadata after each capture so repeated agent observations do not retain earlier node arrays in the browser.
@@ -233,8 +233,8 @@
 
 - [#161](https://github.com/tester-army/e2e/pull/161) [`41612dc`](https://github.com/tester-army/e2e/commit/41612dcf44e6e395d578a23c09cf1dd451231095) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Package and CLI descriptions no longer call e2e a "standard".
 
-- [#168](https://github.com/tester-army/e2e/pull/168) [`1ef5b00`](https://github.com/tester-army/e2e/commit/1ef5b003b62a588f554ad567f9d1f4540ffd8b35) Thanks [@devin-ai-integration](https://github.com/apps/devin-ai-integration)! - READMEs and CLI help use the scoped package names (`@e2edev/e2e`,
-  `@e2edev/playwright`, `@e2edev/agent-device`) on every install line, point at
+- [#168](https://github.com/tester-army/e2e/pull/168) [`1ef5b00`](https://github.com/tester-army/e2e/commit/1ef5b003b62a588f554ad567f9d1f4540ffd8b35) Thanks [@devin-ai-integration](https://github.com/apps/devin-ai-integration)! - READMEs and CLI help use the scoped package names (`@e2e-cpp/e2e`,
+  `@e2e-cpp/playwright`, `@e2e-cpp/agent-device`) on every install line, point at
   the Fern docs instead of e2e.dev, and describe e2e as an open framework for
   agentic end-to-end testing.
 
@@ -256,7 +256,7 @@
   resolves it per target: navigation policy, cache and session identity, the
   report's target record (`baseOrigin` is now absent for a surface without a
   URL), and the app process all read from there. A device target can finally
-  declare a stable identity without inventing a URL. `@e2edev/e2e/engine` also
+  declare a stable identity without inventing a URL. `@e2e-cpp/e2e/engine` also
   exports `obj`, the one-call replacement for the conditional-spread
   idiom when a declaration is built from optional inputs.
 
@@ -270,7 +270,7 @@
   targets: [{ name: 'web', platform: 'web', engine: playwright({ url: 'http://localhost:3000' }) }],
   ```
 
-- [#154](https://github.com/tester-army/e2e/pull/154) [`1d352b3`](https://github.com/tester-army/e2e/commit/1d352b3ee98a02d239c95e4055b4bb5219d7edfc) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Rename the "backend" concept to "engine" everywhere. The authoring import is now `@e2edev/e2e/engine` (`defineEngine`, `EngineHandle`, `EngineError`, `EngineFixtureContext`, ...), a target names its engine as `engine: playwright()` in `e2e.config.ts`, the error code `BACKEND_FAILURE` is now `ENGINE_FAILURE`, and the `backend` provenance field in the report and session schemas is now `engine`. `@e2edev/e2e/backend`, `defineBackend`, `backend:` and `BACKEND_FAILURE` are gone; update the import path, the config key, and any code matching on the error code or reading provenance.
+- [#154](https://github.com/tester-army/e2e/pull/154) [`1d352b3`](https://github.com/tester-army/e2e/commit/1d352b3ee98a02d239c95e4055b4bb5219d7edfc) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Rename the "backend" concept to "engine" everywhere. The authoring import is now `@e2e-cpp/e2e/engine` (`defineEngine`, `EngineHandle`, `EngineError`, `EngineFixtureContext`, ...), a target names its engine as `engine: playwright()` in `e2e.config.ts`, the error code `BACKEND_FAILURE` is now `ENGINE_FAILURE`, and the `backend` provenance field in the report and session schemas is now `engine`. `@e2e-cpp/e2e/backend`, `defineBackend`, `backend:` and `BACKEND_FAILURE` are gone; update the import path, the config key, and any code matching on the error code or reading provenance.
 
 ### Patch Changes
 
@@ -285,7 +285,7 @@
 ### Minor Changes
 
 - [#133](https://github.com/tester-army/e2e/pull/133) [`d14a79c`](https://github.com/tester-army/e2e/commit/d14a79c0420e25a2db9244bff4e107af42395a04) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `surfaceOf(handle)` exposes the live `Page` and `BrowserContext` behind a
-  `playwright()` handle to agent-side code, the way `@e2edev/agent-device`
+  `playwright()` handle to agent-side code, the way `@e2e-cpp/agent-device`
   exposes its device surface. A step executor that replaces the toolset
   wholesale can now drive the page e2e itself opened, instead of attaching a
   second browser it cannot reach. Both accessors read the current attempt and
@@ -340,7 +340,7 @@
 
 ### Minor Changes
 
-- [#114](https://github.com/tester-army/e2e/pull/114) [`e19b826`](https://github.com/tester-army/e2e/commit/e19b826a7f2a944122099851803f6961f107cf86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Publish under the `@e2edev` npm scope as restricted (private) packages: the core package `e2e` is now `@e2edev/e2e`, beside `@e2edev/playwright` and `@e2edev/agent-device`. Entry points move with the name (`@e2edev/e2e/agent`, `@e2edev/e2e/backend`, `@e2edev/e2e/run`); the `e2e` CLI binary keeps its name. Provenance is off while the packages are private, since npm only attests public packages.
+- [#114](https://github.com/tester-army/e2e/pull/114) [`e19b826`](https://github.com/tester-army/e2e/commit/e19b826a7f2a944122099851803f6961f107cf86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Publish under the `@e2edev` npm scope as restricted (private) packages: the core package `@e2e-cpp/core` is now `@e2e-cpp/e2e`, beside `@e2e-cpp/playwright` and `@e2e-cpp/agent-device`. Entry points move with the name (`@e2e-cpp/e2e/agent`, `@e2e-cpp/e2e/backend`, `@e2e-cpp/e2e/run`); the `@e2e-cpp/core` CLI binary keeps its name. Provenance is off while the packages are private, since npm only attests public packages.
 
 - [#101](https://github.com/tester-army/e2e/pull/101) [`8c97039`](https://github.com/tester-army/e2e/commit/8c9703906c476af6dea063c44ddc179399b102e5) Thanks [@okwasniewski](https://github.com/okwasniewski)! - **Breaking.** Playwright is a backend, and core knows no platform (RFC0002
   step 2'). The bumps stay `minor` under the 0.x policy, but the shapes below
@@ -349,7 +349,7 @@
 
   Removed:
 
-  - `@e2edev/e2e/driver`, `defineDriver`, and every driver-SPI type; the `driver:` and
+  - `@e2e-cpp/e2e/driver`, `defineDriver`, and every driver-SPI type; the `driver:` and
     `browser:` target keys; the top-level `browser` config key; the implicit
     zero-config web target. `targets` is required and a target is
     `{ name, platform, backend? }`.
@@ -380,7 +380,7 @@ select, scroll, navigate, back }`). Every node action is now
   - `BackendInitInfo.app.baseUrl` and `BackendFixtureContext.app.baseUrl` are
     optional; absent when no app URL is configured.
   - `Web`, `WebRoute`, `WebResponse`, `RouteFulfillResponse`, `Cookie`,
-    `Dialog`, and `WebExpectation` moved out of `e2e` into `@e2edev/playwright`.
+    `Dialog`, and `WebExpectation` moved out of `@e2e-cpp/core` into `@e2e-cpp/playwright`.
     `expect(fixture)` routes to whatever expectation surface a backend attaches
     through `BackendFixtureContext.expectable`. Every `web` method call,
     including `url()`, `title()`, and `cookies()`, is now a recorded step.
@@ -390,17 +390,17 @@ select, scroll, navigate, back }`). Every node action is now
 
   Added:
 
-  - `@e2edev/playwright` exports `playwright(options)`: a `defineBackend` handle
+  - `@e2e-cpp/playwright` exports `playwright(options)`: a `defineBackend` handle
     with observation, actions, location, state, artifacts, and the contributed
     `web` fixture. `browser` and `viewport` are its options. It also exports
-    `test` typed with `web`; `expect` and `credentials` still come from `e2e`.
-  - `@e2edev/e2e/backend` exports `BACKEND_ERROR_CODES` and
+    `test` typed with `web`; `expect` and `credentials` still come from `@e2e-cpp/core`.
+  - `@e2e-cpp/e2e/backend` exports `BACKEND_ERROR_CODES` and
     `RETRYABLE_BACKEND_ERROR_CODES` (`NODE_STALE`, `FRAME_NOT_FOUND`).
-  - `@e2edev/e2e/backend` exports the semantics the spec requires every backend to
+  - `@e2e-cpp/e2e/backend` exports the semantics the spec requires every backend to
     reproduce exactly: `TestError`, `ConfigurationError`, `InfrastructureError`,
     `matchesText`, `toTextPattern`, `describePattern`, `urlMatches`,
-    `pollCondition`, `Deadline`, and `validateJsonValue`. The `@e2edev/e2e/internal`
-    subpath is removed; a backend package depends on `@e2edev/e2e/backend` only.
+    `pollCondition`, `Deadline`, and `validateJsonValue`. The `@e2e-cpp/e2e/internal`
+    subpath is removed; a backend package depends on `@e2e-cpp/e2e/backend` only.
   - `defineTool` accepts `platforms` to scope a tool pack to targets by
     platform, and `StepExecutorContext.target` names the target a step runs on.
 
@@ -414,7 +414,7 @@ select, scroll, navigate, back }`). Every node action is now
   });
 
   // after
-  import { playwright } from "@e2edev/playwright";
+  import { playwright } from "@e2e-cpp/playwright";
 
   export default defineConfig({
     targets: [
@@ -427,7 +427,7 @@ select, scroll, navigate, back }`). Every node action is now
   });
   ```
 
-  A backend written against the earlier `@e2edev/e2e/backend` draft moves its `actions`
+  A backend written against the earlier `@e2e-cpp/e2e/backend` draft moves its `actions`
   verbs onto `perform` (switch on `action.kind`), its viewport `scroll` onto
   `swipe`, its `navigate`/`back` under `app`, declares `version`, and accepts
   the cleanup context on `endAttempt`/`dispose`.
@@ -441,17 +441,17 @@ select, scroll, navigate, back }`). Every node action is now
   browser-install step it no longer needs, and disposing the backend detaches the
   CDP session without killing the remote process the host owns.
 
-- [#20](https://github.com/tester-army/e2e/pull/20) [`1e21658`](https://github.com/tester-army/e2e/commit/1e21658c949900be0191221a468647e43b6ddf2a) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Move the Playwright driver into its own `@e2edev/playwright` package.
+- [#20](https://github.com/tester-army/e2e/pull/20) [`1e21658`](https://github.com/tester-army/e2e/commit/1e21658c949900be0191221a468647e43b6ddf2a) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Move the Playwright driver into its own `@e2e-cpp/playwright` package.
 
-  `e2e` no longer depends on `playwright`, so installs that drive another backend
+  `@e2e-cpp/core` no longer depends on `playwright`, so installs that drive another backend
   no longer download a browser. `driver: 'playwright'` still works and is still
   the default for web targets; the runner now loads the driver from
-  `@e2edev/playwright`, which it declares as an optional peer dependency.
+  `@e2e-cpp/playwright`, which it declares as an optional peer dependency.
 
   **Upgrading:** install the driver alongside the runner.
 
   ```bash
-  npm install --save-dev @e2edev/e2e @e2edev/playwright
+  npm install --save-dev @e2e-cpp/e2e @e2e-cpp/playwright
   ```
 
   A target that names the driver without the package installed now fails config
@@ -468,8 +468,8 @@ select, scroll, navigate, back }`). Every node action is now
   - The list reporter now prints run-level errors. Previously a run that failed
     during config, collection, or provisioning exited non-zero with the reason
     only in `report.json`.
-  - The `e2e/playwright` subpath export is removed; import from
-    `@e2edev/playwright` instead.
+  - The `@e2e-cpp/core/playwright` subpath export is removed; import from
+    `@e2e-cpp/playwright` instead.
 
 - [#78](https://github.com/tester-army/e2e/pull/78) [`61b31dd`](https://github.com/tester-army/e2e/commit/61b31dd95e431804e5bdb17a37da325d4dca10ef) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Locate nodes that no query can name, and observe shadow roots and `data:` frames.
 
@@ -493,7 +493,7 @@ select, scroll, navigate, back }`). Every node action is now
   exactly as replay does, so a stale selection is still a miss rather than a blind
   dispatch. `poll: false` callers keep their early exit for escalation.
 
-  One observation gap closes alongside it in `@e2edev/playwright`: **open shadow
+  One observation gap closes alongside it in `@e2e-cpp/playwright`: **open shadow
   roots are walked**, so a control that exists only in a shadow tree is now
   selectable. Slotted content is not double-counted — slotted elements are
   light-DOM children, and the shadow tree holds `<slot>` placeholders rather than
@@ -527,7 +527,7 @@ select, scroll, navigate, back }`). Every node action is now
   `navigate`), budgets, deadlines, origin policy, and recording — and delegates
   only the thinking to a pluggable `StepExecutor`, configured as the `agent`
   value itself: `agent: createAgent({...})` or any hand-rolled executor (there
-  is no `executor` key). The `@e2edev/e2e/agent` entrypoint exports `createAgent` (the
+  is no `executor` key). The `@e2e-cpp/e2e/agent` entrypoint exports `createAgent` (the
   built-in AI SDK tool-loop executor), `createToolLoopExecutor` (the chassis:
   verdict tool, hard stops, loop guards, wind-down, `--debug` transcripts), and
   `defineTool` for annotated project tools. Verdicts are ternary: `blocked` is first-class
@@ -551,7 +551,7 @@ select, scroll, navigate, back }`). Every node action is now
     `maxActionStepsPerStep`, `maxEstimatedCostUsd`) are rejected.
   - `report-1` documents changed (limits/usage blocks, `blocked` statuses, new
     error codes); the conformance `suiteVersion` is now 0.2.0.
-  - `verifyDriver` and its conformance types are removed from `@e2edev/e2e/driver`
+  - `verifyDriver` and its conformance types are removed from `@e2e-cpp/e2e/driver`
     until the harness can actually run vectors.
 
 - [#107](https://github.com/tester-army/e2e/pull/107) [`e0ac8af`](https://github.com/tester-army/e2e/commit/e0ac8af5ca2247eef0962945b7500efede1bbb8d) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Observation and lifecycle hardening in the browser backend:
@@ -580,12 +580,12 @@ select, scroll, navigate, back }`). Every node action is now
   and `instanceof` misses. Every typed driver failure then lost its taxonomy: a
   retryable `NODE_STALE` stopped being retried and surfaced as a generic failure
   instead of a recoverable race. This affects any driver package, including
-  `@e2edev/playwright` whenever a project ends up with more than one copy of
-  `e2e` resolved.
+  `@e2e-cpp/playwright` whenever a project ends up with more than one copy of
+  `@e2e-cpp/core` resolved.
 
   Builds now clear `dist` before compiling. `tsc` only writes files, so output
   whose source has since moved or been deleted survived every later build and was
-  published: after the Playwright driver moved out of `e2e`, the `e2e` tarball
+  published: after the Playwright driver moved out of `@e2e-cpp/core`, the `@e2e-cpp/core` tarball
   still carried a full copy of the old `dist/playwright` tree.
 
 - [#107](https://github.com/tester-army/e2e/pull/107) [`e0ac8af`](https://github.com/tester-army/e2e/commit/e0ac8af5ca2247eef0962945b7500efede1bbb8d) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Correctness and speed fixes across the runner's support layers:

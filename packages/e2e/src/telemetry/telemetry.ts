@@ -1,5 +1,6 @@
 /**
- * Anonymous usage telemetry for the CLI.
+ * Optional usage-event infrastructure retained from the MIT base.
+ * The fork CLI supplies no destination: it collects and sends nothing.
  *
  * One instance lives for one CLI invocation. Commands hand it events; at the
  * end of the invocation `flush` sends them in a single bounded request, so a
@@ -8,7 +9,7 @@
  * constructs this class.
  *
  * Off means off at every step. `E2E_TELEMETRY_DISABLED`, `DO_NOT_TRACK`, an
- * `e2e telemetry disable`, or a preferences directory that cannot be written
+ * `e2e-cpp telemetry disable`, or a preferences directory that cannot be written
  * each stop events from being queued, and `flush` reads the preferences file
  * again before sending, so a choice saved from another terminal while the
  * command ran wins too. `E2E_TELEMETRY_DEBUG` prints every event to stderr
@@ -29,7 +30,7 @@ import { envFlag } from '../internal/env.ts';
 import { timestamp } from '../internal/ids.ts';
 import { ciName, collectEnvironment } from './environment.ts';
 import type { TelemetryEvent } from './events.ts';
-import { postBatch, type PostHogEvent } from './posthog.ts';
+import { postBatch, type PostHogEvent, type TelemetryDestination } from './posthog.ts';
 import { anonymousProjectId } from './project.ts';
 import { preferencesPath, TelemetryStore, telemetryConfigDir } from './store.ts';
 
@@ -38,10 +39,12 @@ export const NOTICE_VERSION = 1;
 /** The longest a flush may hold the process; the project lookup and the request share it. */
 const DEFAULT_FLUSH_MS = 2_000;
 
-export type TelemetryDisabledBy = 'E2E_TELEMETRY_DISABLED' | 'DO_NOT_TRACK' | 'preference' | 'store';
+export type TelemetryDisabledBy = 'E2E_TELEMETRY_DISABLED' | 'DO_NOT_TRACK' | 'unconfigured' | 'preference' | 'store';
 
 export interface TelemetryOptions {
-  /** The e2e version, sent with every event. */
+  /** Internal injection only. The distributed CLI deliberately supplies none. */
+  readonly destination?: TelemetryDestination;
+  /** The e2e-cpp version, sent with every event. */
   readonly version: string;
   readonly env?: NodeJS.ProcessEnv;
   /** The project directory the command runs in; hashed into the project id, never sent. */
@@ -58,8 +61,8 @@ export interface TelemetryOptions {
 /** The one-time notice: what is collected, and the two ways out. */
 function noticeText(): string {
   return [
-    `${picocolors.bold('e2e collects anonymous usage telemetry')} to improve the framework: the command, the versions, the OS, and run counts. Never test names, app data, or credentials.`,
-    `Opt out with ${picocolors.cyan('e2e telemetry disable')} or ${picocolors.cyan('E2E_TELEMETRY_DISABLED=1')}. What is sent: ${picocolors.underline(`${DOCS_URL}/telemetry`)}`,
+    `${picocolors.bold('e2e-cpp collects anonymous usage telemetry')} to improve the framework: the command, the versions, the OS, and run counts. Never test names, app data, or credentials.`,
+    `Opt out with ${picocolors.cyan('e2e-cpp telemetry disable')} or ${picocolors.cyan('E2E_TELEMETRY_DISABLED=1')}. What is sent: ${picocolors.underline(`${DOCS_URL}/telemetry`)}`,
     '',
     '',
   ].join('\n');
@@ -84,6 +87,7 @@ export class Telemetry {
   private readonly write: (text: string) => void;
   private readonly projectId: typeof anonymousProjectId;
   private readonly ci: boolean;
+  private readonly destination: TelemetryDestination | undefined;
   /** The store once `store()` opened it, whether or not the file could exist. */
   private opened: { readonly store: TelemetryStore | undefined } | undefined;
   private readonly queue: TelemetryEvent[] = [];
@@ -98,6 +102,7 @@ export class Telemetry {
     this.write = options.write ?? ((text) => void process.stderr.write(text));
     this.projectId = options.projectId ?? anonymousProjectId;
     this.ci = isCiMode(this.env);
+    this.destination = options.destination;
   }
 
   /** Opened on first use, so `--version` and `--help` never touch the disk; undefined when the file cannot exist. */
@@ -110,6 +115,7 @@ export class Telemetry {
   get disabledBy(): TelemetryDisabledBy | undefined {
     if (envFlag(this.env, 'E2E_TELEMETRY_DISABLED')) return 'E2E_TELEMETRY_DISABLED';
     if (envFlag(this.env, 'DO_NOT_TRACK')) return 'DO_NOT_TRACK';
+    if (this.destination === undefined) return 'unconfigured';
     if (this.ci) return undefined;
     const store: TelemetryStore | undefined = this.store();
     if (store === undefined) return 'store';
@@ -177,7 +183,7 @@ export class Telemetry {
     // A choice saved from another process while this command ran wins over the snapshot taken at its start.
     const store: TelemetryStore | undefined = this.ci ? undefined : this.store();
     store?.reload();
-    if (!this.enabled) return;
+    if (!this.enabled || this.destination === undefined) return;
     const deadline = AbortSignal.timeout(maxWaitMs);
     const project = await Promise.race([this.project, aborted(deadline)]);
     // Outside CI, `enabled` has just vouched for the store; no store means a CI run, attributed to the vendor.
@@ -194,7 +200,7 @@ export class Telemetry {
         distinct_id: distinctId,
         project_id: project ?? null,
         session_id: this.sessionId,
-        $lib: 'e2e',
+        $lib: '@e2e-cpp/core',
         $lib_version: this.version,
         // Anonymous events: PostHog keeps no person profile for the id.
         $process_person_profile: false,
@@ -204,6 +210,6 @@ export class Telemetry {
       for (const item of items) this.write(`[telemetry] ${JSON.stringify(item)}\n`);
       return;
     }
-    await postBatch(items, { signal: deadline, fetch: this.fetchImpl });
+    await postBatch(items, { signal: deadline, fetch: this.fetchImpl, destination: this.destination });
   }
 }

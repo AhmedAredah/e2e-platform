@@ -7,8 +7,8 @@
 
 import type { Locator as PwLocator } from 'playwright';
 import { describe, expect, it, vi } from 'vitest';
-import { EngineError, type LocatorAction } from 'e2e/engine';
-import { TestError } from 'e2e/engine';
+import { EngineError, type LocatorAction } from '@e2e-cpp/core/engine';
+import { TestError } from '@e2e-cpp/core/engine';
 import { classifyActionError, dispatchLocatorAction } from '../../src/actions.ts';
 import type { ActionTarget } from '../../src/support.ts';
 

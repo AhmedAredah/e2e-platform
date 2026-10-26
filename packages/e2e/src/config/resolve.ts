@@ -26,7 +26,7 @@ import type {
   TraceCacheStore,
   VideoArtifactConfig,
 } from '../types.ts';
-import { isEngineHandle, type EngineHandle } from '../engine/index.ts';
+import { isEngineHandle, type EngineHandle, type EngineAppDeclaration } from '../engine/index.ts';
 import {
   isModelInstance,
   resolveAgentConfig,
@@ -36,12 +36,13 @@ import {
   type ResolvedBaseLimits,
 } from './agent.ts';
 import { digestAppDeclaration, resolveTargetApp, type ResolvedApp } from './app.ts';
-import { envName, isSecretValue } from './secrets.ts';
+import { envName, isSecretValue, registerDeclaredSecrets } from './secrets.ts';
 
 export type { ResolvedAgentConfig, ResolvedLimits } from './agent.ts';
 export type { ResolvedApp } from './app.ts';
 
 export interface ResolvedTarget {
+  readonly appDeclaration?: EngineAppDeclaration;
   readonly name: string;
   readonly index: number;
   readonly platform: string;
@@ -76,6 +77,7 @@ export interface ResolvedSecret {
 type ArtifactPolicy = 'best-effort' | 'required';
 
 export interface ResolvedConfig {
+  readonly modelPolicy?: 'allow' | 'forbid';
   readonly specVersion: '0.1';
   readonly projectId: string;
   readonly projectRoot: string;
@@ -105,7 +107,7 @@ export interface ResolvedConfig {
    * the names `--agent` gave, in order and deduplicated. Never empty.
    */
   readonly agentNames: readonly string[];
-  /** The first of `agentNames`: the run's agent where exactly one is wanted (`e2e explore`). */
+  /** The first of `agentNames`: the run's agent where exactly one is wanted (`e2e-cpp explore`). */
   readonly agent: ResolvedAgentConfig;
   /** Every configured agent, `default` included, by name. */
   readonly agents: ReadonlyMap<string, ResolvedAgentConfig>;
@@ -136,6 +138,7 @@ export interface ResolvedCacheConfig {
  * overrides, and travel separately.
  */
 export interface CliOverrides {
+  modelPolicy?: 'allow' | 'forbid';
   retries?: number;
   workers?: number;
   reporters?: readonly BuiltinReporter[];
@@ -149,9 +152,10 @@ export interface CliOverrides {
 
 const TARGET_NAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
-const TARGET_KEYS = new Set(['name', 'platform', 'engine']);
+const TARGET_KEYS = new Set(['name', 'platform', 'engine', 'app']);
 
 const TOP_LEVEL_KEYS = new Set([
+  'modelPolicy',
   'specVersion',
   'projectId',
   'targets',
@@ -176,7 +180,7 @@ const CACHE_KEYS = new Set(['mode', 'store', 'dir']);
 const CACHE_MODES = new Set(['off', 'read-only', 'read-write']);
 
 const APP_BELONGS_TO_ENGINE =
-  'the app under test is declared by the engine: engine: playwright({ url }) for a browser, agentDevice({ platform, app }) for a device';
+  'the app under test is declared by the engine: engine: playwright({ url }) for a browser, agentDevice({ platform, app }) for a device; target-level overrides use targets[].app, including { appPath, launchArguments } for native applications';
 
 /** Keys from other runners' configs, each mapped to where that fact lives here. */
 const FOREIGN_TOP_LEVEL_KEYS: Readonly<Record<string, string>> = {
@@ -189,13 +193,12 @@ const FOREIGN_TOP_LEVEL_KEYS: Readonly<Record<string, string>> = {
   webServer: 'the runner starts the app from the engine options: playwright({ url, command: { executable, args } })',
   use: 'browser and app options are engine options: engine: playwright({ ... })',
   projects: 'one target per browser or device: targets: [{ engine }]',
-  agent: 'agents are named: agents: { default: <what agent held> }; e2e run --agent <name> runs with another',
+  agent: 'agents are named: agents: { default: <what agent held> }; e2e-cpp run --agent <name> runs with another',
   screen: 'the test-id attribute is an engine option: engine: playwright({ testIdAttribute })',
 };
 
 /** Keys authors put on a target that belong to its engine. */
 const FOREIGN_TARGET_KEYS: ReadonlySet<string> = new Set([
-  'app',
   'url',
   'baseURL',
   'baseUrl',
@@ -235,6 +238,7 @@ export function resolveConfig(
     ports?: PortAssignments;
   },
 ): ResolvedConfig {
+  registerDeclaredSecrets(raw, options.env ?? process.env);
   const env = options.env ?? process.env;
   const cli = options.cli ?? {};
   const ci = isCiMode(env);
@@ -257,6 +261,10 @@ export function resolveConfig(
     );
   }
 
+  const modelPolicy = cli.modelPolicy ?? raw.modelPolicy ?? 'allow';
+  if (modelPolicy !== 'allow' && modelPolicy !== 'forbid') {
+    throw new ConfigurationError('INVALID_CONFIG', 'modelPolicy must be "allow" or "forbid"');
+  }
   const targets = resolveTargets(raw, options.projectRoot, options.ports ?? {});
   const tests = normalizeTests(raw.tests);
 
@@ -297,6 +305,7 @@ export function resolveConfig(
 
   const resolved: ResolvedConfig = {
     specVersion: '0.1',
+    modelPolicy,
     projectId,
     projectRoot: options.projectRoot,
     configPath: options.configPath,
@@ -338,7 +347,7 @@ export function assignPorts(config: ResolvedConfig, ports: PortAssignments): Res
     ...config,
     targets: config.targets.map((target) => ({
       ...target,
-      app: resolveTargetApp(target.name, target.engine, config.projectRoot, ports[target.name]),
+      app: resolveTargetApp(target.name, target.engine, config.projectRoot, ports[target.name], target.appDeclaration),
     })),
   };
 }
@@ -612,7 +621,7 @@ function resolveTargets(raw: E2EConfig, projectRoot: string, ports: PortAssignme
           : didYouMean(key, [...TARGET_KEYS]);
         throw new ConfigurationError(
           'INVALID_CONFIG',
-          `${where} has unknown key "${key}"; a target is { name?, platform?, engine? }${hint}`,
+          `${where} has unknown key "${key}"; a target is { name?, platform?, engine?, app? }${hint}`,
         );
       }
     }
@@ -620,7 +629,7 @@ function resolveTargets(raw: E2EConfig, projectRoot: string, ports: PortAssignme
       const got = typeof target.engine === 'string' ? `the string ${JSON.stringify(target.engine)}` : `a ${typeof target.engine}`;
       throw new ConfigurationError(
         'INVALID_CONFIG',
-        `${where} engine must be an engine handle, got ${got}; call the engine's factory: playwright({ url }) from @e2edev/playwright, agentDevice({ platform, app }) from @e2edev/agent-device, or your own defineEngine(...)`,
+        `${where} engine must be an engine handle, got ${got}; call the engine's factory: playwright({ url }) from @e2e-cpp/playwright, agentDevice({ platform, app }) from @e2e-cpp/agent-device, or your own defineEngine(...)`,
       );
     }
     const platform = resolvePlatform(target, where);
@@ -646,7 +655,8 @@ function resolveTargets(raw: E2EConfig, projectRoot: string, ports: PortAssignme
       index,
       platform,
       engine: target.engine,
-      app: resolveTargetApp(name, target.engine, projectRoot, ports[name]),
+      ...(target.app === undefined ? {} : { appDeclaration: target.app }),
+      app: resolveTargetApp(name, target.engine, projectRoot, ports[name], target.app),
     };
   });
 }
@@ -685,7 +695,7 @@ function resolvePlatform(target: Target, where: string): string {
  * The `tests` globs, checked and compiled when the config resolves. A wrong
  * type used to be a raw TypeError reported as a test failure (at config load
  * for `tests: 5`, at collection for `tests: [1]`), and a malformed glob was
- * `INVALID_GLOB` only once a run or `e2e list` collected, so `explore`,
+ * `INVALID_GLOB` only once a run or `e2e-cpp list` collected, so `explore`,
  * `mcp`, and `cache` accepted a config no run could use.
  */
 function normalizeTests(tests: unknown): readonly string[] {
@@ -897,6 +907,7 @@ function computeConfigDigest(raw: E2EConfig, projectId: string): string {
         const { engine, ...rest } = target;
         return {
           ...rest,
+          ...(target.app === undefined ? {} : { app: digestAppDeclaration(target.app) }),
           engine: {
             name: engine.name,
             ...(engine.version === undefined ? {} : { version: engine.version }),
@@ -908,7 +919,7 @@ function computeConfigDigest(raw: E2EConfig, projectId: string): string {
           },
         };
       }
-      return target;
+      return { ...target, ...(target.app === undefined ? {} : { app: digestAppDeclaration(target.app) }) };
     });
   }
   return canonicalDigest(sanitized);

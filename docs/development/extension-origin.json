@@ -1,0 +1,1394 @@
+[
+  {
+    "path": "CPP_SUPPORT.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "5580886cfeedd0d5474cd09d7f1dcd98ad41bd61a5022a2b247e4349fb76b3f6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "INSTALL_CPP.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "471e9e559489265f04857bf492fc5f3a644ca4bd514e4a5fecc9effac7cdf9c9",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "OFFLINE_README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d8dde86c75ae99e642627c4ece07ca2c89b2ec1d8299843fbf5943a5342e02fe",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "docs/cpp.mdx",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "16cddc2e1f16cd641d74234327de76843d3b83d64b83c07239db01c941ea44a4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/.gitignore",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b6fd3da3adf701239634eff24eaf39e22a287ee6b3f37be5b1158b7ec6357afc",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/CMakeLists.txt",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ae73c538f5b25edd231dfe9b69c6fe83cfa8e5e38720b1b936a3307e97acc948",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ad0e10ef9721d4f14aebdcc37c5125488dd996dac4ee72f7be867cd4cd591fef",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/e2e.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "dcdd3990ef6c3a7aed1aac2a6d09ee2fd771408c415ec0882295685c92a1757b",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/e2e.negative.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "61ef2d95fce32469561c7833a9fac989f9a049f571045df175ef125d1481daa6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/include/calculator/application.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "26385e94b72ad98119755d6928fddcf2ab6fd366ec2eeef9169a2cdf2f481a06",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/include/calculator/operation.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "e39cfa0b0264b38f64167178a6eac934a728010adabea5a1fc2ad324516548f0",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/include/calculator/options.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0796358a9c6abfff2ec89ef4ab6dcd0d3ee8ec2725ff2b2382d6251ab3911298",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/include/calculator/result.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cf72959cccaa1e73e2e894ff9f5cf92afe1ac27794cfec77110a556f14da7fdd",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/include/calculator/writer.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "48b059517b22d12b106452b997fc051b07ce7c76e42bd90e4f47667ab756ca90",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "398467fc39a3abceb1887d645f8edfa3882559af4cd5a455ed5420705f365adf",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/src/application.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "103e1cbc1c516688a728de768e570d35164e0d96809f99858b8fe8f79d13bacb",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/src/main.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6dc988f7dde032b63eb157024295cce4299709ac8355f2c20b7f7e5f4ff05ee1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/src/operation.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "25bf4d7bb6dcc46b1da8e902410679ac8de2e76259d36fcdd304e91be3ab008f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/src/options.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "30e9425cf875619d01618c10174752e81b8b2710e2a320dc2836361fa4cf134a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/src/output.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a2c3115d16e906f5a6b3fe821a2036d4b6f996c5b04cbae1e52276942452acac",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/test-support.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "8c58bc9dfaf5483dac9ae6e97e02ed2dc32bec9c7d67b42b3e21671c5bb535a5",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/tests/calculator.e2e.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0da7d7757e081e35e97d91531b772b22c8694fa68d589ca91ad1510c41bb9326",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-cpp-cli/tests/planted-wrong-output.e2e.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f3ae6aad175b1465e3bf5eefab9992970a32260996e38afcdd30cba5c8d99ea9",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/.gitignore",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "75c559356763e188944002058768e91ff469e88743adf2c3c32910f0495f3c5e",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/CMakeLists.txt",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9edb19a00442541f6303e244c514495a508080f52fcbbbbde02761af3e548c2d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "75c15912c16fb3de5ae79f0d0968857ddd07d0cdabeba1e4582af21ab3ffc2b8",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/e2e.agent.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9c2dedaebc478e01335166f404572c6ff4dabd270865d4d26eda8204ba252098",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/e2e.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "e1d52293ba42f0573f8625b87e2a32e17160d70cda79d660f20b773b492db81a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/e2e.quick.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d5d481fad81081c89c1708c4dc41facc8756678f966c9ce2c019dc5c71447f30",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1f06aa718445b81c71720b6e65ad81addee57431f74a7f31372120036f3da623",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/tests-agent/calculator.e2e.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "7e699c70d5753f0fc42447b4cd7ec376c37e8413b491a89e4a8cc0801a083c32",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/tests-quick/calculator.e2e.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "2e4b7ced724a2aa6ac7f2dfd681c91f4b180f0de01e3dcb026c90d6bb277341a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/e2e/tests/calculator.e2e.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "17dd667ddc342c129ce01bd73e6f8ac61f0196e9e408d5fac5d4403501d75cc1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/main.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a651a4cd687a87ff6a795a3fdb1261b94acec4d995d759d4c96dd221257b5fe7",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/quick/Main.qml",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "07b6070b6bef26674411eb0df957b515d836268919e7b5dcea637f69d1304330",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/quick/main.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "00ad34e3105bc6f3b041015230fb5f091265c97847254d2740832960457ef3a6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/tests/calculator_tests.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "c7e931035b812298fb2df16a1dd8a147ce285963949b9692b5bfb1db0f26e681",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/ui/calculator_window.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3eb1b4e40d96ae4df6e9a289fa58998a01d507afea1df6afe64fde782262e12c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "examples/with-qt/ui/calculator_window.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "80ed29681e0ae3e442371aeee3ff4d2dc1a0c4eadb5f1b388e432ce677705736",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "426ae79b6efc232467ba84e0324ce2d3a750186e91fb805c388e2ad1343151c1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/.gitignore",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "49c26750db91feb1bb16a5792dafcb03edcb71aeb86926ddda42fb4821cb0f5d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/CMakeLists.txt",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "adb795a1666747849e2cfd4dc4f66549e6842a0f4533c7d1551c5ae6499d15d8",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6fd580b70a82700d52f290f8f0b4c78792587c82c9040f020aaf215e0c7f4471",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/cmake/e2eQtBridgeConfig.cmake.in",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0c4aaf60e1ed6d72893137e98cdea8d2d9ed162ad51a5bcea014c9606b91b9dc",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/include/e2e/qt/bridge.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "66df25fd5987cc76fa20c49052de7acaccbbeca00c5c4a7518f7d8b1327293bf",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/adapters/object_adapter.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3aa811f98fd0b994e46957363529a178a7fc3371c9a536c47a237130e0ea43c4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/adapters/quick_adapter.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ecab85e505c44351c270fed0978ecbaf24d770b2a75813fa3e98bbf1f7251790",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/adapters/quick_adapter.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4bac1e41429609a1ffb4e0fad8611d9fce6589ac9f093f94494743c5d2313311",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/adapters/widgets_adapter.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "2e74a8b86ca75de0d93c77d7951c9674af9ea9d0e1a4094622712096dbaa6ef6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/adapters/widgets_adapter.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b442069487bdf47152fd1e11d81ae3af541e2263102110324940a22f7157df29",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/bridge.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9bda0048c3175b06ce120de75446d4f63670185b0d75bba6bdacd427c66e23f4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/capture_guard.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9e741791a2fd982b0c7e0969dd9dc80feca9a3a014299d2eaadc46d99077ab77",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/capture_guard.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "80493e2c60ad6c543d03b334c1bf0f1cb9e6d9c678bea62da5c06971c1a004da",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/object_registry.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "26492546f20983400cce581c2f7cea7987397a4c967ab755627a9aba1fc99093",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/protocol/bridge_server.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9ede17389931173c13aafcc0dfce7e7662b10b7c76cc0caed3cbaa5bd1ca6536",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/protocol/bridge_server.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f0c4d9aca8daf0c87e414f959df58d44cb716f77fd9016d04330a24a1f939867",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/support.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "baf421df68723a37d769e0cff0d078aa59ad7455e52df472e50a7526579a283d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/support.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ef3c53943f31e574c277b5ebcb686aeb6ef07e6e089944d283d1a7047c2b6acd",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/surface.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "757ab8014b58280eff2b4c0a35a27cd1456048a916e959e3119a0e6311ecde96",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/src/surface.h",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "16f7d038108633884910a627f6db9a2e73ec134bbae1398fff68890d0cebbfcd",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/tests/bridge_tests.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "5ed6cfeb2708a471e59cdf0f60f2a9d42cd37fa470c4b4d14694508b4a3883d3",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/tests/consumer/CMakeLists.txt",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0cffb5781c0fd233fc2eed1333d1cd3e6485f7c51862739a1ebf2bd980752f9a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/tests/consumer/main.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b2e6151e29ed141aaae8d0c322908a341d714fa9d3bc65f646182bc66c01d0dc",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "native/qt/tests/surface_tests.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b943edcf609cee886954886ed5effdbdec41ff22a26045331db7384ad2000a7c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/LICENSE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/checks/NOTICE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f1fe71e291193a7d4963799eef91ee8596e6a53099ccd85e33d3221ffea67f47",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/checks/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "34a2b1052ec7594cad65c5c6411b791d2f34565a8afeebd01a9ded26e096cdba",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "dc6b23694e17ca1ffcff88ec75a49559e7a5905d6916c2a354514ddc9a568f00",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/index.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "eb7d686a6d5437670cd361e9b5b6b2e4563b64aa593a604d216f4e51d308b317",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/internal/decimal.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "60e9d53c66518494f5d4b3ad55e0554622061765c0f18b9e1d8a336c7a54aba2",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/internal/options.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "e27ee5ee85e628390756f1d65ee3bbba1310d735a6070c068768050faa5e40ac",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/io/json-file.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f06f92b597513126de0c6e592cde3810a86968e36636cd2abba044a6332c99f1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/types.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3c9bb3c5523f7d87730c45088a842e2e9578dddaf126d0ed311f3442ec0e57b5",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/validators/base.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ab921390862555bcba66c5254558316216fb74a139f38cb9c7c527b60e8a6a01",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/validators/csv.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "24ca53bab6df2702097e06a50a5d6eaee2f3ae0d02797e2d1ae418ca440e63b1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/validators/json.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a2464a2546d9514c7a611b7db06a153f59054dd948c95ef35427b9ad720eee8c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/src/validators/numeric.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "2b184150a56a4a06032336724a032a104b61b22d76af9874e8344c3ce594e859",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/tests/checks.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3bccb447284fa3d993abf616fb863144ac045a856c465fd3572863089b3cdcbd",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/tsconfig.build.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3e843c977a77402b16e2a2d9475f7523609d4d99390bc0bf37eb25f28f7d97a8",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/tsconfig.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1e1e11669d68bf7fff7e756b977c20e70c145645bdf55d6416fc428dd885b725",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/checks/vitest.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a794157b410b6757def3b8a0dc5a1f4ce833fda0f3a5a8692ee309e2789c3e3f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/LICENSE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/native/NOTICE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9f7f9ae9a73a5840d735467102af2d4e7f62a6459d35015ffa73b87ffcace904",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/native/PROTOCOL.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "213b26ddad2b73bb31dd98fca8f5df4288a8114c1759041bb6466c38bfe4e3fe",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "7f603b54e1f98980ba2ab6d0a37bc5a8ad452726abfe37df8232b3787bb7a1e6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "930ab7d54bda9b02a09af98c83243ff69d7752c6ce9ada6826487515de8600e3",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/driver/native-driver.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "da0f41e7026df4fd2b059e664316222f03600e5e179ea3cf288669aff0425b35",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/driver/rpc-native-driver.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "417ee4a2348ec807f44843e4c3ad7709732add2f7b4d040faa48eb5be58ea84f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/driver/snapshot.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "bd2801bc24ea0a2ccaa83a695ebd333f92c67a217d0324189d3307c544527a68",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/engine/native-engine.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "923908f7ee58053fe8ef10ea172ebad9e9b576f4d4874a9d8e55e5cef2454710",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/engine/output-lines.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "73ef3907707585225a7154412eb769f6b2582771dffbfa0ac416ad12f1ef4acf",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/index.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4f32e141c8af526b3932df0f8ef314f9dd4c28eee56260248fe844c1a6d5d081",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/options.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4dc32b0b18fe69351c4018232613f3fde58cd93d81a8113675076cc6fc674296",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/transport/json-rpc-tcp.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1658443f1e03c7384f7dde7c2289f81afdd5f4d95aff8293b51825940a3a0bf3",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/src/transport/native-transport.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "33e09addc73188b69f66d7077b6bb6d676cef46ef0c670635f25f56571413b6f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/driver.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "bfb07c209514ac39625b3775db52832af23ecf820785e9f5fcf63713efa1d5bb",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/engine.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0ecfa0763d2aed56e0573d244790cc74ef4903470fb3969632fef74677c999f4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/fixtures/mock-helper.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4e1ba4eaefed698b5438876d33e3946063e8d9572783caff8f4f12cfd51e8221",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/output-lines.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b8bbe12f2f82397227d4740a8c6e0825edc6a9de30e54913359c04b16efafbc6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/snapshot.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "92e0131842edb084f9e0ff3ec019327a4ef1f8f22099031fe902f16b9a8ef0c3",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tests/transport.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "c7ee7f2c07112c3a6d8488287d69ff8128733265c2652172ee10d1cf6f20f6ad",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tsconfig.build.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3e843c977a77402b16e2a2d9475f7523609d4d99390bc0bf37eb25f28f7d97a8",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/tsconfig.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1e1e11669d68bf7fff7e756b977c20e70c145645bdf55d6416fc428dd885b725",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/native/vitest.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "bf20619e756a5f52ef370b81afa6a77c5856b800930c8fccd138cf98995fb62e",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/LICENSE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/process/NOTICE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f1fe71e291193a7d4963799eef91ee8596e6a53099ccd85e33d3221ffea67f47",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/process/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "7f4ae72f13da37e0e987139148a9cce6a25539d92bac4e1c54d2b557522a265e",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4ff06696915145bd1f758b7c2af3e21469a69461b22860096a33b0fa243078eb",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/capture/bounded.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0d5b639e2d8c9a3183933c43f41e2b41bd1dd8f782797582cc4f416f488a2446",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/error.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "517e03e3682d486dca30285e469e082b5b9b2812e65674a8fe9d2c01820ce31a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/fixtures/workspace.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ecf748b61d1eb7178eff4fc19540aa3297c8c20d8f9ce098527291bd6c8ab4d1",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/index.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6900fb76e0d02ac01f923cce6a082a4f863045e0da1c612ba51c9a2d6bdd0a1f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/process/local.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6e7e0f6738ae9f333636bd2ab1cfc95c1eb9e57997e75718c52d2390a1dda72a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/process/runner.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "21baffdc732b581011f974bcbdbf99d3f6e9b82df5ae8bbb2d70eae974129219",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a5ad61f7d56c1b37f95c142398b8ae750d37b7f7b87a4cb9a6347004ffeb2d8d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/tree.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "74841f9ece3cfe651ead24ef6f47742077bc1bc7e9ffc131a6da6b472036fa45",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/src/types.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "291b71e7a9f9b8f2aaaa291299c7b0d68d7b6eabb3546b97363db4ae1b905ded",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/tests/integration/process.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "bbc5bf3ecb7473f5af953a8fb96d6c05893e78c16062fac8508badb0a7f8c8ab",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/tests/types/api.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "5fc88a8aa6006fcc1389a3a0bded594ca185d4efc011acb603e144cd282e00b0",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/tests/unit/capture.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "8b516b4cf79cc0cc8a6abaad73932c1add3372c39e142d04d39f092d3219083a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/tsconfig.build.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "eb255072d9df9076cec80adb3a418c1ff98f9a71013bc3562e677540161609b5",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/tsconfig.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1e1e11669d68bf7fff7e756b977c20e70c145645bdf55d6416fc428dd885b725",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/process/vitest.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "66c4934f7a5588a9fb7b4e5ebfee1fab141ffcc8075927cde509665f4f256885",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/LICENSE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/protocol/NOTICE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9eb73a00e014d462233f7fdd846c72aebe9ac1c402820db7343b0f3576bb9559",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/protocol/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "c4bf441817f5073233ac78cf9c483d5770697b5dd0707e33907e56e7cbfcde64",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "966aef187f4557906c05e13fb0c6c422a059606429c5ef8e5c3725a4b1eddf5a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/src/client/http.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "007f3c0a6de0f0b22e710afd37f798a2f12d40c627f51ec0144ed7f6fc6d044c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/src/index.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "0108796fa8a5207adbde9d40e14fbdb8388a2060a89928e4a75fb19761ccf777",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/src/model/response.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "a2e4893db1c1747b9c0c5d7ee73d6fc816f47feac956b226e1b575b5b6147190",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/src/model/types.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "43aef020f0826e217be50d5ada6f13d6f293f874314a35705544b458ccf133e3",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/src/transport/http.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "5b39a88db19c1f5900b2be5750cfbba8f7131025e52addc9f0f8693037c90a73",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/tests/http.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1b5b9835579683780b27e39b174e5175c318f15b9395ae31baeb6f6be110d8db",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/tests/runner.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d800570f525834253c59a12ef425eb88ca7de061ac50899bf77a4d85fb4ece3f",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/tsconfig.build.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d2562020f03735fc82793d384697a01f4cd66e1908917e462fefa0e84f0895bf",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/tsconfig.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "b2bdc5ab7b95b6d9ac2854e2bc4e3eb69827b8b28356ee89d60e7c414eb948be",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/protocol/vitest.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "97adad9037dd6d0096838b83f82f80d92d20b1434636bd9411be0375022cd76e",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/LICENSE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/terminal/NOTICE",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1be5a26c1c995df84753b2808dc637753680fc6678f7a0d726ea8979ff55c2ee",
+    "review": "license_metadata_replaced_for_MIT_fork",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "Original license and attribution documents are replaced with correctly scoped MIT notices; they do not establish authorship."
+  },
+  {
+    "path": "packages/terminal/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "83afd0a6be73bbe8b01d5973ebc4546dfe4d7a127c5b7060129a9a2d356d7425",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/package.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f93dfc74347c8df8bf5cde607502b209944ea9b51dface355c251f4021a12932",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/engine/keys.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "be6058e3724dcc1eb0ae834e387f6734faa24ff1e606ff65ddc477e73c144d98",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/engine/terminal.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d688e96b3064bdb013ddeb20327f324808eb377a2430a7e9789fa5d9c57dca04",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/index.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "47228bb5d568cc7c601f4f131fcaeaf28e151e882d358818642f0832373a86f5",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/model/session.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "4bafcac33a69a4ee13065f36119353536f9e6534cd7f6b93ceb6d8ad20c57e00",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/model/types.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6ef6445534fd0de0444af8a6ee95868f2bd1726cc967af731288c827d70cba4d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/transport/base.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "09bf87e94629d8d31b848dba5cc73984ac751ab93b42af2ec6fc877f90f5b4bc",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/src/transport/node-pty.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "d577688e98e89fb236732ea8fd2e33bf72ecce9f9381122d05282b4cb0c404f7",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/cpp-tui.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "72054cf2fce0679ae4e0a576e76e5e44808155409b20217d4f84c08c6d3267c7",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/engine.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3ccb17a4186e39da996a2dc360796c8d088b19b0718d267e0599aa733a09f641",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/fixtures/menu.cpp",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "28a7a091ada6734a62b552f4bc7ce2594b4c6c5357d68b45fc5eb89cbbc3bbdb",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/helpers.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "dcdea2c6bbf2e8769aec6b97e38ebdc3ddb182f727fd54dfc41527177f597df4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/keys.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ae0018c591dbec28b3e676aa14ed068218a27132ea8ffef0a42c6298af6165cc",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/pty.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "1fe2c31ac41e124ad0bb5874d9b3b6f3ae1b90e8790c3e0a5498fb80f786c83c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/runner.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "3f99eda2f3d4504d59261bf46fb68b282d87b64cbfacf2f33c30446eba26250c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tests/session.test.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "14f437b1e724d372a836d6904d502ddb31c0942380bd533dc6a4bd7a904b916c",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tsconfig.build.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "9840f389be5849ffa1d400a40dd25a9f5497ac221c59688f7a6b792b5d87cb2d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/tsconfig.json",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "755166cc3b497c5adff99871840cb0b339afdbe3c0a8419c7fa17b5e192cf9c6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "packages/terminal/vitest.config.ts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "e22155957ae1b698673f240fd79856c1bf7be361bfe6dfc70b6d901acd0ae4bd",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/cmake-targets.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "6565bc6586133d1a6498c8c853f9e2e077a464558ce5a730dfc576adc2ba9d46",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/cmake-targets.test.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "f7a67be79d978c93901ea1279982271c5345efb2df94a342fb7d7a9427da1011",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/completion-guard.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "ea0623e9032206975093c80409605a9ff01e43595805ff1bb5fefff05792a956",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/completion-guard.test.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "bf470dd82c763695a18beb0600e4e5cb9ba91a4f84600d4f70ea61377ee2024d",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/install-kit-smoke.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "69c73bce3ddffdebb3202fc19a1a03a9b4551aeb8aa3ce792963b17370b521a0",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/install-packed.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "46a971d2f12f70df437d6a1aca4f79808245679e85b187a2a669b4d4ffd69e1e",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/pack.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "85b71a5ff4b7163a2c7715ed992ba29fb678f6b684485ccc488bde1cf8dc770a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/package-manager.d.mts",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "c721f413c5a9b42c2928aeaabcadd127e88656f68c58b1a0ab1964a384ce4e98",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/package-manager.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "c7ba730663b91b22d0455f92c988b26531dc1a3471df8a6232cef084770e6bd4",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/package-manager.test.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "cc7d246e641b9e89870dca2f53419acdc78d0d4c0f76bc754c83aa4f277d23fb",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/qt-export-proof.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "efcfad9e4452675cb036087f809f550394f0f7ac1907cd71e07e85c9f20f53d5",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/runtime-contracts.test.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "57fb06bda73914574a03022e2c296eae62804ae9372366d06879fcdbda10d0d6",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/verify-qt-install.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "7b1bf9a701c90e16411dbd0acc9632fe392416c5f210d70a1e9f6f4f0c4b35aa",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "a79f3e3740e82d4df609910f2a2d060cd991a4bb",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "scripts/cpp/verify.mjs",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "21542ab6a95875228d156a0d1c785c80da802f18ee3f7a8e6a078a8a7bd3a27a",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  },
+  {
+    "path": "verification/README.md",
+    "source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+    "sha256_before_port": "09fdaca01332c8cf2aaa8b48ff85753a84725fa7e01e9479956bdad7f89b7b42",
+    "review": "screened_local_extension_addition",
+    "introduced_in": "9fca60f257fbd1ee0f00d32557898f00925f038f",
+    "license_basis": "maintainer_authorized_MIT_offer_for_original_extension_work"
+  }
+]

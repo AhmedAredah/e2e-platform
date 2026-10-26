@@ -21,10 +21,10 @@ export const MCP_LOCATIONS = [
   { file: '.cursor/mcp.json', hint: 'Cursor' },
 ] as const satisfies readonly McpLocation[];
 
-const MCP_SERVER_NAME = 'e2e';
+const MCP_SERVER_NAME = 'e2e-cpp';
 
 /** How every client starts the server: the project's own e2e, never a fetched one. */
-const SERVER_ENTRY = { command: 'npx', args: ['e2e', 'mcp'] } as const;
+const SERVER_ENTRY = { command: 'npx', args: ['--no-install', 'e2e-cpp', 'mcp'] } as const;
 
 export interface McpRegistration {
   /** Project-relative file, e.g. `.mcp.json`. */

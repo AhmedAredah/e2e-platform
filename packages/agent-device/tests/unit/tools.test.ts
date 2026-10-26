@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defineEngine } from 'e2e/engine';
+import { defineEngine } from '@e2e-cpp/core/engine';
 import { buildEngine } from '../../src/engine.ts';
 import { AgentDeviceSurface } from '../../src/surface.ts';
 import { agentDeviceTools } from '../../src/tools.ts';
@@ -49,7 +49,7 @@ describe('agent tool pack', () => {
 
     await expect(run('alert', { action: 'dismiss' })).rejects.toMatchObject({ code: 'INVALID_STATE' });
 
-    const attempt = (attemptId: string) => ({ attemptId, artifactsDir: '/tmp', signal: new AbortController().signal });
+    const attempt = (attemptId: string) => ({ attemptId, artifactsDir: '/tmp', signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     await android.startAttempt!(attempt('a1'));
     expect(await run('open_app', { app: 'Clock', relaunch: true })).toBe('Opened Clock.');
     expect(await run('swipe', { from: { x: 300, y: 200 }, to: { x: 20, y: 200 } })).toMatch(/Swiped/);

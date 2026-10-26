@@ -5,7 +5,7 @@ import { stripVTControlCharacters } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ListOptions, ListedPair, RunOptions } from '../../src/run/runner.ts';
 import { ConfigurationError } from '../../src/internal/errors.ts';
-import { SAMPLE_REPORT_SECRETS, sampleReport } from '../helpers/sample-report.ts';
+import { sampleReport } from '../helpers/sample-report.ts';
 
 const runMock = vi.hoisted(() => vi.fn());
 const listMock = vi.hoisted(() => vi.fn());
@@ -31,7 +31,7 @@ function lastRunOptions(): RunOptions {
 }
 
 async function invoke(...args: string[]): Promise<void> {
-  await main(['node', 'e2e', ...args]);
+  await main(['node', '@e2e-cpp/core', ...args]);
 }
 
 let stderrSpy: ReturnType<typeof vi.spyOn>;
@@ -60,7 +60,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe('e2e run argument parsing', () => {
+describe('e2e-cpp run argument parsing', () => {
   it('passes defaults through with no flags', async () => {
     await invoke('run');
     const options = lastRunOptions();
@@ -81,7 +81,7 @@ describe('e2e run argument parsing', () => {
     expect(runMock).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
     expect(written(stderrSpy)).toMatch(
-      /^error: "--headed" is a flag, not a test file\. It arrived as a file because a "--" came before it; "(?:pnpm|npm run|yarn|bun run) test:e2e -- --headed" reaches e2e as "run -- --headed" when the package manager forwards the separator\. Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e run --headed\n\(add --help for usage\)\n$/u,
+      /^error: "--headed" is a flag, not a test file\. It arrived as a file because a "--" came before it; "(?:pnpm|npm run|yarn|bun run) test:e2e -- --headed" reaches e2e-cpp as "run -- --headed" when the package manager forwards the separator\. Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e-cpp run --headed\n\(add --help for usage\)\n$/u,
     );
   });
 
@@ -90,7 +90,7 @@ describe('e2e run argument parsing', () => {
     expect(runMock).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(2);
     expect(written(stderrSpy)).toMatch(
-      /Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e run --tag smoke tests\/b\.e2e\.ts\n/u,
+      /Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e-cpp run --tag smoke tests\/b\.e2e\.ts\n/u,
     );
   });
 
@@ -262,7 +262,7 @@ describe('e2e run argument parsing', () => {
 
 });
 
-describe('e2e list', () => {
+describe('e2e-cpp list', () => {
   const pairs: ListedPair[] = [
     { file: 'tests/a.e2e.ts', title: 'signs in', titlePath: ['signs in'], kind: 'test', tags: ['smoke', 'auth'], target: 'web', disposition: 'run' },
     {
@@ -305,7 +305,7 @@ describe('e2e list', () => {
     expect(process.exitCode).toBe(2);
     const stderr = written(stderrSpy);
     expect(stderr.startsWith('error: "--tag" is a flag, not a test file.')).toBe(true);
-    expect(stderr).toMatch(/Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e list --tag smoke\n/u);
+    expect(stderr).toMatch(/Run the CLI directly instead: (?:pnpm exec|npm exec|yarn|bun run) e2e-cpp list --tag smoke\n/u);
     expect(stderr.endsWith('(add --help for usage)\n')).toBe(true);
   });
 
@@ -372,25 +372,25 @@ describe('e2e list', () => {
   it('is listed in the help with an example, and its own help groups the flags', async () => {
     await invoke('--help');
     expect(written(stdoutSpy)).toMatch(/^ {2}list \[options\] \[files\.\.\.\] {2,}print the tests a run would select/mu);
-    expect(written(stdoutSpy)).toContain('  $ e2e list --tag smoke\n');
+    expect(written(stdoutSpy)).toContain('  $ e2e-cpp list --tag smoke\n');
 
     process.exitCode = undefined;
     stdoutSpy.mockClear();
     await invoke('list', '--help');
     const help = written(stdoutSpy);
-    expect(help).toContain('Usage: e2e list [options] [files...]');
+    expect(help).toContain('Usage: e2e-cpp list [options] [files...]');
     const headings = [...help.matchAll(/^(\S[^\n]*):$/gmu)].map((match) => match[1]);
     expect(headings).toEqual(['Arguments', 'Selection', 'Output', 'Options', 'Examples']);
     const flags = [...help.matchAll(/^ {2}(-{1,2}[a-z-]+)/gmu)].map((match) => match[1]);
     expect(flags).toEqual(['--config', '--target', '--tag', '--tag-mode', '--pass-with-no-tests', '--reporter', '-h']);
-    expect(help).toContain('  $ e2e list --reporter json\n');
+    expect(help).toContain('  $ e2e-cpp list --reporter json\n');
     expect(help).toContain('Docs: https://e2e.tester.army/docs/reference/cli#e2e-list\n');
     expect(process.exitCode).toBe(0);
     expect(listMock).not.toHaveBeenCalled();
   });
 });
 
-describe('e2e init argument parsing', () => {
+describe('e2e-cpp init argument parsing', () => {
   it('scaffolds the working directory by default and reports the terminal state', async () => {
     await invoke('init', '--yes');
     expect(initMock).toHaveBeenCalledExactlyOnceWith(process.cwd(), {
@@ -417,7 +417,7 @@ describe('e2e init argument parsing', () => {
   });
 });
 
-describe('e2e --version and --help', () => {
+describe('e2e-cpp --version and --help', () => {
   it('prints the package version alone and exits 0', async () => {
     for (const flag of ['--version', '-v']) {
       process.exitCode = undefined;
@@ -433,8 +433,8 @@ describe('e2e --version and --help', () => {
   it('opens the help with the version, lists every command with examples, and exits 0', async () => {
     await invoke('--help');
     const help = written(stdoutSpy);
-    expect(help.startsWith(`e2e v${packageVersion} · an open framework for agentic end-to-end testing\n`)).toBe(true);
-    expect(help).toContain('Usage: e2e <command> [options]');
+    expect(help.startsWith(`e2e-cpp v${packageVersion} · an open framework for agentic end-to-end testing\n`)).toBe(true);
+    expect(help).toContain('Usage: e2e-cpp <command> [options]');
     expect(help).toMatch(/^ {2}init \[options\] \[directory\] {2,}scaffold/mu);
     expect(help).toMatch(/^ {2}run \[options\] \[files\.\.\.\] {2,}run the tests$/mu);
     expect(help).toMatch(/^ {2}cache {2,}inspect, measure, and clear the trace cache$/mu);
@@ -442,8 +442,8 @@ describe('e2e --version and --help', () => {
     expect(help).toMatch(/^ {2}help \[command\] {2,}show help for a command$/mu);
     expect(help).toMatch(/^ {2}-v, --version {2,}print the version$/mu);
     expect(help).toMatch(/^ {2}-h, --help {2,}show help$/mu);
-    expect(help).toContain('Examples:\n  $ e2e init\n  $ e2e run\n');
-    expect(help).toContain('Run e2e <command> --help for the flags of one command.');
+    expect(help).toContain('Examples:\n  $ e2e-cpp init\n  $ e2e-cpp run\n');
+    expect(help).toContain('Run e2e-cpp <command> --help for the flags of one command.');
     expect(help).toContain('Docs: https://e2e.tester.army/docs\n');
     expect(process.exitCode).toBe(0);
     expect(runMock).not.toHaveBeenCalled();
@@ -452,7 +452,7 @@ describe('e2e --version and --help', () => {
   it('groups the run flags, then lists examples and the exit codes', async () => {
     await invoke('run', '--help');
     const help = written(stdoutSpy);
-    expect(help).toContain('Usage: e2e run [options] [files...]');
+    expect(help).toContain('Usage: e2e-cpp run [options] [files...]');
     // Every flag the action reads is documented, under its group, in this order.
     const headings = [...help.matchAll(/^(\S[^\n]*):$/gmu)].map((match) => match[1]);
     expect(headings).toEqual(['Arguments', 'Selection', 'Execution', 'Output', 'Options', 'Examples', 'Exit codes']);
@@ -468,6 +468,7 @@ describe('e2e --version and --help', () => {
       '--workers',
       '--retries',
       '--no-cache',
+      '--no-model',
       '--reporter',
       '--artifacts',
       '--debug',
@@ -477,7 +478,7 @@ describe('e2e --version and --help', () => {
     ]);
     // Commander wraps at the help width, so the choices may span two lines.
     expect(help).toMatch(/\(choices: "any", "all",\s+default: "any"\)/u);
-    expect(help).toContain("  $ e2e run 'tests/**/*.smoke.e2e.ts' --target web --tag smoke\n");
+    expect(help).toContain("  $ e2e-cpp run 'tests/**/*.smoke.e2e.ts' --target web --tag smoke\n");
     expect(help).toMatch(/^Exit codes:\n {2}0 {4}every selected test passed/mu);
     expect(help).toMatch(/^ {2}130 {2}interrupted/mu);
     expect(help).toContain('Docs: https://e2e.tester.army/docs/reference/cli#exit-codes\n');
@@ -501,11 +502,11 @@ describe('e2e --version and --help', () => {
   it('describes init, its directory argument, and its one flag', async () => {
     await invoke('init', '--help');
     const help = written(stdoutSpy);
-    expect(help).toContain('Usage: e2e init [options] [directory]');
+    expect(help).toContain('Usage: e2e-cpp init [options] [directory]');
     expect(help).toContain('without touching existing files');
     expect(help).toMatch(/^ {2}directory {2,}project directory, created when missing/mu);
     expect(help).toMatch(/^ {2}-y, --yes {2,}skip the prompts: Playwright, AI on, no installation$/mu);
-    expect(help).toContain('  $ e2e init my-app\n  $ e2e init --yes\n');
+    expect(help).toContain('  $ e2e-cpp init my-app\n  $ e2e-cpp init --yes\n');
     expect(process.exitCode).toBe(0);
   });
 
@@ -513,20 +514,20 @@ describe('e2e --version and --help', () => {
     await invoke();
     expect(stdoutSpy).not.toHaveBeenCalled();
     const help = written(stderrSpy);
-    expect(help).toContain('Usage: e2e <command> [options]');
+    expect(help).toContain('Usage: e2e-cpp <command> [options]');
     expect(help).toContain('Examples:');
     expect(process.exitCode).toBe(2);
     expect(runMock).not.toHaveBeenCalled();
   });
 });
 
-describe('e2e guide', () => {
+describe('e2e-cpp guide', () => {
   it('prints the overview without frontmatter, exits 0, and never runs', async () => {
     await invoke('guide');
     expect(runMock).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(0);
     expect(written(stdoutSpy).startsWith('# e2e')).toBe(true);
-    expect(written(stdoutSpy)).toContain('npx e2e guide <topic>');
+    expect(written(stdoutSpy)).toContain('npx --no-install e2e-cpp guide <topic>');
   });
 
   it('prints one topic', async () => {
@@ -544,23 +545,23 @@ describe('e2e guide', () => {
 
   it('is listed in the help with an example, and its own help names the topics', async () => {
     await invoke('--help');
-    expect(written(stdoutSpy)).toMatch(/^ {2}guide \[topic\] {2,}print the e2e skill for coding agents$/mu);
-    expect(written(stdoutSpy)).toContain('  $ e2e guide\n');
+    expect(written(stdoutSpy)).toMatch(/^ {2}guide \[topic\] {2,}print the e2e-cpp skill for coding agents$/mu);
+    expect(written(stdoutSpy)).toContain('  $ e2e-cpp guide\n');
 
     process.exitCode = undefined;
     stdoutSpy.mockClear();
     await invoke('guide', '--help');
     const help = written(stdoutSpy);
-    expect(help).toContain('Usage: e2e guide [options] [topic]');
+    expect(help).toContain('Usage: e2e-cpp guide [options] [topic]');
     expect(help).toMatch(/one of agent, debugging, explore, mcp, running, setup,\s+writing-tests/u);
-    expect(help).toContain('  $ e2e guide writing-tests\n');
+    expect(help).toContain('  $ e2e-cpp guide writing-tests\n');
     expect(help).toContain('Docs: https://e2e.tester.army/docs/reference/cli#e2e-guide\n');
     expect(process.exitCode).toBe(0);
     expect(runMock).not.toHaveBeenCalled();
   });
 });
 
-describe('e2e telemetry', () => {
+describe('e2e-cpp telemetry', () => {
   let configHome: string;
 
   /** Every `[telemetry] {...}` line the debug mode printed to stderr. */
@@ -587,31 +588,31 @@ describe('e2e telemetry', () => {
     rmSync(configHome, { recursive: true, force: true });
   });
 
-  it('reports enabled by default and points at the docs', async () => {
+  it('reports that the fork has no telemetry destination', async () => {
     await invoke('telemetry');
     const out = written(stdoutSpy);
-    expect(out).toContain('Status: enabled\n');
+    expect(out).toContain('Status: disabled (this fork has no telemetry destination)\n');
     expect(out).toContain('Details: https://e2e.tester.army/docs/telemetry\n');
     expect(process.exitCode).toBe(0);
   });
 
-  it('disable saves the choice, status names it, and enable restores it', async () => {
-    const file = path.join(configHome, 'e2e', 'telemetry.json');
+  it('saves preferences without enabling an unconfigured transport', async () => {
+    const file = path.join(configHome, 'e2e-cpp', 'telemetry.json');
     await invoke('telemetry', 'disable');
-    expect(written(stdoutSpy)).toContain(`telemetry disabled; saved to ${file}\n`);
-    expect(written(stdoutSpy)).toContain('Status: disabled (switched off with e2e telemetry disable)\n');
+    expect(written(stdoutSpy)).toContain(`telemetry preference disabled; saved to ${file}\n`);
+    expect(written(stdoutSpy)).toContain('Status: disabled (this fork has no telemetry destination)\n');
     expect(written(stdoutSpy)).toContain('Nothing is sent from this machine.\n');
     expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ enabled: false });
     expect(process.exitCode).toBe(0);
 
     stdoutSpy.mockClear();
     await invoke('telemetry');
-    expect(written(stdoutSpy)).toContain('Status: disabled (switched off with e2e telemetry disable)\n');
+    expect(written(stdoutSpy)).toContain('Status: disabled (this fork has no telemetry destination)\n');
 
     stdoutSpy.mockClear();
     await invoke('telemetry', 'enable');
-    expect(written(stdoutSpy)).toContain(`telemetry enabled; saved to ${file}\n`);
-    expect(written(stdoutSpy)).toContain('Status: enabled\n');
+    expect(written(stdoutSpy)).toContain(`telemetry preference enabled; saved to ${file}\n`);
+    expect(written(stdoutSpy)).toContain('Status: disabled (this fork has no telemetry destination)\n');
     expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ enabled: true });
   });
 
@@ -629,56 +630,33 @@ describe('e2e telemetry', () => {
     expect(written(stderrSpy)).toContain('Allowed choices are status, enable, disable');
   });
 
-  it('prints the notice once before the first command and a session event per command', async () => {
+  it('does not collect events or print an opt-out notice for normal commands', async () => {
     await invoke('list');
     await invoke('list', '--tag', 'smoke');
-    const notices = written(stderrSpy).split('e2e collects anonymous usage telemetry').length - 1;
-    expect(notices).toBe(1);
-    expect(written(stderrSpy)).toContain('e2e telemetry disable');
-    const events = printedEvents();
-    expect(events.map((event) => event.event)).toEqual(['e2e_cli_session', 'e2e_cli_session']);
-    expect(events[0]!.properties['command']).toBe('list');
-    expect(events[0]!.properties['flags']).toEqual([]);
-    expect(events[1]!.properties['flags']).toEqual(['--tag']);
-    expect(JSON.stringify(events)).not.toContain('smoke');
-    expect(events[0]!.properties['$lib']).toBe('e2e');
-    expect(events[0]!.properties['distinct_id']).toMatch(/^[a-f0-9]{32}$/u);
-  });
-
-  it('does not print the notice before e2e telemetry itself', async () => {
     await invoke('telemetry');
-    expect(written(stderrSpy)).not.toContain('e2e collects anonymous usage telemetry');
-    expect(printedEvents().map((event) => event.properties['command'])).toEqual(['telemetry']);
+    expect(written(stderrSpy)).not.toContain('collects anonymous usage telemetry');
+    expect(printedEvents()).toEqual([]);
   });
 
-  it('records the run event from the report the run returned, with the flag names only', async () => {
+  it('preserves the run exit code without collecting the returned report', async () => {
     runMock.mockResolvedValue({ exitCode: 1, report: sampleReport() });
     await invoke('run', '--workers', '3', '--headed', 'tests/secret.e2e.ts');
-    const events = printedEvents();
-    expect(events.map((event) => event.event)).toEqual(['e2e_cli_session', 'e2e_run_completed']);
-    const run = events[1]!;
-    expect(run.properties['flags']).toEqual(['--headed', '--workers']);
-    expect(run.properties['status']).toBe('failed');
-    expect(run.properties['tests_executed']).toBe(2);
-    expect(run.properties['engines']).toEqual(['homegrown@9.9.9', 'playwright@0.6.1']);
-    const payload = JSON.stringify(run);
-    for (const secret of SAMPLE_REPORT_SECRETS) expect(payload).not.toContain(secret);
-    expect(payload).not.toContain('"3"');
+    expect(printedEvents()).toEqual([]);
     expect(process.exitCode).toBe(1);
   });
 
   it('is listed in the help with its actions', async () => {
     await invoke('--help');
     expect(written(stdoutSpy)).toMatch(/^ {2}telemetry \[action\] {2,}show, enable, or disable anonymous usage telemetry$/mu);
-    expect(written(stdoutSpy)).toContain('  $ e2e telemetry disable\n');
+    expect(written(stdoutSpy)).toContain('  $ e2e-cpp telemetry disable\n');
 
     process.exitCode = undefined;
     stdoutSpy.mockClear();
     await invoke('telemetry', '--help');
     const help = written(stdoutSpy);
-    expect(help).toContain('Usage: e2e telemetry [options] [action]');
+    expect(help).toContain('Usage: e2e-cpp telemetry [options] [action]');
     expect(help).toContain('E2E_TELEMETRY_DEBUG=1');
-    expect(help).toContain('  $ E2E_TELEMETRY_DEBUG=1 e2e run\n');
+    expect(help).toContain('  $ E2E_TELEMETRY_DEBUG=1 e2e-cpp run\n');
     expect(help).toContain('Docs: https://e2e.tester.army/docs/telemetry\n');
     expect(process.exitCode).toBe(0);
   });

@@ -1,9 +1,9 @@
 {
-  "name": "@e2edev/oauth",
-  "version": "0.1.0-canary-20260917213813",
+  "name": "@e2e-cpp/oauth",
+  "version": "0.1.0",
   "description": "Sign in to a personal ChatGPT, GitHub Copilot, or SuperGrok subscription and use it as an AI SDK model",
   "keywords": [
-    "e2e",
+    "@e2e-cpp/core",
     "ai-sdk",
     "oauth",
     "chatgpt",
@@ -17,15 +17,6 @@
     "Oskar Kwa\u015bniewski <oskar@tester.army>",
     "Szymon Rybczak <szymon@tester.army>"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tester-army/e2e.git",
-    "directory": "packages/oauth"
-  },
-  "bugs": {
-    "url": "https://github.com/tester-army/e2e/issues"
-  },
-  "homepage": "https://github.com/tester-army/e2e/tree/main/packages/oauth#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
@@ -34,7 +25,7 @@
   },
   "type": "module",
   "bin": {
-    "e2e-oauth": "./dist/bin.js"
+    "e2e-cpp-oauth": "./dist/bin.js"
   },
   "exports": {
     ".": {
@@ -59,7 +50,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
@@ -97,9 +89,9 @@
     "ai": "7.0.105",
     "typescript": "7.0.2",
     "vitest": "5.0.0",
-    "zod": "4.6.1"
+    "zod": "4.6.6"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.22.3 || >=24.8.0"
   }
 }

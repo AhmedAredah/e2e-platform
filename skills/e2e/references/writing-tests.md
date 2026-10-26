@@ -4,8 +4,8 @@
 
 ```ts
 // tests/todos.e2e.ts
-import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test.describe('todos', { tags: ['todos'] }, () => {
   test.beforeEach(async ({ app }) => {
@@ -88,8 +88,8 @@ Fixtures are lazy; destructure them in the callback.
 | `screen` | `Screen` | Always. |
 | `agent` | `Agent` | Needs a configured model, else `MODEL_UNAVAILABLE`. See the `agent` topic. |
 | `platform` | `'web' \| 'ios' \| 'android' \| string` | Always; also in `beforeAll` and `afterAll`. |
-| `web` | `Web` | Browser targets. Import `test` from `@e2edev/playwright`. |
-| `device` | `Device` | Device targets. Import `test` from `@e2edev/agent-device`. |
+| `web` | `Web` | Browser targets. Import `test` from `@e2e-cpp/playwright`. |
+| `device` | `Device` | Device targets. Import `test` from `@e2e-cpp/agent-device`. |
 | `session` | `SetupSession` | Only in `test.setup`. |
 
 ### app
@@ -201,8 +201,8 @@ tests declare it. Selecting a dependent test alone still runs its setup.
 
 ```ts
 // tests/auth.setup.e2e.ts
-import { test } from '@e2edev/playwright';
-import { expect, credentials } from 'e2e';
+import { test } from '@e2e-cpp/playwright';
+import { expect, credentials } from '@e2e-cpp/core';
 
 test.setup('authenticate as admin', { sessions: ['admin'] }, async ({ app, screen, session, web }) => {
   const admin = credentials.user('admin');
@@ -217,7 +217,7 @@ test.setup('authenticate as admin', { sessions: ['admin'] }, async ({ app, scree
 
 ```ts
 // tests/dashboard.e2e.ts
-import { test, expect } from 'e2e';
+import { test, expect } from '@e2e-cpp/core';
 
 test('the dashboard opens directly', { session: 'admin' }, async ({ app, screen }) => {
   await app.open('/dashboard');
@@ -254,7 +254,7 @@ a setup test and keep the evidence in the tests that matter.
 
 ## The web fixture (browser only)
 
-Import `test` from `@e2edev/playwright`. Prefer `app` and `screen`; use
+Import `test` from `@e2e-cpp/playwright`. Prefer `app` and `screen`; use
 `web` for what only a browser has. Portable suites declare
 `requires: ['web']` so device targets skip the test instead of failing.
 

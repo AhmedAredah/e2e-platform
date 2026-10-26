@@ -2,7 +2,8 @@
 
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { TargetSession } from '../engine/surface.ts';
-import { SecretLedger } from '../internal/redact.ts';
+import { processSecrets, SecretLedger } from '../internal/redact.ts';
+export { processSecrets } from '../internal/redact.ts';
 
 export interface SessionSecrecy {
   /** Every secret value the session may have seen; live, so a provider's value joins the moment it exists. */
@@ -20,7 +21,24 @@ export interface SessionSecrecy {
  * the worker through here. Seeded with the static values as each session
  * learns them; provider-backed values join as they resolve.
  */
-export const processSecrets = new SecretLedger();
+export interface SessionProtection {
+  readonly secrets: readonly (readonly [string, string])[];
+  readonly tainted: boolean;
+}
+
+/** Captures protection alongside engine state; callers encrypt both together. */
+export function snapshotProtection(secrecy: SessionSecrecy): SessionProtection {
+  return { secrets: secrecy.ledger.snapshot(), tainted: secrecy.taint.value };
+}
+
+/** Restores protection before the app state can display or throw any saved value. */
+export function restoreProtection(secrecy: SessionSecrecy, protection: SessionProtection): void {
+  for (const [name, value] of protection.secrets) {
+    secrecy.ledger.register(name, value);
+    processSecrets.register(name, value);
+  }
+  secrecy.taint.value ||= protection.tainted;
+}
 
 /** Seeds `processSecrets` with the static values of `secrets`, so output before any session opens is covered too. */
 export function registerStaticSecrets(secrets: ResolvedConfig['secrets']): void {

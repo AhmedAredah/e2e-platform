@@ -1,17 +1,18 @@
 {
-  "name": "@e2edev/docs",
+  "name": "@e2e-cpp/docs",
   "private": true,
   "description": "The e2e documentation site, built with Mintlify",
   "type": "module",
   "scripts": {
     "dev": "mint dev",
-    "check": "node ../scripts/check-docs-examples.ts && mint validate && mint broken-links",
-    "typecheck": "tsc --noEmit --project examples/tsconfig.json"
+    "check": "node ../scripts/check-docs-examples.ts && node ../scripts/check-docs-local.mjs",
+    "typecheck": "tsc --noEmit --project examples/tsconfig.json",
+    "check:online": "mint validate && mint broken-links"
   },
   "devDependencies": {
-    "@e2edev/agent-device": "workspace:*",
-    "e2e": "workspace:*",
-    "@e2edev/playwright": "workspace:*",
+    "@e2e-cpp/agent-device": "workspace:*",
+    "@e2e-cpp/core": "workspace:*",
+    "@e2e-cpp/playwright": "workspace:*",
     "@types/node": "26.4.1",
     "agent-device": "0.21.6",
     "ai": "7.0.97",

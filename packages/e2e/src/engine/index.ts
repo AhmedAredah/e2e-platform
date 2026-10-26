@@ -123,6 +123,10 @@ export interface EngineKeyboard {
  * process it starts before the run.
  */
 export interface EngineAppDeclaration {
+  /** Native executable or application bundle; resolved by the engine. */
+  readonly appPath?: string;
+  /** Arguments passed directly to the application, without a shell. */
+  readonly launchArguments?: readonly string[];
   /**
    * Base URL of an addressable app: `app.open()` opens it and relative
    * navigation resolves against it. WHATWG-normalized; no userinfo, query, or
@@ -178,6 +182,8 @@ export interface EngineAppDeclaration {
  * documents enter an observation, which requests carry injected credentials.
  */
 export interface EngineAppInfo {
+  readonly appPath?: string;
+  readonly launchArguments?: readonly string[];
   /**
    * The site of the app's `url`, its registrable domain as `siteOf` reads it:
    * where the app's secrets, headers, and basic-auth credentials may go, and
@@ -468,6 +474,10 @@ export interface EngineInitInfo {
  * `startAttempt` and tears it down in `endAttempt`.
  */
 export interface EngineAttemptContext {
+  /** Records bounded diagnostic text, redacted before artifact publication. */
+  readonly appLog: (event: EngineAppLog) => void;
+  /** Adds diagnostic runtime versions to the attempt environment artifact. */
+  readonly environment: (values: Readonly<Record<string, string>>) => void;
   /** The attempt id. */
   readonly attemptId: string;
   /** Absolute directory every artifact of this attempt is written under. */
@@ -485,6 +495,17 @@ export interface EngineAttemptContext {
  * the budget is exhausted, so a hook that cannot finish in time stops instead
  * of running on into the next attempt's setup.
  */
+export interface EngineAppLog {
+  readonly source: 'console' | 'error' | 'system';
+  readonly level: 'info' | 'warning' | 'error';
+  readonly text: string;
+}
+
+/** Information available during synchronous app validation. */
+export interface EngineAppCheckInfo {
+  readonly targetName: string;
+}
+
 export interface EngineCleanupContext {
   /** Aborts when the cleanup budget is spent. */
   readonly signal: AbortSignal;
@@ -549,6 +570,10 @@ export interface EngineSnapshot {
 
 /** The body of one target: typed, model-free, capability-graded. */
 export interface Engine {
+  /** Validates the merged engine defaults and target app declaration. */
+  validateApp?(app: EngineAppDeclaration, info: EngineAppCheckInfo): void;
+  /** Flushes latched asynchronous faults before verdict and after cleanup. */
+  settleAttempt?(context: EngineCleanupContext): Promise<void>;
   /** Engine name, for diagnostics. */
   readonly name: string;
   /**
@@ -689,3 +714,5 @@ export interface EngineHandle extends Engine {
 }
 
 export { defineEngine, isEngineHandle } from './manifest.ts';
+
+export { resolveExpression } from './resolve-expression.ts';

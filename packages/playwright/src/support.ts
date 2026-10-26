@@ -1,8 +1,8 @@
 /** Shared error translation, filename, and swipe helpers for the Playwright engine. */
 
 import type { ElementHandle, Locator as PwLocator, Mouse, Page } from 'playwright';
-import { EngineError, type Momentum, type ScrollDirection, type ViewportPoint } from 'e2e/engine';
-import { ConfigurationError, InfrastructureError, TestError } from 'e2e/engine';
+import { EngineError, type Momentum, type ScrollDirection, type ViewportPoint } from '@e2e-cpp/core/engine';
+import { ConfigurationError, InfrastructureError, TestError } from '@e2e-cpp/core/engine';
 
 export const DEFAULT_VIEWPORT = { width: 1280, height: 720 } as const;
 

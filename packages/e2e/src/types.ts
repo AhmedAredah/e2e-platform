@@ -787,6 +787,8 @@ export interface Target {
   platform?: string;
   /** The engine driving the surface: `playwright(...)`, `agentDevice(...)`, or any `defineEngine` handle. */
   engine?: EngineHandle;
+  /** Target app values override the engine's app defaults. */
+  app?: import('./engine/index.ts').EngineAppDeclaration;
 }
 
 /**
@@ -911,7 +913,7 @@ export interface AgentConfig {
    */
   executor?: StepExecutor;
   /** An AI SDK model instance; no implicit default. */
-  model?: ModelInstance;
+  model?: ModelInstance | false;
   /**
    * The model that judges `assert`, `waitFor`, and `extract`; defaults to
    * `model`. A judge of its own separates the model that grades a flow from
@@ -990,6 +992,8 @@ export interface Reporter {
 }
 
 export interface E2EConfig {
+  /** Forbid built-in model execution; custom executors remain trusted project code. */
+  modelPolicy?: 'allow' | 'forbid';
   /** The config format this runner implements: `'0.1'`. */
   specVersion?: '0.1';
   /** Stable project id, 1 through 256 characters; defaults to the root `package.json` name. */
@@ -1023,7 +1027,7 @@ export interface E2EConfig {
   reporters?: readonly (BuiltinReporter | Reporter)[];
   /**
    * The agents by name. Each is either an options block or the agent itself:
-   * `createAgent(...)` from `e2e/agent`, or any hand-rolled
+   * `createAgent(...)` from `@e2e-cpp/core/agent`, or any hand-rolled
    * `StepExecutor`. `default` is the one tests run with; `e2e run --agent
    * <name>` runs them with another. With an agent value, the model is the
    * one it brought and every other option keeps its default. Agents never

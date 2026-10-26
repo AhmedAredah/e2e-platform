@@ -1,5 +1,5 @@
 /**
- * The model gateways `e2e init` offers. Each is one AI SDK provider package
+ * The model gateways `e2e-cpp init` offers. Each is one AI SDK provider package
  * and the line that constructs a model with it; the runner itself knows none
  * of them and takes the constructed instance. Adding a gateway is adding an
  * entry here.
@@ -18,7 +18,7 @@ export interface GatewayPreset {
   readonly import: string;
   /** The comment line above the model, naming who serves it and which variable it reads, or which sign-in it uses. */
   readonly comment: string;
-  /** For a subscription: the `e2e login` provider that signs in, which init names as the next step. */
+  /** For a subscription: the `e2e-cpp login` provider that signs in, which init names as the next step. */
   readonly login?: string;
   /** The model expression, with the endpoint the user typed for an OpenAI-compatible one. */
   model(endpoint: string | undefined): string;
@@ -61,9 +61,9 @@ export const GATEWAYS: readonly GatewayPreset[] = [
     id: 'chatgpt',
     label: 'ChatGPT Plus/Pro subscription',
     hint: 'your ChatGPT plan through the Codex sign-in',
-    dependencies: { ...siblingDependency('@e2edev/oauth'), '@ai-sdk/openai': '^4.0.0' },
-    import: "import { chatgpt } from '@e2edev/oauth/chatgpt';",
-    comment: 'Your ChatGPT subscription serves the model; sign in once with `e2e login openai`.',
+    dependencies: { ...siblingDependency('@e2e-cpp/oauth'), '@ai-sdk/openai': '^4.0.0' },
+    import: "import { chatgpt } from '@e2e-cpp/oauth/chatgpt';",
+    comment: 'Your ChatGPT subscription serves the model; sign in once with `e2e-cpp login openai`.',
     login: 'openai',
     model: () => "chatgpt('gpt-5.5')",
   },
@@ -71,9 +71,9 @@ export const GATEWAYS: readonly GatewayPreset[] = [
     id: 'copilot',
     label: 'GitHub Copilot subscription',
     hint: 'your Copilot plan: OpenAI, Anthropic, Google, and SpaceXAI models',
-    dependencies: { ...siblingDependency('@e2edev/oauth'), '@ai-sdk/openai-compatible': '^3.0.0' },
-    import: "import { copilot } from '@e2edev/oauth/copilot';",
-    comment: 'Your GitHub Copilot subscription serves the model; sign in once with `e2e login github-copilot`.',
+    dependencies: { ...siblingDependency('@e2e-cpp/oauth'), '@ai-sdk/openai-compatible': '^3.0.0' },
+    import: "import { copilot } from '@e2e-cpp/oauth/copilot';",
+    comment: 'Your GitHub Copilot subscription serves the model; sign in once with `e2e-cpp login github-copilot`.',
     login: 'github-copilot',
     model: () => "copilot('claude-sonnet-5')",
   },
@@ -81,9 +81,9 @@ export const GATEWAYS: readonly GatewayPreset[] = [
     id: 'grok',
     label: 'SuperGrok subscription',
     hint: 'your SuperGrok or X Premium+ plan',
-    dependencies: { ...siblingDependency('@e2edev/oauth'), '@ai-sdk/xai': '^5.0.0' },
-    import: "import { grok } from '@e2edev/oauth/grok';",
-    comment: 'Your SuperGrok subscription serves the model; sign in once with `e2e login spacexai`.',
+    dependencies: { ...siblingDependency('@e2e-cpp/oauth'), '@ai-sdk/xai': '^5.0.0' },
+    import: "import { grok } from '@e2e-cpp/oauth/grok';",
+    comment: 'Your SuperGrok subscription serves the model; sign in once with `e2e-cpp login spacexai`.',
     login: 'spacexai',
     model: () => "grok('grok-4')",
   },

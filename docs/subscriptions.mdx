@@ -4,15 +4,15 @@ description: Use your ChatGPT, GitHub Copilot, or SuperGrok subscription for age
 ---
 
 Use an existing subscription without a separate API key. Choose your plan
-in `e2e init`, install dependencies, then sign in:
+in `e2e-cpp init`, install dependencies, then sign in:
 
 | Subscription | Command |
 | --- | --- |
-| ChatGPT Plus or Pro | `npx e2e login openai` |
-| GitHub Copilot | `npx e2e login github-copilot` |
-| SuperGrok or X Premium+ | `npx e2e login spacexai` |
+| ChatGPT Plus or Pro | `npx --no-install e2e-cpp login openai` |
+| GitHub Copilot | `npx --no-install e2e-cpp login github-copilot` |
+| SuperGrok or X Premium+ | `npx --no-install e2e-cpp login spacexai` |
 
-Follow the terminal prompts, then run `npx e2e run`. Agent calls use your
+Follow the terminal prompts, then run `npx --no-install e2e-cpp run`. Agent calls use your
 plan's usage limits. For a new project, start with the [quickstart](/quickstart).
 
 Claude subscriptions are not supported. To use Claude, configure an
@@ -20,45 +20,47 @@ Claude subscriptions are not supported. To use Claude, configure an
 
 ## Set up an existing project
 
-`e2e init` leaves existing configs intact. To switch an existing project to
-a subscription, install its packages and replace the model in your config:
+`e2e-cpp init` leaves existing configs intact. To switch an existing project to
+a subscription, install its packages and replace the model in your config.
+The `/path/to/` examples below refer to your locally packed OAuth module; this
+source archive does not publish the fork packages:
 
 <Tabs>
   <Tab title="ChatGPT">
 ```bash
-npm install -D ai @e2edev/oauth @ai-sdk/openai
-npx e2e login openai
+npm install -D ai /path/to/e2e-cpp-oauth-0.1.0.tgz @ai-sdk/openai
+npx --no-install e2e-cpp login openai
 ```
 
 ```ts title="Model setup"
-import { createAgent } from 'e2e/agent';
-import { chatgpt } from '@e2edev/oauth/chatgpt';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { chatgpt } from '@e2e-cpp/oauth/chatgpt';
 
 const agent = createAgent({ model: chatgpt('gpt-5.5') });
 ```
   </Tab>
   <Tab title="GitHub Copilot">
 ```bash
-npm install -D ai @e2edev/oauth @ai-sdk/openai-compatible
-npx e2e login github-copilot
+npm install -D ai /path/to/e2e-cpp-oauth-0.1.0.tgz @ai-sdk/openai-compatible
+npx --no-install e2e-cpp login github-copilot
 ```
 
 ```ts title="Model setup"
-import { createAgent } from 'e2e/agent';
-import { copilot } from '@e2edev/oauth/copilot';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { copilot } from '@e2e-cpp/oauth/copilot';
 
 const agent = createAgent({ model: copilot('claude-sonnet-5') });
 ```
   </Tab>
   <Tab title="SuperGrok">
 ```bash
-npm install -D ai @e2edev/oauth @ai-sdk/xai
-npx e2e login spacexai
+npm install -D ai /path/to/e2e-cpp-oauth-0.1.0.tgz @ai-sdk/xai
+npx --no-install e2e-cpp login spacexai
 ```
 
 ```ts title="Model setup"
-import { createAgent } from 'e2e/agent';
-import { grok } from '@e2edev/oauth/grok';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { grok } from '@e2e-cpp/oauth/grok';
 
 const agent = createAgent({ model: grok('grok-4') });
 ```
@@ -70,19 +72,19 @@ available to your account.
 
 ## Sign-in help
 
-- ChatGPT opens a browser to sign in. Use `npx e2e login openai --device`
+- ChatGPT opens a browser to sign in. Use `npx --no-install e2e-cpp login openai --device`
   to sign in with a device code instead.
 - Copilot reuses your GitHub CLI login. If you do not use `gh`, pass
   `--client-id` for your own GitHub OAuth app with device flow enabled.
   Use `--enterprise-url` for GitHub Enterprise.
 - SuperGrok prints a device code and the URL where you enter it.
 
-Run `npx e2e login` to choose a provider and see which accounts are signed
-in. Run `npx e2e logout` to remove a saved login.
+Run `npx --no-install e2e-cpp login` to choose a provider and see which accounts are signed
+in. Run `npx --no-install e2e-cpp logout` to remove a saved login.
 
 ## Saved credentials and CI
 
-Logins are stored in `~/.config/e2e/oauth.json`, or under
+Logins are stored in `~/.config/e2e-cpp/oauth.json`, or under
 `$XDG_CONFIG_HOME`, with file permissions restricted to your user. Tokens
 refresh automatically.
 

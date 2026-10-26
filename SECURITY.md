@@ -1,25 +1,21 @@
 # Security
 
-The user-facing version of this document, with every rule and limit as the
-code enforces it, is [e2e.tester.army/docs/security](https://e2e.tester.army/docs/security).
+The source guide for this fork is [docs/security.mdx](docs/security.mdx).
+Upstream documentation describes a different distribution and may differ.
 
 ## Reporting a vulnerability
 
-Report privately through
-[GitHub security advisories](https://github.com/tester-army/e2e/security/advisories/new)
-or by mail to security@tester.army. Do not open a public issue for anything
-that lets a page, a model, or a committed file act with more authority than
-this document grants it.
-
-You get an acknowledgement within 3 business days and a fix or a written plan
-within 30 days. We credit reporters in the advisory unless they ask us not to.
+This local fork has no published security contact or hosted advisory endpoint.
+Contact the maintainer who supplied your copy through your established private
+channel. Do not post credentials or exploit details in a public issue. The
+maintainer must configure a private disclosure channel before publishing a
+hosted release. The original project's contact is not this fork's support team.
 
 ## Supported versions
 
-Only the latest published `0.x` minor of each package receives fixes. A
-security fix ships as a patch on that minor; older minors are not patched.
-Once `1.0` is out this becomes the current major plus the previous one for
-six months after the newer major's release.
+The current candidate is 0.1.0. No registry release, response-time commitment or
+long-term maintenance window is established. Check [RELEASE_STATUS.md](RELEASE_STATUS.md)
+for tested environments and unresolved dependency findings.
 
 ## Trust model
 
@@ -42,16 +38,39 @@ right before dispatch. Unknown tools or fields, stale observation references,
 and denied destinations fail with `POLICY_DENIED`. Model text is never
 evaluated as code, selectors, shell, or config.
 
-Secrets follow from that split. A `Secret` never reaches model input, digests,
-logs, reports, or artifacts. A secret fill is authorized by the runner from
-its own observation (an unresolved handle, a secure sink, an editable node
-with a compatible purpose, no control transfer since); the
-model never sees or picks the value. Once a secret is filled, the viewport
-stays pixel-tainted for the rest of the attempt, and the attempt's Playwright
-trace is rewritten before it is registered or stored: every credential value,
-in every encoding a trace spells it, becomes `<secret:name>`, and a trace that
-cannot be rewritten is deleted. Sessions are per-run, target-bound, encrypted
-with a memory-only key, and deleted at cleanup.
+Secret handles stay on the host. Registered static strings and provider values
+resolved by the runner are redacted at runner-owned text boundaries: semantic
+fields, executor prose, stdout/stderr, events, errors, reports, AI traces, and
+text evidence. The filter recognizes raw, JSON-escaped, HTML-escaped, and
+standard URL-encoded forms. A secret-bearing semantic node ID is refused
+because rewriting it would no longer identify the same control.
+
+A secret fill is authorized from the runner's own observation. Once an opaque
+secret, or a literal matching a registered secret, is filled, that live session
+stays pixel-tainted; model and artifact captures are withheld when their safety
+cannot be proved. The taint and full history of resolved provider values are
+encrypted alongside saved engine state and restored before the engine restores
+it. Session envelopes are bound to the run, target, engine and app identity,
+expire within 24 hours, and are deleted at cleanup. The encryption key stays in
+memory and worker IPC, never in the archive.
+
+Playwright traces from tainted sessions are rewritten before registration;
+binary entries are omitted because their pixels cannot be proven safe. Archives
+with unreadable data or unrewritable multiline secrets are withheld. Video from
+a tainted session is withheld; a required video then fails cleanup. Registered downloads and logs
+must be UTF-8 text without NUL bytes and no larger than 8 MiB. They are redacted
+before hashing or upload. Opaque, binary, oversized or undecodable downloads
+and logs are deleted and recorded as incomplete with no artifact path. This
+intentionally excludes binary download evidence; use a trusted custom workflow
+outside the runner when such files are required. Redacted text is diagnostic
+evidence and is not guaranteed to remain a replayable application data file.
+
+Managed command and service logs redact currently known values, plus configured
+command environment values of at least four characters, before writing bytes to
+disk. Output filtering retains incomplete secret suffixes across writes,
+including UTF-8 byte boundaries. Unreasonably large secret values cause output
+to be withheld. Config console output is held until static declarations become
+available; failed or excessive config output is omitted.
 
 ## Navigation and origins
 
@@ -73,34 +92,15 @@ child frames off the site are dropped from observations.
 
 ## Telemetry and outbound traffic
 
-The CLI sends anonymous usage telemetry, on by default. One `e2e_cli_session`
-event per command carries the command name, the names of the flags given, the
-e2e, Node, and OS versions, the CPU count and memory class, and whether the
-shell is a container, a CI vendor, or a coding agent. One `e2e_run_completed`
-event per run carries the report's numbers: status, exit code, duration, test
-and step counts, engine names and versions, platforms, cache replay counts,
-model provider and public model id, token totals, and the runner's error codes.
-Events are attributed to a random per-machine id and a hashed project id (the
-SHA-256 of the repository's root commit); in CI the vendor's name stands in for
-the machine, and without git, or with a shallow checkout, there is no project
-id. Test titles, file paths,
-URLs, instructions, observations, messages, stack traces, environment
-variables, and credentials are never sent. Engine names, platforms, and model
-ids are sent as your config declares them when they are plain tokens and as
-`other` otherwise; an error code that is not an upper-case token is `OTHER`.
-Every property
-is listed at [e2e.tester.army/docs/telemetry](https://e2e.tester.army/docs/telemetry),
-and `E2E_TELEMETRY_DEBUG=1` prints each event instead of sending it.
-
-Opt out with `e2e telemetry disable`, `E2E_TELEMETRY_DISABLED=1`, or
-`DO_NOT_TRACK=1`. Telemetry is a CLI concern; the runner itself sends nothing.
-Telemetry falls under the disclosure policy above.
+The fork CLI has no telemetry destination or ingestion key. It does not collect
+or transmit usage events, including in CI. The inherited preference commands
+remain available, but `e2e-cpp telemetry enable` cannot activate a transport.
+`E2E_TELEMETRY_DISABLED` and `DO_NOT_TRACK` remain recognized opt-out flags.
+Transport tests use an explicitly injected mock destination.
 
 There is no crash reporting and no update check. The complete list of
 outbound connections a run can make:
 
-- one telemetry request per CLI invocation to `eu.i.posthog.com`, unless
-  opted out
 - the model endpoint owned by the AI SDK instance in your config (agent steps
   only; deterministic suites make no model calls, and cached steps replay
   without one)
@@ -113,5 +113,19 @@ it.
 
 ## Known non-goals
 
-`command.log` and service logs are captured as the process writes them; the
-runner does not redact them. Keep secrets out of your app's stdout.
+This is a protection boundary for registered values in runner-controlled
+outputs, not a sandbox or a general data-loss-prevention system. Arbitrary test,
+config, engine and application code can bypass streams, write its own files,
+open sockets, or invoke model APIs directly. Values printed before they become
+known, credentials never registered with the runner, provider exceptions before
+a value is returned, and arbitrary encodings or transformations cannot be
+reliably recognized. App and service processes may also know secrets that their
+runner process has never resolved. Keep credentials out of application output,
+and register static secrets before running code that may emit them.
+
+Registered file paths must remain within the attempt evidence directory.
+Symlinks that resolve outside it are not uploaded. Trusted producers must finish
+writing a file before registering it; concurrent mutation after registration is
+outside the artifact contract. Source files, user-chosen destination paths,
+pre-existing logs, and external storage services remain under the caller's
+control. Review diagnostics before sharing them.

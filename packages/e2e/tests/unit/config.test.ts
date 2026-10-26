@@ -70,10 +70,10 @@ describe('resolveConfig', () => {
       code: 'INVALID_GLOB',
       message: "'**' must be a complete path segment: tests/**foo/*.ts",
     });
-    expect(resolve({ tests: 'e2e/*.e2e.ts' }).tests).toEqual(['e2e/*.e2e.ts']);
-    expect(resolve({ tests: ['tests/**/*.e2e.ts', 'tests/**/*.e2e.ts', 'e2e/*.e2e.ts'] }).tests).toEqual([
+    expect(resolve({ tests: '@e2e-cpp/core/*.e2e.ts' }).tests).toEqual(['@e2e-cpp/core/*.e2e.ts']);
+    expect(resolve({ tests: ['tests/**/*.e2e.ts', 'tests/**/*.e2e.ts', '@e2e-cpp/core/*.e2e.ts'] }).tests).toEqual([
       'tests/**/*.e2e.ts',
-      'e2e/*.e2e.ts',
+      '@e2e-cpp/core/*.e2e.ts',
     ]);
   });
 
@@ -140,7 +140,7 @@ describe('resolveConfig', () => {
       'unknown config key "screen"; the test-id attribute is an engine option: engine: playwright({ testIdAttribute })',
     );
     expect(() => resolve({ targets: [{ ...WEB, url: 'http://localhost:3000' }] } as never)).toThrow(
-      'target "web" has unknown key "url"; a target is { name?, platform?, engine? }; the app under test is declared by the engine',
+      'target "web" has unknown key "url"; a target is { name?, platform?, engine?, app? }; the app under test is declared by the engine',
     );
     expect(() => resolve({ targets: [{ ...WEB, platfrom: 'web' }] } as never)).toThrow('did you mean "platform"?');
     expect(() => resolve({ reporters: ['lst'] } as never)).toThrow(

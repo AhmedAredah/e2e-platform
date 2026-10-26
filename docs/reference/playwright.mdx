@@ -3,17 +3,17 @@ title: Playwright
 description: The browser engine, its options, and the web fixture it contributes.
 ---
 
-`@e2edev/playwright` drives Chromium, Firefox, and WebKit through Playwright.
+`@e2e-cpp/playwright` drives Chromium, Firefox, and WebKit through Playwright.
 A web target names it as its engine, and it contributes the `web` fixture for
 browser-only work. Import `test` from the package to have `web` typed.
 
 The package declares `playwright` as a peer dependency (`>=1.63.0 <2`) and
 does not install it. An app that already depends on Playwright keeps its
-version; `e2e init` adds `playwright` only to a project that has none.
+version; `e2e-cpp init` adds `playwright` only to a project that has none.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 
 export default {
   targets: [{ engine: playwright({ url: 'http://localhost:3000' }) }],
@@ -455,7 +455,7 @@ package for typing config helpers and fixtures.
 ## surfaceOf
 
 ```ts
-import { playwright, surfaceOf } from '@e2edev/playwright';
+import { playwright, surfaceOf } from '@e2e-cpp/playwright';
 
 const engine = playwright({ url: 'http://localhost:3000' });
 const live = surfaceOf(engine);   // PlaywrightLiveSurface | undefined

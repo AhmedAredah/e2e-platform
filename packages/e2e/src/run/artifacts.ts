@@ -2,7 +2,9 @@
 
 import { createHash } from 'node:crypto';
 import { createReadStream, mkdirSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, realpath, rm, writeFile } from 'node:fs/promises';
+import { processSecrets } from '../internal/redact.ts';
+import { TestError } from '../internal/errors.ts';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import type { ArtifactStore } from '../types.ts';
@@ -75,7 +77,8 @@ export function createAttemptArtifacts(options: {
     dir,
     register: (kind, relativePath, registration?: ArtifactRegistration) => {
       const id = `${options.attemptId}:artifact:${records.length}`;
-      const absolute = path.join(dir, relativePath);
+      const absolute = path.resolve(dir, relativePath);
+      if (!isInside(dir, absolute)) throw new TestError('ARTIFACT_PATH_INVALID', 'artifact path must stay inside its attempt directory');
       const stepId = options.currentStepId?.();
       const startedAt = registration?.startedAt;
       const record: ArtifactRecord = {
@@ -90,6 +93,20 @@ export function createAttemptArtifacts(options: {
       const reportPath = path.posix.join(...options.segments, relativePath);
       pending.push(
         (async () => {
+          const resolved = await realpath(absolute).catch(() => undefined);
+          if (resolved === undefined) return;
+          if (!isInside(await realpath(dir), resolved)) {
+            record.redaction = 'incomplete';
+            return;
+          }
+          if (kind === 'download' || kind === 'log') {
+            if (!(await sanitizeTextArtifact(absolute))) {
+              record.redaction = 'incomplete';
+              await rm(absolute, { force: true });
+              return;
+            }
+            record.redaction = 'complete';
+          }
           // Without a store the file is streamed for its size and digest only;
           // with one it is read whole, since the store needs the bytes anyway,
           // and hashed from that same buffer. A file that never appeared is
@@ -124,7 +141,7 @@ export function createAttemptArtifacts(options: {
               ...(stepId === undefined ? {} : { stepId }),
               ...(startedAt === undefined ? {} : { startedAt }),
             });
-            if (typeof ref === 'string' && ref !== '') record.ref = ref;
+            if (typeof ref === 'string' && ref !== '') record.ref = processSecrets.redact(ref);
           } catch {
             // best-effort by contract
           }
@@ -166,4 +183,22 @@ function mediaTypeFor(relativePath: string): string {
   if (relativePath.endsWith('.mp4')) return 'video/mp4';
   if (relativePath.endsWith('.txt')) return 'text/plain';
   return 'application/octet-stream';
+}
+
+/** A producer may register only files within its own evidence directory. */
+function isInside(root: string, candidate: string): boolean {
+  const relative = path.relative(path.resolve(root), candidate);
+  return relative !== '' && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+}
+
+/** Rewrite bounded UTF-8 text before hashing/uploading; opaque or oversized downloads fail closed. */
+async function sanitizeTextArtifact(absolute: string): Promise<boolean> {
+  const info = await stat(absolute).catch(() => undefined);
+  if (info === undefined || !info.isFile() || info.size > 8 * 1024 * 1024) return false;
+  const bytes = await readFile(absolute);
+  let text: string;
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { return false; }
+  if (text.includes('\0')) return false;
+  await writeFile(absolute, processSecrets.redact(text), { mode: 0o600 });
+  return true;
 }

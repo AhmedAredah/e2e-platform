@@ -6,7 +6,8 @@ import path from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
 import type { Readiness, ResolvedService } from '../config/app.ts';
 import { InfrastructureError } from '../internal/errors.ts';
-import { createRedactor } from '../internal/redact.ts';
+import { createRedactor, processSecrets, SecretLedger } from '../internal/redact.ts';
+import { StreamingRedactor } from '../internal/output-redaction.ts';
 import { sleep } from '../internal/time.ts';
 import type { CommandConfig } from '../types.ts';
 
@@ -140,6 +141,28 @@ export class ManagedProcess {
     if (!aborted()) this.hooks.ready?.(this.label, Date.now() - startedAt, this.reusedExisting);
   }
 
+  /** Redacts managed output before any log bytes reach disk, retaining split values across writes. */
+  private captureLog(child: ChildProcess, fd: number): void {
+    const ledger = new SecretLedger(Object.entries(this.command.env ?? {}).filter(([, value]) => value.length >= REDACTED_ENV_MIN_LENGTH));
+    const filter = new StreamingRedactor(ledger);
+    let closed = false;
+    const refresh = (): void => { for (const [name, value] of processSecrets.snapshot()) ledger.register(name, value); };
+    const write = (text: string): void => {
+      if (text !== '' && !closed) {
+        try { fs.writeSync(fd, text); } catch { /* A failed diagnostic log must not crash the runner. */ }
+      }
+    };
+    const chunk = (bytes: Buffer): void => { refresh(); write(filter.write(bytes)); };
+    child.stdout?.on('data', chunk);
+    child.stderr?.on('data', chunk);
+    child.once('close', () => {
+      refresh();
+      write(filter.flush());
+      closed = true;
+      fs.closeSync(fd);
+    });
+  }
+
   /** The preflight probe, the spawn, and the readiness wait behind `start`. */
   private async launch(signal?: AbortSignal): Promise<void> {
     // A function, not a narrowed local: the signal flips while the loop awaits.
@@ -189,14 +212,13 @@ export class ManagedProcess {
         cwd: path.resolve(this.projectRoot, this.command.cwd ?? '.'),
         env,
         detached: process.platform !== 'win32',
-        stdio: logFd === undefined ? 'ignore' : ['ignore', logFd, logFd],
+        stdio: logFd === undefined ? 'ignore' : ['ignore', 'pipe', 'pipe'],
       });
-    } finally {
-      // The child holds its own copy of the descriptor once spawn returns
-      // (a spawn failure surfaces as the 'error' event, not here), so the
-      // parent's copy would only be a leak for the life of the run.
+    } catch (cause) {
       if (logFd !== undefined) fs.closeSync(logFd);
+      throw cause;
     }
+    if (logFd !== undefined) this.captureLog(child, logFd);
     this.child = child;
     live.add(child);
     let spawnError: Error | undefined;
@@ -336,7 +358,7 @@ export class ManagedProcess {
 
   /**
    * Opens `command.log` for appending, creating its directory, and returns
-   * the descriptor the child writes stdout and stderr to. No `log` means the
+   * the descriptor receiving filtered stdout and stderr. No `log` means the
    * output is discarded as before. The same file across services and runs
    * accumulates, which is what a developer reading a failed boot wants.
    */

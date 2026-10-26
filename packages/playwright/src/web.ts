@@ -13,7 +13,7 @@
  */
 
 import type { Download, Route } from 'playwright';
-import type { ActionOptions, Expectable, JsonValue, Locator, Screen, TextMatch } from 'e2e';
+import type { ActionOptions, Expectable, JsonValue, Locator, Screen, TextMatch } from '@e2e-cpp/core';
 import {
   Deadline,
   describePattern,
@@ -29,7 +29,7 @@ import {
   type LocatorExpression,
   type OperationContext,
   type TextPattern,
-} from 'e2e/engine';
+} from '@e2e-cpp/core/engine';
 import type { DialogHandler } from './dialogs.ts';
 import { message as causeMessage, translatePwError } from './support.ts';
 import { compileEvaluation } from './evaluation.ts';

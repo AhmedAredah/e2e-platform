@@ -197,7 +197,7 @@ export function renderJunitReport(report: Report1Document): string {
   for (const suite of suites) addCounts(total, suite.counts);
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    `<testsuites ${attributes({ name: 'e2e', ...countAttributes(total) })}>`,
+    `<testsuites ${attributes({ name: '@e2e-cpp/core', ...countAttributes(total) })}>`,
   ];
   for (const suite of suites) {
     for (const line of suite.lines) lines.push(`  ${line}`);

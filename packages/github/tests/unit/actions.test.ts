@@ -21,7 +21,7 @@ describe('detectActions', () => {
       apiUrl: 'https://api.github.com',
       runUrl: 'https://github.com/octo/app/actions/runs/99',
       eventName: 'pull_request',
-      workflow: 'e2e',
+      workflow: 'e2e-cpp',
       job: 'test',
       sha: 'head-sha',
       pullRequest: 41,

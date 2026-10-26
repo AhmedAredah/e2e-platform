@@ -3,7 +3,7 @@ title: From Detox
 description: Use your existing app build and testIDs with screen, expect, and agent goals.
 ---
 
-`@e2edev/agent-device` drives a simulator or emulator using your normal debug
+`@e2e-cpp/agent-device` drives a simulator or emulator using your normal debug
 or release build. It does not need the Detox framework. React Native
 `testID` props work with `getByTestId` on both platforms.
 
@@ -24,8 +24,8 @@ while migrating one spec at a time.
 | `device.launchApp({ permissions })` | `device.setPermission(...)` inside the test |
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { agentDevice } from '@e2e-cpp/agent-device';
 
 export default {
   targets: [
@@ -52,9 +52,9 @@ describe('login', () => {
 });
 ```
 
-```ts title="e2e"
-import { test } from '@e2edev/agent-device';
-import { expect, credentials } from 'e2e';
+```ts title="@e2e-cpp/core"
+import { test } from '@e2e-cpp/agent-device';
+import { expect, credentials } from '@e2e-cpp/core';
 
 test('shows the home screen', async ({ agent, screen }) => {
   const ada = credentials.user('ada');

@@ -143,7 +143,7 @@ export async function openStandaloneAttempt(options: StandaloneAttemptOptions): 
 
   let session: TargetSession;
   try {
-    session = await executor.launchSession(undefined, attemptId, artifacts.dir, signal);
+    session = await executor.launchSession(undefined, attemptId, artifacts.dir, signal, artifacts.sink);
   } catch (cause) {
     await executor.dispose();
     await teardownProcesses();

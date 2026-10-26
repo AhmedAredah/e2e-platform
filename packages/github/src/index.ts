@@ -1,8 +1,8 @@
 /**
- * `@e2edev/github` public surface: the `github()` reporter factory. The
+ * `@e2e-cpp/github` public surface: the `github()` reporter factory. The
  * reporter posts one pull request comment per run from GitHub Actions,
- * through the `reporters` seam of `e2e`, and writes the same text to
- * the job summary. The page itself is `renderMarkdownReport` from `e2e`.
+ * through the `reporters` seam of `@e2e-cpp/core`, and writes the same text to
+ * the job summary. The page itself is `renderMarkdownReport` from `@e2e-cpp/core`.
  */
 
 export { github } from './reporter.ts';

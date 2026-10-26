@@ -1,3 +1,5 @@
+import { processSecrets, redactJson } from '../internal/redact.ts';
+import { registerStaticSecrets } from '../run/secrecy.ts';
 /** report-1 document construction. */
 
 import os from 'node:os';
@@ -314,7 +316,7 @@ export interface Report1Document {
   run: {
     id: string;
     specVersion: '0.1';
-    runner: { name: 'e2e'; version: string };
+    runner: { name: '@e2e-cpp/core'; version: string };
     status: BuildReportOptions['status'] | 'blocked';
     exitCode: BuildReportOptions['exitCode'];
     startedAt: string;
@@ -646,6 +648,7 @@ function computeUsage(options: {
 /** Builds the complete report-1 document. */
 export function buildReport(options: BuildReportOptions): Report1Document {
   const { config } = options;
+  if (config !== undefined) registerStaticSecrets(config.secrets);
   const targets =
     config === undefined
       ? []
@@ -665,13 +668,13 @@ export function buildReport(options: BuildReportOptions): Report1Document {
 
   const summary = computeSummary(options.results);
 
-  return {
+  return redactJson({
     schemaVersion: 'report-1',
     run: {
       id: options.runId,
       specVersion: '0.1',
       runner: {
-        name: 'e2e',
+        name: '@e2e-cpp/core',
         version: packageVersion(import.meta.url, '../../package.json', '0.0.0'),
       },
       status: deriveRunStatus(options.status, options.results, options.serialGroups, options.runErrors),
@@ -704,7 +707,7 @@ export function buildReport(options: BuildReportOptions): Report1Document {
       }),
       ...(options.explore === undefined ? {} : { explore: options.explore }),
     },
-  };
+  }, processSecrets.redact);
 }
 
 function compareResults(a: ResultRecord, b: ResultRecord): number {

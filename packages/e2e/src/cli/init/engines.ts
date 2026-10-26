@@ -24,8 +24,8 @@ export function getEnginePresets() {
       id: 'playwright',
       label: 'Web',
       hint: 'Playwright',
-      dependencies: { ...siblingDependency('@e2edev/playwright'), playwright: playwrightRange(SIBLING_VERSIONS?.['playwright']) },
-      imports: ["import { playwright } from '@e2edev/playwright';"],
+      dependencies: { ...siblingDependency('@e2e-cpp/playwright'), playwright: playwrightRange(SIBLING_VERSIONS?.['playwright']) },
+      imports: ["import { playwright } from '@e2e-cpp/playwright';"],
       config: `  targets: [{
     engine: playwright({
       url: process.env.APP_URL ?? 'http://localhost:3000',
@@ -33,8 +33,8 @@ export function getEnginePresets() {
       // command: { executable: 'npm', args: ['run', 'dev'] },
     }),
   }],`,
-      example: `import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+      example: `import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test('app opens', async ({ app, web }) => {
   await app.open('/');
@@ -55,8 +55,8 @@ test('app opens', async ({ app, web }) => {
       id: 'agent-device',
       label: 'Mobile (iOS/Android)',
       hint: 'agent-device',
-      dependencies: siblingDependency('@e2edev/agent-device'),
-      imports: ["import { agentDevice } from '@e2edev/agent-device';"],
+      dependencies: siblingDependency('@e2e-cpp/agent-device'),
+      imports: ["import { agentDevice } from '@e2e-cpp/agent-device';"],
       config: ios
         ? `  // Replace Settings with your app's bundle id.
   targets: [{ name: 'ios', engine: agentDevice({ platform: 'ios', app: 'Settings' }) }],
@@ -64,8 +64,8 @@ test('app opens', async ({ app, web }) => {
         : `  // Replace com.android.settings with your app's package name.
   targets: [{ name: 'android', engine: agentDevice({ platform: 'android', app: 'com.android.settings' }) }],
   workers: 1,`,
-      example: `import { test } from '@e2edev/agent-device';
-import { expect } from 'e2e';
+      example: `import { test } from '@e2e-cpp/agent-device';
+import { expect } from '@e2e-cpp/core';
 
 test('Settings opens', async ({ screen }) => {
   await expect(${ios ? "screen.getByRole('button', { name: 'General' })" : "screen.getByText('Network & internet')"}).toBeVisible();
@@ -96,7 +96,7 @@ test('Settings opens', async ({ screen }) => {
       imports: [],
       config: `  // Add an engine here when your tests need to drive an app.
   targets: [{ name: 'default', platform: 'custom' }],`,
-      example: `import { test, expect } from 'e2e';
+      example: `import { test, expect } from '@e2e-cpp/core';
 
 test('app responds', async () => {
   const response = await fetch(process.env.APP_URL ?? 'http://localhost:3000');

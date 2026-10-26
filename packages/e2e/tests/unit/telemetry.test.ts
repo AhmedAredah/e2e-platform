@@ -8,10 +8,11 @@ import {
   EVENT_RUN_COMPLETED,
   runCompletedEvent,
 } from '../../src/telemetry/events.ts';
-import { POSTHOG_HOST, POSTHOG_PROJECT_KEY } from '../../src/telemetry/posthog.ts';
 import { preferencesPath, TelemetryStore, telemetryConfigDir } from '../../src/telemetry/store.ts';
 import { NOTICE_VERSION, Telemetry, type TelemetryOptions } from '../../src/telemetry/telemetry.ts';
 import { SAMPLE_REPORT_SECRETS, sampleReport } from '../helpers/sample-report.ts';
+
+const TELEMETRY_TEST_DESTINATION = { host: 'https://telemetry.example.invalid', projectKey: 'test-only-key' };
 
 const temporaries: string[] = [];
 const restores: (() => void)[] = [];
@@ -29,7 +30,7 @@ function tempDir(): string {
 function unwritableDir(): string {
   const blocker = path.join(tempDir(), 'blocker');
   writeFileSync(blocker, '');
-  return path.join(blocker, 'e2e');
+  return path.join(blocker, '@e2e-cpp/core');
 }
 
 /** Takes write permission away from `dir` until the test ends. */
@@ -72,6 +73,7 @@ function create(overrides: Partial<TelemetryOptions> = {}) {
   const configDir = overrides.configDir ?? tempDir();
   const telemetry = new Telemetry({
     version: '1.2.3',
+    destination: TELEMETRY_TEST_DESTINATION,
     env: {},
     cwd: tempDir(),
     configDir,
@@ -171,16 +173,36 @@ describe('telemetry store', () => {
   });
 
   it('resolves the config directory from XDG_CONFIG_HOME, the home directory, or APPDATA', () => {
-    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '/xdg' }, 'linux')).toBe(path.join('/xdg', 'e2e'));
-    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '  ' }, 'darwin')).toBe(path.join(os.homedir(), '.config', 'e2e'));
+    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '/xdg' }, 'linux')).toBe(path.join('/xdg', 'e2e-cpp'));
+    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '  ' }, 'darwin')).toBe(path.join(os.homedir(), '.config', 'e2e-cpp'));
     expect(telemetryConfigDir({ APPDATA: 'C:\\Users\\me\\AppData\\Roaming' }, 'win32')).toBe(
-      path.join('C:\\Users\\me\\AppData\\Roaming', 'e2e'),
+      path.join('C:\\Users\\me\\AppData\\Roaming', 'e2e-cpp'),
     );
   });
 });
 
 describe('Telemetry', () => {
-  it('is on by default, prints the notice once, and sends one batch with identity and environment', async () => {
+  it.each([{}, { CI: '1' }, { E2E_TELEMETRY_DEBUG: '1' }])('sends nothing and creates no identity without a destination: %j', async (env) => {
+    const output: string[] = [];
+    const sent = recordingFetch();
+    const configDir = tempDir();
+    const telemetry = new Telemetry({ version: '0.1.0', env, configDir,
+      fetch: sent.fetch, write: (value) => { output.push(value); } });
+    expect(telemetry.disabledBy).toBe('unconfigured');
+    telemetry.notice();
+    telemetry.record(cliSessionEvent('run', []));
+    await telemetry.flush();
+    expect(sent.calls).toEqual([]);
+    expect(output).toEqual([]);
+    expect(existsSync(preferencesPath(configDir))).toBe(false);
+    telemetry.setEnabled(true);
+    telemetry.record(cliSessionEvent('run', []));
+    await telemetry.flush();
+    expect(telemetry.enabled).toBe(false);
+    expect(sent.calls).toEqual([]);
+  });
+
+  it('uses an explicitly injected destination, prints the notice once, and sends one batch', async () => {
     const { telemetry, output, sent, configDir } = create();
     expect(telemetry.enabled).toBe(true);
     expect(telemetry.disabledBy).toBeUndefined();
@@ -188,8 +210,8 @@ describe('Telemetry', () => {
     telemetry.notice();
     telemetry.notice();
     expect(output).toHaveLength(1);
-    expect(output[0]).toContain('e2e collects anonymous usage telemetry');
-    expect(output[0]).toContain('e2e telemetry disable');
+    expect(output[0]).toContain('e2e-cpp collects anonymous usage telemetry');
+    expect(output[0]).toContain('e2e-cpp telemetry disable');
     expect(output[0]).toContain('E2E_TELEMETRY_DISABLED=1');
     expect(output[0]).toContain('/telemetry');
     expect(TelemetryStore.open(configDir)!.wasNotified(NOTICE_VERSION)).toBe(true);
@@ -199,8 +221,8 @@ describe('Telemetry', () => {
 
     expect(sent.calls).toHaveLength(1);
     const [call] = sent.calls;
-    expect(call!.url).toBe(`${POSTHOG_HOST}/batch/`);
-    expect(call!.body.api_key).toBe(POSTHOG_PROJECT_KEY);
+    expect(call!.url).toBe(`${TELEMETRY_TEST_DESTINATION.host}/batch/`);
+    expect(call!.body.api_key).toBe(TELEMETRY_TEST_DESTINATION.projectKey);
     expect(call!.body.batch).toHaveLength(1);
     const [item] = call!.body.batch;
     expect(item!.event).toBe(EVENT_CLI_SESSION);
@@ -211,7 +233,7 @@ describe('Telemetry', () => {
     expect(properties['distinct_id']).toBe(TelemetryStore.open(configDir)!.anonymousId);
     expect(properties['session_id']).toBe(telemetry.sessionId);
     expect(properties['project_id']).toMatch(/^[a-f0-9]{64}$/u);
-    expect(properties['$lib']).toBe('e2e');
+    expect(properties['$lib']).toBe('@e2e-cpp/core');
     expect(properties['$lib_version']).toBe('1.2.3');
     expect(properties['e2e_version']).toBe('1.2.3');
     expect(properties['$process_person_profile']).toBe(false);

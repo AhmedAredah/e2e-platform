@@ -1,0 +1,16 @@
+{
+  "name": "e2e-example-qt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "e2e-cpp run",
+    "test:quick": "e2e-cpp run --config e2e.quick.config.ts",
+    "test:agent": "e2e-cpp run --config e2e.agent.config.ts"
+  },
+  "devDependencies": {
+    "@e2e-cpp/core": "workspace:*",
+    "@e2e-cpp/native": "workspace:*",
+    "ai": "7.0.97"
+  },
+  "license": "MIT"
+}

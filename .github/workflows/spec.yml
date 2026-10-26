@@ -3,7 +3,7 @@ name: spec
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, mit-cpp]
 
 # The repository's own runs are not usage: the CLI sends no telemetry from CI here.
 env:
@@ -18,13 +18,13 @@ concurrency:
 
 jobs:
   check:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 26
+          node-version: 24.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Lint
@@ -36,16 +36,16 @@ jobs:
       - name: Error code reference
         run: pnpm docs:check-errors
       - name: Install browsers
-        run: pnpm --filter @e2edev/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
       - name: Testbed
-        run: pnpm --filter @e2edev/testbed test
+        run: pnpm --filter @e2e-cpp/testbed test
 
   test:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24, 26]
+        node: ['22.22.3', '24.22.1']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
@@ -55,6 +55,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
-        run: pnpm --filter @e2edev/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
       - name: Unit and integration tests
         run: pnpm test

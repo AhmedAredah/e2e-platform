@@ -11,7 +11,7 @@ import { withHint } from '../internal/errors.ts';
 import { addDevDependencyCommand, detectPackageManager } from '../internal/package-manager.ts';
 import { didYouMean, suggest } from '../internal/suggest.ts';
 
-/** The runtime exports of `e2e`; a unit test keeps this list equal to the real module. */
+/** The runtime exports of `@e2e-cpp/core`; a unit test keeps this list equal to the real module. */
 export const RUNTIME_EXPORTS: readonly string[] = [
   'test',
   'expect',
@@ -93,14 +93,14 @@ function subpathHint(subpath: string, manifestPath: string): string {
 }
 
 function missingExportHint(specifier: string, exportName: string): string {
-  if (specifier !== 'e2e') return '';
+  if (specifier !== '@e2e-cpp/core') return '';
   if (exportName === 'defineConfig') {
     return 'defineConfig was removed in e2e 0.5: default-export the object and end it with satisfies E2EConfig';
   }
   const suggestion = suggest(exportName, RUNTIME_EXPORTS);
   if (suggestion !== undefined) return `did you mean "${suggestion}"?`;
   return /^[A-Z]/.test(exportName)
-    ? `if ${exportName} is a type, import it with import type { ${exportName} } from 'e2e'`
+    ? `if ${exportName} is a type, import it with import type { ${exportName} } from '@e2e-cpp/core'`
     : `e2e exports ${RUNTIME_EXPORTS.join(', ')}`;
 }
 

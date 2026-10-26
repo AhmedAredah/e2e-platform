@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-24",
+  "audit_scope": "MIT-base ancestry, 174 imported local-extension files, package/native license inventory, and the completed candidate changed/new text-source similarity screen. Dependency binaries and ownership remain outside the screen.",
+  "upstream_repository": "https://github.com/tester-army/e2e",
+  "mit_base_commit": "e9c2914c6d8f8d664d820b13a1fa454e9247e94b",
+  "mit_base_license_url": "https://github.com/tester-army/e2e/blob/e9c2914c6d8f8d664d820b13a1fa454e9247e94b/LICENSE",
+  "license_transition_commit": "ca5e6196b620165dcabc383c1aaf35c44cf22690",
+  "transition_commit_present_in_fork_object_database": false,
+  "mit_base_package_licenses": {
+    "e2e": "MIT",
+    "agent-device": "MIT",
+    "github": "MIT",
+    "oauth": "MIT",
+    "playwright": "MIT"
+  },
+  "extension_source_commit": "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d",
+  "extension_manifest": "extension-origin.json",
+  "extension_files_imported": 174,
+  "extension_introduction_counts": {
+    "9fca60f257fbd1ee0f00d32557898f00925f038f": 156,
+    "a79f3e3740e82d4df609910f2a2d060cd991a4bb": 11,
+    "d5d0b2455a1eacdec372b1dac725bbfd76bb4a2d": 7
+  },
+  "similarity_screen": {
+    "upstream_comparison": "69e123b17e04ed624df16d32f3b1ef95ce22c083",
+    "mit_text_files": 644,
+    "later_upstream_text_files": 1256,
+    "method": "Eight consecutive nonblank whitespace-normalized lines, minimum 200 characters, present in later upstream but absent from MIT tree. Similarity is a screening signal, not a legal originality finding.",
+    "qualifying_matches": 0,
+    "findings": []
+  },
+  "license_decision": {
+    "inherited_code": "Retain MIT terms and upstream attribution from the historical base.",
+    "original_extension_work": "Maintainer authorized an MIT offer for original local extension work; preserve any identified third-party terms.",
+    "new_port_work": "Implement missing integration against the MIT base, with new tests and explicit provenance.",
+    "later_upstream_material": "No permission inferred to distribute later Apache-only material without its applicable conditions.",
+    "copyright_notice": "The e2e-cpp contributors label identifies original fork contributions collectively; it does not assign ownership or replace upstream attribution."
+  },
+  "limitations": [
+    "Git authorship, creation in a new path, and a similarity screen do not establish copyright ownership.",
+    "The screen does not detect all rewritten, transformed, short, or externally sourced material.",
+    "The screen is not a complete dependency SBOM, patent review, trademark authorization, or legal clearance.",
+    "The final archive must include only the intended Git ancestry and reviewed working tree, and actual binary distributions retain dependency obligations."
+  ],
+  "current_tree_spot_check": {
+    "scope": "Completed candidate source after implementation and documentation freeze on 2026-10-24; 496 existing changed/new text source files were screened against the historical MIT and later upstream trees. Final validation-count prose may be added separately.",
+    "screened_files": 496,
+    "screened_extensions": [
+      ".ts",
+      ".mts",
+      ".mjs",
+      ".js",
+      ".cpp",
+      ".h",
+      ".c",
+      ".qml",
+      ".md",
+      ".mdx",
+      "CMakeLists.txt"
+    ],
+    "screen_result": "Thirteen matching windows in five files required manual inspection. They consist of MIT-era context made contiguous with small directory, dependency-version or interface edits.",
+    "matched_window_count": 13,
+    "reviewed_matches": [
+      {
+        "path": "AGENTS.md",
+        "windows": 9,
+        "finding": "Five windows differ from the inherited MIT prose only in the Vitest 4-to-5 version correction; four windows differ only in the packages-to-apps testbed relocation."
+      },
+      {
+        "path": "packages/e2e/src/engine/manifest.ts",
+        "windows": 1,
+        "finding": "An independently added settleAttempt interface key precedes unchanged MIT lifecycle keys and comments."
+      },
+      {
+        "path": "packages/e2e/src/run/artifacts.ts",
+        "windows": 1,
+        "finding": "A new closing brace precedes the unchanged MIT artifact comment and measurement code."
+      },
+      {
+        "path": "packages/e2e/src/run/execute.ts",
+        "windows": 1,
+        "finding": "The added method terminator precedes the unchanged MIT endAttempt method and its comment."
+      },
+      {
+        "path": "packages/e2e/src/run/fixtures.ts",
+        "windows": 1,
+        "finding": "The existing MIT app.open navigation branch is now a conditional-expression branch; the subsequent MIT navigation methods are unchanged."
+      }
+    ],
+    "conclusion": "The reviewed matches do not identify substantive copying of a later upstream implementation. This is a technical similarity screen, not proof of independent authorship or legal clearance.",
+    "implementation_attestation": "Core and security porters report implementing against MIT checkout files without opening/copying later upstream core implementations in this task. This is not described as a clean-room process.",
+    "code_fingerprint": {
+      "files": 396,
+      "manifest": "final-code-provenance-manifest.json",
+      "manifest_sha256": "0bf73ca341ce0074fd54face12c8ab5b09a5c05ed529f1e7102a1d58408efa84",
+      "scope": "Changed/new implementation, tests and source configuration; documentation is excluded from this fingerprint."
+    }
+  },
+  "origin_manifest_verification": {
+    "files": 174,
+    "unique_paths": 174,
+    "source_sha256_mismatches": 0,
+    "first_addition_commit_mismatches": 0,
+    "evidence": "final-origin-manifest-check.json"
+  },
+  "base_ancestry_commit_count": 268,
+  "license_inventory": {
+    "root": "MIT; original TesterArmy attribution plus fork attribution",
+    "public_packages": 10,
+    "public_package_license": "MIT",
+    "inherited_package_attribution": "TesterArmy notice preserved; fork contributor notice added alongside it",
+    "qt_helper_and_examples": "MIT; separate Qt dependency terms preserved in native/qt/THIRD_PARTY.md",
+    "unbox_ai_skill_license_blob": "c5346d9628641739ddbcaa244385e9a28d9fb9fe",
+    "unbox_ai_license_url": "https://github.com/tester-army/unbox-ai/blob/main/LICENSE",
+    "unbox_ai_license_retrieved": "2026-10-24",
+    "unslop_source_basis": "Inherited MIT e2e contribution 2e5e783d2d3457544470b1533aba47fccb6b2081 by Oskar Kwaśniewski. Current external dotfiles repository supplies no standalone license; no MIT claim is made for that whole external repository."
+  }
+}

@@ -1,11 +1,6 @@
-/**
- * The Node.js floor, checked before the CLI loads anything else. Package
- * managers only warn about `engines`, so an unsupported runtime would
- * otherwise surface as an unrelated TypeError deep inside a run.
- */
-
-/** Mirrors `engines.node` in package.json; a unit test keeps the two in step. */
-export const MINIMUM_NODE_VERSION = '22.12.0';
+/** Validate the runtime before loading dependencies that require newer Node APIs. */
+const MINIMUM_NODE_VERSION = '22.22.3';
+export const SUPPORTED_NODE_RANGE = `^${MINIMUM_NODE_VERSION} || >=24.8.0`;
 
 function parse(version: string): [number, number, number] {
   const [major = 0, minor = 0, patch = 0] = version
@@ -15,18 +10,10 @@ function parse(version: string): [number, number, number] {
   return [major, minor, patch];
 }
 
-/** Explains an unsupported runtime, or undefined when `current` meets the floor. */
-export function unsupportedNodeMessage(
-  current: string,
-  minimum: string = MINIMUM_NODE_VERSION,
-): string | undefined {
-  const have = parse(current);
-  const need = parse(minimum);
-  for (let i = 0; i < 3; i += 1) {
-    if (have[i]! > need[i]!) return undefined;
-    if (have[i]! < need[i]!) {
-      return `e2e requires Node.js ${minimum} or newer; this is Node.js ${current.replace(/^v/, '')}. Upgrade Node.js, or switch versions with your version manager (nvm use 22, fnm use 22, volta pin node@22).`;
-    }
-  }
-  return undefined;
+/** Mirrors the public package engine range, including its unsupported 23.x gap. */
+export function unsupportedNodeMessage(current: string): string | undefined {
+  const [major, minor, patch] = parse(current);
+  if ((major === 22 && (minor > 22 || (minor === 22 && patch >= 3)))
+    || major > 24 || (major === 24 && minor >= 8)) return undefined;
+  return `e2e-cpp requires Node.js ${MINIMUM_NODE_VERSION}+ in the 22.x line, or 24.8.0+; this is Node.js ${current.replace(/^v/, '')}. Upgrade Node.js, or switch versions with your version manager (nvm use 22, fnm use 22, volta pin node@22).`;
 }

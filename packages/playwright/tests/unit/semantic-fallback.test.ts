@@ -1,7 +1,7 @@
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Browser, ElementHandle, Page } from 'playwright';
-import { EngineError, TestError, type OperationContext } from 'e2e/engine';
+import { EngineError, TestError, type OperationContext } from '@e2e-cpp/core/engine';
 import { captureDocument, ROOT_NODE_ID } from '../../src/observation.ts';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { BrowserConnection } from '../../src/browser-connection.ts';
@@ -50,7 +50,7 @@ async function setup() {
     runId: 'run', targetName: 'fixture', projectRoot: process.cwd(), app: {}, env: {},
     headed: false, workerSlot: 0, signal,
   });
-  await surface.startAttempt({ attemptId: 'attempt', artifactsDir: tmpdir(), signal });
+  await surface.startAttempt({ appLog() {}, environment() {}, attemptId: 'attempt', artifactsDir: tmpdir(), signal });
   await surface.ensurePage();
   vi.mocked(captureDocument).mockRejectedValue(TIMEOUT);
   return { surface, masks, screenshot };

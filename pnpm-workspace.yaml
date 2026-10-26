@@ -1,12 +1,15 @@
 packages:
   - packages/*
+  - apps/*
   - docs
+  - examples/with-cpp-cli
+  - examples/with-qt/e2e
 
 # pnpm 12 refuses versions published less than a day ago by default. Exact pins
 # already decide what we install, so the delay only blocks deliberate bumps.
 minimumReleaseAge: 0
 
-# e2e and @e2edev/playwright develop against each other; pnpm 12 would
+# e2e and @e2e-cpp/playwright develop against each other; pnpm 12 would
 # otherwise refuse to run recursive scripts across that cycle.
 ignoreWorkspaceCycles: true
 
@@ -16,10 +19,21 @@ allowBuilds:
   keytar: false
   puppeteer: false
   sharp: false
+  node-pty: true
 
+# Security fixes are scoped to compatible dependency lines. The private mobile
+# showcase still has upstream advisories; see RELEASE_STATUS.md.
 overrides:
-  'fast-uri@>=3.0.0 <3.1.6': 3.1.6
+  'fast-uri@>=3.0.0 <3.1.9': 3.1.9
   'js-yaml@<3.15.2': 3.15.2
   'js-yaml@>=4.0.0 <4.3.2': 4.3.2
   'nanoid@<3.3.18': 3.3.18
-  'undici@>=7.0.0 <7.29.0': 7.29.0
+  'undici@>=7.0.0 <7.30.1': 7.30.1
+  'ip-address@>=10.0.0 <10.7.4': 10.7.4
+  'source-map-js@>=1.0.0 <1.2.2': 1.2.2
+  'proxy-addr@>=2.0.0 <2.0.8': 2.0.8
+  'shell-quote@>=1.8.4 <1.11.0': 1.11.0
+  'body-parser@>=2.0.0 <2.4.0': 2.4.0
+  'hono@>=4.0.0 <4.13.11': 4.13.11
+  'sharp@>=0.34.0 <0.35.5': 0.35.5
+  'xcode>uuid': 11.1.1

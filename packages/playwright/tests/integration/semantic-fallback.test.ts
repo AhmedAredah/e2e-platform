@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import type { SemanticNode } from 'e2e/engine';
+import type { SemanticNode } from '@e2e-cpp/core/engine';
 import { playwright, surfaceOf } from '../../src/index.ts';
 import { decodePng } from '../helpers/png.ts';
 
@@ -20,7 +20,7 @@ describe('masked fallback after a stalled semantic reader', () => {
     const cleanup = { signal, timeoutMs: 30_000 };
     try {
       await engine.init!({ runId: 'fallback', targetName: 'fixture', projectRoot: process.cwd(), app: {}, env: {}, headed: false, workerSlot: 0, signal });
-      await engine.startAttempt!({ attemptId: 'attempt', artifactsDir, signal });
+      await engine.startAttempt!({ attemptId: 'attempt', artifactsDir, signal, appLog: () => {}, environment: () => {} });
       await engine.session!.open!('about:blank', operation);
       const page = surfaceOf(engine)!.page();
       await page.setContent('<style>input{position:absolute;left:20px;top:20px;width:100px;height:30px;border:0;padding:0;background:red}</style><input data-testid="password" type="password" value="private-value">');
@@ -59,7 +59,7 @@ describe('masked fallback after a stalled semantic reader', () => {
     const cleanup = { signal, timeoutMs: 30_000 };
     try {
       await engine.init!({ runId: 'ids', targetName: 'fixture', projectRoot: process.cwd(), app: {}, env: {}, headed: false, workerSlot: 0, signal });
-      await engine.startAttempt!({ attemptId: 'attempt', artifactsDir, signal });
+      await engine.startAttempt!({ attemptId: 'attempt', artifactsDir, signal, appLog: () => {}, environment: () => {} });
       await engine.session!.open!('about:blank', operation);
       const page = surfaceOf(engine)!.page();
       await page.setContent('<button data-testid="a" onclick="document.body.dataset.clicked=\'A\'">Button A</button>');

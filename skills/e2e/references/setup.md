@@ -2,36 +2,47 @@
 
 ## Requirements
 
-- Node.js 22.12 or newer.
+- Node.js 22.22.3+ in the 22.x line, or 24.8.0+.
 - ES modules. e2e loads `.ts` config, tests, and helpers as ES modules
   whatever the nearest `package.json` `type` says, so a CommonJS package (a
   Next.js app, for instance) needs no change. Write them with `import`, never
   `require` or `module.exports`.
-- For browser tests, `@e2edev/playwright` plus `playwright` (`>=1.63.0 <2`),
+- For browser tests, `@e2e-cpp/playwright` plus `playwright` (`>=1.63.0 <2`),
   a peer dependency the engine does not install itself: an app that already
   depends on Playwright keeps its version and its browser cache. A version
   outside the range may be rejected by the package manager as an unmet peer
   (npm's `ERESOLVE`); upgrade `playwright` within the range.
   Missing browsers download when the engine first boots. In CI install them
   up front: `npx playwright install chromium --with-deps`.
-- For mobile tests, `@e2edev/agent-device`. It installs the `agent-device`
+- For mobile tests, `@e2e-cpp/agent-device`. It installs the `agent-device`
   it was built and tested against, pinned exactly because agent-device minors
   break; the pin moves with each engine release.
 
 ## Scaffold
 
 ```bash
-npx e2e@beta init       # npm
-pnpm dlx e2e@beta init  # pnpm
+npx --no-install e2e-cpp init       # npm
+pnpm exec e2e-cpp init  # pnpm
 ```
 
-When `e2e` is already installed, run `npx e2e init` instead, so the
-installed version scaffolds.
+These commands use an already installed local fork. Registry publication is not
+established. Install the core from the archive's checksummed kit and pack optional
+workspace packages locally. For example, after building the extracted repository:
+
+```bash
+pnpm --filter @e2e-cpp/playwright pack --pack-destination /absolute/path/to/tarballs
+```
+
+Install the resulting tarball in your test project alongside the local core.
+Use the corresponding package filter for agent-device, OAuth or the GitHub reporter.
 
 The wizard asks which engine and model provider to use. Agent steps can
 use a subscription, an API key, or a local endpoint. Choose None for tests
 without AI. It also offers to install this skill, register the MCP server
-for your coding agent, and install dependencies.
+for your coding agent, and install dependencies. For this source candidate,
+decline installation until every `@e2e-cpp/*` dependency points to a local tarball.
+Init preserves existing dependency entries; newly added entries are version
+ranges, which require adjustment before a registry-free install.
 
 `--yes` accepts Playwright and Vercel AI Gateway, installs the skill in
 `.agents/skills/` and `.claude/skills/`, and registers MCP in `.mcp.json` and
@@ -45,7 +56,7 @@ the skill and registered MCP entries. The final message shows the run command.
 Without the wizard:
 
 ```bash
-npm install --save-dev e2e@beta @e2edev/playwright@beta playwright ai@^7
+npm install --save-dev /path/to/e2e-cpp-core-0.1.0.tgz /path/to/e2e-cpp-playwright-0.1.0.tgz playwright@1.63.0 ai@^7
 ```
 
 `ai` (the Vercel AI SDK, v7) is only needed for `agent.*` steps.
@@ -53,22 +64,22 @@ npm install --save-dev e2e@beta @e2edev/playwright@beta playwright ai@^7
 ## Subscriptions and API keys
 
 Agent steps can use a subscription, an API key, or a local endpoint.
-`e2e init` writes the model config and dependencies for the option you choose.
+`e2e-cpp init` writes the model config and dependencies for the option you choose.
 After installing dependencies, authenticate that provider:
 
 | Choice | Setup |
 | --- | --- |
-| ChatGPT Plus or Pro | `npx e2e login openai` |
-| GitHub Copilot | `npx e2e login github-copilot`, with the GitHub CLI already signed in or your own `--client-id` |
-| SuperGrok or X Premium+ | `npx e2e login spacexai` |
+| ChatGPT Plus or Pro | `npx --no-install e2e-cpp login openai` |
+| GitHub Copilot | `npx --no-install e2e-cpp login github-copilot`, with the GitHub CLI already signed in or your own `--client-id` |
+| SuperGrok or X Premium+ | `npx --no-install e2e-cpp login spacexai` |
 | Vercel AI Gateway | Set `AI_GATEWAY_API_KEY` |
 | OpenRouter | Set `OPENROUTER_API_KEY` |
 | Local or self-hosted endpoint | Set the endpoint URL and a model it serves; add a key if required |
 
 An existing config stays unchanged when you run `init`. To switch it to
-ChatGPT manually, install `ai`, `@e2edev/oauth`, and `@ai-sdk/openai`, import
-`chatgpt` from `@e2edev/oauth/chatgpt`, and use `chatgpt('gpt-5.5')` as the
-agent's `model`. Sign in with `npx e2e login openai`. Use API keys in CI.
+ChatGPT manually, install `ai`, `@e2e-cpp/oauth`, and `@ai-sdk/openai`, import
+`chatgpt` from `@e2e-cpp/oauth/chatgpt`, and use `chatgpt('gpt-5.5')` as the
+agent's `model`. Sign in with `npx --no-install e2e-cpp login openai`. Use API keys in CI.
 
 ## The config
 
@@ -77,9 +88,9 @@ literal ending in `satisfies E2EConfig`. The runner validates it at load:
 unknown keys are `INVALID_CONFIG`.
 
 ```ts
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { gateway } from 'ai';
 
 export default {
@@ -116,7 +127,7 @@ export default {
 | `workers` | half the cores, `1` in CI | Test files run in parallel across workers, at most the `workers` the engine declares per target (a device target: one per device). |
 | `reporters` | `['list']` | `list`, `json`, `junit`, `markdown`, and reporter objects (`{ name, onEvent?, onRunFinished? }`) that receive the finished run. `json` excludes `list`; `--reporter` keeps the objects. |
 | `cache` | `'read-write'`, `'read-only'` in CI | The trace cache for `agent.act`; `'off'` disables it. |
-| `agents` | `{ default: built-in }` | Agents by name. `default` is what tests run with; `e2e run --agent <name>` runs with another. Each entry is `createAgent(...)`, an options block `{ model, judge, context, maxSteps, maxModelCalls, providerOptions }`, or a custom `StepExecutor`. The built-in agent requires `model` as an AI SDK instance. Custom executors can implement `act` and `assert` without a model; `waitFor` and `extract` still need one. |
+| `agents` | `{ default: built-in }` | Agents by name. `default` is what tests run with; `e2e-cpp run --agent <name>` runs with another. Each entry is `createAgent(...)`, an options block `{ model, judge, context, maxSteps, maxModelCalls, providerOptions }`, or a custom `StepExecutor`. The built-in agent requires `model` as an AI SDK instance. Custom executors can implement `act` and `assert` without a model; `waitFor` and `extract` still need one. |
 | `credentials` | `{}` | Named `{ username, password }` entries; `password` may be a function returning the value. |
 | `secrets` | `{}` | Named values the model never sees (API keys, tokens): a string or a function returning the value. A name cannot also be a credential. |
 | `artifacts` | `['screenshot', 'trace']` | Kinds to keep (`screenshot`, `trace`, and the opt-in `video`), or `{ kinds, store, video }`; `video: { retain: 'on-failure' }` keeps only the recordings of attempts that did not pass. |
@@ -243,20 +254,20 @@ or read the address from the environment:
 | `E2E_USER_<NAME>_USERNAME`, `E2E_USER_<NAME>_PASSWORD` | Override `credentials.<name>`. `<NAME>` is the credential name uppercased, other characters as `_`. |
 | `E2E_SECRET_<NAME>` | Overrides the value of `secrets.<name>`, same uppercasing rule. |
 | `CI` | Turns on CI defaults: `retries: 1`, `workers: 1`, `test.only` rejected, cache read-only, `reuseExisting` ignored. |
-| `E2E_TELEMETRY_DISABLED`, `DO_NOT_TRACK` | Turn anonymous usage telemetry off; `e2e telemetry disable` saves the same choice. `E2E_TELEMETRY_DEBUG=1` prints each event instead of sending it. |
+| `E2E_TELEMETRY_DISABLED`, `DO_NOT_TRACK` | Turn anonymous usage telemetry off; `e2e-cpp telemetry disable` saves the same choice. `E2E_TELEMETRY_DEBUG=1` prints each event instead of sending it. |
 
 ## Mobile targets
 
-`@e2edev/agent-device` drives iOS simulators and Android emulators through
+`@e2e-cpp/agent-device` drives iOS simulators and Android emulators through
 [agent-device](https://github.com/callstack/agent-device). It needs Xcode
 with a simulator runtime, or the Android SDK with an emulator; run
 `npx agent-device doctor` once.
 
 ```ts
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
-import { agentDeviceTools } from '@e2edev/agent-device/tools';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
+import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
 import { gateway } from 'ai';
 
 const iphone = agentDevice({ platform: 'ios', app: 'com.example.app' });
@@ -291,7 +302,7 @@ export default {
   Raw screenshot files are removed when capture finishes, including after
   cancellation.
 - `screen`, `expect`, `app`, and `agent` work unchanged. Import `test` from
-  `@e2edev/agent-device` to type the `device` fixture (`setAppearance`,
+  `@e2e-cpp/agent-device` to type the `device` fixture (`setAppearance`,
   `setNetwork`, `setPermission`, `installApp`, `locator('role=... id=...')`,
   and more). Portable suites declare `requires: ['device']`.
 - No `state` capability: `test.setup` and `session` are unavailable on a
@@ -304,10 +315,20 @@ export default {
 
 ## Done when
 
-- `npx e2e run tests/example.e2e.ts` passes against the app.
-- `package.json` has a script such as `"test:e2e": "e2e run"`.
+- `npx --no-install e2e-cpp run tests/example.e2e.ts` passes against the app.
+- `package.json` has a script such as `"test:e2e": "e2e-cpp run"`.
 - `.gitignore` lists the `.e2e/` outputs (init adds them). Committing
   `.e2e/cache/` is opt-in: remove that line so CI and teammates replay
   `agent.act` steps instead of re-running the model.
 - CI runs the whole suite on pull requests, agent steps included; see
   `running`.
+
+
+### Native deterministic targets
+
+Use `targets: [{ engine: qt(), app: { appPath: './build/my-app', launchArguments: [] } }]`
+for the Qt engine, and `modelPolicy: 'forbid'` for deterministic suites.
+`e2e-cpp run --no-model` enforces that policy across workers. Per-agent
+`model: false` also blocks built-in acting and judgment calls, while allowing
+fixture acquisition. Custom executors remain trusted code. A native
+`app.open()` with no URL calls the engine's restart hook.

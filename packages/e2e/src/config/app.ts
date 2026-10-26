@@ -58,6 +58,8 @@ export interface PortRequest {
  * engine, or whose engine declares nothing, gets the empty resolution.
  */
 export interface ResolvedApp {
+  readonly appPath?: string;
+  readonly launchArguments?: readonly string[];
   /** Normalized base URL; undefined for a surface without addressable locations. */
   readonly base: NormalizedBaseUrl | undefined;
   /** The free-port request the declared URL made; undefined when it names a port or there is no URL. */
@@ -101,8 +103,27 @@ export function resolveTargetApp(
   engine: EngineHandle | undefined,
   projectRoot: string,
   port?: number,
+  override?: EngineAppDeclaration,
 ): ResolvedApp {
-  const declared: EngineAppDeclaration = engine?.app ?? {};
+  if (override !== undefined && (typeof override !== 'object' || override === null || Array.isArray(override))) {
+    throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" app must be an object`);
+  }
+  const declared: EngineAppDeclaration = { ...engine?.app, ...override };
+  const known = new Set(['url', 'environment', 'identity', 'command', 'readyUrl', 'services', 'appPath', 'launchArguments']);
+  for (const key of Object.keys(declared)) {
+    if (!known.has(key)) throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" app has unknown key "${key}"`);
+  }
+  if (declared.appPath !== undefined && (typeof declared.appPath !== 'string' || declared.appPath.trim() === '' || declared.appPath.includes('\0'))) {
+    throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" app.appPath must be a non-empty string without NUL`);
+  }
+  if (declared.launchArguments !== undefined && (!Array.isArray(declared.launchArguments) || declared.launchArguments.some((value) => typeof value !== 'string' || value.includes('\0')))) {
+    throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" app.launchArguments must contain strings without NUL`);
+  }
+  const validation = engine?.validateApp?.(declared, { targetName }) as unknown;
+  if (typeof validation === 'object' && validation !== null && 'then' in validation) {
+    void Promise.resolve(validation).catch(() => undefined);
+    throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" validateApp must finish synchronously`);
+  }
   const where = `target "${targetName}" engine ${engine?.name ?? 'none'}`;
   const declaredBase = declared.url === undefined ? undefined : normalizeBaseUrl(declared.url);
   const portRequest = declaredBase === undefined ? undefined : freePortRequest(declaredBase, port);
@@ -145,11 +166,13 @@ export function resolveTargetApp(
   }
 
   return {
+    ...(declared.appPath === undefined ? {} : { appPath: declared.appPath }),
+    ...(declared.launchArguments === undefined ? {} : { launchArguments: [...declared.launchArguments] }),
     base,
     portRequest,
     site: base === undefined ? undefined : siteOf(new URL(base.href).hostname),
     environment,
-    identity: identity ?? (declaredBase === undefined ? undefined : `${declaredBase.origin}${declaredBase.basePath}`),
+    identity: identity ?? (declaredBase === undefined ? declared.appPath : `${declaredBase.origin}${declaredBase.basePath}`),
     command,
     readyUrl: command === undefined ? undefined : readyUrl,
     services: resolveServices(declared.services, projectRoot, `${where} app.services`, expand),
@@ -386,8 +409,10 @@ function digestCommand<T extends CommandConfig>(command: T): Omit<T, 'env'> & Di
  * contributes to the digest.
  */
 export function digestAppDeclaration(app: EngineAppDeclaration) {
-  const { url, environment, identity, command, readyUrl, services } = app;
+  const { url, environment, identity, command, readyUrl, services, appPath, launchArguments } = app;
   return obj({
+    appPath,
+    launchArguments,
     url,
     environment,
     identity,

@@ -1,100 +1,28 @@
 ---
 title: Telemetry
-description: What the CLI sends, what it never sends, and how to turn it off.
+description: The fork CLI has no telemetry destination and sends no usage events.
 ---
 
-The `e2e` CLI sends anonymous usage data so we can see which commands,
-engines, and features are used and where runs fail. It is on by default.
-Telemetry includes counts and version information, but no test content, app
-content, or credentials.
-
-## Opt out
-
-Any one of these turns it off:
+The `e2e-cpp` CLI does not collect or send usage telemetry. The upstream
+project's destination and ingestion key have been removed. This applies to
+normal commands, CI and model-free runs.
 
 ```bash
-npx e2e telemetry disable   # saved in ~/.config/e2e/telemetry.json
-export E2E_TELEMETRY_DISABLED=1          # for a shell or a CI job
-export DO_NOT_TRACK=1                    # the cross-tool convention
+npx --no-install e2e-cpp telemetry
 ```
 
-`npx e2e telemetry` prints the status and, when it is off, why.
-`enable` reverses a saved `disable`. Environment variables take precedence.
-Running commands check the saved setting again before sending, so disabling
-telemetry also applies to commands already running in another terminal.
+The command reports `Status: disabled (this fork has no telemetry destination)`.
+The inherited `enable` and `disable` commands save a local compatibility
+preference; neither configures a transport. `E2E_TELEMETRY_DISABLED=1` and
+`DO_NOT_TRACK=1` remain recognized opt-out flags. `E2E_TELEMETRY_DEBUG=1` does
+not activate collection or sending.
 
-## See what would be sent
+The retained internal event/transport modules are covered by tests with an
+explicit mock destination. They are not a public telemetry configuration API.
+Adding telemetry to a future distribution requires a deliberate code and policy
+change, a destination controlled by its maintainer, and an appropriate user choice.
 
-```bash
-E2E_TELEMETRY_DEBUG=1 npx e2e run
-```
-
-This prints the exact event payloads to stderr as `[telemetry] {...}` and
-sends nothing.
-
-## What is sent
-
-Each command sends a session event. `run` and `explore` also send a run event.
-Events go in one request when the command ends, with a two-second deadline
-for all telemetry work.
-
-Every event carries these properties:
-
-| Property | Value |
-| --- | --- |
-| `distinct_id` | A random id stored in the preferences file. CI uses `ci:<vendor>` instead |
-| `project_id` | A hash derived from the repository's root commit, shared across full clones. Outside git or in a shallow clone, a hash of the project path with a random local salt. `null` in CI when no root commit is available |
-| `session_id` | A random id for this one invocation |
-| `os`, `os_release`, `arch`, `cpu_count`, `memory_gb`, `docker`, `wsl`, `tty` | The machine class |
-| `ci`, `ci_name` | Whether `CI` is set, and the vendor when one announces itself (`github-actions`, `gitlab`, `circleci`, ...) |
-| `coding_agent` | The coding agent whose shell ran the command, when one announces itself (`claude-code`, `cursor`, `codex`, ...) |
-| `e2e_version`, `node_version`, `package_manager` | Versions and the package manager that invoked the CLI |
-| `$lib`, `$lib_version`, `$process_person_profile` | `e2e`, its version, and `false`: PostHog keeps no person profile |
-
-`e2e_cli_session`, once per command:
-
-| Property | Value |
-| --- | --- |
-| `command` | `init`, `run`, `list`, `cache ls`, `guide`, `telemetry`, ... |
-| `flags` | The names of the flags given, such as `--headed` or `--tag`. Never their values |
-
-`e2e_run_completed`, once per `e2e run` or `e2e explore`, built from the numbers in `report.json`:
-
-| Property | Value |
-| --- | --- |
-| `status`, `exit_code`, `duration_ms` | The run's outcome |
-| `flags` | The names of the flags given to the run command, never their values |
-| `tests_discovered`, `tests_selected`, `tests_executed`, `tests_passed`, `tests_failed`, `tests_flaky`, `tests_skipped` | The summary counts |
-| `targets`, `platforms`, `engines` | How many targets, on which platforms, and with which engines and versions, as your config declares them: `web`, `ios`, `playwright@0.6.1`, or your own engine's name and version. A name that is not a plain token of letters, digits, dots, dashes, and underscores is reported as `other` |
-| `steps_total`, `steps_agent`, `steps_locator`, `steps_assertion`, `steps_screen`, `steps_app`, `steps_session`, `steps_resource` | Step counts by kind |
-| `agent_steps_replayed`, `agent_steps_partial`, `agent_steps_missed`, `agent_steps_vision` | How the trace cache served the agent steps, and how many used pixel evidence |
-| `model_gateway`, `model_provider`, `model_id`, `model_calls`, `model_tokens`, `model_cached_tokens`, `estimated_cost_usd` | For the first model-backed step: the AI SDK provider that served it (`gateway` for the Vercel AI Gateway, `openrouter.chat`, `openai.chat`, ...), the vendor (the first segment of a `vendor/model` id, else the provider), and the public model id (a fine-tuned or routed id is reported as `other`); then the run's totals |
-| `artifact_bytes` | Size of the artifacts the run wrote |
-| `errors`, `error_codes` | How many run-level errors, and the distinct error codes seen anywhere in the run (`LOCATOR_NOT_FOUND`, `APP_UNREACHABLE`, ...), at most 20. A code that is not an upper-case token, the shape of every runner code, is reported as `OTHER` |
-
-## What is never sent
-
-Test titles, file paths, URLs, origins, instructions, observations, page
-content, screenshots, error messages, stack traces, environment variable
-values, credentials, or file contents. Events include only the properties
-listed above.
-
-## In CI
-
-CI runs are attributed to the CI vendor rather than to a machine, no
-preferences file is written on the runner, and no notice is printed. Set
-`E2E_TELEMETRY_DISABLED: '1'` in the job's `env` to send nothing from CI.
-
-## Where it goes
-
-Events go to a PostHog project we operate, in one request to
-`eu.i.posthog.com`. PostHog keeps no person profile for the ids; the data is
-read in aggregate. Telemetry falls under the
-[security policy](https://github.com/tester-army/e2e/blob/main/SECURITY.md),
-which also lists every other outbound connection a run can make.
-
-## The notice
-
-The first command prints a notice on stderr explaining how to opt out.
-It leaves `--reporter json` output intact. The notice appears again after a
-material change to the data collected.
+Telemetry being disabled does not disable configured model providers, app traffic,
+HTTP tests, browser downloads or custom reporters. Use `modelPolicy: 'forbid'` or
+`--no-model` to prohibit runner model calls, and provision dependencies before
+working offline. See the source repository's `SECURITY.md` for trust boundaries.

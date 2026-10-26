@@ -12,7 +12,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppError } from 'agent-device';
 import { decodePng, encodePng } from '../helpers/png.ts';
-import type { EngineFixtureContext, EngineHandle, OperationContext, SemanticNode } from 'e2e/engine';
+import type { EngineFixtureContext, EngineHandle, OperationContext, SemanticNode } from '@e2e-cpp/core/engine';
 import { buildEngine } from '../../src/engine.ts';
 import type { Device } from '../../src/device.ts';
 import type { AgentDeviceOptions } from '../../src/options.ts';
@@ -94,7 +94,7 @@ afterEach(() => {
 
 async function openAttempt(h: Harness, attemptId = 'a1'): Promise<void> {
   await boot(h.engine);
-  await h.engine.startAttempt!({ attemptId, artifactsDir, signal: new AbortController().signal });
+  await h.engine.startAttempt!({ attemptId, artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
 }
 
 /** The observed node with this name, from a fresh observation. */
@@ -161,7 +161,7 @@ describe('lifecycle', () => {
 
     await h.engine.endAttempt!(cleanup());
     await h.engine.endAttempt!(cleanup());
-    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     expect(h.fake.methods().filter((m) => m === 'apps.open')).toHaveLength(2);
 
     await h.engine.dispose!(cleanup());
@@ -188,7 +188,7 @@ describe('lifecycle', () => {
     await boot(first.engine, 'ios', 0);
     expect(first.sessions).toEqual(['e2e-ios-0']);
     expect(first.fake.lastArgs('devices.boot')).toEqual({ platform: 'ios', device: 'iPhone 17' });
-    await first.engine.startAttempt!({ attemptId: 'a1', artifactsDir, signal: new AbortController().signal });
+    await first.engine.startAttempt!({ attemptId: 'a1', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     expect(first.fake.lastArgs('apps.open')).toEqual({ app: 'Settings', platform: 'ios', device: 'iPhone 17', relaunch: true });
 
     const second = harness({ device: pool, session: 'qa' });
@@ -402,7 +402,7 @@ describe('lifecycle', () => {
     expect(h.fake.lastArgs('apps.open')).toEqual({ app: 'com.example.app', platform: 'ios', relaunch: true });
 
     await h.engine.endAttempt!(cleanup());
-    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     expect(h.fake.methods().filter((m) => m === 'apps.install')).toHaveLength(1);
 
     await h.engine.session!.reset!(operation());
@@ -442,7 +442,7 @@ describe('lifecycle', () => {
     await expect(h.engine.dispose!(cleanup())).resolves.toBeUndefined();
     await openAttempt(h);
     await expect(
-      h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal }),
+      h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} }),
     ).rejects.toMatchObject({ code: 'INVALID_STATE' });
   });
 
@@ -800,7 +800,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
     expect(at(100, 240)).toEqual([200, 200, 200]);
 
     await h.engine.endAttempt!(cleanup());
-    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     expect(await h.engine.artifacts!.screenshot('again', operation())).toBe('screenshots/001-again.png');
 
     h.fake.respond('capture.snapshot', () => ({
@@ -867,7 +867,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
         temporaryFilesRemoved = !existsSync(file) && !existsSync(path.dirname(file));
         return { appName: 'Settings', appBundleId: 'com.apple.Preferences' };
       });
-      const next = h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+      const next = h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
       await new Promise((resolve) => setImmediate(resolve));
       expect(opened).toBe(false);
       finishCapture!();
@@ -904,7 +904,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
     await expect(pending).rejects.toMatchObject({ code: 'CANCELLED' });
     await h.engine.endAttempt!(cleanup());
 
-    const next = h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    const next = h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     let nextDone = false;
     void next.then(() => {
       nextDone = true;
@@ -924,7 +924,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
     await expect(hung).rejects.toMatchObject({ code: 'CANCELLED' });
     await h.engine.endAttempt!(cleanup());
     const launch = new AbortController();
-    const launching = h.engine.startAttempt!({ attemptId: 'a3', artifactsDir, signal: launch.signal });
+    const launching = h.engine.startAttempt!({ attemptId: 'a3', artifactsDir, signal: launch.signal, appLog: () => {}, environment: () => {} });
     launch.abort();
     await expect(launching).rejects.toMatchObject({ code: 'CANCELLED' });
   });
@@ -1146,7 +1146,7 @@ describe('video', () => {
     expect(existsSync(elsewhere)).toBe(false);
     await h.engine.endAttempt!(cleanup());
     // A recording still running when the attempt ends is stopped, best-effort.
-    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     await h.engine.artifacts!.startVideo!(operation());
     const before = records(h).length;
     await h.engine.endAttempt!(cleanup());
@@ -1186,7 +1186,7 @@ describe('video', () => {
     expect(stops).toBe(1);
 
     // A stop that fails keeps the recording marked, so ending the attempt stops it again.
-    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+    await h.engine.startAttempt!({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
     const started = h.engine.artifacts!.startVideo!(operation());
     await new Promise((resolve) => setTimeout(resolve, 0));
     releaseStart!();

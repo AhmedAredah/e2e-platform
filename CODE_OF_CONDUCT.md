@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at conduct@tester.army. All complaints will be reviewed and investigated promptly and fairly.
+Maintainers of this fork must configure their own private conduct-reporting channel before opening a public community. No enforcement contact has been designated in this source distribution; upstream contacts are not the contacts for this fork.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

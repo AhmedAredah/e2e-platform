@@ -44,6 +44,8 @@ export interface ScreenContext {
   readonly engine: LocatorEngine;
   readonly steps: StepRecorder;
   readonly secrets: SecretResolver;
+  /** Marks a literal registered secret as sensitive before it reaches the surface. */
+  readonly protectText?: (value: string) => boolean;
   /** Base directory for resolving relative file paths, e.g. uploads. */
   readonly projectRoot?: string;
 }
@@ -229,14 +231,15 @@ class LocatorImpl extends ScreenImpl implements Locator {
   }
 
   fill(value: string | Secret, options?: ActionOptions): Promise<void> {
-    const sensitive = isSecret(value);
+    const secret = isSecret(value);
+    const sensitive = secret || (typeof value === 'string' && this.context.protectText?.(value) === true);
     // Resolved inside the recorded step, so a failing provider fails the fill.
     return this.action('locator.fill', async () =>
       this.context.engine.perform(
         this.expression,
         {
           kind: 'fill',
-          value: sensitive ? await this.context.secrets.resolve(value) : value,
+          value: secret ? await this.context.secrets.resolve(value) : value,
           sensitive,
         },
         options?.timeout,

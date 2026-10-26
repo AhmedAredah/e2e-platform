@@ -4,13 +4,13 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { playwright } from '@e2edev/playwright';
+import { playwright } from '@e2e-cpp/playwright';
 import type { ListOptions, ListedPair, RunOptions, RunOutcome } from '../../src/run/runner.ts';
 import type { E2EConfig } from '../../src/index.ts';
 
 export type { RunOptions, RunOutcome };
 
-// The built runner is used so fixture test files resolving the "e2e"
+// The built runner is used so fixture test files resolving the "@e2e-cpp/core"
 // self-reference share the same registry instance. The specifier is kept
 // non-literal so typechecking does not require a prior build.
 const builtRunnerModule = '../../dist/run/runner.js';
@@ -22,7 +22,7 @@ const TMP_ROOT = path.join(PACKAGE_ROOT, 'tests', 'tmp-projects');
 /**
  * The web target integration suites run against, its engine declaring the
  * fixture app's URL. The handle comes from the built playwright package, whose
- * `e2e` peer resolves to this package's dist, so the brand symbol is shared at
+ * `@e2e-cpp/core` peer resolves to this package's dist, so the brand symbol is shared at
  * runtime even though the src/dist types differ.
  */
 function defaultTargets(appUrl: string): NonNullable<E2EConfig['targets']> {
@@ -105,8 +105,8 @@ export async function listProject(
 
 /** Default file-backed config used by worker-path integration tests. */
 export function workerConfigSource(workers: number, extra = ''): string {
-  return `import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+  return `import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 
 export default {
   targets: [{ name: 'web', engine: playwright({ url: process.env.APP_URL! }) }],

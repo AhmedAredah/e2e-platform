@@ -2,8 +2,8 @@
  * Sign in to a personal AI subscription once, then use it as an AI SDK model.
  *
  * Model constructors live on subpaths so a config installs only the provider
- * package it uses: `@e2edev/oauth/chatgpt`, `@e2edev/oauth/copilot`,
- * `@e2edev/oauth/grok`. This entry holds the flows, the stores, and the fetch
+ * package it uses: `@e2e-cpp/oauth/chatgpt`, `@e2e-cpp/oauth/copilot`,
+ * `@e2e-cpp/oauth/grok`. This entry holds the flows, the stores, and the fetch
  * for anyone wiring a provider of their own.
  */
 

@@ -33,6 +33,8 @@ const KNOWN_KEYS = [
   'prepare',
   'init',
   'startAttempt',
+  'validateApp',
+  'settleAttempt',
   'endAttempt',
   'dispose',
 ] as const satisfies readonly (keyof Engine)[];
@@ -51,6 +53,8 @@ const NESTED_HOOKS = {
  * target, where an error can name it.
  */
 const APP_DECLARATION_KEYS = [
+  'appPath',
+  'launchArguments',
   'url',
   'environment',
   'identity',
@@ -67,6 +71,8 @@ const FUNCTION_MEMBERS = [
   'prepare',
   'init',
   'startAttempt',
+  'validateApp',
+  'settleAttempt',
   'endAttempt',
   'dispose',
 ] as const;

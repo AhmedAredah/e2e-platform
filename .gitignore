@@ -18,3 +18,13 @@ packages/e2e/skills/
 .env*
 # `pnpm run canary` writes this changeset and consumes it in the same run.
 .changeset/canary.md
+
+# Generated build, validation, install-kit and platform-local output.
+**/build/
+**/.e2e/
+release-packages/
+verification/*
+!verification/README.md
+.DS_Store
+Thumbs.db
+**/.next/

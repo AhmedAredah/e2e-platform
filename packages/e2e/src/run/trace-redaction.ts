@@ -6,7 +6,7 @@
  * that carried it. The runner owns the secret ledger, so the runner rewrites.
  */
 
-import { readFile, rm } from 'node:fs/promises';
+import { readFile, realpath, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { writeFileAtomic } from '../internal/atomic-write.ts';
 import { errorMessage, InfrastructureError } from '../internal/errors.ts';
@@ -35,7 +35,11 @@ export async function redactTraceArchives(
     );
   }
   try {
-    for (const archive of archives) await redactArchive(archive, ledger);
+    const resolvedRoot = await realpath(root);
+    for (const archive of archives) {
+      if (!isInside(resolvedRoot, await realpath(archive))) throw new Error('trace symlink leaves the attempt directory');
+      await redactArchive(archive, ledger);
+    }
   } catch (cause) {
     await Promise.all(archives.map((archive) => rm(archive, { force: true })));
     throw new InfrastructureError(
@@ -55,23 +59,23 @@ function isInside(root: string, absolute: string): boolean {
  * Every text entry is rewritten through the ledger; one the redactor left
  * unchanged is carried as stored, so an archive with nothing to redact is not
  * rewritten at all. An entry that is not UTF-8 text (a screencast frame, a
- * font, an image) cannot be rewritten: it is carried as stored unless a
- * secret's bytes occur in it, in which case it is dropped from the archive.
+ * font, an image) cannot be proven safe after a secret fill and is omitted.
+ * A rendered secret does not have to occur as literal bytes in its image.
  */
 async function redactArchive(absolute: string, ledger: SecretLedger): Promise<void> {
   const entries = readZip(await readFile(absolute));
   let changed = false;
   const kept: ZipEntry[] = [];
   for (const entry of entries) {
+    if (ledger.redact(entry.name) !== entry.name) { changed = true; continue; }
     const bytes = inflateEntry(entry);
     const text = decodeText(bytes);
     if (text === undefined) {
-      if (ledger.appearsIn(bytes)) {
-        changed = true;
-        continue;
-      }
-      kept.push(entry);
+      changed = true;
       continue;
+    }
+    if (ledger.forms().some((form) => form.includes('\n') && text.includes(form))) {
+      throw new Error('trace contains a multiline secret that cannot be rewritten as independent records');
     }
     const clean = redactText(text, ledger.redact);
     if (clean === text) {

@@ -1,3 +1,5 @@
+import { protectProcessOutput } from '../internal/output-redaction.ts';
+import { processSecrets, registerStaticSecrets } from './secrecy.ts';
 /** Run orchestration: config, collection, selection, execution, reporting. */
 
 import path from 'node:path';
@@ -63,6 +65,8 @@ export interface RunOptions {
   passWithNoTests?: boolean | undefined;
   /** Runs with the trace cache off (`--no-cache`), overriding the config. */
   noCache?: boolean | undefined;
+  /** Forbids built-in model execution regardless of the config. */
+  noModel?: boolean | undefined;
   /**
    * The configured agents unpinned tests run as (`--agent`), instead of
    * `agents.default`. Several names run every such test once per agent.
@@ -206,6 +210,11 @@ const FORCE_KILL_MARGIN_MS = 1_000;
 
 /** Executes one complete run and returns the outcome without exiting. */
 export async function run(options: RunOptions = {}): Promise<RunOutcome> {
+  return protectProcessOutput(() => runProtected(options));
+}
+
+/** Executes while the public output streams remain behind the secret boundary. */
+async function runProtected(options: RunOptions): Promise<RunOutcome> {
   const cwd = options.cwd ?? process.cwd();
   const env = options.env ?? process.env;
   const runId = uuidv7();
@@ -237,6 +246,7 @@ export async function run(options: RunOptions = {}): Promise<RunOutcome> {
   if (options.workers !== undefined) cli.workers = options.workers;
   if (options.reporters !== undefined) cli.reporters = options.reporters;
   if (options.noCache === true) cli.cache = 'off';
+  if (options.noModel === true) cli.modelPolicy = 'forbid';
   if (options.video === true) cli.video = true;
   if (options.agent !== undefined) cli.agents = typeof options.agent === 'string' ? [options.agent] : options.agent;
 
@@ -266,6 +276,7 @@ export async function run(options: RunOptions = {}): Promise<RunOutcome> {
     ...reporterIds.filter((id) => id !== 'list').map((id) => STATELESS_REPORTERS[id]),
     ...(loaded.config?.customReporters ?? []),
   ];
+  if (loaded.config !== undefined) registerStaticSecrets(loaded.config.secrets);
   const emit = createRunEventEmitter([
     ...activeReporters.map((reporter) =>
       reporter.onEvent === undefined ? undefined : reporter.onEvent.bind(reporter),
@@ -308,6 +319,7 @@ export async function run(options: RunOptions = {}): Promise<RunOutcome> {
     combineExitCodes(
       [
         ...resultExitCodes(results),
+        ...serialExitCodes(serialGroups),
         ...runErrors.map((runError) => exitCodeForCategory(runError.error.category)),
         ...(interruptController.signal.aborted ? [130] : []),
       ].filter((code) => code !== 130 || !runAborted),
@@ -414,8 +426,8 @@ export async function run(options: RunOptions = {}): Promise<RunOutcome> {
       ...(aiTracePath === undefined ? {} : { aiTracePath }),
     });
     if (debug.enabled) {
-      process.stderr.write(debug.summary());
-      process.stderr.write(agentStepTable(results, serialGroups));
+      process.stderr.write(processSecrets.redact(debug.summary()));
+      process.stderr.write(processSecrets.redact(agentStepTable(results, serialGroups)));
     }
     // `onRunFinished` runs last, after everything the terminal shows, so
     // nothing reading it waits on a slow reporter; the rows they resolve with
@@ -450,6 +462,7 @@ export async function run(options: RunOptions = {}): Promise<RunOutcome> {
   vcs = await detectVcs(config.projectRoot, env);
 
   setSecretRegistry(config);
+  registerStaticSecrets(config.secrets);
   // Several run agents have no one model to name; each step names its own.
   // The judge is named only when it is a model of its own.
   const runAgent = config.agentNames.length === 1 ? config.agent : undefined;
@@ -844,6 +857,7 @@ function statusOf(exitCode: RunExitCode): Exclude<RunStatus, 'blocked'> {
 function resultExitCodes(results: readonly ResultRecord[]): number[] {
   const codes: number[] = [0];
   for (const result of results) {
+    if (result.attempts.some((attempt) => attempt.cleanup !== 'complete')) codes.push(3);
     switch (result.status) {
       case 'failed':
       case 'timed-out':
@@ -857,6 +871,20 @@ function resultExitCodes(results: readonly ResultRecord[]): number[] {
         break;
       default:
         break;
+    }
+  }
+  return codes;
+}
+
+/** A shared-session failure remains a run failure even if every member body passed. */
+function serialExitCodes(groups: readonly SerialGroupRecord[]): number[] {
+  const codes: number[] = [];
+  for (const group of groups) {
+    if (group.attempts.some((attempt) => attempt.cleanup !== 'complete')) codes.push(3);
+    if (group.status === 'interrupted') codes.push(130);
+    else if (group.status === 'failed' || group.status === 'timed-out') {
+      const error = group.attempts.at(-1)?.error;
+      codes.push(error === undefined ? 1 : exitCodeForCategory(error.category));
     }
   }
   return codes;
@@ -880,7 +908,7 @@ async function runReporters(
   force: AbortSignal,
 ): Promise<ReporterSummary> {
   const warn = (reporter: Reporter, detail: string): void => {
-    process.stderr.write(`e2e: reporter "${reporter.name}" ${detail}\n`);
+    process.stderr.write(processSecrets.redact(`e2e: reporter "${reporter.name}" ${detail}\n`));
   };
   const budget = timeoutMs >= 1000 ? `${Math.round(timeoutMs / 1000)}s` : `${timeoutMs}ms`;
   const outcomes = await Promise.all(

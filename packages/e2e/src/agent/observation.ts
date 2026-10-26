@@ -70,7 +70,7 @@ export function prepareObservation(
   const location = observation.location === undefined ? undefined : options.redact(observation.location);
   const path = location === undefined ? undefined : observationPath(location);
   const metadata = {
-    revision: observation.revision,
+    revision: options.redact(observation.revision),
     ...(location === undefined ? {} : { location }),
     ...(path === undefined ? {} : { path }),
     viewport: observation.viewport,
@@ -110,7 +110,7 @@ export function prepareObservation(
     if (cutByBudget) return;
     const line = formatNode(node, depth, redact);
     const size = encoder.encode(`${line}\n`).byteLength;
-    if (lines.length > 0 && bytes + size > budget) {
+    if (bytes + size > budget) {
       cutByBudget = true;
       return;
     }
@@ -254,10 +254,10 @@ export function projectTree(node: SemanticNode, redact: (text: string) => string
   const attributes =
     node.attributes === undefined
       ? undefined
-      : Object.fromEntries(Object.entries(node.attributes).map(([key, value]) => [key, redact(value)]));
+      : Object.fromEntries(Object.entries(node.attributes).map(([key, value]) => [redact(key), redact(value)]));
   return {
-    id: node.ref.id,
-    ...(node.role === undefined ? {} : { role: node.role }),
+    id: safeNodeId(node.ref.id, redact),
+    ...(node.role === undefined ? {} : { role: redact(node.role) }),
     ...(node.name === undefined ? {} : { name: redact(node.name) }),
     ...(node.text === undefined ? {} : { text: redact(node.text) }),
     ...(node.value === undefined || secure ? {} : { value: redact(node.value) }),
@@ -265,7 +265,7 @@ export function projectTree(node: SemanticNode, redact: (text: string) => string
     ...(node.states === undefined ? {} : { states: node.states }),
     ...(attributes === undefined ? {} : { attributes }),
     ...(node.rect === undefined ? {} : { rect: node.rect }),
-    ...(node.framePath === undefined ? {} : { framePath: node.framePath }),
+    ...(node.framePath === undefined ? {} : { framePath: node.framePath.map(redact) }),
     ...(node.children === undefined
       ? {}
       : { children: node.children.map((child) => projectTree(child, redact)) }),
@@ -285,14 +285,14 @@ export function formatNode(
   depth: number,
   redact: (text: string) => string,
 ): string {
-  const parts: string[] = [`#${node.ref.id}`];
-  if (node.role !== undefined && node.role !== '') parts.push(node.role);
+  const parts: string[] = [`#${safeNodeId(node.ref.id, redact)}`];
+  if (node.role !== undefined && node.role !== '') parts.push(redact(node.role));
   if (node.name !== undefined && node.name !== '') parts.push(JSON.stringify(redact(node.name)));
-  const text = node.text === undefined ? '' : collapseText(node.text);
+  const text = node.text === undefined ? '' : collapseText(redact(node.text));
   if (text !== '' && text !== node.name) parts.push(`text=${JSON.stringify(redact(text))}`);
   // Disambiguators the model needs when role and name repeat. The engine has
   // already reduced href to origin and path.
-  if (node.testId !== undefined && node.testId !== '') parts.push(`testid=${JSON.stringify(node.testId)}`);
+  if (node.testId !== undefined && node.testId !== '') parts.push(`testid=${JSON.stringify(redact(node.testId))}`);
   const href = node.attributes?.['href'];
   if (href !== undefined && href !== '') parts.push(`href=${JSON.stringify(redact(href))}`);
   const placeholder = node.attributes?.['placeholder'];
@@ -492,4 +492,10 @@ function indexNodes(
     parents.set(child.ref.id, node.ref.id);
     indexNodes(child, into, parents);
   }
+}
+
+/** A model must receive a true reference, so identities containing secrets fail closed. */
+function safeNodeId(id: string, redact: (text: string) => string): string {
+  if (redact(id) !== id) throw new TestError('POLICY_DENIED', 'semantic node identity contains a registered secret');
+  return id;
 }

@@ -178,7 +178,7 @@ describe('ManagedProcess stall diagnostics', () => {
     expect(quoted).toEqual(lines.slice(5).map((line) => `  ${line}`));
   });
 
-  it('redacts command.env values from the quoted output with the report-wide secret markers, the log itself untouched', async () => {
+  it('redacts command.env values before persistence and from the quoted output with report-wide secret markers', async () => {
     const app = new ManagedProcess(
       'service "compose"',
       stalled(
@@ -192,7 +192,8 @@ describe('ManagedProcess stall diagnostics', () => {
     expect(failure.message).toBe(
       `service "compose" did not exit within 1000 ms\noutput in ${log} since service "compose" started:\n  token=<secret:SECRET> port=443`,
     );
-    expect(fs.readFileSync(path.join(dir, log), 'utf8')).toContain('token=hunter2-hunter2');
+    expect(fs.readFileSync(path.join(dir, log), 'utf8')).toContain('token=<secret:SECRET>');
+    expect(fs.readFileSync(path.join(dir, log), 'utf8')).not.toContain('hunter2-hunter2');
   });
 
   it('says so when the process wrote nothing', async () => {

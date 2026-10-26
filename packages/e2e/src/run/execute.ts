@@ -1,6 +1,7 @@
 /** Test-target execution engine. */
 
-import { rm } from 'node:fs/promises';
+import { realpath, rm } from 'node:fs/promises';
+import { AttemptDiagnostics } from './attempt-diagnostics.ts';
 import path from 'node:path';
 import type { TargetSession, OperationContext } from '../engine/surface.ts';
 import type { ResolvedConfig, ResolvedTarget } from '../config/resolve.ts';
@@ -46,7 +47,7 @@ import { isFailedStatus } from './records.ts';
 import { runWithRetries } from './retry.ts';
 import { runSerialUnit, type SerialHost, type SharedSerialSession } from './serial.ts';
 import { INTERRUPTED_BEFORE_START, pairKey, pairResult, unstartedResult } from './units.ts';
-import { sessionSecrecy } from './secrecy.ts';
+import { sessionSecrecy, snapshotProtection, restoreProtection } from './secrecy.ts';
 import { SessionStaging, SessionStore, type SessionIdentity } from './sessions.ts';
 import { redactTraceArchives } from './trace-redaction.ts';
 import { StepRecorder, type StepProgress } from './steps.ts';
@@ -100,8 +101,9 @@ type AttemptPhase = 'launch' | 'beforeEach' | 'body' | 'afterEach';
  * reports.
  */
 export interface ClosingRecord {
-  readonly status: AttemptRecord['status'];
+  status: AttemptRecord['status'];
   cleanup: AttemptRecord['cleanup'];
+  error?: SerializedError;
 }
 
 /** Signal for operations that only end when they finish, such as cleanup. */
@@ -130,6 +132,7 @@ export class TargetExecutor implements SerialHost {
   readonly realms: RealmManager;
   readonly debug: DebugTrace;
 
+  private readonly diagnostics = new Map<string, AttemptDiagnostics>();
   private readonly runErrors: RunError[] = [];
   private readonly models: WorkerModels;
   private readonly sessionIdentity: SessionIdentity;
@@ -224,7 +227,7 @@ export class TargetExecutor implements SerialHost {
             runId: this.options.runId,
             targetName: this.target.name,
             projectRoot: this.config.projectRoot,
-            app: obj({ site: this.target.app.site }),
+            app: obj({ site: this.target.app.site, appPath: this.target.app.appPath, launchArguments: this.target.app.launchArguments }),
             env: this.options.env,
             headed: this.options.headed,
             workerSlot: this.options.workerSlot,
@@ -478,8 +481,8 @@ export class TargetExecutor implements SerialHost {
             );
             return attempt;
           }
-          for (const [name, state] of staging.entries()) {
-            await this.options.sessionStore.save(name, this.sessionIdentity, state);
+          for (const [name, state, protection] of staging.entries()) {
+            await this.options.sessionStore.save(name, this.sessionIdentity, state, protection);
           }
         }
         return attempt;
@@ -497,6 +500,7 @@ export class TargetExecutor implements SerialHost {
     attemptId: string,
     artifactsDir: string,
     signal: AbortSignal,
+    artifactSink?: ArtifactSink,
   ): Promise<TargetSession> {
     // The engine booted in init() once per worker; the adapter is per-attempt
     // so refs never cross attempts.
@@ -512,6 +516,8 @@ export class TargetExecutor implements SerialHost {
       );
     }
     const session = createEngineSession({ engine, targetName: this.target.name });
+    const diagnostics = new AttemptDiagnostics();
+    this.diagnostics.set(attemptId, diagnostics);
     const launch = <T>(label: string, run: (launchSignal: AbortSignal) => Promise<T>) =>
       this.lifecycle(label, this.config.launchTimeout, 'LAUNCH_TIMEOUT', signal, run);
     const launchOp = (launchSignal: AbortSignal) =>
@@ -521,11 +527,13 @@ export class TargetExecutor implements SerialHost {
       if (startAttempt !== undefined) {
         await this.debug.time('session.launch', () =>
           launch(`starting an attempt on engine ${engine?.name ?? 'none'}`, (launchSignal) =>
-            startAttempt({ attemptId, artifactsDir, signal: launchSignal }),
+            startAttempt({ attemptId, artifactsDir, signal: launchSignal, appLog: diagnostics.appLog, environment: diagnostics.environment }),
           ),
         );
       }
       if (sessionName !== undefined) {
+        const protection = await this.options.sessionStore.loadProtection(sessionName, this.sessionIdentity);
+        restoreProtection(sessionSecrecy(session, this.config.secrets), protection);
         const state = await this.options.sessionStore.load(sessionName, this.sessionIdentity);
         await launch('restoring the session', (launchSignal) =>
           session.restoreState!(state, launchOp(launchSignal)),
@@ -553,9 +561,23 @@ export class TargetExecutor implements SerialHost {
       // open it: end it within the cleanup budget, or the retry opens a second
       // one. An engine without startAttempt makes this a no-op.
       await this.endAttempt(session, attemptId).catch(() => undefined);
+      if (artifactSink !== undefined) {
+        await diagnostics.publish(artifactSink, sessionSecrecy(session, this.config.secrets).ledger.redact).catch(() => undefined);
+      }
+      this.diagnostics.delete(attemptId);
       throw cause;
     }
     return session;
+  }
+
+  /** Asks the engine to surface asynchronous failures within a cleanup budget. */
+  private async settleAttempt(): Promise<void> {
+    const engine = this.target.engine;
+    if (engine?.settleAttempt === undefined) return;
+    await this.lifecycle(
+      'settling the attempt', this.config.cleanupTimeout, 'CLEANUP_TIMEOUT', NEVER_ABORTS,
+      (signal) => engine.settleAttempt!({ signal, timeoutMs: this.config.cleanupTimeout }),
+    );
   }
 
   /** Ends one attempt's isolation within the cleanup budget. */
@@ -585,10 +607,16 @@ export class TargetExecutor implements SerialHost {
     if (stopVideo !== undefined) {
       await this.stopRecording('video', attemptId, record, secondaryErrors, async (operation) => {
         const segments = await stopVideo(operation);
+        if (sessionSecrecy(session, this.config.secrets).taint.value) {
+          await Promise.all(segments.map((segment) => removeArtifact(artifactSink.dir, segment.path)));
+          secondaryErrors.push(serializeError(new ConfigurationError('POLICY_DENIED', 'Video withheld after secret input because recorded pixels cannot be redacted reliably'), { phase: 'cleanup' }));
+          if (this.config.artifacts.get('video') === 'required') record.cleanup = 'failed';
+          return;
+        }
         if (this.config.videoRetain === 'on-failure' && !isFailedStatus(record.status)) {
           // Recorded so a failure could be watched; a pass has nothing to show.
           await Promise.all(
-            segments.map((segment) => rm(path.join(artifactSink.dir, segment.path), { force: true })),
+            segments.map((segment) => removeArtifact(artifactSink.dir, segment.path)),
           );
           return;
         }
@@ -628,6 +656,26 @@ export class TargetExecutor implements SerialHost {
     } catch (cause) {
       record.cleanup = 'failed';
       secondaryErrors.push(serializeError(classifyError(cause), { phase: 'cleanup' }));
+    }
+    try {
+      await this.settleAttempt();
+    } catch (cause) {
+      const error = serializeError(classifyError(cause), { phase: 'cleanup' });
+      if (record.status === 'passed') {
+        record.status = 'failed';
+        record.error = error;
+      }
+      record.cleanup = 'failed';
+      secondaryErrors.push(error);
+    }
+    try {
+      const diagnostics = this.diagnostics.get(attemptId);
+      await diagnostics?.publish(artifactSink, sessionSecrecy(session, this.config.secrets).ledger.redact);
+    } catch (cause) {
+      record.cleanup = 'failed';
+      secondaryErrors.push(serializeError(classifyError(cause), { phase: 'cleanup' }));
+    } finally {
+      this.diagnostics.delete(attemptId);
     }
   }
 
@@ -807,7 +855,7 @@ export class TargetExecutor implements SerialHost {
     try {
       const session =
         shared?.session ??
-        (await this.launchSession(pair.options.session, attemptId, artifacts.dir, attemptAbort.signal));
+        (await this.launchSession(pair.options.session, attemptId, artifacts.dir, attemptAbort.signal, artifacts.sink));
       openSession = session;
 
       const testDeadline = new Deadline(pair.options.timeout);
@@ -825,7 +873,7 @@ export class TargetExecutor implements SerialHost {
               const state = await session.captureState(
                 this.op(attemptId, this.config.actionTimeout, attemptAbort.signal),
               );
-              context.staging.stage(name, state);
+              context.staging.stage(name, state, snapshotProtection(sessionSecrecy(session, this.config.secrets)));
             };
       const { fixtures } = createFixtures({
         config: this.config,
@@ -938,6 +986,14 @@ export class TargetExecutor implements SerialHost {
     } catch (cause) {
       recordFailure(cause, phase);
     } finally {
+      if (openSession !== null) {
+        try {
+          await this.settleAttempt();
+        } catch (cause) {
+          if (failure === undefined) recordFailure(cause, 'afterEach');
+          else secondaryErrors.push(serializeError(classifyError(cause), { phase: 'afterEach', redact }));
+        }
+      }
       attemptEnd.abort();
       this.interruptSignal.removeEventListener('abort', onInterrupt);
       // The verdict is reached before the session closes: nothing after this
@@ -970,10 +1026,12 @@ export class TargetExecutor implements SerialHost {
       // can never evict a good entry. On a failure, confirmation stops at what
       // had been verified when the failure landed — later teardown steps
       // prove nothing about the flow.
-      await flushStagedTraces(
-        cache,
-        failure === undefined ? steps.lastVerifiedStepIndex : lastVerifiedAtFailure,
-      );
+      const verified = failure === undefined && record.cleanup === 'complete' && record.status !== 'failed'
+        ? steps.lastVerifiedStepIndex : lastVerifiedAtFailure;
+      if (shared === undefined) await flushStagedTraces(cache, verified);
+      else shared.finalizeCaches.push(async (groupClosedCleanly) => {
+        await flushStagedTraces(cache, groupClosedCleanly ? verified : -1);
+      });
     }
     return record;
   }
@@ -994,4 +1052,25 @@ function classifyAttemptStatus(
     return 'timed-out';
   }
   return 'failed';
+}
+
+/** Removes only a file whose path and resolved location remain inside the attempt. */
+async function removeArtifact(directory: string, relative: string): Promise<void> {
+  const candidate = path.resolve(directory, relative);
+  const inside = (root: string, target: string): boolean => {
+    const suffix = path.relative(root, target);
+    return suffix !== '' && suffix !== '..' && !suffix.startsWith(`..${path.sep}`) && !path.isAbsolute(suffix);
+  };
+  if (!inside(path.resolve(directory), candidate)) {
+    throw new InfrastructureError('ARTIFACT_PATH_INVALID', 'Artifact removal path must stay inside its attempt directory');
+  }
+  const resolved = await realpath(candidate).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return undefined;
+    throw error;
+  });
+  if (resolved === undefined) return;
+  if (!inside(await realpath(directory), resolved)) {
+    throw new InfrastructureError('ARTIFACT_PATH_INVALID', 'Artifact removal resolves outside its attempt directory');
+  }
+  await rm(candidate, { force: true });
 }

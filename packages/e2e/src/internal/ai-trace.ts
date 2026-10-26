@@ -16,6 +16,7 @@
  * attempt and per step, so no model call site needs to know it is traced.
  */
 
+import { processSecrets, redactJson } from './redact.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { Telemetry } from 'ai';
@@ -270,7 +271,7 @@ export class AiTraceRecorder {
       }
       this.calls.clear();
     }
-    return snapshot;
+    return redactJson(snapshot, processSecrets.redact);
   }
 
   /** True while any step has started and not yet ended; useful in tests. */
@@ -469,10 +470,10 @@ export class AiTraceCollector {
   document(): AiTraceDocument {
     const byStart = (a: { started_at: string }, b: { started_at: string }) =>
       a.started_at < b.started_at ? -1 : a.started_at > b.started_at ? 1 : 0;
-    return {
+    return redactJson({
       runs: this.runs.toSorted(byStart),
       steps: this.steps.toSorted(byStart),
-    };
+    }, processSecrets.redact);
   }
 
   get size(): number {

@@ -1,5 +1,5 @@
 /**
- * `e2e mcp` with a project that has two targets, a custom engine with fewer
+ * `e2e-cpp mcp` with a project that has two targets, a custom engine with fewer
  * verbs, and project tools from `createAgent({ tools })`: the server's tool
  * list stays the same four, each session's catalog is what its own target
  * can do (the engine's verbs, the project tools for its platform), a project
@@ -28,9 +28,9 @@ export const kiosk = createFakeEngine({
 });
 `;
 
-const CONFIG = `import type { E2EConfig } from 'e2e';
-import { createAgent, defineTool, getToolContext } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+const CONFIG = `import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent, defineTool, getToolContext } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { z } from 'zod';
 import { kiosk } from './kiosk.ts';
 
@@ -67,7 +67,7 @@ export default {
 `;
 
 /** A second project config beside the first: one target, no project tools. */
-const KIOSK_ONLY_CONFIG = `import type { E2EConfig } from 'e2e';
+const KIOSK_ONLY_CONFIG = `import type { E2EConfig } from '@e2e-cpp/core';
 import { kiosk } from './kiosk.ts';
 
 export default {
@@ -80,7 +80,7 @@ interface ToolText {
   readonly isError: boolean;
 }
 
-describe('e2e mcp with project tools and a custom engine', { timeout: 120_000 }, () => {
+describe('e2e-cpp mcp with project tools and a custom engine', { timeout: 120_000 }, () => {
   let app: FixtureApp;
   let project: FixtureProject;
   let client: Client;

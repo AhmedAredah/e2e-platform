@@ -14,7 +14,7 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-const ENTRY = { command: 'npx', args: ['e2e', 'mcp'] };
+const ENTRY = { command: 'npx', args: ['--no-install', 'e2e-cpp', 'mcp'] };
 
 describe('planMcpRegistration', () => {
   it('creates each missing file with the e2e server entry', () => {
@@ -23,7 +23,7 @@ describe('planMcpRegistration', () => {
       ['.mcp.json', false],
       ['.cursor/mcp.json', false],
     ]);
-    expect(JSON.parse(plans[0]!.content)).toEqual({ mcpServers: { e2e: ENTRY } });
+    expect(JSON.parse(plans[0]!.content)).toEqual({ mcpServers: { 'e2e-cpp': ENTRY } });
     expect(plans[0]!.content.endsWith('\n')).toBe(true);
   });
 
@@ -32,17 +32,17 @@ describe('planMcpRegistration', () => {
     writeFileSync(path.join(dir, '.mcp.json'), existing);
     const [plan] = planMcpRegistration(dir, ['.mcp.json']);
     expect(plan!.existing).toBe(true);
-    expect(JSON.parse(plan!.content)).toEqual({ mcpServers: { figma: { command: 'figma-mcp' }, e2e: ENTRY }, other: true });
+    expect(JSON.parse(plan!.content)).toEqual({ mcpServers: { figma: { command: 'figma-mcp' }, 'e2e-cpp': ENTRY }, other: true });
     expect(plan!.content).toContain('\n    "mcpServers"');
   });
 
   it('plans nothing for a file that already registers the same entry, and finds it', () => {
     mkdirSync(path.join(dir, '.cursor'));
-    writeFileSync(path.join(dir, '.cursor', 'mcp.json'), JSON.stringify({ mcpServers: { e2e: ENTRY } }));
+    writeFileSync(path.join(dir, '.cursor', 'mcp.json'), JSON.stringify({ mcpServers: { 'e2e-cpp': ENTRY } }));
     expect(planMcpRegistration(dir, ['.cursor/mcp.json'])).toEqual([]);
     expect(findRegisteredMcpFiles(dir)).toEqual(['.cursor/mcp.json']);
     // A stale entry is repaired, not treated as registered.
-    writeFileSync(path.join(dir, '.mcp.json'), JSON.stringify({ mcpServers: { e2e: { command: 'e2e', args: ['mcp'] } } }));
+    writeFileSync(path.join(dir, '.mcp.json'), JSON.stringify({ mcpServers: { 'e2e-cpp': { command: '@e2e-cpp/core', args: ['mcp'] } } }));
     expect(planMcpRegistration(dir, ['.mcp.json'])).toHaveLength(1);
     expect(findRegisteredMcpFiles(dir)).toEqual(['.mcp.json', '.cursor/mcp.json']);
   });

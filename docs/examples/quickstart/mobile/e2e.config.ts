@@ -1,6 +1,6 @@
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
 import { gateway } from 'ai';
 
 export default {

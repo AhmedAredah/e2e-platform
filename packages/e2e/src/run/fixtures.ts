@@ -129,6 +129,11 @@ export function createFixtures(environment: AttemptEnvironment): AttemptFixtures
     engine,
     steps: environment.steps,
     secrets,
+    protectText: (value) => {
+      const sensitive = ledger.redact(value) !== value;
+      taint.value ||= sensitive;
+      return sensitive;
+    },
     projectRoot: environment.config.projectRoot,
   };
   const screen = createScreen(screenContext);
@@ -159,7 +164,7 @@ export function createFixtures(environment: AttemptEnvironment): AttemptFixtures
         `unknown agent "${name}"; configured: ${[...config.agents.keys()].join(', ')}`,
       );
     }
-    environment.models.preflight(resolved);
+    if (config.modelPolicy !== 'forbid' && resolved.modelDisabled !== true) environment.models.preflight(resolved);
     const selection: AgentSelection = {
       name,
       config: resolved,
@@ -313,7 +318,7 @@ function fixtureContext(
     targetName: environment.target.name,
     fixture: (name, surface, operations) => recorder.fixture(name, surface, operations),
     app: {
-      ...obj({ site: app.site }),
+      ...obj({ site: app.site, appPath: app.appPath, launchArguments: app.launchArguments }),
       resolveUrl: (url) => {
         requireAppUrl(environment.target);
         return resolveNavigationUrl(url, app.base).url;
@@ -456,7 +461,9 @@ function createApp(environment: AttemptEnvironment, engine: LocatorEngine, taint
 
   return {
     baseUrl: target.app.base?.href,
-    open: (openPath?: string) => navigate('app.open', openPath ?? '/', openPath),
+    open: (openPath?: string) => target.app.base === undefined && openPath === undefined
+      ? steer('app.open', (operation) => engine.session.app.restart(operation))
+      : navigate('app.open', openPath ?? '/', openPath),
     restart: () => steer('app.restart', (operation) => engine.session.app.restart(operation)),
     clearState: () => steer('app.clearState', (operation) => engine.session.app.reset(operation)),
     async back(): Promise<void> {

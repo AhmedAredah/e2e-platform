@@ -13,11 +13,13 @@ export function createRedactor(
 ): (text: string) => string {
   const entries = secretForms(secrets);
   if (entries.length === 0) return (text) => text;
-  return (text) => {
-    let out = text;
-    for (const [name, value] of entries) out = out.split(value).join(`<secret:${name}>`);
-    return out;
-  };
+  const replacements = new Map(entries.map(([name, value]) => {
+    const marker = `<secret:${name}>`;
+    return [value, entries.some(([, form]) => marker.includes(form)) ? '' : marker];
+  }));
+  const pattern = new RegExp(entries.map(([, value]) => value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  // One pass prevents a later replacement from rewriting a generated marker.
+  return (text) => text.replace(pattern, (value) => replacements.get(value)!);
 }
 
 /** Every (name, form) pair the secrets take in text, longest form first; empty values contribute none. */
@@ -38,14 +40,15 @@ function secretForms(secrets: Iterable<readonly [string, string]>): (readonly [s
  */
 function encodedForms(value: string): string[] {
   const json = JSON.stringify(value).slice(1, -1);
+  let uriForms: string[] = [];
+  try { uriForms = [encodeURIComponent(value), encodeURI(value)]; } catch { /* Lone surrogates have no URI encoding. */ }
   return [
     ...new Set([
       value,
       json,
       JSON.stringify(json).slice(1, -1),
       escapeHtml(value),
-      encodeURIComponent(value),
-      encodeURI(value),
+      ...uriForms,
       new URLSearchParams([['v', value]]).toString().slice(2),
     ]),
   ];
@@ -89,6 +92,16 @@ export class SecretLedger {
     this.compiled = undefined;
   }
 
+  /** Encoded spellings needed to retain incomplete values at streaming boundaries. */
+  forms(): readonly string[] {
+    return secretForms(this.values).map(([, form]) => form);
+  }
+
+  /** Copies the ledger for encrypted session transport; never include this in reports or logs. */
+  snapshot(): readonly (readonly [string, string])[] {
+    return this.values.map(([name, value]) => [name, value] as const);
+  }
+
   /** Bound so it can be handed out as a plain function. */
   readonly redact = (text: string): string => this.compile().redact(text);
 
@@ -109,4 +122,17 @@ export class SecretLedger {
     };
     return this.compiled;
   }
+}
+
+/** Every value this process has resolved; output boundaries use the live ledger. */
+export const processSecrets = new SecretLedger();
+
+/** Redacts both keys and string values in plain JSON-shaped output without mutating its owner. */
+export function redactJson<T>(value: T, redact: (text: string) => string): T {
+  if (typeof value === 'string') return redact(value) as T;
+  if (Array.isArray(value)) return value.map((entry) => redactJson(entry, redact)) as T;
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [redact(key), redactJson(entry, redact)])) as T;
+  }
+  return value;
 }

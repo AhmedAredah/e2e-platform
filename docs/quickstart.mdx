@@ -3,12 +3,20 @@ title: Quickstart
 description: Run your first web or mobile test, then add AI with your own subscription or API key.
 ---
 
+<Note>
+This is the MIT-based e2e-cpp fork. Install the local checksummed kit from the
+source archive before using the commands below; the fork package names are not
+published by this archive. The browser/mobile presets also need locally packed
+engine modules. C++ setup is described in [C++ applications](/cpp).
+</Note>
+
+
 Set up a test, run it, then let an agent drive a flow. Agent steps can use
 your own ChatGPT, GitHub Copilot, or SuperGrok subscription, an API key, or a
 local model.
 
 <Note>
-Use Node.js 22.12 or newer. On Windows, run inside WSL. Mobile tests also
+Use Node.js 22.22.3+ in the 22.x line, or 24.8.0+. On Windows, run inside WSL. Mobile tests also
 need Xcode with an iOS simulator runtime, or the Android SDK with an emulator.
 </Note>
 
@@ -20,15 +28,15 @@ need Xcode with an iOS simulator runtime, or the Android SDK with an emulator.
 
   <CodeGroup>
   ```bash npm
-  npx e2e@canary init
+  npx --no-install e2e-cpp init
   ```
 
   ```bash pnpm
-  pnpm dlx e2e@canary init
+  pnpm exec e2e-cpp init
   ```
 
   ```bash bun
-  bunx e2e@canary init
+  bun run e2e-cpp init
   ```
   </CodeGroup>
 
@@ -46,9 +54,9 @@ need Xcode with an iOS simulator runtime, or the Android SDK with an emulator.
     This config uses Vercel AI Gateway. The wizard configures the provider you chose.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { gateway } from 'ai';
 
 export default {
@@ -58,8 +66,8 @@ export default {
 ```
 
 ```ts title="tests/example.e2e.ts"
-import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test('app opens', async ({ app, web }) => {
   await app.open('/');
@@ -78,9 +86,9 @@ test('app opens', async ({ app, web }) => {
     `platform: 'android'` and `app: 'com.android.settings'`.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
 import { gateway } from 'ai';
 
 export default {
@@ -91,8 +99,8 @@ export default {
 ```
 
 ```ts title="tests/example.e2e.ts"
-import { test } from '@e2edev/agent-device';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/agent-device';
+import { expect } from '@e2e-cpp/core';
 
 test('Settings opens', async ({ screen }) => {
   await expect(screen.getByRole('button', { name: 'General' })).toBeVisible();
@@ -105,7 +113,10 @@ test('Settings opens', async ({ screen }) => {
   </Tabs>
   </Step>
   <Step title="Install dependencies">
-  If you skipped installation in the wizard:
+  For this source candidate, decline the wizard's dependency installation until
+  every `@e2e-cpp/*` dependency points to a trusted local tarball. Install the core
+  kit and locally packed optional engine first; init preserves existing dependency
+  entries but adds version ranges for missing ones. Once those entries are resolved:
 
   <CodeGroup>
   ```bash npm
@@ -123,7 +134,7 @@ test('Settings opens', async ({ screen }) => {
   </Step>
   <Step title="Run the example">
   ```bash
-  npx e2e run
+  npx --no-install e2e-cpp run
   ```
 
   e2e downloads a browser if needed, or boots the configured simulator or
@@ -142,9 +153,9 @@ Connect the option you chose in the wizard before running an agent step.
 
   | Subscription | Command |
   | --- | --- |
-  | ChatGPT Plus or Pro | `npx e2e login openai` |
-  | GitHub Copilot | `npx e2e login github-copilot` |
-  | SuperGrok or X Premium+ | `npx e2e login spacexai` |
+  | ChatGPT Plus or Pro | `npx --no-install e2e-cpp login openai` |
+  | GitHub Copilot | `npx --no-install e2e-cpp login github-copilot` |
+  | SuperGrok or X Premium+ | `npx --no-install e2e-cpp login spacexai` |
 
   Follow the terminal prompts. Copilot reuses your GitHub CLI login if
   available; otherwise it needs an OAuth app client ID. See
@@ -172,8 +183,8 @@ Adapt the web example to a flow your app supports:
 <Tabs>
   <Tab title="Web">
 ```ts title="tests/agent.e2e.ts"
-import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test('a visitor signs up for a trial', async ({ app, agent, screen }) => {
   await app.open('/');
@@ -189,8 +200,8 @@ test('a visitor signs up for a trial', async ({ app, agent, screen }) => {
   </Tab>
   <Tab title="Mobile (iOS)">
 ```ts title="tests/agent.e2e.ts"
-import { test } from '@e2edev/agent-device';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/agent-device';
+import { expect } from '@e2e-cpp/core';
 
 test('the agent opens General', async ({ agent, device }) => {
   await agent.act('open {section} settings', { params: { section: 'General' } });
@@ -209,7 +220,7 @@ Use `params` for values the goal refers to. Use `agent.assert` for a
 judgment about the screen and `expect` for an exact check.
 
 ```bash
-npx e2e run tests/agent.e2e.ts
+npx --no-install e2e-cpp run tests/agent.e2e.ts
 ```
 
 If you chose **None** during setup, [add a model to your config](/models)

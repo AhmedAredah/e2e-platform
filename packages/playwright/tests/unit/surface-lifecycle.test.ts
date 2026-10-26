@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Browser, Dialog, Route } from 'playwright';
-import type { EngineFixtureContext, OperationContext } from 'e2e/engine';
+import type { EngineFixtureContext, OperationContext } from '@e2e-cpp/core/engine';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { createWebFixture } from '../../src/web.ts';
@@ -59,7 +59,7 @@ beforeEach(async () => {
   acquire.mockResolvedValue(browser);
   surface = new PlaywrightSurface({});
   await surface.init({ runId: 'run', targetName: 'web', projectRoot: process.cwd(), app: {}, env: {}, headed: false, workerSlot: 0, signal: new AbortController().signal });
-  await surface.startAttempt({ attemptId: 'a1', artifactsDir, signal: new AbortController().signal });
+  await surface.startAttempt({ appLog() {}, environment() {}, attemptId: 'a1', artifactsDir, signal: new AbortController().signal });
 });
 
 afterEach(async () => {
@@ -89,7 +89,7 @@ it.each(['dialog', 'route'] as const)('keeps a late %s failure on the attempt th
     } as unknown as Route);
   }
   await surface.endAttempt(cleanup());
-  await surface.startAttempt({ attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
+  await surface.startAttempt({ appLog() {}, environment() {}, attemptId: 'a2', artifactsDir, signal: new AbortController().signal });
   release();
   await pending;
   expect(() => oldLatch.throwPending()).toThrow(/old handler failed/);

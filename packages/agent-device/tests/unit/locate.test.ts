@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LocatorExpression, TextPattern } from 'e2e/engine';
+import type { LocatorExpression, TextPattern } from '@e2e-cpp/core/engine';
 import { resolveExpression } from '../../src/locate.ts';
 import { projectSnapshot } from '../../src/nodes.ts';
 import { SETTINGS_NODES } from '../helpers/fake-client.ts';

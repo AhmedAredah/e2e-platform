@@ -10,7 +10,7 @@
  * an in-flight observation still references.
  */
 
-import { EngineError, type EngineSnapshot, type NodeRef } from 'e2e/engine';
+import { EngineError, type EngineSnapshot, type NodeRef } from '@e2e-cpp/core/engine';
 import type { ActionTarget } from './support.ts';
 
 /** Located refs are pruned oldest-first past this bound so the map cannot grow unboundedly. */

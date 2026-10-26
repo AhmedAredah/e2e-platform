@@ -41,7 +41,7 @@ export const actionsEnv = {
   GITHUB_RUN_ID: '99',
   GITHUB_EVENT_NAME: 'pull_request',
   GITHUB_EVENT_PATH: '/event.json',
-  GITHUB_WORKFLOW: 'e2e',
+  GITHUB_WORKFLOW: 'e2e-cpp',
   GITHUB_JOB: 'test',
   GITHUB_STEP_SUMMARY: '/summary.md',
 };

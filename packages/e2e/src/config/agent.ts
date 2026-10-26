@@ -37,6 +37,8 @@ export function modelLabel(model: ResolvedModel): string {
 }
 
 export interface ResolvedAgentConfig {
+  /** Explicitly disables all built-in model paths for this agent. */
+  readonly modelDisabled?: boolean;
   /**
    * The step executor `agent.act()` dispatches to, configured as the `agent`
    * value itself (`agent: createAgent(...)` or any StepExecutor); undefined
@@ -169,11 +171,13 @@ export function resolveAgentConfig(
 
   const context = resolveContext(agent?.context, limits.maxAgentContextBytes, label);
 
-  const model = resolveCanonicalModel(agent?.model, executor?.model, label, 'model');
+  const modelDisabled = agent?.model === false;
+  const model = agent?.model === false ? undefined : resolveCanonicalModel(agent?.model, executor?.model, label, 'model');
   return {
     executor,
+    modelDisabled,
     model,
-    judge: resolveCanonicalModel(agent?.judge, executor?.judge, label, 'judge') ?? model,
+    judge: modelDisabled ? undefined : resolveCanonicalModel(agent?.judge, executor?.judge, label, 'judge') ?? model,
     maxSteps,
     maxModelCalls,
     timeout,

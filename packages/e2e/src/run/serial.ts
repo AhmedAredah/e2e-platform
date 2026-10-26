@@ -45,6 +45,8 @@ export interface SharedSerialSession {
   readonly priorSteps: StepRecord[];
   /** Executor scratch memory shared by every member, as the ledger is. */
   readonly memory: Map<string, unknown>;
+  /** Defers cache confirmation until shared-session cleanup has settled. */
+  readonly finalizeCaches: ((closedCleanly: boolean) => Promise<void>)[];
 }
 
 /** Executor capabilities the serial runner borrows. */
@@ -61,6 +63,7 @@ export interface SerialHost {
     attemptId: string,
     artifactsDir: string,
     signal: AbortSignal,
+    artifactSink?: ArtifactSink,
   ): Promise<TargetSession>;
   closeSession(
     session: TargetSession,
@@ -219,11 +222,12 @@ async function runSerialAttempt(
   let shared: SharedSerialSession;
   try {
     shared = {
-      session: await host.launchSession(first.options.session, attemptId, artifacts.dir, host.interruptSignal),
+      session: await host.launchSession(first.options.session, attemptId, artifacts.dir, host.interruptSignal, artifacts.sink),
       attemptId,
       artifactSegments,
       priorSteps: [],
       memory: new Map(),
+      finalizeCaches: [],
     };
   } catch (cause) {
     const error = classifyError(cause);
@@ -334,6 +338,9 @@ async function runSerialAttempt(
     if (failedMember.error !== undefined) record.error = failedMember.error;
   }
   await host.closeSession(shared.session, attemptId, record, artifacts.sink, record.secondaryErrors);
+  if (record.status !== 'interrupted') {
+    for (const finalize of shared.finalizeCaches) await finalize(record.cleanup === 'complete');
+  }
   await artifacts.settle();
   record.durationMs = Date.now() - startedMs;
   return record;

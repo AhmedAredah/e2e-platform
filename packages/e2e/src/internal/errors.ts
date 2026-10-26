@@ -1,6 +1,7 @@
 /** Runner-owned error taxonomy and exit-code mapping. */
 
 import { stripVTControlCharacters } from 'node:util';
+import { processSecrets, redactJson } from './redact.ts';
 import { sourceLocation, type SourceLocation } from './source.ts';
 import {
   ENGINE_ERROR_CODES,
@@ -11,7 +12,7 @@ import {
 
 /** Message of an arbitrary thrown value, for diagnostics that must not throw. */
 export function errorMessage(cause: unknown): string {
-  return cause instanceof Error ? cause.message : String(cause);
+  try { return cause instanceof Error ? cause.message : String(cause); } catch { return '[unprintable error]'; }
 }
 
 /**
@@ -67,9 +68,11 @@ export function messageWithCauses(error: Error): string {
   return parts.join(': ');
 }
 
-function describeCause(cause: unknown): string {
+function describeCause(cause: unknown, depth = 0, budget = { remaining: 32 }): string {
+  budget.remaining -= 1;
+  if (depth >= MAX_CAUSE_CHAIN || budget.remaining < 0) return '[cause depth limit]';
   if (cause instanceof AggregateError) {
-    const members = [...new Set(cause.errors.map(describeCause).filter((text) => text !== ''))];
+    const members = [...new Set(cause.errors.slice(0, 32).map((entry) => describeCause(entry, depth + 1, budget)).filter((text) => text !== ''))];
     if (members.length > 0) return members.join('; ');
   }
   if (cause instanceof Error) {
@@ -77,7 +80,7 @@ function describeCause(cause: unknown): string {
     const code = (cause as { code?: unknown }).code;
     return typeof code === 'string' ? code : '';
   }
-  return String(cause);
+  return errorMessage(cause);
 }
 
 export type ErrorCategory =
@@ -336,7 +339,7 @@ export function classifyError(value: unknown): E2EError {
   if (value instanceof Error) {
     return new TestError('ERROR', messageWithCauses(value), { cause: value });
   }
-  return new TestError('ERROR', String(value));
+  return new TestError('ERROR', errorMessage(value));
 }
 
 const MAX_MESSAGE_BYTES = 8192;
@@ -356,15 +359,15 @@ export function serializeError(
     redact?: ((text: string) => string) | undefined;
   } = {},
 ): SerializedError {
-  const redact = extras.redact ?? ((text: string): string => text);
+  const redact = extras.redact ?? processSecrets.redact;
   const serialized: SerializedError = {
     category: error.category,
-    code: error.code,
+    code: truncateUtf8(sanitizeText(redact(error.code)), MAX_DETAIL_BYTES),
     message: truncateUtf8(sanitizeText(redact(error.message)), MAX_MESSAGE_BYTES),
     retryable: error.retryable,
   };
   if (extras.phase !== undefined) serialized.phase = extras.phase;
-  if (extras.scopeId !== undefined) serialized.scopeId = extras.scopeId;
+  if (extras.scopeId !== undefined) serialized.scopeId = redact(extras.scopeId);
   if (error.details !== undefined) {
     const details = boundedDetails(error.details, redact);
     if (details !== undefined) serialized.details = details;
@@ -372,7 +375,7 @@ export function serializeError(
   const stack = (error.cause instanceof Error ? error.cause.stack : undefined) ?? error.stack;
   if (stack !== undefined) serialized.stack = truncateUtf8(sanitizeText(redact(stack)), 65536);
   const source = sourceLocation(stack, extras.projectRoot);
-  if (source !== undefined) serialized.source = source;
+  if (source !== undefined) serialized.source = redactJson(source, redact);
   return serialized;
 }
 

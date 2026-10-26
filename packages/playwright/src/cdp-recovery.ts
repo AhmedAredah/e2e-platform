@@ -1,6 +1,6 @@
 /** Validates a persistent CDP binding without publishing or retaining it. */
 import type { Browser, BrowserContext, Page } from 'playwright';
-import { EngineError } from 'e2e/engine';
+import { EngineError } from '@e2e-cpp/core/engine';
 import { connectCdp } from './browser-connection.ts';
 import { registerCdpSelectors, requireCdpShadowTracking } from './cdp-selectors.ts';
 import { connectionAbort, type ConnectionBudget } from './operation-budget.ts';

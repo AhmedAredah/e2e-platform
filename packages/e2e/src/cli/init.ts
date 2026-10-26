@@ -47,7 +47,7 @@ const GITIGNORE_ENTRIES = [
 ];
 
 const RUN_SCRIPT = 'test:e2e';
-const SCRIPTS = { [RUN_SCRIPT]: 'e2e run' };
+const SCRIPTS = { [RUN_SCRIPT]: 'e2e-cpp run' };
 
 /** The gateway `--yes` picks; the choice is written into the config either way. */
 const DEFAULT_GATEWAY: GatewayId = 'vercel';
@@ -55,17 +55,17 @@ const DEFAULT_GATEWAY: GatewayId = 'vercel';
 type GatewayChoice = GatewayId | 'none';
 
 /**
- * Runs `e2e init`. Every prompt happens before the first write, existing
+ * Runs `e2e-cpp init`. Every prompt happens before the first write, existing
  * config and test files are never touched, and dependencies install only when
  * the user asks. The agent skill is offered once; later runs refresh the
  * copies that exist and never add new locations.
  */
 export async function init(cwd: string, options: InitOptions = {}): Promise<number> {
-  clack.intro(options.directory === undefined ? 'e2e init' : `e2e init ${options.directory}`);
+  clack.intro(options.directory === undefined ? 'e2e-cpp init' : `e2e-cpp init ${options.directory}`);
 
   if (options.interactive === false && !options.yes) {
     clack.log.error(
-      'e2e init asks questions and needs an interactive terminal; run it from a terminal, or pass --yes to accept the defaults (Playwright, the Vercel AI Gateway, no installation)',
+      'e2e-cpp init asks questions and needs an interactive terminal; run it from a terminal, or pass --yes to accept the defaults (Playwright, the Vercel AI Gateway, no installation)',
     );
     return 2;
   }
@@ -78,7 +78,7 @@ export async function init(cwd: string, options: InitOptions = {}): Promise<numb
   try {
     pkg = readPackage(cwd);
   } catch (cause) {
-    clack.log.error(`${path.join(cwd, 'package.json')} could not be read: ${describeManifestError(cause)}; fix it before running e2e init`);
+    clack.log.error(`${path.join(cwd, 'package.json')} could not be read: ${describeManifestError(cause)}; fix it before running e2e-cpp init`);
     return 2;
   }
   const bundledSkill = readSkillFiles();
@@ -219,15 +219,15 @@ export async function init(cwd: string, options: InitOptions = {}): Promise<numb
     clack.log.success(`${skill.existing ? 'Updated' : 'Created'} ${skill.relative}/ (${skill.files.length} files)`);
   }
   if (skillDirs.length === 0) {
-    clack.log.info(`Skipped the agent skill; agents can still print it with ${execCommand(manager, 'e2e guide')}`);
+    clack.log.info(`Skipped the agent skill; agents can still print it with ${execCommand(manager, 'e2e-cpp guide')}`);
   }
   for (const registration of mcpRegistrations) {
     mkdirSync(path.dirname(registration.absolute), { recursive: true });
     writeFileSync(registration.absolute, registration.content, 'utf8');
-    clack.log.success(`${registration.existing ? 'Updated' : 'Created'} ${registration.relative} (e2e mcp server)`);
+    clack.log.success(`${registration.existing ? 'Updated' : 'Created'} ${registration.relative} (e2e-cpp mcp server)`);
   }
   if (mcpFiles.length === 0) {
-    clack.log.info('Skipped the MCP server; register it later with: claude mcp add e2e -- npx e2e mcp');
+    clack.log.info('Skipped the MCP server; register it later with: claude mcp add e2e -- npx --no-install e2e-cpp mcp');
   }
   if (missingIgnore.length > 0) {
     const prefix = existingIgnore === '' || existingIgnore.endsWith('\n') ? '' : '\n';
@@ -251,15 +251,15 @@ export async function init(cwd: string, options: InitOptions = {}): Promise<numb
     clack.log.info('No tsconfig.json; add one for editor completions on e2e.config.ts and tests/');
   }
   // The script init adds, unless the project already had one of its own under that name.
-  const runCommand = /^e2e run(?:\s|$)/u.test(manifest.scripts?.[RUN_SCRIPT] ?? '')
+  const runCommand = /^e2e-cpp run(?:\s|$)/u.test(manifest.scripts?.[RUN_SCRIPT] ?? '')
     ? runScriptCommand(manager, RUN_SCRIPT)
-    : execCommand(manager, 'e2e run');
+    : execCommand(manager, 'e2e-cpp run');
   // A subscription gateway has no key to set; the sign-in is the step before the first run.
   const subscription = model === undefined ? undefined : getGatewayPreset(model.gateway).login;
   const next = [
     options.directory === undefined ? undefined : `cd ${shellArgument(options.directory)}`,
     install ? undefined : `${manager} install`,
-    subscription === undefined ? undefined : execCommand(manager, `e2e login ${subscription}`),
+    subscription === undefined ? undefined : execCommand(manager, `e2e-cpp login ${subscription}`),
     `${scaffold.needsAppUrl ? 'APP_URL=http://localhost:3000 ' : ''}${runCommand}`,
   ].filter((step) => step !== undefined);
   clack.outro(`Next: ${next.join(', then ')}`);

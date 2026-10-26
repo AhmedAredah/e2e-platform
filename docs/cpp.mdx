@@ -1,0 +1,195 @@
+---
+title: C++ applications
+description: Test compiled commands and cooperative Qt applications with explicit output checks and model-free runs.
+icon: terminal
+---
+
+The C++ extension adds process, native-bridge, terminal, HTTP and output-checking
+packages. A C++ application does not automatically have a portable UI tree: use
+the package that matches its exposed interface.
+
+<Note>
+These extension packages are included in this source branch. The examples use
+built local packages. Install a candidate in another project with the local kit below.
+A source archive does not include installed dependencies, compilers or Qt kits.
+Use the complete checkout for the C++ examples. The inherited initializer does
+not fetch a published copy of these fork packages.
+</Note>
+
+## Install in your project
+
+From a checkout with dependencies installed, create the local package kit:
+
+```bash
+pnpm pack:cpp
+node release-packages/install.mjs /absolute/path/to/your-project
+```
+
+The project must already contain `package.json`. The installer verifies package
+checksums and installs the runner plus all five extensions through npm.
+Third-party dependencies need registry access or a populated local cache.
+Real terminal processes also need the optional `node-pty` peer and native build prerequisites.
+
+## Choose an interface
+
+| Application | Use | What this does not imply |
+| --- | --- | --- |
+| Finite command or a CLI using CLI11/Boost/cxxopts | `@e2e-cpp/process` with `@e2e-cpp/checks` | Pipes do not emulate an interactive terminal. |
+| Qt Widgets or Quick app containing the helper | `@e2e-cpp/native` and `native/qt` | Toolkit events are not OS-wide keyboard/mouse input; arbitrary native dialogs and custom controls need qualification. |
+| Interactive terminal | `@e2e-cpp/terminal` | Optional PTY dependencies and terminal features must be qualified separately. |
+| HTTP service | `@e2e-cpp/protocol` | An RPC extension interface does not provide gRPC or WebSocket implementations. |
+| C++ server with a browser UI | Existing [web engine](/browser) | Native host controls and file dialogs remain separate surfaces. |
+| GTK, wxWidgets, JUCE, FLTK, ImGui or a game | A new qualified helper/driver or existing exposed interface | Dedicated toolkit drivers are not included merely because the program is C++. |
+
+## Build the source example
+
+Install the repository's pinned pnpm/Node prerequisites, CMake 3.21 or newer and
+a C++17 compiler. Windows needs Visual Studio C++ build tools, macOS needs Xcode
+command-line tools, and Linux needs GCC or Clang.
+
+From the repository root:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm build
+node scripts/cpp/verify.mjs
+```
+
+The verifier compiles the actual calculator, runs CTest, then runs the built e2e
+CLI on three tests. A separate negative suite deliberately exports the wrong
+answer and must fail an assertion. No model or API key is needed. The verifier
+downloads nothing after prerequisite installation and package builds.
+
+## Check the result independently
+
+The process fixture starts the compiled executable directly, captures separate
+stdout/stderr streams, checks expected exit codes, and owns cleanup. Its working
+directory is temporary, so use explicit retained paths for evidence.
+
+```ts
+import { test, expect } from '@e2e-cpp/process/test';
+import { assertComparison, compareJson } from '@e2e-cpp/checks';
+
+const executable = process.env['E2E_CPP_BINARY'];
+if (!executable) throw new Error('Set E2E_CPP_BINARY to the compiled calculator path');
+test('computes the expected result', async ({ processes }) => {
+  const result = await processes.run({
+    executable,
+    args: ['sum', '--a', '0.1', '--b', '0.2'],
+    timeoutMs: 5000,
+  });
+
+  expect(result.exitCode).toBe(0);
+  assertComparison(compareJson(JSON.parse(result.stdout.bytes.toString('utf8')), {
+    schemaVersion: 1,
+    operation: 'sum',
+    operands: [0.1, 0.2],
+    sum: 0.3,
+  }, { numbers: { absolute: 1e-12 } }));
+});
+```
+
+Choose tolerances from the domain's error budget. A zero exit or a success label
+is not proof of correct output. Validate schemas, keys, units, aggregates, files
+and database effects as appropriate. Tests must not regenerate their expected
+results from the application under test.
+
+For C++ `max_digits10` JSON output, pass `{ decimalPrecision: 'binary64' }`
+as the third argument of `readJsonFile`. This explicitly accepts finite binary64
+rounding. The default rejects decimal changes; unsafe integers still require
+separate opt-in. Preserve exact 64-bit identifiers and extended precision as strings.
+
+## Use a cooperative Qt target
+
+Build the helper into a test application with the selected Qt development kit.
+The reference project is `examples/with-qt/`; it includes Widgets and, where the
+kit provides the required modules, a Quick example.
+
+```ts
+import type { E2EConfig } from '@e2e-cpp/core';
+import { qt } from '@e2e-cpp/native';
+
+const executable = process.env['E2E_QT_DEMO'];
+if (!executable) throw new Error('Set E2E_QT_DEMO to the compiled helper app path');
+
+export default {
+  modelPolicy: 'forbid',
+  targets: [{
+    name: 'qt-demo',
+    engine: qt(),
+    app: { appPath: executable },
+  }],
+} satisfies E2EConfig;
+```
+
+Supply an absolute `E2E_QT_DEMO` path. The native engine owns launch and the helper
+handshake; an HTTP `app.command` readiness URL is not required. Capabilities are
+negotiated explicitly. Widgets/Quick objects, virtualized models and custom
+rendering need different mappings. A successful helper test does not establish
+native-input, accessibility or compositor fidelity. Locators reject truncated
+trees, so missing nodes cannot prove absence. Screenshots discard frames whose
+tree or mask geometry changes during capture; persistent changes fail closed.
+
+With Qt installed and a desktop available:
+
+```bash
+node scripts/cpp/verify.mjs --qt
+```
+
+On Linux, use `xvfb-run -a` for a real X11 window. An offscreen run is useful for
+helper semantics but is not evidence of OS routing or Wayland compatibility.
+
+## Forbid model calls explicitly
+
+Set `modelPolicy: 'forbid'` in configuration or run:
+
+<CodeGroup>
+```bash npm
+npx --no-install e2e-cpp run --no-model
+```
+
+```bash pnpm
+pnpm exec e2e-cpp run --no-model
+```
+
+```bash bun
+bun run e2e-cpp run --no-model
+```
+</CodeGroup>
+
+This policy is separate from replay-cache strictness. Replaying actions still
+needs fresh outcome assertions, and a cache miss must not silently contact a
+model in a model-forbidden run.
+
+## Extend a module
+
+`ProcessRunner`/`LocalProcessRunner`, `NativeEngine`, `NativeDriver` and
+`NativeTransport` keep supervision, runner integration, toolkit behavior and
+transport separate. Subclass the relevant contract or inject a collaborator
+rather than rewriting the runner for each toolkit. Output validators and
+terminal/protocol abstractions keep independent verification and interaction
+separate. Every added backend needs its own capability declaration, lifecycle
+and seeded-defect tests. Terminal factories receive an optional operation budget
+and abort signal. Teardown invalidates pending acquisitions, and late transports
+are closed. A custom factory must honor cancellation to release its own pending resources.
+
+## Evidence and limits
+
+The verifier retains reports, exported JSON and process logs under the CLI
+example's `.e2e/` directory, a CTest XML report under its build directory and a
+summary at `.e2e/cpp/verification.json`. Qt reports live under the Qt example's
+`e2e/.e2e/` directory. CI is configured for Windows/macOS/Linux; consult actual
+job artifacts before calling an untested configuration supported.
+
+Native helpers are trusted code, not an OS sandbox. Raw logs, recordings and
+dumps can contain private application data. Review evidence before sharing it.
+Qt helper binaries must match qualified toolkit/compiler/build combinations;
+Qt Test and Qt Quick Test have no normal binary-compatibility guarantee.
+
+See the source checkout's `CPP_SUPPORT.md` for the folder layout, extension
+contracts, qualification gates and primary-source references. Framework sources:
+[Qt threading](https://doc.qt.io/qt-6/threads-qobject.html),
+[Qt plugin deployment](https://doc.qt.io/qt-6/deployment-plugins.html),
+[Qt compatibility](https://doc.qt.io/qt-6/qtmodules.html),
+[Node child processes](https://nodejs.org/api/child_process.html) and
+[CTest](https://cmake.org/cmake/help/latest/manual/ctest.1.html).

@@ -1,0 +1,55 @@
+{
+  "name": "@e2e-cpp/terminal",
+  "version": "0.1.0",
+  "description": "PTY-backed terminal engine with real VT screen reconstruction for e2e",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "NOTICE",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "prepublishOnly": "node ../../scripts/check-dist.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/session.test.ts tests/keys.test.ts tests/engine.test.ts"
+  },
+  "dependencies": {
+    "@xterm/headless": "6.0.0",
+    "@xterm/addon-unicode11": "0.9.0"
+  },
+  "peerDependencies": {
+    "@e2e-cpp/core": ">=0.1.0 <1.0.0",
+    "@e2e-cpp/process": ">=0.1.0 <1.0.0",
+    "node-pty": "^1.1.0"
+  },
+  "peerDependenciesMeta": {
+    "node-pty": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@e2e-cpp/core": "workspace:*",
+    "@e2e-cpp/process": "workspace:*",
+    "node-pty": "1.1.0",
+    "@types/node": "26.6.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "engines": {
+    "node": "^22.22.3 || >=24.8.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "tag": "latest"
+  }
+}

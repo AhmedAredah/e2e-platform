@@ -3,7 +3,7 @@ title: From Playwright
 description: Run e2e alongside Playwright and migrate tests one file at a time.
 ---
 
-`@e2edev/playwright` uses your installed Playwright when its version satisfies
+`@e2e-cpp/playwright` uses your installed Playwright when its version satisfies
 the engine's peer dependency. Both test runners can stay in the same project.
 e2e uses `e2e.config.ts` and finds `tests/**/*.e2e.ts` by default. Keep the two
 runners' file patterns separate.
@@ -40,9 +40,9 @@ test('checkout', async ({ page }) => {
 });
 ```
 
-```ts title="e2e"
-import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+```ts title="@e2e-cpp/core"
+import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test('checkout', async ({ app, agent, screen }) => {
   await app.open('/cart');

@@ -1,4 +1,4 @@
-/** `e2e telemetry`: whether anonymous usage telemetry is on, and the switch. */
+/** `e2e-cpp telemetry`: whether anonymous usage telemetry is on, and the switch. */
 
 import picocolors from 'picocolors';
 import type { Telemetry, TelemetryDisabledBy } from '../telemetry/telemetry.ts';
@@ -11,7 +11,8 @@ export const TELEMETRY_ACTIONS: readonly TelemetryAction[] = ['status', 'enable'
 const REASONS: Readonly<Record<TelemetryDisabledBy, string>> = {
   E2E_TELEMETRY_DISABLED: 'E2E_TELEMETRY_DISABLED is set',
   DO_NOT_TRACK: 'DO_NOT_TRACK is set',
-  preference: 'switched off with e2e telemetry disable',
+  unconfigured: 'this fork has no telemetry destination',
+  preference: 'switched off with e2e-cpp telemetry disable',
   store: 'the preferences directory is not writable',
 };
 
@@ -30,7 +31,7 @@ export function telemetry(action: TelemetryAction, instance: Telemetry): number 
       process.stderr.write(`the choice could not be saved: ${instance.preferencesPath} is not writable\n`);
       return 2;
     }
-    out(`telemetry ${enable ? 'enabled' : 'disabled'}; saved to ${saved}`);
+    out(`telemetry preference ${enable ? 'enabled' : 'disabled'}; saved to ${saved}`);
   }
   const disabledBy = instance.disabledBy;
   if (disabledBy === undefined) {

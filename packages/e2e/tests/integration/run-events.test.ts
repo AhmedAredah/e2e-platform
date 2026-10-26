@@ -21,7 +21,7 @@ import {
 import type { StepExecutor } from '../../src/agent/executor.ts';
 import type { RunEvent } from '../../src/run/events.ts';
 
-const SUITE = `import { test, expect } from 'e2e';
+const SUITE = `import { test, expect } from '@e2e-cpp/core';
 
 test('increments once', async ({ app, agent, screen }) => {
   await app.open();
@@ -145,12 +145,12 @@ describe('run events: attempt and step identity', () => {
     const app = await startFixtureApp();
     const events: RunEvent[] = [];
     const files = {
-      'tests/retry.e2e.ts': `import { test } from 'e2e';
+      'tests/retry.e2e.ts': `import { test } from '@e2e-cpp/core';
 test('retry', { retries: 1 }, async ({ app, agent }) => {
   await app.open();
   await agent.act('retry me');
 });`,
-      'tests/serial.e2e.ts': `import { test } from 'e2e';
+      'tests/serial.e2e.ts': `import { test } from '@e2e-cpp/core';
 test.describe('group', { serial: true, retries: 1 }, () => {
   test('first', async ({ app, agent }) => {
     await app.open();
@@ -245,7 +245,7 @@ describe('run events: run lifecycle hygiene', () => {
     try {
       const result = await runProjectWithConfigFile(
         {
-          'tests/logs.e2e.ts': `import { test } from 'e2e';
+          'tests/logs.e2e.ts': `import { test } from '@e2e-cpp/core';
 console.log('top level');
 test('talks', async () => {
   console.log('hello', { from: 'the test' });

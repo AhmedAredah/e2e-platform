@@ -117,8 +117,8 @@ artifact with `TRACE_WITHHELD` and leaves the file untouched. See the
 ## Watch it happen
 
 ```bash
-npx e2e run --headed          # a visible browser
-npx e2e run --video           # requires an engine that records video
+npx --no-install e2e-cpp run --headed          # a visible browser
+npx --no-install e2e-cpp run --video           # requires an engine that records video
 ```
 
 `--video` requires recording support from every selected engine. Unsupported
@@ -151,9 +151,9 @@ report; use `expect` or an artifact for anything a later reader needs.
 Use these flags to inspect agent behavior:
 
 ```bash
-npx e2e run --debug     # timings and a step table on stderr
-npx e2e run --ai-trace  # every model call, for a trace viewer
-npx e2e run --no-cache  # run the agent live instead of replaying
+npx --no-install e2e-cpp run --debug     # timings and a step table on stderr
+npx --no-install e2e-cpp run --ai-trace  # every model call, for a trace viewer
+npx --no-install e2e-cpp run --no-cache  # run the agent live instead of replaying
 ```
 
 `--debug` appends two tables after the reporter's output: phase timings for
@@ -206,7 +206,7 @@ Every code, its class, and its exit code are in the
 
 <CardGroup cols={2}>
   <Card title="CLI reference" icon="terminal" href="/reference/cli#e2e-run">
-    Every flag of `e2e run`.
+    Every flag of `e2e-cpp run`.
   </Card>
   <Card title="Errors" icon="triangle-exclamation" href="/reference/errors">
     Every error code.

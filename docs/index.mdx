@@ -8,7 +8,7 @@ goal in natural language and an agent interacts with the app to complete it.
 Use locators and assertions in the same test to check exact results.
 
 ```ts title="tests/checkout.e2e.ts"
-import { test, expect } from 'e2e';
+import { test, expect } from '@e2e-cpp/core';
 
 test('a member upgrades to Pro', async ({ app, agent, screen }) => {
   await app.open('/settings/billing');
@@ -28,9 +28,9 @@ Tests without agent steps run without a model.
 Configure an engine for your app and a model for the agent:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { gateway } from 'ai';
 
 export default {

@@ -1,0 +1,159 @@
+// SPDX-License-Identifier: MIT
+#include "support.h"
+#include <QAbstractButton>
+#include <QAbstractItemView>
+#include <QAccessible>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QStyle>
+#include <QStyleOptionButton>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPlainTextEdit>
+#include <QRadioButton>
+#include <QTextEdit>
+#include <QHash>
+#include <QStringList>
+#include <QCoreApplication>
+#include <QKeyEvent>
+#include <QPointer>
+#include <QMetaProperty>
+
+#ifdef E2E_QT_HAS_QUICK
+#include <QQuickItem>
+#endif
+
+namespace e2e::qt::detail {
+void sendKeyPair(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text) {
+    QPointer<QObject> target(object);
+    QKeyEvent press(QEvent::KeyPress, key, modifiers, text);
+    QCoreApplication::sendEvent(target, &press);
+    if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during key input");
+    QKeyEvent release(QEvent::KeyRelease, key, modifiers, text);
+    QCoreApplication::sendEvent(target, &release);
+}
+QString clean(QString value, int limit) {
+    value.remove(QChar::Null);
+    return value.left(limit);
+}
+
+QJsonObject rectJson(const QRectF& rect) {
+    return {{"x", rect.x()}, {"y", rect.y()}, {"width", rect.width()}, {"height", rect.height()}};
+}
+
+QString requiredText(const QJsonObject& params, const char* key) {
+    if (!params.value(QLatin1String(key)).isString()) throw Failure("INVALID_STATE", "string argument required");
+    const QString text = params.value(QLatin1String(key)).toString();
+    if (text.size() > MaxText) throw Failure("INVALID_STATE", "text argument exceeds limit");
+    return text;
+}
+
+QString accessibleName(QObject* object) {
+    auto* accessible = QAccessible::queryAccessibleInterface(object);
+    return accessible ? clean(accessible->text(QAccessible::Name), 256) : QString();
+}
+
+QString widgetRole(QWidget* widget) {
+    if (qobject_cast<QRadioButton*>(widget)) return "radio";
+    if (qobject_cast<QCheckBox*>(widget)) return "checkbox";
+    if (qobject_cast<QAbstractButton*>(widget)) return "button";
+    if (qobject_cast<QLineEdit*>(widget) || qobject_cast<QTextEdit*>(widget) || qobject_cast<QPlainTextEdit*>(widget)) return "textbox";
+    if (qobject_cast<QComboBox*>(widget)) return "combobox";
+    if (qobject_cast<QLabel*>(widget)) return "text";
+    if (qobject_cast<QAbstractItemView*>(widget)) return "grid";
+    if (widget->isWindow()) return widget->isModal() ? "dialog" : "window";
+    return "group";
+}
+
+QPoint widgetPoint(QWidget* widget) {
+    if (auto* button = qobject_cast<QAbstractButton*>(widget)) {
+        if (qobject_cast<QCheckBox*>(widget) || qobject_cast<QRadioButton*>(widget)) {
+            QStyleOptionButton option;
+            option.initFrom(widget);
+            option.text = button->text();
+            option.icon = button->icon();
+            option.iconSize = button->iconSize();
+            const auto element = qobject_cast<QRadioButton*>(widget) ? QStyle::SE_RadioButtonClickRect : QStyle::SE_CheckBoxClickRect;
+            return widget->style()->subElementRect(element, &option, widget).center();
+        }
+    }
+    return widget->rect().center();
+}
+
+namespace {
+bool secureMarker(QObject* object) {
+    const int index = object->metaObject()->indexOfProperty("e2eSecure");
+    if (index >= 0) {
+        const QMetaProperty property = object->metaObject()->property(index);
+        // A mutable declaration without NOTIFY can change and change back
+        // inside paint, defeating both signal guards and before/after checks.
+        if (!property.isConstant() && !property.hasNotifySignal()) return true;
+    }
+    return object->property("e2eSecure").toBool();
+}
+}
+
+bool secureObject(QObject* object) {
+    for (QObject* ancestor = object; ancestor; ancestor = ancestor->parent())
+        if (secureMarker(ancestor)) return true;
+    if (auto* edit = qobject_cast<QLineEdit*>(object)) return edit->echoMode() != QLineEdit::Normal;
+#ifdef E2E_QT_HAS_QUICK
+    for (auto* item = qobject_cast<QQuickItem*>(object); item; item = item->parentItem()) {
+        if (secureMarker(item)) return true;
+        if (item->property("echoMode").isValid() && item->property("echoMode").toInt() != 0) return true;
+    }
+#endif
+    return false;
+}
+
+ParsedKey parseKey(QString value) {
+#ifdef Q_OS_MACOS
+    constexpr bool macos = true;
+#else
+    constexpr bool macos = false;
+#endif
+    return parseKey(std::move(value), {macos, QCoreApplication::testAttribute(Qt::AA_MacDontSwapCtrlAndMeta)});
+}
+
+ParsedKey parseKey(QString value, KeyboardPlatform platform) {
+    // Qt normally represents physical Command as Control on macOS. The
+    // application attribute opts out of that translation, not of our grammar.
+    const bool swapped = platform.macos && !platform.dontSwapControlAndMeta;
+    const auto control = swapped ? Qt::MetaModifier : Qt::ControlModifier;
+    const auto meta = swapped ? Qt::ControlModifier : Qt::MetaModifier;
+    Qt::KeyboardModifiers modifiers = Qt::NoModifier;
+    QStringList parts = value.split('+');
+    if (value.endsWith('+')) {
+        if (value == "+") parts = QStringList{"+"};
+        else if (value.endsWith("++")) { parts.removeLast(); parts.last() = "+"; }
+    }
+    for (int i = 0; i + 1 < parts.size(); ++i) {
+        const QString& part = parts[i];
+        if (part == "ControlOrMeta") modifiers |= platform.macos ? meta : control;
+        else if (part == "Control" || part == "Ctrl") modifiers |= control;
+        else if (part == "Meta" || part == "Command") modifiers |= meta;
+        else if (part == "Alt") modifiers |= Qt::AltModifier;
+        else if (part == "Shift") modifiers |= Qt::ShiftModifier;
+        else throw Failure("UNSUPPORTED_CAPABILITY", "unsupported key modifier");
+    }
+    const QString key = parts.constLast();
+    static const QHash<QString, Qt::Key> keys = {
+        {"Enter", Qt::Key_Return}, {"Return", Qt::Key_Return}, {"Tab", Qt::Key_Tab},
+        {"Insert", Qt::Key_Insert}, {"Escape", Qt::Key_Escape}, {"Backspace", Qt::Key_Backspace}, {"Delete", Qt::Key_Delete},
+        {"ArrowUp", Qt::Key_Up}, {"ArrowDown", Qt::Key_Down}, {"ArrowLeft", Qt::Key_Left},
+        {"ArrowRight", Qt::Key_Right}, {"Home", Qt::Key_Home}, {"End", Qt::Key_End},
+        {"PageUp", Qt::Key_PageUp}, {"PageDown", Qt::Key_PageDown}, {"Space", Qt::Key_Space},
+    };
+    if (keys.contains(key)) return {keys.value(key), modifiers, key == "Space" ? QString(" ") : QString()};
+    if (key.size() == 1 && key.at(0).unicode() >= 32 && key.at(0).unicode() <= 126) {
+        const QString text = modifiers.testFlag(Qt::ShiftModifier) ? key.toUpper() : key;
+        return {static_cast<Qt::Key>(key.toUpper().at(0).unicode()), modifiers, text};
+    }
+    if (key.startsWith('F')) {
+        bool ok = false;
+        const int number = key.mid(1).toInt(&ok);
+        if (ok && number >= 1 && number <= 12) return {static_cast<Qt::Key>(Qt::Key_F1 + number - 1), modifiers, {}};
+    }
+    throw Failure("UNSUPPORTED_CAPABILITY", "unsupported key");
+}
+}

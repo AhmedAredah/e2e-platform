@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AppError } from 'agent-device';
-import { EngineError, TestError } from 'e2e/engine';
+import { EngineError, TestError } from '@e2e-cpp/core/engine';
 import { staleOr, translateError } from '../../src/errors.ts';
 
 describe('error translation', () => {

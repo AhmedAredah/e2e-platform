@@ -51,7 +51,7 @@ export interface CodexProviderOptions {
 }
 
 export function createCodexProvider(options: CodexProviderOptions = {}): OAuthProvider<CodexCredentials, CodexLoginOptions> {
-  const originator = options.originator ?? 'e2e';
+  const originator = options.originator ?? 'e2e-cpp';
   const issuer = options.issuer ?? ISSUER;
   const apiUrl = options.apiUrl ?? API_URL;
   const callbackPort = options.callbackPort ?? CALLBACK_PORT;

@@ -1,4 +1,4 @@
-# @e2edev/github
+# @e2e-cpp/github
 
 ## 0.3.0-canary-20260917213813
 
@@ -11,7 +11,7 @@
 
 ### Minor Changes
 
-- [#310](https://github.com/tester-army/e2e/pull/310) [`4c76360`](https://github.com/tester-army/e2e/commit/4c76360cb65b20c5193240b0e5a0489bd7e0c558) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The reporter's `key` also names the comment in its headline (`e2e chromium: 77 passed`), so two jobs posting to one pull request read apart. The comment itself takes the new page layout from `e2e`: no file table, flaky tests folded, one line of small print.
+- [#310](https://github.com/tester-army/e2e/pull/310) [`4c76360`](https://github.com/tester-army/e2e/commit/4c76360cb65b20c5193240b0e5a0489bd7e0c558) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The reporter's `key` also names the comment in its headline (`e2e chromium: 77 passed`), so two jobs posting to one pull request read apart. The comment itself takes the new page layout from `@e2e-cpp/core`: no file table, flaky tests folded, one line of small print.
 
 ### Patch Changes
 
@@ -36,7 +36,7 @@
 
 ### Minor Changes
 
-- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `e2e`. `@e2edev/e2e` is retired and deprecated on npm; every import, config, and peer range now names `e2e` (`e2e`, `e2e/agent`, `e2e/engine`). The engines and the GitHub reporter declare their peer dependency on `e2e`, so a project on `@e2edev/e2e` must switch the runner to `e2e` when it takes these versions. The CLI keeps its `e2e` bin name.
+- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `@e2e-cpp/core`. `@e2e-cpp/e2e` is retired and deprecated on npm; every import, config, and peer range now names `@e2e-cpp/core` (`@e2e-cpp/core`, `@e2e-cpp/core/agent`, `@e2e-cpp/core/engine`). The engines and the GitHub reporter declare their peer dependency on `@e2e-cpp/core`, so a project on `@e2e-cpp/e2e` must switch the runner to `@e2e-cpp/core` when it takes these versions. The CLI keeps its `@e2e-cpp/core` bin name.
 
 ### Patch Changes
 
@@ -62,10 +62,10 @@
   pull request or a handoff instead of retelling the result.
   `renderMarkdownReport(report, { artifactsUrl, artifactsDir, sourceUrl })` is
   exported from the main entrypoint for a reporter that posts the page
-  elsewhere. `@e2edev/github` posts this page as the pull request comment in
+  elsewhere. `@e2e-cpp/github` posts this page as the pull request comment in
   place of its one table of tests that did not pass; its `renderComment`,
   `CommentOptions`, `MAX_MARKER_CHARS`, and `MAX_URL_CHARS` exports are gone
-  (nothing consumed them), and the package now needs `@e2edev/e2e` 0.13 or
+  (nothing consumed them), and the package now needs `@e2e-cpp/e2e` 0.13 or
   later. `e2e init` ignores `.e2e/summary.md`.
 
 ## 0.1.0

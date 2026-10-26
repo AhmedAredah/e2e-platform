@@ -1,46 +1,53 @@
 {
-  "name": "e2e-monorepo",
+  "name": "e2e-cpp-monorepo",
   "private": true,
-  "description": "An open framework for agentic end-to-end testing",
+  "description": "MIT-based E2E framework with extensible CLI, terminal, HTTP and native Qt engines",
   "keywords": [
-    "e2e",
+    "@e2e-cpp/core",
     "testing",
     "agentic"
   ],
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter e2e run build && pnpm --filter @e2edev/playwright run build && pnpm --filter @e2edev/agent-device run build && pnpm --filter @e2edev/github run build && pnpm --filter @e2edev/oauth run build",
+    "build": "pnpm --filter @e2e-cpp/core run build && pnpm --filter @e2e-cpp/process run build && pnpm --filter @e2e-cpp/checks run build && pnpm --filter @e2e-cpp/protocol run build && pnpm --filter @e2e-cpp/native run build && pnpm --filter @e2e-cpp/terminal run build && pnpm --filter @e2e-cpp/playwright run build && pnpm --filter @e2e-cpp/agent-device run build && pnpm --filter @e2e-cpp/github run build && pnpm --filter @e2e-cpp/oauth run build",
     "check": "pnpm run lint && pnpm run check:dead-code && pnpm run typecheck && pnpm run docs:check-errors && pnpm run docs:check",
     "check:dead-code": "fallow dead-code",
     "docs:check-errors": "node scripts/check-error-codes.ts",
-    "docs:check": "pnpm --filter @e2edev/docs run check",
-    "docs:dev": "pnpm --filter @e2edev/docs run dev",
+    "docs:check": "pnpm --filter @e2e-cpp/docs run check",
+    "docs:dev": "pnpm --filter @e2e-cpp/docs run dev",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "changeset": "changeset",
     "version-packages": "changeset version && pnpm install --lockfile-only",
-    "release": "pnpm run build && changeset publish --tag beta",
+    "release": "pnpm run pack:cpp",
     "canary": "node scripts/canary-changeset.ts && changeset version --snapshot canary && pnpm run build",
-    "canary:publish": "changeset publish --tag canary --no-git-tag",
     "typecheck": "pnpm run build && pnpm -r run typecheck",
-    "test": "pnpm run build && pnpm --filter e2e run test && pnpm --filter @e2edev/playwright run test && pnpm --filter @e2edev/agent-device run test && pnpm --filter @e2edev/github run test && pnpm --filter @e2edev/oauth run test",
-    "test:testbed": "pnpm run build && pnpm --filter @e2edev/testbed test",
-    "test:web-benchmark": "pnpm run build && pnpm --filter @e2edev/web-benchmark test",
-    "test:mobile-benchmark": "pnpm run build && pnpm --filter @e2edev/mobile-benchmark test",
-    "test:agent": "pnpm run build && pnpm --filter @e2edev/testbed test:agent"
+    "test": "pnpm run build && pnpm --filter @e2e-cpp/core run test && pnpm --filter @e2e-cpp/process run test && pnpm --filter @e2e-cpp/checks run test && pnpm --filter @e2e-cpp/protocol run test && pnpm --filter @e2e-cpp/native run test && pnpm --filter @e2e-cpp/terminal run test && pnpm --filter @e2e-cpp/playwright run test && pnpm --filter @e2e-cpp/agent-device run test && pnpm --filter @e2e-cpp/github run test && pnpm --filter @e2e-cpp/oauth run test && pnpm run test:scripts",
+    "test:testbed": "pnpm run build && pnpm --filter @e2e-cpp/testbed test",
+    "test:web-benchmark": "pnpm run build && pnpm --filter @e2e-cpp/web-benchmark test",
+    "test:mobile-benchmark": "pnpm run build && pnpm --filter @e2e-cpp/mobile-benchmark test",
+    "test:agent": "pnpm run build && pnpm --filter @e2e-cpp/testbed test:agent",
+    "build:cpp": "pnpm --filter @e2e-cpp/core run build && pnpm --filter @e2e-cpp/process run build && pnpm --filter @e2e-cpp/checks run build && pnpm --filter @e2e-cpp/protocol run build && pnpm --filter @e2e-cpp/native run build && pnpm --filter @e2e-cpp/terminal run build",
+    "test:cpp": "pnpm run build:cpp && pnpm --filter @e2e-cpp/process run test && pnpm --filter @e2e-cpp/checks run test && pnpm --filter @e2e-cpp/protocol run test && pnpm --filter @e2e-cpp/native run test && pnpm --filter @e2e-cpp/terminal run test",
+    "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
+    "verify:cpp": "node scripts/cpp/verify.mjs",
+    "verify:qt:exports": "node scripts/cpp/qt-export-proof.mjs",
+    "verify:qt:install": "node scripts/cpp/verify-qt-install.mjs",
+    "pack:cpp": "pnpm run build:cpp && node scripts/cpp/pack.mjs",
+    "check:local": "pnpm run lint && pnpm run check:dead-code && pnpm run typecheck && pnpm run docs:check-errors && pnpm run docs:check"
   },
   "contributors": [
-    "Oskar Kwaśniewski <oskar@tester.army>",
+    "Oskar Kwa\u015bniewski <oskar@tester.army>",
     "Szymon Rybczak <szymon@tester.army>"
   ],
   "devDependencies": {
-    "@changesets/changelog-github": "1.0.1",
     "@changesets/cli": "3.0.2",
     "@types/node": "26.4.1",
     "fallow": "3.24.1",
     "oxlint": "1.82.0",
     "typescript": "7.0.2",
-    "zod": "4.6.1"
+    "zod": "4.6.6"
   },
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.3.4",
+  "license": "MIT"
 }

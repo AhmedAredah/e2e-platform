@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { upsertComment } from '../../src/post.ts';
 import { fakeGitHub, json } from './fake-github.ts';
 
-const MARKER = '<!-- e2e-github project=x -->';
+const MARKER = '<!-- e2e-cpp-github project=x -->';
 const params = (fetchImpl: typeof fetch, signal = new AbortController().signal) => ({
   fetch: fetchImpl,
   signal,
@@ -32,7 +32,7 @@ describe('upsertComment', () => {
       authorization: 'Bearer ghs_token',
       accept: 'application/vnd.github+json',
       'x-github-api-version': '2022-11-28',
-      'user-agent': '@e2edev/github',
+      'user-agent': '@e2e-cpp/github',
     });
     expect(calls[1]?.headers['content-type']).toBe('application/json');
     expect(calls[1]?.body).toEqual({ body: `${MARKER}\n### e2e` });

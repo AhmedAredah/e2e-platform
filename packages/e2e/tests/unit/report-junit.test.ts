@@ -64,7 +64,7 @@ describe('renderJunitReport', () => {
   it('renders an empty run as a root with zero counts and no suites', () => {
     const xml = render(reportDocument());
     expect(rootAttributes(xml)).toEqual({
-      name: 'e2e',
+      name: '@e2e-cpp/core',
       tests: '0',
       failures: '0',
       errors: '0',

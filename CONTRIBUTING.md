@@ -1,215 +1,113 @@
 # Contributing
 
-Contributions are welcome, no matter how large or small. Bug reports and docs
-fixes count as much as features.
+This fork extends an MIT upstream snapshot with reusable C++ application testing
+modules. Start with [README.md](README.md), [CPP_SUPPORT.md](CPP_SUPPORT.md) and
+[AGENTS.md](AGENTS.md) for the architecture and conventions.
 
 ## License and contribution terms
 
-The code is MIT (see [`LICENSE`](./LICENSE)). There is no CLA and no DCO bot.
-By opening a pull request you agree that your contribution is licensed under
-the same MIT terms as the project (inbound = outbound). Only submit work you
-have the right to license that way.
+The project source is MIT; see [LICENSE](LICENSE) and the
+[provenance record](docs/development/LICENSING.md). Submit only work you can license
+under those terms. Preserve notices and attribution. Do not copy later upstream
+Apache-only implementation changes into this MIT fork without resolving their
+separate license obligations. Runtime dependencies and Qt retain their own terms.
 
-Please read the [code of conduct](./CODE_OF_CONDUCT.md) before you post.
-Security issues go through [`SECURITY.md`](./SECURITY.md), not the issue
-tracker.
+Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before participating. Consult
+[SECURITY.md](SECURITY.md) before reporting a potential vulnerability. Fork-owned
+community and security channels must be configured before a public launch; the
+original project's contacts are not designated contacts for this fork.
 
-## The contract
+## Development
 
-There is no separate spec document. The code is the contract, pinned in three
-places, and a change to any of them is a contract change:
-
-- The emitted `packages/e2e/dist/index.d.ts` and `dist/engine/index.d.ts`
-  are the public API. `packages/e2e/tests/types/sdk-types.ts` holds
-  compile-time assertions for the parts that are easy to loosen by accident;
-  it runs under `typecheck`.
-- Wire formats are the JSON Schemas in `packages/e2e/schema/` (report,
-  session, agent judgment, agent tool), each with a valid and an invalid
-  fixture. A wire change edits the producer, the schema, and both fixtures in
-  one review.
-- Security invariants are the list in [`SECURITY.md`](./SECURITY.md) and the
-  Gotchas section of [`AGENTS.md`](./AGENTS.md), enforced by
-  `tests/integration/agent-policy.test.ts` and the secret-ledger unit tests.
-
-Where the docs and the code disagree, the code wins and the docs are a bug.
-Fix the prose when you find it stale.
-
-## Development workflow
-
-This project is a pnpm monorepo containing:
-
-- `packages/e2e`: the published `e2e` package (SDK, runner, CLI, engine contract)
-- `packages/playwright`: the published `@e2edev/playwright` browser engine
-- `packages/agent-device`: the published `@e2edev/agent-device` mobile engine
-- `packages/testbed`: private dogfood suite that consumes the built packages
-- `packages/web-benchmark`: private Next.js app of hard-surface scenarios plus the e2e suites written against them
-- `docs/`: the docs site, built with [Mintlify](https://mintlify.com)
-- `skills/e2e/`: the agent skill shipped with the package and installed by `e2e init`
-
-Install dependencies from the root:
+Use the Node version range in package manifests and pnpm 12.3.4. Public modules
+live in `packages/`; private browser/mobile regression applications live in
+`apps/`; compiled helpers belong in `native/`; consumer applications belong in
+`examples/`. Keep generated build trees, reports and caches outside tracked source.
 
 ```sh
-pnpm install
-```
-
-Build first; nearly everything downstream consumes `dist`:
-
-```sh
+pnpm install --frozen-lockfile
 pnpm build
+pnpm check:local
+pnpm test
 ```
 
-Before sending a pull request, make sure the full gate passes:
+Runner/browser integration tests require the matching Chromium installation:
 
 ```sh
-pnpm check   # lint -> check:dead-code -> typecheck -> docs:check
-pnpm test    # unit + integration
+pnpm --filter @e2e-cpp/playwright exec playwright install chromium
 ```
 
-Integration tests need Chromium:
+C++ verification also requires CMake and a C++17 compiler. Qt checks need a matching
+Qt 6 kit and its runtime modules. See [verification/README.md](verification/README.md)
+for compiled example, installed CMake consumer, deliberate failure and npm kit
+checks. Record the actual environment and any unavailable qualification. Do not
+claim an OS or toolkit passed solely because a workflow exists for it.
+
+Default documentation checks are local:
 
 ```sh
-pnpm --filter @e2edev/playwright exec playwright install chromium
+pnpm docs:check
+pnpm docs:dev
 ```
 
-Docs are part of the change, not a follow-up. A behavior change updates its
-page under `docs/` in the same review, and `skills/e2e/` when the
-skill describes that surface.
+`docs:dev` starts the optional Mintlify preview. The separate docs `check:online`
+command contacts Mintlify; it is not part of the offline gate. Provider-backed
+suites spend model calls and require explicit manual invocation.
 
-```sh
-pnpm docs:dev     # local preview
-pnpm docs:check   # validate the site, its links, and the quickstart examples
-```
+## Public contracts and extension design
 
-### Commit message convention
+A contract change updates its implementation, types, tests and documentation
+in the same review:
 
-We follow the [conventional commits specification](https://www.conventionalcommits.org/en):
+- Public TypeScript declarations and compile-time API assertions.
+- Configuration, CLI flags/exit codes and environment variables.
+- Engine capabilities, deadlines, cancellation, observation completeness and cleanup.
+- JSON Schemas and valid/invalid fixtures for reports, sessions and agent protocols.
+- Native helper protocol and installed CMake usage.
 
-- `fix`: bug fixes, e.g. fix a crash when the engine disconnects.
-- `feat`: new features, e.g. add a new assertion.
-- `refactor`: code refactor with no behavior change.
-- `docs`: documentation changes.
-- `test`: adding or updating tests.
-- `chore`: tooling changes, e.g. change CI config.
+Use abstract classes for reusable backend contracts and inject drivers, transports
+and validators. Keep toolkit behavior out of core. New helpers must declare their
+capabilities honestly and include deliberate wrong-output or failure cases; a
+successful exit alone does not validate the application result. Qt's internal
+adapter headers are not an installed third-party plugin ABI.
 
-Mark a breaking change with `!` after the type (`feat(config)!: ...`). PRs are
-squash-merged, so the PR title is the commit; the
-[`writing-pr`](./.claude/skills/writing-pr/SKILL.md) skill describes the body.
+The emitted declarations are the public API. A module under `internal`, private
+showcase code, raw reporter wording and model prompts are not stability promises.
+Errors codes, wire semantics and exported interfaces are public contracts. Keep
+behavior and documentation consistent rather than preserving stale claims.
 
-### Changesets
+## Changes and local releases
 
-We use [changesets](https://github.com/changesets/changesets) to publish new
-versions. It handles bumping the version based on semver, writing the
-changelog, and creating tags and GitHub releases.
-
-If your change affects `e2e`, `@e2edev/playwright`, or
-`@e2edev/agent-device`, add a changeset:
+Use Conventional Commits. Explain the concrete behavior and relevant validation
+in a PR, and add a Changeset for a user-visible change to any reusable package:
 
 ```sh
 pnpm changeset
 ```
 
-Changes limited to the testbed, the web benchmark, docs, or CI don't need one.
-`@e2edev/testbed` and `@e2edev/web-benchmark` are private and skipped entirely
-(`privatePackages: false`), so they never get a version bump, a changelog, or a
-git tag. Never hand-edit a package `version` or
-`CHANGELOG.md`; `changesets/action` owns both.
-
-## Releases
-
-The runner publishes to npmjs as `e2e`; engines and reporters publish under
-the `@e2edev` scope. All are public packages: anyone can install them and read
-the release on GitHub. After a PR with a changeset lands on `main`, the release
-workflow opens a `chore: version packages` pull request that applies the
-pending changesets. Merging that PR re-runs the full gate, publishes the new
-versions, and creates the matching GitHub release. `@e2edev/e2e` is the
-runner's retired name and is deprecated on npm.
-
-### Release channels
-
-- `latest`: the current stable release. Install with no tag.
-- `next`: release candidates cut from `main` ahead of a `latest` release.
-  This is the build we ask reporters to confirm a fix against. Install with
-  `@next`.
-
-While the packages are `0.x`, versioned releases ship to the `beta` dist-tag
-instead and `latest` is not moved. The root `release` script passes
-`--tag beta`, and each publishable package carries `publishConfig.tag: "beta"`
-as a backstop for a hand-run `npm publish`. Switching to `latest` plus `next`
-is a two-line change in that script and those manifests, and happens with `1.0`.
-
-- `canary`: a build of `main` cut by hand ahead of the next versioned release.
-  This is the channel for beta testers before `1.0`, and the one the quickstart
-  installs. Install with `@canary`.
-
-A canary is a changesets snapshot release, published from a maintainer's
-machine, never from CI:
+Private applications are skipped by Changesets. The initial fork reset to 0.1.0
+is intentional; inherited changelogs describe upstream history, not published
+fork releases. Future coordinated version updates use the local Changesets
+configuration and plain changelog generator. No upstream GitHub release links
+are generated for this fork.
 
 ```sh
-GITHUB_TOKEN=<token> pnpm run canary
-pnpm run canary:publish
-git checkout -- packages .changeset
+pnpm pack:cpp
+node scripts/cpp/install-kit-smoke.mjs
 ```
 
-The first script writes a changeset that bumps every public package, versions
-them as `<next version>-canary-<datetime>`, and builds. The second publishes
-with `--tag canary`; it is a separate step because npm's two-factor prompt
-(a hardware key, for instance) has to be answered at the terminal. Bumping all
-of them together is what keeps the engines installable: their peer ranges are
-rewritten to the runner's exact canary version, and `init` pins the engine
-build it shipped with. The build has to run after versioning for that pin to
-hold, and each build stamps `dist/.build.json` with its version; a
-`prepublishOnly` hook in every package refuses to publish a `dist` whose stamp
-does not match `package.json`, so a publish without the build step in front of
-it fails instead of shipping the previous build. Nothing the scripts write is
-committed.
+`pack:cpp` and root `release` create a checksummed six-package local installation
+kit. The manual packaging workflow uploads an artifact. They do not publish to
+npm or create a release PR. Package names are local fork identities until the
+maintainer separately establishes registry ownership, support channels and a
+publication policy. No automatic publishing credentials are required.
 
-## Stability policy
+Every package build stamps its output; packing checks that the compiled version
+matches package metadata. The consumer smoke check installs local tarballs into
+a fresh project, verifies licenses, imports public modules, runs passing and
+intentionally failing tests, checks declarations and audits the installed tool.
 
-### What is covered
-
-The following are the public contract. A change that breaks any of them is a
-breaking change and follows the rules below:
-
-- Public types exported from `e2e` and `e2e/engine`, as
-  emitted in `dist/index.d.ts` and `dist/engine/index.d.ts`. Removing an
-  export, narrowing an accepted input, widening a returned type, or changing a
-  fixture's runtime behavior all count.
-- Config keys in `e2e.config.ts`, their types, and their defaults.
-- CLI commands, flags, exit codes, and environment variables (`E2E_*`).
-- Wire formats: the report, session, and agent protocol schemas in
-  `packages/e2e/schema/`, and the trace cache layout under `.e2e/cache/`.
-  Adding an optional field is compatible; renaming, removing, or changing the
-  meaning of one is not.
-
-Not covered: anything under `internal`, the testbed, the exact text of error
-messages and reporter output (error *codes* are covered), and the agent's
-prompts and tool descriptions.
-
-### Breaking changes
-
-- A breaking change to a covered surface ships with a deprecation first. The
-  old form keeps working, prints a one-line warning naming the replacement,
-  and is documented as deprecated on its reference page and in the changelog.
-- The window is six months. Deprecations are batched at the start of a
-  window; the first window opens on October 1, 2026, so removals from that
-  batch land no earlier than April 1, 2027. The next batch is April 1, and so
-  on, twice a year.
-- Removal happens at the end of the window, in a minor release while the
-  packages are `0.x` (semver treats `0.x` minors as breaking) and in a major
-  release from `1.0` onward. The changeset body names both the removed form
-  and its replacement, and the PR title carries the `!`.
-- A deprecation is announced in three places when it lands: the changeset
-  (so it reaches the changelog and the GitHub release), the reference page
-  for the surface, and a runtime warning the first time the old form is used
-  in a run.
-- Security fixes are the exception. If keeping the old form open is itself
-  the vulnerability, it is removed in a patch and the advisory says so.
-
-### Engine contract
-
-`e2e/engine` is what `@e2edev/playwright` and `@e2edev/agent-device`
-build against, and what a third-party engine builds against too. A change to
-that contract bumps all three packages together in one release, with a
-changeset for each, so an engine and a runner from the same release always
-match. Engines declare a peer range on `e2e` that points one way only
-(engine to runner, `>=x <1`); do not make it mutual or narrow it.
+Before a public release, document compatibility changes and upgrade paths.
+Coordinate engine/core peer ranges so compatible packages can be installed
+together. Security fixes may require immediate removal of unsafe behavior; explain
+that decision with the fix and its regression test.

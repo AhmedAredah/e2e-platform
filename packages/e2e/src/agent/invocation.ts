@@ -5,6 +5,7 @@
  * explicit deadline, a model-call budget, and no shared model transcript.
  */
 
+import { ConfigurationError } from '../internal/errors.ts';
 import type { StepExecutorContext } from './executor.ts';
 import type { JSONSchema7 } from 'ai';
 import type { AgentCacheContext } from '../cache/context.ts';
@@ -172,6 +173,9 @@ export class Invocation {
     private readonly options: InvocationOptions,
   ) {
     this.agent = runtime.select(options.agent);
+    if (runtime.config.modelPolicy === 'forbid' || this.agent.config.modelDisabled === true) {
+      throw new ConfigurationError('MODEL_UNAVAILABLE', 'Built-in model execution is disabled by model policy');
+    }
     this.deadline = runtime.engine.deadline(options.timeoutMs);
     this.pixelTier = options.vision === true || options.vision === 'only';
     this.system = buildSystem(options.task, this.agent.agentContext);
@@ -339,8 +343,8 @@ export class Invocation {
           { kind: 'model', phase: 'agent.model', name: request.schemaName },
           () =>
             this.adapter.generate({
-              system: this.system,
-              prompt,
+              system: this.runtime.redact(this.system),
+              prompt: this.runtime.redact(prompt),
               ...(images === undefined ? {} : { images }),
               schemaName: request.schemaName,
               schema: request.schema,

@@ -5,6 +5,7 @@
  * `resolve.ts` and the handle module apply the rules.
  */
 
+import { processSecrets } from '../internal/redact.ts';
 import type { credentialBrand, secretBrand } from '../internal/brands.ts';
 
 /**
@@ -77,3 +78,20 @@ export function envName(prefix: 'E2E_USER' | 'E2E_SECRET', name: string): string
   return `${prefix}_${name.toUpperCase().replaceAll(/[^A-Z0-9]/g, '_')}`;
 }
 
+
+/** Registers static declarations before validation can quote them in a diagnostic. */
+export function registerDeclaredSecrets(raw: unknown, env: NodeJS.ProcessEnv): void {
+  for (const [name, value] of Object.entries(env)) {
+    if ((name.startsWith('E2E_SECRET_') || /^E2E_USER_.*_PASSWORD$/.test(name)) && typeof value === 'string' && value !== '') processSecrets.register(name, value);
+  }
+  if (typeof raw !== 'object' || raw === null) return;
+  const config = raw as { secrets?: unknown; credentials?: unknown };
+  if (typeof config.secrets === 'object' && config.secrets !== null) {
+    for (const [name, value] of Object.entries(config.secrets)) if (typeof value === 'string' && value !== '') processSecrets.register(name, value);
+  }
+  if (typeof config.credentials === 'object' && config.credentials !== null) {
+    for (const [name, value] of Object.entries(config.credentials)) {
+      if (typeof value === 'object' && value !== null && 'password' in value && typeof value.password === 'string' && value.password !== '') processSecrets.register(name, value.password);
+    }
+  }
+}

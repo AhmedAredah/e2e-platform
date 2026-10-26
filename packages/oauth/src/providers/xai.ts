@@ -24,7 +24,7 @@ export interface XaiProviderOptions {
 
 export function createXaiProvider(options: XaiProviderOptions = {}): OAuthProvider<OAuthCredentials, Record<string, never>> {
   const issuer = options.issuer ?? ISSUER;
-  const referrer = options.referrer ?? 'e2e';
+  const referrer = options.referrer ?? 'e2e-cpp';
   return {
     id: 'spacexai',
     name: 'SpaceXAI',

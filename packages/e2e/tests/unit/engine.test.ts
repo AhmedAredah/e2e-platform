@@ -73,7 +73,7 @@ describe('defineEngine', () => {
   it('keeps hooks off the app declaration and closes the session manifest', () => {
     expect(() =>
       defineEngine(observingEngine({ app: { open: async () => undefined } as never })),
-    ).toThrow(/app has unknown key "open"; expected one of url, environment.*Steering hooks belong on session/);
+    ).toThrow(/app has unknown key "open"; expected one of appPath, launchArguments, url, environment.*Steering hooks belong on session/);
     expect(() =>
       defineEngine(observingEngine({ app: { navigate: async () => undefined } as never })),
     ).toThrow(/Steering hooks belong on session/);

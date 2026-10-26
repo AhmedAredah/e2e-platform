@@ -37,7 +37,7 @@ import {
   type ViewportPoint,
   type ViewportSize,
   ConfigurationError,
-} from 'e2e/engine';
+} from '@e2e-cpp/core/engine';
 import { runCommand, staleOr } from './errors.ts';
 import { pointerInteraction } from './actions.ts';
 import { resolveExpression } from './locate.ts';

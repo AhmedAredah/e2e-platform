@@ -3,12 +3,12 @@ title: e2e/engine
 description: Build an engine with observations, actions, lifecycle hooks, and fixtures.
 ---
 
-Import engine types and helpers from `e2e/engine`. `defineEngine` validates
+Import engine types and helpers from `@e2e-cpp/core/engine`. `defineEngine` validates
 and freezes your implementation, derives its capabilities, and returns a
 handle for `targets` in the config.
 
 ```ts
-import { defineEngine, type EngineHandle } from 'e2e/engine';
+import { defineEngine, type EngineHandle } from '@e2e-cpp/core/engine';
 
 export function defineEngine(spec: Engine): EngineHandle;
 export function isEngineHandle(value: unknown): value is EngineHandle;
@@ -715,7 +715,7 @@ export interface EngineAppDeclaration {
 Every field is documented under
 [the app under test](/reference/config#the-app-under-test). The site comes
 back to the engine as `EngineInitInfo.app.site`; `sameSite` from
-`e2e/engine` applies it to a URL.
+`@e2e-cpp/core/engine` applies it to a URL.
 
 ## Session
 
@@ -1018,7 +1018,7 @@ dispatch.
 `LOCATOR_ACTION_KINDS`, `POINTER_ACTION_KINDS`, `KEY_MODIFIERS`,
 `KEY_NAMES`, `parseKey`, `ENGINE_ERROR_CODES`, `RETRYABLE_ENGINE_ERROR_CODES`,
 `OBSERVED_NAME_LIMIT` and `OBSERVED_TEXT_LIMIT` are exported from
-`e2e/engine`. The `selector` expression kind carries a
+`@e2e-cpp/core/engine`. The `selector` expression kind carries a
 platform-native selector string; `frame` scopes a query into a nested
 document.
 
@@ -1104,3 +1104,34 @@ A `SemanticQuery` with `visible: true` must match only nodes whose
 `SemanticNode`, so `getByText('x', { visible: true })` and `toBeVisible()`
 never disagree. Apply it wherever the query sits in the expression, under a
 scope, filter, or index too.
+
+
+## Native app lifecycle and diagnostics
+
+`EngineAppDeclaration` and `EngineInitInfo.app` include optional `appPath` and
+`launchArguments`. A target's `app` fields override the engine's defaults.
+`validateApp(app, { targetName })` is synchronous and rejects unsupported app
+configuration before a worker launches. Like other hooks, methods inherited
+from a class are bound to the implementation instance.
+
+`startAttempt(context)` also receives two diagnostic callbacks:
+
+```ts
+context.environment({ bridgeVersion: '1.0' });
+context.appLog({ source: 'console', level: 'info', text: 'Application ready' });
+```
+
+The runner bounds these buffers and publishes `environment.json` and
+`application.log` as log artifacts after redacting secrets with the final
+attempt ledger. The callbacks do not directly publish raw process output.
+
+An engine with asynchronous transport or child-process failures should latch
+those faults and implement `settleAttempt({ signal, timeoutMs })`. The runner
+calls it before the attempt verdict and again after `endAttempt`, each within
+the cleanup budget. A fault at either boundary prevents a passing attempt.
+The engine should consume reported faults, stop background readers in cleanup,
+and reject promptly when the cleanup signal aborts.
+
+`resolveExpression(expression, roots)` is the shared deterministic semantic-tree
+locator resolver exported from `@e2e-cpp/core/engine`. Engines can use it to keep
+role, text, test-id, filtering, and locator combinations consistent.

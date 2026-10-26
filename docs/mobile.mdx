@@ -3,7 +3,7 @@ title: Testing iOS and Android
 description: Set up a simulator or emulator target, write a device test, and know what differs from the web.
 ---
 
-`@e2edev/agent-device` runs tests on iOS simulators and Android emulators.
+`@e2e-cpp/agent-device` runs tests on iOS simulators and Android emulators.
 Tests use the same `agent`, `screen`, and `expect` APIs as browser tests.
 Each attempt starts in the configured app.
 
@@ -21,8 +21,8 @@ The wizard selects iOS on macOS and Android elsewhere. It starts with the
 Settings app and one worker:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { agentDevice } from '@e2e-cpp/agent-device';
 
 export default {
   // Replace Settings with your app's bundle id.
@@ -60,8 +60,8 @@ when possible so attempts start consistently and cached steps can replay.
 Add a target for each platform:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { agentDevice } from '@e2edev/agent-device';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { agentDevice } from '@e2e-cpp/agent-device';
 
 const iphone = agentDevice({ platform: 'ios', app: 'com.example.app' });
 const pixel = agentDevice({ platform: 'android', app: 'com.example.app' });
@@ -94,8 +94,8 @@ If none are booted, it boots one. Two workers never drive the same device.
 `listitem`, and `switch`. Use `getByTestId` for native element identifiers.
 
 ```ts
-import { test } from '@e2edev/agent-device';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/agent-device';
+import { expect } from '@e2e-cpp/core';
 
 test('shows the version offline in dark mode', async ({ agent, device, screen }) => {
   await device.setAppearance('dark');
@@ -138,10 +138,10 @@ The agent already has basic actions such as `tap`, `type`, and `scroll`.
 Add `agentDeviceTools` for app switching, device gestures, and system alerts:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
-import { agentDeviceTools } from '@e2edev/agent-device/tools';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
+import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
 import { gateway } from 'ai';
 
 const iphone = agentDevice({ platform: 'ios', app: 'com.example.app' });

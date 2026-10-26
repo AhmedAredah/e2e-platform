@@ -1,5 +1,5 @@
 /**
- * `e2e explore` end to end against the fixture app, with one scripted model
+ * `e2e-cpp explore` end to end against the fixture app, with one scripted model
  * serving both surfaces: the planner's structured call and the explorer's
  * tool loop. The run goes through the real runner in-process, so the report,
  * the exit code, the finding evidence, and the summary rows are the ones a
@@ -19,7 +19,7 @@ import { fakeCalls, installFakeModel, type FakeCall } from '../helpers/fake-mode
 import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';
 import { assertValidReport } from '../helpers/report-schema.ts';
 import { createProject, type FixtureProject } from '../helpers/run-project.ts';
-import { playwright } from '@e2edev/playwright';
+import { playwright } from '@e2e-cpp/playwright';
 import { z } from 'zod';
 
 type PlanAnswer = { decision: 'step'; title: string; instruction: string } | { decision: 'finish'; summary: string };
@@ -79,7 +79,7 @@ async function runExplore(
   return Object.assign(outcome, { notices });
 }
 
-describe('e2e explore', () => {
+describe('e2e-cpp explore', () => {
   let app: FixtureApp;
   let project: FixtureProject;
 
@@ -333,7 +333,7 @@ describe('e2e explore', () => {
     });
     expect(outcome.status).toBe('passed');
     expect(notices).toEqual(['exploring with agent "ux"']);
-    // The steps record the agent they ran as, like `e2e run --agent`.
+    // The steps record the agent they ran as, like `e2e-cpp run --agent`.
     const steps = outcome.report.run.results[0]!.attempts[0]!.steps.filter((step) => step.api.startsWith('agent.'));
     expect(steps.length).toBeGreaterThan(0);
     expect(steps.map((step) => step.agent)).toEqual(steps.map(() => 'ux'));

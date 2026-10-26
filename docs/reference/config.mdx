@@ -8,8 +8,8 @@ its shape without widening its inferred types. The runner also validates the
 config when it loads, including ranges and rules TypeScript cannot check.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 
 export default {
   targets: [
@@ -22,7 +22,7 @@ export default {
 ```
 
 Unknown keys are rejected with `INVALID_CONFIG` at every level. There is no
-top-level `app` key: the engine declares the app it drives (see
+top-level `app` key. An engine can declare defaults and `targets[].app` can override them (see
 [the app under test](#the-app-under-test)).
 
 ## Loading
@@ -45,6 +45,7 @@ written with `require` or `module.exports` fails to load.
 
 ```ts
 export interface E2EConfig {
+  modelPolicy?: 'allow' | 'forbid';
   /** The config format this runner implements: `'0.1'`. */
   specVersion?: '0.1';
   /** Stable project id, 1 through 256 characters; defaults to the root `package.json` name. */
@@ -138,6 +139,7 @@ export interface Target {
   platform?: string;
   /** The engine driving the surface: `playwright(...)`, `agentDevice(...)`, or any `defineEngine` handle. */
   engine?: EngineHandle;
+  app?: EngineAppDeclaration;
 }
 ```
 
@@ -161,6 +163,8 @@ resolves it at config load.
  * App details declared by an engine and resolved once per target.
  */
 export interface EngineAppDeclaration {
+  readonly appPath?: string;
+  readonly launchArguments?: readonly string[];
   /**
    * Base URL of an addressable app: `app.open()` opens it and relative
    * navigation resolves against it. WHATWG-normalized; no userinfo, query, or
@@ -383,7 +387,7 @@ export interface AgentConfig {
    */
   executor?: StepExecutor;
   /** An AI SDK model instance; no implicit default. */
-  model?: ModelInstance;
+  model?: ModelInstance | false;
   /**
    * Model for `assert`, `waitFor`, and `extract`; defaults to `model`.
    * Must agree with `createAgent({ judge })` when both are set.
@@ -405,7 +409,7 @@ export interface AgentConfig {
 ```
 
 Tests use the `default` agent unless you select another with
-`e2e run --agent <name>`, a test or group option, or an individual `agent.*`
+`e2e-cpp run --agent <name>`, a test or group option, or an individual `agent.*`
 call. A test with `{ agent: ['buyer', 'admin'] }` runs once for each agent.
 `default` exists even when the config declares no agents, but has no model.
 
@@ -414,9 +418,9 @@ is `INVALID_CONFIG` on the CLI flag, `COLLECTION_ERROR` on a test or group,
 and `INVALID_ARGUMENT` on a call. See [Agents and personas](/agents).
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { gateway } from 'ai';
 
 export default {
@@ -456,7 +460,7 @@ export interface ModelInstance {
 ```
 
 Construct the model in your config with an AI SDK provider. For subscription
-sign-in, use [`@e2edev/oauth`](/subscriptions).
+sign-in, use [`@e2e-cpp/oauth`](/subscriptions).
 
 | Gateway | Constructor | Package | Reads |
 | --- | --- | --- | --- |
@@ -577,7 +581,7 @@ trust through `writable`.
 
 ### Commit your traces
 
-`e2e init` adds `.e2e/cache/` to `.gitignore`, so committing entries is
+`e2e-cpp init` adds `.e2e/cache/` to `.gitignore`, so committing entries is
 opt-in. Remove that line to share replays with CI and teammates; CI stays
 `read-only` unless `cache: 'read-write'` is set. See
 [Caching agent steps](/cache#commit-your-traces).
@@ -618,3 +622,35 @@ CI mode is on unless `CI` is unset, blank, `0`, or `false`.
 | `cache` | `read-write` | `read-only` when unset |
 | `test.only` | allowed | `ONLY_IN_CI`, exit code 2 |
 | `command.reuseExisting` | honored | ignored, with a notice |
+
+
+## Deterministic native configuration
+
+```ts
+import type { E2EConfig } from '@e2e-cpp/core';
+import { qt } from '@e2e-cpp/qt';
+
+export default {
+  modelPolicy: 'forbid',
+  targets: [{ engine: qt(), app: { appPath: './build/my-app', launchArguments: ['--test'] } }],
+} satisfies E2EConfig;
+```
+
+`targets[].app` overrides fields declared by `engine.app`. Omitted fields keep
+the engine defaults; `launchArguments` replaces the entire argument list. The
+engine validates the merged declaration before execution. Native paths and
+arguments are forwarded to its initialization hook. Without an explicit
+identity or URL, `appPath` identifies the app for session and cache isolation.
+
+`modelPolicy: 'forbid'` disables built-in model execution for every named agent.
+`agents: { default: { model: false } }` disables it for that agent. Both permit
+acquiring the agent fixture, so deterministic code can share fixtures with
+agentic suites. A built-in `act`, `assert`, `waitFor`, or `extract` then fails
+with `MODEL_UNAVAILABLE` before observing the app or replaying an acting trace.
+`e2e-cpp run --no-model` overrides a configured `allow` policy in every worker.
+An omitted policy defaults to `allow`, but does not configure an implicit model.
+
+Custom executors remain trusted project code: their `act` and `assert` methods
+can perform deterministic work with no model. They receive no harness-provided
+model under a forbid policy. This setting cannot prevent arbitrary network
+calls made by application code or a custom executor.

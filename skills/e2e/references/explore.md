@@ -1,16 +1,16 @@
 # Exploring without a test
 
-`e2e explore` runs the agent against the app with a goal instead of a test
+`e2e-cpp explore` runs the agent against the app with a goal instead of a test
 file. Use it to see what the agent can do with an app before tests exist, to
 hunt for regressions on a branch, or to find what is worth turning into a
 test. It needs a config with a target and an agent that holds a model,
 nothing else.
 
 ```bash
-npx e2e explore   # goal: "Explore the app and find bugs"
-npx e2e explore 'Explore checkout like a first-time buyer and report anything off'
-npx e2e explore --target web --max-steps 4 --headed
-npx e2e explore 'Hunt for broken forms' --video
+npx --no-install e2e-cpp explore   # goal: "Explore the app and find bugs"
+npx --no-install e2e-cpp explore 'Explore checkout like a first-time buyer and report anything off'
+npx --no-install e2e-cpp explore --target web --max-steps 4 --headed
+npx --no-install e2e-cpp explore 'Hunt for broken forms' --video
 ```
 
 ## What a run does
@@ -42,7 +42,7 @@ usernames, and the agent fills passwords with `type_secret` by name.
 | `--agent <name>` | `default` | Build the explorer from another configured agent (`agents.<name>`). |
 | `--max-steps <n>` | 8 (1 to 12) | Exploration steps at most. |
 | `--timeout <ms>` | 600000 (180000 to 900000) | Wall clock; the last minute is for the assessment. |
-| `--headed`, `--reporter`, `--artifacts`, `--debug`, `--ai-trace`, `--video` | as `run` | Same meaning as for `e2e run`. |
+| `--headed`, `--reporter`, `--artifacts`, `--debug`, `--ai-trace`, `--video` | as `run` | Same meaning as for `e2e-cpp run`. |
 
 Per-step action and model-call budgets default to 40 each; `agent.maxSteps`
 and `agent.maxModelCalls` in the config override them. The trace cache is off

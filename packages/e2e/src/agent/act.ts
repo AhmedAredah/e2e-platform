@@ -1,3 +1,4 @@
+import { redactJson } from '../internal/redact.ts';
 /**
  * Harness-owned dispatch of one `agent.act()` step.
  *
@@ -16,6 +17,7 @@
  * executor's verdict onto the runner's error taxonomy.
  */
 
+import { isDefaultAgent } from './default-agent.ts';
 import type { StepTurn } from '../run/steps.ts';
 import { writeFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
@@ -140,6 +142,9 @@ export async function dispatchAgentStep(
   // recorded step, and the step carries the agent it ran with.
   agent: DispatchAgent = runtime.select(spec.agent),
 ): Promise<ActResult> {
+  if ((runtime.config.modelPolicy === 'forbid' || agent.config.modelDisabled === true) && (agent.config.executor === undefined || isDefaultAgent(agent.executor))) {
+    throw new ConfigurationError('MODEL_UNAVAILABLE', 'Built-in model execution is disabled by model policy');
+  }
   return runtime.steps.run('agent', spec.api, spec.instruction, async () => {
     const dispatch = new ActDispatch(runtime, spec, agent);
     try {
@@ -243,8 +248,8 @@ class ActDispatch {
       step: {
         kind: this.spec.kind,
         index: this.stepIndex,
-        instruction: this.spec.instruction,
-        params: this.spec.params,
+        instruction: this.runtime.redact(this.spec.instruction),
+        params: redactJson(this.spec.params, this.runtime.redact),
         secrets: [...this.spec.secrets.values()].map((secret) => ({
           name: secret.name,
           purpose: secret.purpose,
@@ -260,8 +265,8 @@ class ActDispatch {
         return dispatch.resolveModel();
       },
       providerOptions: this.agent.config.providerOptions,
-      ledger: ledger.text,
-      agentContext: this.agent.agentContext,
+      ledger: this.runtime.redact(ledger.text),
+      agentContext: this.agent.agentContext === undefined ? undefined : this.runtime.redact(this.agent.agentContext),
       budgets: {
         maxActions: this.accounting.maxActions,
         maxModelCalls: this.accounting.maxModelCalls,
@@ -469,6 +474,7 @@ class ActDispatch {
 
   /** Resolves the configured model once; executors that never read it never pay. */
   private resolveModel(): ModelInstance | undefined {
+    if (this.runtime.config.modelPolicy === 'forbid' || this.agent.config.modelDisabled === true) return undefined;
     if (!this.sdkModelResolved) {
       const resolved = this.agent.config.model;
       this.sdkModel = resolved === undefined ? undefined : instantiateLanguageModel(resolved);

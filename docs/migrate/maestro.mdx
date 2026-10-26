@@ -20,7 +20,7 @@ Set up a target with the [mobile guide](/mobile) and a model with the
 | `tags` and `--include-tags` | `{ tags: [...] }` on a test, `--tag` on the CLI |
 | `env` and `${VAR}` | `process.env` in the config, `params` in a goal |
 | `--format junit` | `--reporter list,junit` |
-| `maestro record` | `npx e2e run --video` |
+| `maestro record` | `npx --no-install e2e-cpp run --video` |
 | Maestro Cloud | Your CI, see [Continuous integration](/ci) |
 
 ## A flow, before and after
@@ -42,9 +42,9 @@ appId: com.example.app
     id: "resend"
 ```
 
-```ts title="e2e"
-import { test } from '@e2edev/agent-device';
-import { expect } from 'e2e';
+```ts title="@e2e-cpp/core"
+import { test } from '@e2e-cpp/agent-device';
+import { expect } from '@e2e-cpp/core';
 
 test('asks for the email', async ({ app, agent, screen }) => {
   await app.clearState();

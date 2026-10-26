@@ -5,7 +5,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { FinishedRun, Report } from 'e2e';
+import type { FinishedRun, Report } from '@e2e-cpp/core';
 
 type ReportRun = Report['run'];
 type ReportResult = ReportRun['results'][number];
@@ -99,7 +99,7 @@ export function report(
     schemaVersion: 'report-1',
     run: {
       ...VALID.run,
-      runner: { name: 'e2e', version: '0.9.0' },
+      runner: { name: '@e2e-cpp/core', version: '0.9.0' },
       status,
       exitCode: status === 'passed' ? 0 : 1,
       startedAt: '2026-07-24T12:00:00.000Z',

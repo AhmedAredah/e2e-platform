@@ -10,11 +10,11 @@
 
 import type { JsonValue } from '../types.ts';
 
-/** The PostHog Cloud EU ingestion host. */
-export const POSTHOG_HOST = 'https://eu.i.posthog.com';
-
-/** The e2e project's ingestion key: public and write-only, like the key posthog-js embeds in a page. */
-export const POSTHOG_PROJECT_KEY = 'phc_rT8hpREuSj5bRGPHP6KLKNuf4kfwhP4FEf6ahHHV2ZgH';
+/** Explicit transport configuration. This fork supplies no CLI destination. */
+export interface TelemetryDestination {
+  readonly host: string;
+  readonly projectKey: string;
+}
 
 /** One item of the batch, exactly as PostHog receives it; `distinct_id` is a property. */
 export interface PostHogEvent {
@@ -28,15 +28,16 @@ export interface PostBatchOptions {
   /** Aborts the request: the caller's one deadline for everything telemetry does after the command. */
   readonly signal: AbortSignal;
   readonly fetch: typeof fetch;
+  readonly destination: TelemetryDestination;
 }
 
 /** Sends the batch; resolves to whether PostHog accepted it. */
 export async function postBatch(events: readonly PostHogEvent[], options: PostBatchOptions): Promise<boolean> {
   try {
-    const response = await options.fetch(`${POSTHOG_HOST}/batch/`, {
+    const response = await options.fetch(`${options.destination.host}/batch/`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ api_key: POSTHOG_PROJECT_KEY, batch: events }),
+      body: JSON.stringify({ api_key: options.destination.projectKey, batch: events }),
       signal: options.signal,
     });
     return response.ok;

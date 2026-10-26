@@ -33,7 +33,7 @@ function reported(outcome: RunOutcome, title: string) {
   return result;
 }
 
-const MISSING_LOCATOR_TEST = `import { test } from 'e2e';
+const MISSING_LOCATOR_TEST = `import { test } from '@e2e-cpp/core';
 
 test('taps a button that is not there', async ({ app, screen }) => {
   await app.open('/');
@@ -41,7 +41,7 @@ test('taps a button that is not there', async ({ app, screen }) => {
 });
 `;
 
-const TEARDOWN_TEST = `import { test } from 'e2e';
+const TEARDOWN_TEST = `import { test } from '@e2e-cpp/core';
 
 test.afterEach(async ({ app }) => {
   await app.open('/after');
@@ -53,7 +53,7 @@ test('fails, then tears down', async ({ app, screen }) => {
 });
 `;
 
-const WRONG_EXPECTATION_TEST = `import { test, expect } from 'e2e';
+const WRONG_EXPECTATION_TEST = `import { test, expect } from '@e2e-cpp/core';
 
 test('expects the wrong count', async ({ app, screen }) => {
   await app.open('/');

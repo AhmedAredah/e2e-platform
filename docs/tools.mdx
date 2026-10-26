@@ -8,9 +8,9 @@ other project-specific operations during a goal. Wrap each AI SDK tool with
 `defineTool` to declare whether it changes state and which platforms support it.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { createAgent, defineTool } from 'e2e/agent';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent, defineTool } from '@e2e-cpp/core/agent';
+import { playwright } from '@e2e-cpp/playwright';
 import { gateway, tool } from 'ai';
 import { z } from 'zod';
 
@@ -68,7 +68,7 @@ masked screenshot as report evidence when pixels are available:
 
 ```ts
 import { randomUUID } from 'node:crypto';
-import { defineTool, getToolContext } from 'e2e/agent';
+import { defineTool, getToolContext } from '@e2e-cpp/core/agent';
 import { tool } from 'ai';
 import { z } from 'zod';
 
@@ -104,13 +104,13 @@ overwriting an earlier image.
 
 ## Device toolkits
 
-`@e2edev/agent-device` ships a ready tool pack for its engine:
+`@e2e-cpp/agent-device` ships a ready tool pack for its engine:
 
 ```ts
-import type { E2EConfig } from 'e2e';
-import { createAgent } from 'e2e/agent';
-import { agentDevice } from '@e2edev/agent-device';
-import { agentDeviceTools } from '@e2edev/agent-device/tools';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { createAgent } from '@e2e-cpp/core/agent';
+import { agentDevice } from '@e2e-cpp/agent-device';
+import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
 import { gateway } from 'ai';
 
 const iphone = agentDevice({ platform: 'ios', app: 'Settings' });

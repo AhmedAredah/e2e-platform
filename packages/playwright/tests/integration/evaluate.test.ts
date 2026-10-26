@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Page } from 'playwright';
-import type { EngineFixtureContext } from 'e2e/engine';
+import type { EngineFixtureContext } from '@e2e-cpp/core/engine';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { createWebFixture, type Web } from '../../src/web.ts';
 
@@ -20,7 +20,7 @@ describe('web.evaluate error boundaries', () => {
   });
 
   beforeEach(async () => {
-    await surface.startAttempt({ attemptId: 'evaluate', artifactsDir, signal });
+    await surface.startAttempt({ appLog() {}, environment() {}, attemptId: 'evaluate', artifactsDir, signal });
     page = await surface.ensurePage();
     web = createWebFixture(surface, {
       operation: () => ({ signal, timeoutMs: 1_000, runId: 'evaluate', attemptId: 'evaluate', origin: 'test' }),

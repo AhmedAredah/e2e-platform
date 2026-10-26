@@ -1,7 +1,7 @@
 /** Masked pixel capture for an observation. */
 
 import type { Locator, Page } from 'playwright';
-import type { ObservationPixels, OperationContext, ViewportSize } from 'e2e/engine';
+import type { ObservationPixels, OperationContext, ViewportSize } from '@e2e-cpp/core/engine';
 import { CaptureScope } from './capture-scope.ts';
 import { CLOSED_SHADOW_SELECTOR_ENGINE, SECURE_FIELD_SELECTOR } from './read-node.ts';
 

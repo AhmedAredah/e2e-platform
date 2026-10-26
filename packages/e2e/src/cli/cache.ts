@@ -1,5 +1,5 @@
 /**
- * `e2e cache`: what is in the trace cache, and how to get rid of it.
+ * `e2e-cpp cache`: what is in the trace cache, and how to get rid of it.
  *
  * The store is a directory of digest-named files, so a committed cache is
  * unreadable without a reader: `ls` prints each entry's provenance — the test,
@@ -57,7 +57,7 @@ const TEMPORARY_FILE = /^[a-f0-9]{64}\.json\.[a-f0-9]{16}\.tmp$/u;
 const DIGEST_PREFIX_CHARS = 12;
 
 /**
- * Runs one `e2e cache` command against the configured store directory.
+ * Runs one `e2e-cpp cache` command against the configured store directory.
  * Returns the process exit code: 2 for a config or filesystem error, 0
  * otherwise — an empty or absent cache is a fact, not a failure.
  */
@@ -102,7 +102,7 @@ async function resolveCacheDirectory(options: CacheOptions): Promise<string> {
   });
   if (config.cache.store !== undefined) {
     throw new Error(
-      'cache.store replaces the file store with a custom one; e2e cache reads files only, so inspect that store with its own tools',
+      'cache.store replaces the file store with a custom one; e2e-cpp cache reads files only, so inspect that store with its own tools',
     );
   }
   return config.cache.dir;

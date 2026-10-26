@@ -6,8 +6,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { EngineFixtureContext, LocatorExpression } from 'e2e/engine';
-import type { Locator, Screen } from 'e2e';
+import type { EngineFixtureContext, LocatorExpression } from '@e2e-cpp/core/engine';
+import type { Locator, Screen } from '@e2e-cpp/core';
 import type { PlaywrightSurface } from '../../src/surface.ts';
 import { createWebFixture } from '../../src/web.ts';
 

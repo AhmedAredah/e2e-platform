@@ -1,9 +1,9 @@
 {
-  "name": "@e2edev/github",
-  "version": "0.3.0-canary-20260917213813",
+  "name": "@e2e-cpp/github",
+  "version": "0.1.0",
   "description": "GitHub reporter for e2e: one pull request comment per run, from GitHub Actions",
   "keywords": [
-    "e2e",
+    "@e2e-cpp/core",
     "testing",
     "agentic",
     "end-to-end",
@@ -14,18 +14,9 @@
   ],
   "license": "MIT",
   "contributors": [
-    "Oskar Kwaśniewski <oskar@tester.army>",
+    "Oskar Kwa\u015bniewski <oskar@tester.army>",
     "Szymon Rybczak <szymon@tester.army>"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tester-army/e2e.git",
-    "directory": "packages/github"
-  },
-  "bugs": {
-    "url": "https://github.com/tester-army/e2e/issues"
-  },
-  "homepage": "https://github.com/tester-army/e2e/tree/main/packages/github#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
@@ -40,7 +31,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
@@ -51,15 +43,15 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "e2e": "0.15.0-canary-20260917213813"
+    "@e2e-cpp/core": ">=0.1.0 <1.0.0"
   },
   "devDependencies": {
-    "e2e": "workspace:*",
+    "@e2e-cpp/core": "workspace:*",
     "@types/node": "26.4.1",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   },
   "engines": {
-    "node": ">=22.12.0"
+    "node": "^22.22.3 || >=24.8.0"
   }
 }

@@ -24,12 +24,12 @@ const CLI = path.join(PACKAGE_ROOT, 'dist', 'cli', 'bin.js');
 const CONFIG = "export default { targets: [{ name: 'local', platform: 'test' }] };\n";
 let dir: string;
 
-/** Links workspace packages into the fixture's node_modules, standing in for an install: the runner as `e2e`, everything else under `@e2edev`. */
+/** Links workspace packages into the fixture's node_modules, standing in for an install: the runner as `@e2e-cpp/core`, everything else under `@e2edev`. */
 function linkPackages(...names: readonly string[]): void {
   for (const name of names) {
-    const target = path.join(dir, 'node_modules', ...(name === 'e2e' ? [name] : ['@e2edev', name]));
+    const target = path.join(dir, 'node_modules', ...(name === '@e2e-cpp/core' ? [name] : ['@e2e-cpp', name]));
     mkdirSync(path.dirname(target), { recursive: true });
-    symlinkSync(path.resolve(PACKAGE_ROOT, '..', name), target, 'junction');
+    symlinkSync(path.resolve(PACKAGE_ROOT, '..', name === '@e2e-cpp/core' ? 'e2e' : name), target, 'junction');
   }
 }
 
@@ -59,7 +59,7 @@ describe('initializing standalone projects', () => {
     async (appUrl) => {
       vi.stubEnv('APP_URL', appUrl);
       await execFileAsync(process.execPath, [CLI, 'init', '--yes'], { cwd: dir });
-      linkPackages('e2e', 'playwright');
+      linkPackages('@e2e-cpp/core', 'playwright');
       linkModules('ai');
 
       const raw = await loadConfigModule(path.join(dir, 'e2e.config.ts'));
@@ -84,14 +84,14 @@ describe('initializing standalone projects', () => {
     writeFileSync(path.join(dir, 'e2e.config.ts'), scaffold.config);
     mkdirSync(path.join(dir, 'tests'));
     writeFileSync(path.join(dir, 'tests/example.e2e.ts'), scaffold.example);
-    linkPackages('e2e');
+    linkPackages('@e2e-cpp/core');
     linkModules('ai', '@openrouter/ai-sdk-provider');
 
     const raw = await loadConfigModule(path.join(dir, 'e2e.config.ts'));
     const config = resolveConfig(raw, { projectRoot: dir, env: {} });
     const collection = await collect(config);
 
-    expect(scaffold.dependencies).not.toHaveProperty('@e2edev/playwright');
+    expect(scaffold.dependencies).not.toHaveProperty('@e2e-cpp/playwright');
     expect(scaffold.dependencies).toMatchObject({ ai: '^7.0.0', '@openrouter/ai-sdk-provider': '^3.0.0' });
     expect(config.agent.model).toMatchObject({ provider: expect.stringMatching(/^openrouter/), id: 'openai/gpt-5.6-luna' });
     expect(config.targets[0]!.app.base).toBeUndefined();
@@ -108,7 +108,7 @@ describe('initializing standalone projects', () => {
     writeFileSync(path.join(dir, 'e2e.config.ts'), scaffold.config);
     mkdirSync(path.join(dir, 'tests'));
     writeFileSync(path.join(dir, 'tests/example.e2e.ts'), scaffold.example);
-    linkPackages('e2e', 'agent-device');
+    linkPackages('@e2e-cpp/core', 'agent-device');
     linkModules('ai');
 
     const raw = await loadConfigModule(path.join(dir, 'e2e.config.ts'));
@@ -123,13 +123,13 @@ describe('initializing standalone projects', () => {
     expect(config.targets).toMatchObject([{ name: platform, platform, engine: { name: 'agent-device' } }]);
     expect(collection.tests.map((test) => test.title)).toEqual(['Settings opens']);
     // The engine installs agent-device itself; init writes the engine, never the driver.
-    expect(scaffold.dependencies).toHaveProperty('@e2edev/agent-device');
+    expect(scaffold.dependencies).toHaveProperty('@e2e-cpp/agent-device');
     expect(scaffold.dependencies).not.toHaveProperty('agent-device');
   });
 
   it('runs the generated browser example against any page without a model key', async () => {
     await execFileAsync(process.execPath, [CLI, 'init', '--yes'], { cwd: dir });
-    linkPackages('e2e', 'playwright');
+    linkPackages('@e2e-cpp/core', 'playwright');
     linkModules('ai');
     const server = createServer((_request, response) => response.end('<p>hello</p>'));
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -139,16 +139,16 @@ describe('initializing standalone projects', () => {
       // The gateway model in the config constructs without a key; only an agent step would need one.
       const env: NodeJS.ProcessEnv = { ...process.env, APP_URL: `http://127.0.0.1:${address.port}` };
       delete env.AI_GATEWAY_API_KEY;
-      const { stdout } = await execFileAsync(process.execPath, [CLI, 'run', '--workers', '1', '--no-cache'], { cwd: dir, env });
+      const { stdout } = await execFileAsync(process.execPath, [CLI, 'run', '--workers', '1', '--no-cache'], { cwd: dir, env }).catch((error) => { throw new Error(`${error.stdout}\n${error.stderr}`, { cause: error }); });
       expect(stdout).toContain('1 passed');
       const manifest = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8'));
       const playwrightVersion = (JSON.parse(readFileSync(path.resolve(PACKAGE_ROOT, '..', 'playwright', 'package.json'), 'utf8')) as { version: string }).version;
-      expect(manifest.devDependencies['@e2edev/playwright']).toBe(dependencyRange(playwrightVersion));
+      expect(manifest.devDependencies['@e2e-cpp/playwright']).toBe(dependencyRange(playwrightVersion));
       const recorded = JSON.parse(readFileSync(path.join(PACKAGE_ROOT, 'dist', 'cli', 'init', 'sibling-versions.json'), 'utf8')) as Record<string, string>;
-      expect(Object.keys(recorded).toSorted()).toEqual(['@e2edev/agent-device', '@e2edev/oauth', '@e2edev/playwright', 'playwright']);
+      expect(Object.keys(recorded).toSorted()).toEqual(['@e2e-cpp/agent-device', '@e2e-cpp/oauth', '@e2e-cpp/playwright', 'playwright']);
       expect(manifest.devDependencies.playwright).toBe(`^${recorded.playwright}`);
       expect(manifest.devDependencies.ai).toBe('^7.0.0');
-      expect(manifest.scripts).toEqual({ 'test:e2e': 'e2e run' });
+      expect(manifest.scripts).toEqual({ 'test:e2e': 'e2e-cpp run' });
     } finally {
       await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     }
@@ -163,9 +163,9 @@ describe('initializing standalone projects', () => {
       writeFileSync(path.join(dir, 'tests/helper.ts'), 'export const answer = (): number => 42;\n');
       writeFileSync(
         path.join(dir, 'tests/example.e2e.ts'),
-        "import { expect, test } from 'e2e';\nimport { answer } from './helper.ts';\n\ntest('helpers load as ES modules', () => {\n  expect(answer()).toBe(42);\n});\n",
+        "import { expect, test } from '@e2e-cpp/core';\nimport { answer } from './helper.ts';\n\ntest('helpers load as ES modules', () => {\n  expect(answer()).toBe(42);\n});\n",
       );
-      linkPackages('e2e');
+      linkPackages('@e2e-cpp/core');
 
       const raw = await loadConfigModule(path.join(dir, 'e2e.config.ts'));
       const config = resolveConfig(raw, { projectRoot: dir, env: {} });
@@ -183,8 +183,8 @@ describe('initializing standalone projects', () => {
     const testsDir = path.join(dir, 'tests');
     mkdirSync(testsDir);
     writeFileSync(path.join(testsDir, 'package.json'), '{"type":"commonjs"}');
-    writeFileSync(path.join(testsDir, 'example.e2e.ts'), "import { test } from 'e2e';\n\ntest('registers', () => {});\n");
-    linkPackages('e2e');
+    writeFileSync(path.join(testsDir, 'example.e2e.ts'), "import { test } from '@e2e-cpp/core';\n\ntest('registers', () => {});\n");
+    linkPackages('@e2e-cpp/core');
 
     const raw = await loadConfigModule(path.join(dir, 'e2e.config.mts'));
     const config = resolveConfig(raw, { projectRoot: dir, env: {} });
@@ -198,7 +198,7 @@ describe('initializing standalone projects', () => {
     await expect(execFileAsync(process.execPath, [CLI, 'run'], { cwd: dir })).rejects.toMatchObject({
       code: 2,
       stdout: expect.stringMatching(
-        /Cannot find package 'e2e' imported from [\s\S]*?e2e is declared in \S+package\.json but is not installed: run pnpm install/,
+        /Cannot find package '@e2e-cpp\/core' imported from [\s\S]*?@e2e-cpp\/core is declared in \S+package\.json but is not installed: run pnpm install/,
       ),
     });
   });
@@ -207,7 +207,7 @@ describe('initializing standalone projects', () => {
     await expect(execFileAsync(process.execPath, [CLI, 'run'], { cwd: dir })).rejects.toMatchObject({
       code: 2,
       stdout: expect.stringMatching(
-        /CONFIG_NOT_FOUND[\s\S]*no e2e\.config\.ts or e2e\.config\.mts found in .* or its parent directories; run e2e init to create one, or pass --config <path>/,
+        /CONFIG_NOT_FOUND[\s\S]*no e2e\.config\.ts or e2e\.config\.mts found in .* or its parent directories; run e2e-cpp init to create one, or pass --config <path>/,
       ),
     });
     writeFileSync(path.join(dir, 'e2e.config.js'), CONFIG);
@@ -221,26 +221,26 @@ describe('initializing standalone projects', () => {
 
   it('explains a removed export and a wrong subpath in the config', async () => {
     await execFileAsync(process.execPath, [CLI, 'init', '--yes'], { cwd: dir });
-    linkPackages('e2e');
+    linkPackages('@e2e-cpp/core');
     writeFileSync(
       path.join(dir, 'e2e.config.ts'),
-      "import { defineConfig } from 'e2e';\nexport default defineConfig({ targets: [{ name: 'local', platform: 'test' }] });\n",
+      "import { defineConfig } from '@e2e-cpp/core';\nexport default defineConfig({ targets: [{ name: 'local', platform: 'test' }] });\n",
     );
     await expect(loadConfigModule(path.join(dir, 'e2e.config.ts'))).rejects.toMatchObject({
       code: 'CONFIG_LOAD_FAILED',
       message: expect.stringContaining('defineConfig was removed in e2e 0.5'),
     });
     // The import must be used, or the TypeScript transform elides it.
-    writeFileSync(path.join(dir, 'e2e.config.ts'), "import { test } from 'e2e/test';\nexport default { marker: test };\n");
+    writeFileSync(path.join(dir, 'e2e.config.ts'), "import { test } from '@e2e-cpp/core/test';\nexport default { marker: test };\n");
     await expect(loadConfigModule(path.join(dir, 'e2e.config.ts'))).rejects.toMatchObject({
       code: 'CONFIG_LOAD_FAILED',
-      message: expect.stringContaining('e2e exports e2e, e2e/agent, e2e/engine'),
+      message: expect.stringContaining('@e2e-cpp/core exports @e2e-cpp/core, @e2e-cpp/core/agent, @e2e-cpp/core/engine'),
     });
   });
 
   it('names look-alike test files when the globs match nothing', async () => {
     await execFileAsync(process.execPath, [CLI, 'init', '--yes'], { cwd: dir });
-    linkPackages('e2e', 'playwright');
+    linkPackages('@e2e-cpp/core', 'playwright');
     linkModules('ai');
     writeFileSync(path.join(dir, 'tests', 'login.test.ts'), 'export {};\n');
     rmSync(path.join(dir, 'tests', 'example.e2e.ts'));

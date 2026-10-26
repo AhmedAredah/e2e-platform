@@ -10,7 +10,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { EngineCleanupContext, EngineHandle, OperationContext } from 'e2e/engine';
+import type { EngineCleanupContext, EngineHandle, OperationContext } from '@e2e-cpp/core/engine';
 import { playwright } from '../../src/index.ts';
 import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';
 import { closeRemoteChrome, launchRemoteChrome, type RemoteChrome } from '../helpers/cdp-host.ts';
@@ -65,7 +65,7 @@ describe('playwright engine over CDP', () => {
     expect(resolved).toBe(1);
 
     try {
-      await engine.startAttempt!({ attemptId: 'a1', artifactsDir, signal: new AbortController().signal });
+      await engine.startAttempt!({ attemptId: 'a1', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
       await engine.session!.open!(`${app.url}/`, operation('a1'));
       const headings = await engine.locate!(
         { kind: 'query', query: { kind: 'role', value: { kind: 'string', value: 'heading', exact: true } } },
@@ -105,7 +105,7 @@ describe('playwright engine over CDP', () => {
       signal: new AbortController().signal,
     });
     try {
-      await engine.startAttempt!({ attemptId: 'r1', artifactsDir, signal: new AbortController().signal });
+      await engine.startAttempt!({ attemptId: 'r1', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
       await engine.session!.open!(`${app.url}/`, operation('r1'));
       await engine.endAttempt!(cleanup());
       expect(resolved).toBe(1);
@@ -120,7 +120,7 @@ describe('playwright engine over CDP', () => {
 
       // The next attempt must not fail on the dead browser: it reacquires,
       // running the resolver again, and works over the new session.
-      await engine.startAttempt!({ attemptId: 'r2', artifactsDir, signal: new AbortController().signal });
+      await engine.startAttempt!({ attemptId: 'r2', artifactsDir, signal: new AbortController().signal, appLog: () => {}, environment: () => {} });
       expect(resolved).toBe(2);
       await engine.session!.open!(`${app.url}/`, operation('r2'));
       const headings = await engine.locate!(

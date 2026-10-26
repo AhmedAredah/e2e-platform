@@ -1,5 +1,5 @@
 /**
- * `e2e mcp` end to end: the built CLI serving a fixture project over stdio to
+ * `e2e-cpp mcp` end to end: the built CLI serving a fixture project over stdio to
  * a real MCP client. The server's tool list is four tools; everything the
  * session can do is a catalog behind `call`. Covers the catalog, a live
  * session driven through `call`, argument validation, the secret and pixel
@@ -19,8 +19,8 @@ import { createProject, type FixtureProject } from '../helpers/run-project.ts';
 const PACKAGE_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CLI = path.join(PACKAGE_ROOT, 'dist', 'cli', 'bin.js');
 
-const CONFIG = `import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+const CONFIG = `import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 
 // Anything a config prints must reach stderr, never the protocol stream.
 console.log('config loaded');
@@ -37,7 +37,7 @@ interface ToolText {
   readonly images: number;
 }
 
-describe('e2e mcp', { timeout: 120_000 }, () => {
+describe('e2e-cpp mcp', { timeout: 120_000 }, () => {
   let app: FixtureApp;
   let project: FixtureProject;
   let client: Client;
@@ -247,6 +247,6 @@ describe('e2e mcp', { timeout: 120_000 }, () => {
 
   it('kept stdout for the protocol: the config\'s console.log landed on stderr', () => {
     expect(stderr).toContain('config loaded');
-    expect(stderr).toContain('e2e mcp: [info] e2e mcp');
+    expect(stderr).toContain('e2e-cpp mcp: [info] e2e-cpp mcp');
   });
 });

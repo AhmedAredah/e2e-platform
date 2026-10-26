@@ -1,7 +1,13 @@
 # AGENTS.md
 
-`e2e` — an agentic end-to-end testing framework. pnpm monorepo, ESM only,
+`@e2e-cpp/core` — an agentic end-to-end testing framework. pnpm monorepo, ESM only,
 TypeScript 7.
+
+This fork begins at MIT upstream commit `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`.
+Do not import later Apache-only upstream changes as MIT. Record independently
+implemented compatibility changes and preserve dependency licenses; see
+`docs/development/LICENSING.md`. Fork package versions begin at 0.1.0.
+
 
 ## Contracts
 
@@ -25,16 +31,16 @@ There is no separate spec. The code is the contract, pinned in three places:
   `reference/errors.mdx` or `reference/engine.mdx`, or documented but raised
   nowhere.
 
-There are no RFCs or design documents in the repo. The why lives in PR
-descriptions and commit bodies; `git log` and `gh pr view` are the archive.
+The extension contracts and support boundaries are described in `CPP_SUPPORT.md`
+and the package READMEs. Record design rationale with changes and validation.
 
 ## Layout
 
-- `packages/e2e` — the published `e2e` package: SDK surface, runner, CLI,
-  `e2e/engine` contract. Core knows the contract and never an engine's
+- `packages/e2e` — the reusable `@e2e-cpp/core` package: SDK surface, runner, CLI,
+  `@e2e-cpp/core/engine` contract. Core knows the contract and never an engine's
   internals: no `Web`, `browser`, `page`, `route`, or `playwright` noun lives in
   `src/` (grep for them; zero hits is the invariant). The one exception is the
-  `e2e init` scaffold presets in `src/cli/init/engines.ts`, which write the
+  `e2e-cpp init` scaffold presets in `src/cli/init/engines.ts`, which write the
   user's config and so name engine packages as text; the package build records
   the sibling packages' versions in `dist/cli/init/sibling-versions.json` for the
   ranges they write. Each preset owns its prompt label, dependencies, config,
@@ -44,35 +50,35 @@ descriptions and commit bodies; `git log` and `gh pr view` are the archive.
     `standalone.ts` opens one attempt with no test body for hosts),
     `src/collect/` registration+selection, `src/locator/` locator AST/engine,
     `src/agent/` the agent (the `act` executor socket plus the judgment
-    methods), `src/mcp/` the `e2e mcp` server (a live session that rides
+    methods), `src/mcp/` the `e2e-cpp mcp` server (a live session that rides
     the `act` socket with a queue executor so every MCP call is a harness
     action).
-- `packages/playwright` — the published `@e2edev/playwright` package: the
+- `packages/playwright` — the reusable `@e2e-cpp/playwright` package: the
   browser engine, built with the public `defineEngine`, contributing the
-  `web` fixture and `expect(web)`. It depends on `e2e` (peer), never the
+  `web` fixture and `expect(web)`. It depends on `@e2e-cpp/core` (peer), never the
   reverse; a target names it explicitly as `engine: playwright()`. There is
   no default engine and no well-known id registry in core. It imports from
-  `e2e/engine` only: the semantics every engine must reproduce
+  `@e2e-cpp/core/engine` only: the semantics every engine must reproduce
   (error taxonomy, text and URL matching, assertion polling, JSON-value rules)
-  are exported there, and there is no `e2e/internal` subpath.
-- `packages/testbed` (`@e2edev/testbed`, private) — dogfood project that
+  are exported there, and there is no `@e2e-cpp/core/internal` subpath.
+- `apps/testbed` (`@e2e-cpp/testbed`, private) — dogfood project that
   consumes the **built** packages like a real user would: the playground app
   where every runner feature (sessions, routes, downloads, frames, uploads,
   serial groups, the executor seams, verdict edge cases, the reporter under
   stress, `explore`) has a deterministic test. Hard UI surfaces belong to the
   benchmarks, not here.
-- `packages/web-benchmark` (`@e2edev/web-benchmark`, private) — a Next.js app of
+- `apps/web-benchmark` (`@e2e-cpp/web-benchmark`, private) — a Next.js app of
   self-contained hard-surface scenarios (shadow DOM, canvas, iframes, native
   dialogs, planted bugs) at `/e/<slug>`, copied from the tester-army web
   benchmark, plus the e2e suites written against them (`tests/` and
-  `tests-agent/` both gate PRs; the agentic one spends real model calls).
+  `tests-agent/`; deterministic tests gate PRs and model-backed suites are manual).
   Scenario files are copies: keep diffs against
   the source minimal so scenarios port both ways, and never fix a planted bug.
-- `packages/mobile-benchmark` (`@e2edev/mobile-benchmark`, private) — an Expo
+- `apps/mobile-benchmark` (`@e2e-cpp/mobile-benchmark`, private) — an Expo
   app of hard mobile surfaces (merged or hidden accessibility trees, native
   alerts over modals, keyboard-covered submits, virtualized lists, a WebView,
   OS permission and payment sheets), copied from the tester-army mobile
-  benchmark, plus the e2e suites on the `@e2edev/agent-device` engine
+  benchmark, plus the e2e suites on the `@e2e-cpp/agent-device` engine
   (`tests/` locators only, `tests-agent/` one `agent.act` per scenario).
   Neither runs in CI: no simulator there. Scenario files are copies: keep
   diffs against the source minimal, and name no company a scenario was
@@ -82,19 +88,29 @@ descriptions and commit bodies; `git log` and `gh pr view` are the archive.
   `docs/style.css`; `docs/examples/` is typechecked and shown verbatim in the
   quickstart, kept in sync by `scripts/check-docs-examples.ts`).
 - `skills/e2e/` — the agent skill for consumers: `SKILL.md` plus
-  `references/<topic>.md`, one per `e2e guide` topic. It lives at the repo
-  root because `npx skills add tester-army/e2e` only looks in well-known
-  directories. The `e2e` build copies it to `packages/e2e/skills/`
-  (gitignored) so the published package ships it; `src/cli/skill.ts` reads
-  that copy first and the repo source as the fallback, and `e2e init` writes
+  `references/<topic>.md`, one per `e2e-cpp guide` topic. The fork ships its local
+  copy; installing a current upstream skill is not equivalent. The `@e2e-cpp/core` build copies it to `packages/e2e/skills/`
+  (gitignored) so the packed package ships it; `src/cli/skill.ts` reads
+  that copy first and the repo source as the fallback, and `e2e-cpp init` writes
   it into a project's `.agents/skills/` and `.claude/skills/`.
+
+- `packages/process`, `checks`, `native`, `terminal`, `protocol` — independent
+  C++ boundary modules. Keep abstract contracts separate from concrete backends
+  and use dependency injection for transports, drivers and validators.
+- `native/qt` — C++17 Qt helper, control adapters, CMake export and native tests.
+  New toolkit helpers belong in sibling directories; Qt internals are not an
+  installed ABI for third-party adapter plugins.
+- `examples/with-cpp-cli`, `examples/with-qt` — real compiled consumer fixtures,
+  including deliberate wrong-output scenarios that must remain detectable.
+- `scripts/cpp` — verification and checksummed local install-kit tooling.
+  Generated evidence belongs in ignored build/output folders, not source.
 
 ## Commands
 
 Build first — nearly everything downstream consumes `dist`.
 
 ```bash
-pnpm check          # lint -> check:dead-code -> typecheck -> docs:check-errors -> docs:check (full gate)
+pnpm check:local    # lint -> dead-code -> build/typecheck -> error docs -> local docs checks
 pnpm test           # builds, then vitest unit + integration
 pnpm test:testbed   # builds, then runs the real CLI against the playground app
 pnpm test:web-benchmark   # builds, then runs the real CLI against the benchmark scenarios
@@ -103,23 +119,23 @@ pnpm test:web-benchmark   # builds, then runs the real CLI against the benchmark
 Focused work:
 
 ```bash
-pnpm --filter e2e run build
-pnpm --filter e2e run test:unit                       # unit only, no build
-pnpm --filter e2e exec vitest run tests/unit/scheduler.test.ts
-pnpm --filter e2e exec vitest run -t 'name fragment'
-pnpm --filter @e2edev/playwright run test
-pnpm --filter @e2edev/testbed run test:headed
+pnpm --filter @e2e-cpp/core run build
+pnpm --filter @e2e-cpp/core run test:unit                       # unit only, no build
+pnpm --filter @e2e-cpp/core exec vitest run tests/unit/scheduler.test.ts
+pnpm --filter @e2e-cpp/core exec vitest run -t 'name fragment'
+pnpm --filter @e2e-cpp/playwright run test
+pnpm --filter @e2e-cpp/testbed run test:headed
 ```
 
 - Package `test` scripts do **not** build. Root `build` and `test` order the
-  packages explicitly rather than relying on topological sort, because `e2e`
+  packages explicitly rather than relying on topological sort, because `@e2e-cpp/core`
   devDepends on the playwright engine for its browser-backed integration tests
-  while the engine peer-depends on `e2e` — pnpm reports that cycle on every
+  while the engine peer-depends on `@e2e-cpp/core` — pnpm reports that cycle on every
   install.
 - `pnpm typecheck` runs `build` first, then per-package `typecheck`. The
   package `typecheck` covers `tests/**`, which is what makes
   `tests/types/sdk-types.ts` a test.
-- Integration tests need Chromium: `pnpm --filter @e2edev/playwright exec
+- Integration tests need Chromium: `pnpm --filter @e2e-cpp/playwright exec
   playwright install chromium`. The Playwright engine's `prepare` hook
   also installs a missing browser once per run, in the runner, before `plan`
   is emitted and the run's clock starts.
@@ -143,24 +159,24 @@ pnpm --filter @e2edev/testbed run test:headed
 
 ## Testing quirks
 
-- Vitest 4, `pool: 'forks'`, two projects. `integration` is capped at
+- Vitest 5, `pool: 'forks'`, two projects. `integration` is capped at
   `maxWorkers: 3` and runs in a later group — do not raise it; CPU starvation
   produces timeouts indistinguishable from real failures.
 - Integration tests write throwaway projects into
   `packages/e2e/tests/tmp-projects/` (gitignored) and import the runner from
-  `dist/` via a non-literal specifier so the fixture's `e2e` self-reference
+  `dist/` via a non-literal specifier so the fixture's `@e2e-cpp/core` self-reference
   shares one registry. Stale `dist` means confusing failures — rebuild.
 - Testbed suites beyond the default one never gate a PR: `test:agent` /
   `test:dogfood` (real model calls, need `AI_GATEWAY_API_KEY`, optional
-  `E2E_MODEL=provider/model-id`, the testbed's own override) run only on the weekly
-  `.github/workflows/agent.yml` schedule or by manual dispatch. Both run
+  `E2E_MODEL=provider/model-id`, the testbed's own override) run only by manual
+  `.github/workflows/agent.yml` dispatch. Both run
   against local deterministic apps, so a failure there is ours.
 - Agentic assertions must be model-portable: assert on meaning (`toContain`)
   and pair each agentic step with a deterministic locator check.
 
 ## Inspecting agent runs with unbox-ai
 
-`e2e run --ai-trace` records every model call of a run to `.e2e/ai-trace.json`
+`e2e-cpp run --ai-trace` records every model call of a run to `.e2e/ai-trace.json`
 in the AI SDK devtools database shape (`{ runs[], steps[] }`). One run per
 agent step, named `<test title> · <api> "<label>"`; one entry per model round
 trip (an `act` turn, a `waitFor` poll, a judgment repair round) with the exact
@@ -175,12 +191,12 @@ Use [unbox-ai](https://github.com/tester-army/unbox-ai) to read it — never
 agents: `npx skills add tester-army/unbox-ai`). Start wide, then drill:
 
 ```bash
-AI_GATEWAY_API_KEY=... pnpm --filter @e2edev/testbed test:agent -- --ai-trace --no-cache
-npx unbox-ai runs packages/testbed/.e2e/ai-trace.json            # one line per agent step
-npx unbox-ai summary packages/testbed/.e2e/ai-trace.json --run 3 # one step: turns, tokens, caching
-npx unbox-ai tools packages/testbed/.e2e/ai-trace.json --run 3   # what the agent called, and how often
-npx unbox-ai event packages/testbed/.e2e/ai-trace.json 2 --run 3 # one turn's new messages
-npx unbox-ai compare packages/testbed/.e2e/ai-trace.json --run 3 --run 4 --trajectory
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent -- --ai-trace --no-cache
+npx unbox-ai runs apps/testbed/.e2e/ai-trace.json            # one line per agent step
+npx unbox-ai summary apps/testbed/.e2e/ai-trace.json --run 3 # one step: turns, tokens, caching
+npx unbox-ai tools apps/testbed/.e2e/ai-trace.json --run 3   # what the agent called, and how often
+npx unbox-ai event apps/testbed/.e2e/ai-trace.json 2 --run 3 # one turn's new messages
+npx unbox-ai compare apps/testbed/.e2e/ai-trace.json --run 3 --run 4 --trajectory
 ```
 
 This is how to debug an agentic step: a wrong node id, a loop guard firing, a
@@ -220,8 +236,10 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
   stops the run (exit 2). No implicit target either: `targets` is required and
   each names its engine.
 - Security invariants (fail closed when one cannot be enforced):
-  - Secrets never reach model input, digests, logs, reports, or artifacts.
-    Model input is the redacted semantic tree (as text or, on request, the
+  - Registered secret values must be redacted at runner-controlled model,
+    diagnostic and artifact boundaries as described in SECURITY.md. Explicit
+    raw process logs and trusted application/test code require their own handling;
+    arbitrary unknown secrets cannot be inferred. Model input is the redacted semantic tree (as text or, on request, the
     redacted node tree), masked pixels only when masking is proven and no
     secret was filled, and the sanitized prior-step records. Once a secret is
     filled the viewport stays pixel-tainted for the rest of the attempt. What
@@ -247,56 +265,29 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
     nothing here sandboxes them. Untrusted PR code belongs in an external
     sandbox with no secrets or write tokens.
 
-- CI (`.github/workflows/spec.yml`) runs lint, typecheck, the testbed, and the web benchmark on Node 26 and `pnpm test` on Node 22, 24, and 26, and pins actions by SHA; keep
-  new actions SHA-pinned. Every workflow runs on Blacksmith
-  (`runs-on: blacksmith-4vcpu-ubuntu-2404`), like the tester-army repos; keep
-  new jobs on that label.
-- Commits follow Conventional Commits; PRs are squash-merged with the number in
-  the subject.
-- PR titles and bodies follow the `writing-pr` skill
-  (`.claude/skills/writing-pr/SKILL.md`). `unslop`
-  (`.claude/skills/unslop/SKILL.md`, from `okwasniewski/dotfiles`) applies to
-  any prose an agent writes here; other agents install it with
-  `npx skills add okwasniewski/dotfiles --skill unslop`.
-- Releases go through changesets: a user-visible change adds a `.changeset/`
-  entry. Peer ranges point one way only (engine -> `e2e`, widened to `>=x <1`);
-  making them mutual or narrow forces changesets to bump both packages to a
-  major on every release.
-- The root `release` script publishes with `--tag beta`, so releases land on the
-  `beta` dist-tag and never move an existing `latest`. That flag is what does the
-  work: `changeset publish` always passes `--tag` through to the publish tool, so
-  the matching `publishConfig.tag` on both packages is only a backstop for a
-  hand-run `npm publish` — `pnpm publish` ignores it. One leak is not fixable
-  here: npmjs auto-assigns `latest` on a package's *first* publish in addition to
-  `--tag`, so a brand-new package lands on `latest` once regardless.
-  Do not switch to changesets pre mode to get a real prerelease version: it is
-  outside the engine's `e2e` peer range, which majors `@e2edev/playwright` on
-  every runner minor and rewrites the peer range. Widening the range does not
-  rescue it — node-semver only lets a prerelease satisfy a comparator set when a
-  comparator with the same `major.minor.patch` carries a prerelease, so
-  `0.3.0-beta.0` satisfies neither `>=0.1.0-0 <1` nor `*`. Never hand-edit a
-  package `version` or `CHANGELOG.md`; `changesets/action` owns both.
-- Canaries are hand-run, never from CI: `pnpm run canary` with `GITHUB_TOKEN`
-  set versions and builds every public package as a changesets snapshot, and
-  `pnpm run canary:publish` publishes them to the `canary` dist-tag. Publishing
-  is its own step because npm's two-factor prompt is interactive. Never publish
-  without building first: each build stamps `dist/.build.json`, and every
-  package's `prepublishOnly` (`scripts/check-dist.ts`) refuses a `dist` whose
-  stamp does not match `package.json`. `scripts/canary-changeset.ts` first writes a changeset bumping all
-  of them, so they move together: a snapshot of one engine alone would keep a
-  peer range the runner's canary does not satisfy. Snapshot versions read
-  `0.10.0-canary-<datetime>` (`snapshot.useCalculatedVersion`); the build runs
-  after `changeset version` so `init` records those versions, and `init` pins a
-  prerelease engine exactly, since a caret on a prerelease resolves to the
-  newest canary of that tuple, whose peer range names a different runner build.
-  Nothing the script writes is committed; `git checkout -- packages .changeset`
-  afterwards.
-- The runner publishes as the unscoped `e2e` (entry points `e2e`, `e2e/agent`,
-  `e2e/engine`; the bin is `e2e` too); engines and reporters publish public
-  under the `@e2edev` scope. `@e2edev/e2e` is the retired name: deprecated on
-  npm, never referenced here. Provenance stays off until the repository is
-  public, and the release job authenticates with the `NPM_TOKEN` secret.
-  Document the CLI as `npx e2e`; npx runs the locally installed bin first, and
-  the flag `--no-install` adds nothing once the package is a dependency.
-- Private packages are skipped entirely by changesets (`privatePackages: false`),
-  so `@e2edev/testbed` gets no version bump, no `CHANGELOG.md`, and no git tag.
+- CI uses standard GitHub-hosted runners and SHA-pinned actions. The spec
+  workflow checks Node 22.22.3 and 24.22.1. The C++ workflow adds Linux/macOS/Windows
+  command and installation checks, plus Linux Qt offscreen validation. Workflow
+  configuration alone is not evidence that an OS/toolkit has passed.
+- Provider-backed jobs require explicit manual dispatch. Workflows do not send
+  pull-request messages, publish packages or modify upstream repositories.
+- The default documentation check is local and makes no Mintlify requests.
+  `pnpm --filter @e2e-cpp/docs run check:online` is a separate network operation.
+- Commits use Conventional Commits. Keep PR descriptions about the final behavior
+  and relevant validation. Retain third-party attribution in inherited tooling.
+- User-visible changes add a Changeset. Peer ranges point from engines to core,
+  never the reverse. The local fork reset to 0.1.0 is intentional; future version
+  updates should use Changesets so dependent packages stay coordinated.
+- Root `release` and `pack:cpp` create a checksummed six-package installation kit;
+  neither publishes. The release workflow is manual and uploads that kit as an
+  artifact. No fork namespace ownership or registry publication is established.
+- Each build stamps `dist/.build.json`; package `prepublishOnly` and kit packing
+  validate that stamp. Build before packing. `pnpm run canary` only prepares a
+  local coordinated snapshot; there is no automatic canary publishing command.
+- Core's package name is `@e2e-cpp/core`; its executable is `e2e-cpp`. Document
+  locally installed commands as `npx --no-install e2e-cpp` or `pnpm exec e2e-cpp`
+  so instructions cannot fetch a different upstream package. The OAuth executable
+  is `e2e-cpp-oauth`. Preserve the on-disk consumer skill name `e2e`.
+- Private applications are skipped by Changesets (`privatePackages: false`).
+  Their dependencies and known audit findings remain visible and are distinct
+  from the six-package consumer kit.

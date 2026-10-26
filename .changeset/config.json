@@ -1,9 +1,12 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "tester-army/e2e" }],
+  "changelog": [
+    "@changesets/cli/changelog",
+    null
+  ],
   "commit": false,
   "access": "public",
-  "baseBranch": "main",
+  "baseBranch": "mit-cpp",
   "updateInternalDependencies": "patch",
   "fixed": [],
   "linked": [],

@@ -16,11 +16,11 @@ export const CREDENTIALS_ENV = 'E2E_OAUTH_CREDENTIALS';
 
 type CredentialsFile = Record<string, OAuthCredentials>;
 
-/** `$XDG_CONFIG_HOME/e2e/oauth.json`, or `~/.config/e2e/oauth.json`. */
+/** `$XDG_CONFIG_HOME/e2e-cpp/oauth.json`, or `~/.config/e2e-cpp/oauth.json`. */
 export function defaultCredentialsPath(env: NodeJS.ProcessEnv = process.env): string {
   const configHome = env['XDG_CONFIG_HOME'];
   const base = configHome !== undefined && configHome !== '' ? configHome : path.join(homedir(), '.config');
-  return path.join(base, 'e2e', 'oauth.json');
+  return path.join(base, 'e2e-cpp', 'oauth.json');
 }
 
 /** The store the model constructors and the CLI use: the environment variable when set, else the file. */

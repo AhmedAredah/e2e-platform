@@ -1,0 +1,46 @@
+{
+  "name": "@e2e-cpp/process",
+  "version": "0.1.0",
+  "description": "Bounded subprocess fixtures for native and C++ end-to-end tests",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "tag": "latest"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./test": {
+      "types": "./dist/test.d.ts",
+      "default": "./dist/test.js"
+    }
+  },
+  "files": [
+    "dist",
+    "NOTICE",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "prepublishOnly": "node ../../scripts/check-dist.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit"
+  },
+  "peerDependencies": {
+    "@e2e-cpp/core": ">=0.1.0 <1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.2",
+    "@e2e-cpp/core": "workspace:*",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "engines": {
+    "node": "^22.22.3 || >=24.8.0"
+  }
+}

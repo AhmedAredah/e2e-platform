@@ -8,6 +8,8 @@ import { register, type NamespacedUnregister } from 'tsx/esm/api';
 import { ConfigurationError } from '../internal/errors.ts';
 import type { E2EConfig } from '../types.ts';
 import { explainModuleError } from './diagnose.ts';
+import { registerDeclaredSecrets } from './secrets.ts';
+import { protectConfigOutput } from '../internal/output-redaction.ts';
 import { resolveSync } from './esm-hooks.ts';
 
 const CONFIG_NAMES = ['e2e.config.ts', 'e2e.config.mts'] as const;
@@ -77,7 +79,7 @@ export function missingConfigError(cwd: string): ConfigurationError {
   const searched = `no ${CONFIG_NAMES.join(' or ')} found in ${root} or its parent directories`;
   const remedy =
     lookalike === undefined
-      ? 'run e2e init to create one, or pass --config <path>'
+      ? 'run e2e-cpp init to create one, or pass --config <path>'
       : `found ${lookalike}, but only ${CONFIG_NAMES.join(' and ')} are loaded: rename it and keep it an ES module`;
   return new ConfigurationError('CONFIG_NOT_FOUND', `${searched}; ${remedy}`);
 }
@@ -138,7 +140,7 @@ function registerLoader(): NamespacedUnregister {
     // tests run from source (tsc rewrites import specifiers, not URLs).
     nodeModule.register(import.meta.url.replace(/load(\.[jt]s)$/, 'esm-hooks$1'));
   }
-  return register({ namespace: 'e2e' });
+  return register({ namespace: '@e2e-cpp/core' });
 }
 
 /**
@@ -157,6 +159,12 @@ export async function importModule(absolutePath: string, cacheKey = 'module'): P
 
 /** Loads and returns the raw default export of a config module. */
 export async function loadConfigModule(configPath: string): Promise<E2EConfig> {
+  registerDeclaredSecrets(undefined, process.env);
+  return protectConfigOutput(() => loadConfigModuleProtected(configPath));
+}
+
+/** Imports inside the output boundary; successful exports establish their static ledger first. */
+async function loadConfigModuleProtected(configPath: string): Promise<E2EConfig> {
   let moduleValue: unknown;
   try {
     moduleValue = await importModule(configPath);
@@ -178,5 +186,6 @@ export async function loadConfigModule(configPath: string): Promise<E2EConfig> {
       `config ${configPath} ${found}; write export default { targets: [...] } satisfies E2EConfig`,
     );
   }
+  registerDeclaredSecrets(defaultExport, process.env);
   return defaultExport as E2EConfig;
 }

@@ -32,7 +32,7 @@ describe('packageVersion', () => {
 
 describe('readJson', () => {
   it('reads a resolvable JSON module', () => {
-    expect(readJson(import.meta.url, '../../package.json')).toMatchObject({ name: 'e2e' });
+    expect(readJson(import.meta.url, '../../package.json')).toMatchObject({ name: '@e2e-cpp/core' });
   });
 
   it('returns undefined when the specifier cannot be resolved', () => {

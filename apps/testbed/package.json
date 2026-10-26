@@ -1,0 +1,31 @@
+{
+  "name": "@e2e-cpp/testbed",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dogfood suite: runs the e2e runner against a local playground app",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --noEmit && node node_modules/@e2e-cpp/core/dist/cli/bin.js run",
+    "test:headed": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run --headed",
+    "app": "node app/server.mjs",
+    "test:agent": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.agent.config.ts",
+    "test:dogfood": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.dogfood.config.ts",
+    "test:stress": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.stress.config.ts",
+    "explore": "node node_modules/@e2e-cpp/core/dist/cli/bin.js explore --config e2e.agent.config.ts",
+    "explore:garden": "node node_modules/@e2e-cpp/core/dist/cli/bin.js explore --config e2e.explore.config.ts",
+    "explore:bench": "node scripts/explore-bench.mjs"
+  },
+  "dependencies": {
+    "@e2e-cpp/playwright": "workspace:*",
+    "@e2e-cpp/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@ai-sdk/devtools": "1.0.18",
+    "@types/node": "26.4.1",
+    "ai": "7.0.97",
+    "playwright": "1.63.0",
+    "typescript": "7.0.2",
+    "zod": "4.6.6"
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * `e2e run --ai-trace`: every model round trip of a run lands in
+ * `e2e-cpp run --ai-trace`: every model round trip of a run lands in
  * `.e2e/ai-trace.json` in the AI SDK devtools database shape, attributed to
  * the test and step that made it, on both transports — in-process and
  * child-process workers.
@@ -20,7 +20,7 @@ import {
 } from '../helpers/run-project.ts';
 import type { AiTraceDocument } from '../../src/internal/ai-trace.ts';
 
-const SUITE = `import { test, expect } from 'e2e';
+const SUITE = `import { test, expect } from '@e2e-cpp/core';
 
 test('default agent increments the counter', async ({ app, agent, screen }) => {
   await app.open();
@@ -160,8 +160,8 @@ describe('--ai-trace on child-process workers', () => {
     // A worker re-loads the config module itself, so the scripted model is
     // built inside the config file from the shared helper.
     const helper = fileURLToPath(new URL('../helpers/fake-loop-model.ts', import.meta.url));
-    const configSource = `import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+    const configSource = `import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 import { installFakeLoopModel } from ${JSON.stringify(helper)};
 
 export default {

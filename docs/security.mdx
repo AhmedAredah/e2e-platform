@@ -100,7 +100,15 @@ masked rectangle.
 
 The redactor matches registered values in raw, JSON, HTML, and URL-encoded
 forms. It retains old values after a secret rotates. Secret values are
-excluded from cache entries, model input, and reports.
+excluded from cache entries, model input, and reports. Literal strings matching
+registered secrets receive the same pixel taint when passed to `fill`. Semantic
+roles, test IDs, attributes, frame paths, executor prose, errors and report
+labels are redacted. A secret-bearing node ID is refused instead of rewritten.
+
+Saved session state retains the full resolved-secret history and pixel taint in
+the encrypted payload. Protection is restored before the engine receives state.
+Config console output is held until static declarations are registered; runner
+and worker output filtering handles secrets split across writes and UTF-8 bytes.
 
 ### Where redaction stops
 
@@ -108,16 +116,19 @@ excluded from cache entries, model input, and reports.
 - A transformed form of the value, such as its last four characters, is not
   the secret and passes through.
 - A Playwright trace from a tainted session is rewritten before it is kept.
-  Text entries become `<secret:name>`. Image entries cannot be rewritten:
-  one containing the literal secret bytes is dropped, one that merely renders
-  the secret as pixels survives. A trace the runner cannot rewrite is
+  Text entries become `<secret:name>`. Binary image/font entries are omitted:
+  literal-byte scanning cannot prove a rendered image is safe. A trace the runner cannot rewrite is
   deleted and the attempt records `TRACE_WITHHELD`.
 - A video masks nothing and is labelled `redaction: "incomplete"`. It is
-  never recorded unless you ask.
+  never recorded unless you ask, and is withheld after the session is tainted.
 - The `headers` a protected preview needs are recorded in the trace as
   request headers. Share that trace as you would the bypass secret.
-- `command.log` and service logs are captured as the process writes them.
-  The runner does not redact them. Keep secrets out of your app's stdout.
+- Managed command and service logs redact values known in the runner process,
+  plus command environment values of at least four characters, before disk.
+  Keep secrets out of app output: provider values may be known only to a worker.
+- Unregistered values, arbitrary transformations, code writing its own files or
+  sockets, and values printed before resolution are outside this boundary.
+  The runner executes trusted code with the caller's OS privileges.
 
 ## Sessions
 
@@ -146,7 +157,7 @@ Files are named by a hash of the expected key and refused if larger than
 1 MiB. Entries store actions and a redacted summary; replay executes only
 the actions. Secret fills store a name and authorize the fill again.
 
-`e2e init` ignores `.e2e/cache/` in Git. If you choose to
+`e2e-cpp init` ignores `.e2e/cache/` in Git. If you choose to
 [commit recordings](/cache#commit-your-traces), review their actions and typed
 values. CI defaults to read-only when no cache mode is configured.
 
@@ -166,24 +177,29 @@ path you configure.
 | `ai-trace.json` | Every model call, opt-in via `--ai-trace`. Prompts are the redacted ones the model saw; inline image bytes are replaced by their size. | as the prompt |
 | `sessions/<runId>/` | Encrypted sessions, deleted at cleanup. | encrypted |
 | `cache/` | Trace entries. | secret-free by construction |
-| The path in `command.log` | Your app's stdout and stderr, verbatim. Must be inside the project root. | none |
+| The path in `command.log` | App stdout/stderr, filtered before persistence; must stay inside the project root. | currently known values |
+
+Registered logs and downloads must be UTF-8 text without NUL bytes and at most
+8 MiB. They are redacted before hashing or upload. Opaque, binary, oversized or
+undecodable files are withheld, deleted, and labelled incomplete without a path.
+Text redaction may change application data syntax; evidence is for diagnostics.
 
 An `artifacts.store` receives each artifact's bytes as they are produced,
-after trace redaction. A `cache.store` receives every recorded entry and
+after redaction. Producers must finish writing before registration; mutation
+after registration is outside the artifact contract. A `cache.store` receives every recorded entry and
 supplies every replayed one; what comes back is validated again before use.
 
 ## Outbound connections
 
+The fork CLI collects and sends no usage telemetry; see [Telemetry](/telemetry).
 Built-in features may connect to:
 
-- one telemetry request per CLI invocation to `eu.i.posthog.com`, unless
-  opted out; see [Telemetry](/telemetry)
 - the provider endpoint used by your configured model. Deterministic tests
   and fully replayed action steps make no model call.
 - readiness probes against the `readyUrl` of the app the runner starts
 - a Playwright browser download, once, when the browser is missing
 - the DevTools endpoint you name in `playwright({ connect })`
-- the GitHub API, only from the opt-in `@e2edev/github` reporter
+- the GitHub API, only from the opt-in `@e2e-cpp/github` reporter
 - the app under test, and whatever that app itself loads
 
 There is no crash reporting or update check. `--ai-trace` writes a local
@@ -192,10 +208,10 @@ additional connections.
 
 ## MCP and explore
 
-`e2e mcp` uses stdio and the same action authorization as a test run. It
+`e2e-cpp mcp` uses stdio and the same action authorization as a test run. It
 allows one open session at a time and closes idle sessions.
 
-`e2e explore` carries every configured credential into every step. Usernames
+`e2e-cpp explore` carries every configured credential into every step. Usernames
 reach the model as plain text; passwords stay handles. Explore with a config
 that declares only the accounts the exploration needs.
 

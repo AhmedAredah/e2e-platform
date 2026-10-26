@@ -39,7 +39,7 @@ timeout. They do not accept per-call timeout options.
 
 | Method | Timeout | Throws |
 | --- | --- | --- |
-| `open(path?)` | `config.timeout`, 120000 ms | `APP_URL_REQUIRED` when the engine declares no `url`, `POLICY_DENIED` for a `file:`, `data:`, or `javascript:` URL, `APP_UNREACHABLE`, `ACTION_FAILED`, `UNSUPPORTED_CAPABILITY` without `session.open` |
+| `open(path?)` | `config.timeout`, 120000 ms | Without a URL, `open()` invokes the engine restart hook; an explicit path still requires a URL (`APP_URL_REQUIRED`). `POLICY_DENIED` for a `file:`, `data:`, or `javascript:` URL, `APP_UNREACHABLE`, `ACTION_FAILED`, `UNSUPPORTED_CAPABILITY` without `session.open` |
 | `restart()` | `config.timeout`, 120000 ms | `ACTION_FAILED`, `ENGINE_FAILURE`, `UNSUPPORTED_CAPABILITY` without `session.restart` |
 | `clearState()` | `config.timeout`, 120000 ms | `ACTION_FAILED`, `ENGINE_FAILURE`, `UNSUPPORTED_CAPABILITY` without `session.reset` |
 | `back()` | `config.actionTimeout`, 30000 ms | `APP_NOT_OPEN`, `ACTION_FAILED`, `UNSUPPORTED_CAPABILITY` without `session.back` |

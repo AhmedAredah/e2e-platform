@@ -1,17 +1,25 @@
-# @e2edev/playwright
+# @e2e-cpp/playwright
 
-The browser engine for [`e2e`](https://www.npmjs.com/package/e2e), built on
+> Fork installation: these package names are local release identities. Use the
+> checksummed kit in [INSTALL_CPP.md](../../INSTALL_CPP.md), or pack the needed
+> workspace module locally. Registry availability is not established.
+
+The browser engine for [`@e2e-cpp/core`](https://www.npmjs.com/package/e2e), built on
 [Playwright](https://playwright.dev).
 
-`e2e` ships no engine of its own: every target names the engine that drives
+`@e2e-cpp/core` ships no engine of its own: every target names the engine that drives
 it, and this package is the one for browsers. It implements the public
-`e2e/engine` contract, so a device or desktop engine plugs into the same
+`@e2e-cpp/core/engine` contract, so a device or desktop engine plugs into the same
 seam with no privilege either way.
 
 ## Install
 
+After building the source repository, pack this optional module with
+`pnpm --filter @e2e-cpp/playwright pack --pack-destination /absolute/path/to/tarballs`.
+Replace the paths below with your local tarballs; the core comes from the release kit.
+
 ```bash
-npm install --save-dev e2e @e2edev/playwright playwright
+npm install --save-dev /path/to/e2e-cpp-core-0.1.0.tgz /path/to/e2e-cpp-playwright-0.1.0.tgz playwright@1.63.0
 ```
 
 Bring your own Playwright: `playwright` is a peer dependency (`>=1.63.0 <2`),
@@ -21,8 +29,8 @@ outside the range may be rejected by your package manager as an unmet peer
 (npm's `ERESOLVE`), so upgrade `playwright` within the range.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from 'e2e';
-import { playwright } from '@e2edev/playwright';
+import type { E2EConfig } from '@e2e-cpp/core';
+import { playwright } from '@e2e-cpp/playwright';
 
 export default {
   targets: [{ name: 'web', engine: playwright({ url: 'http://localhost:3000' }) }],
@@ -78,11 +86,11 @@ for the lifecycle and ownership contract.
 The engine contributes `web`: navigation, routes, cookies, dialogs, frames,
 downloads, keyboard and mouse, plus `expect(web).toHaveURL()` and
 `toHaveTitle()` and `toHaveClass()`. Import `test` from this package to have it
-typed; it is the same runtime `test` as `e2e`'s.
+typed; it is the same runtime `test` as `@e2e-cpp/core`'s.
 
 ```ts
-import { test } from '@e2edev/playwright';
-import { expect } from 'e2e';
+import { test } from '@e2e-cpp/playwright';
+import { expect } from '@e2e-cpp/core';
 
 test('signs in', async ({ app, screen, web }) => {
   await app.open('/login');
