@@ -1,9 +1,9 @@
 # Publishing the reviewed candidate
 
 The canonical repository is `AhmedAredah/e2e-platform`, a GitHub fork of
-`tester-army/e2e`. The reviewed local source branch is `mit-main`; uploading it is currently blocked
-by missing write access in the GitHub connection. No GitHub release has been
-published. The branch is rooted at MIT
+`tester-army/e2e`. The reviewed candidate source branch is `mit-main`.
+Source publication is separate from package publication and release qualification;
+no GitHub release has been published. The branch is rooted at MIT
 revision `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. Preserve the separately
 copied upstream `main` branch and its Apache terms. Do not merge that branch
 into the MIT line without reviewing every imported license obligation.

@@ -10,13 +10,14 @@ another language; GUI support depends on accessible controls and the driver.
 
 [AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform) was created
 as a real GitHub fork of TesterArmy e2e. Issues and private vulnerability reporting
-are enabled. The reviewed local branch is `mit-main`; uploading it is blocked
-by the GitHub connection's missing write access. The hosted `main` branch remains
+are enabled. The reviewed candidate source is maintained on
+[`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main).
+The separately retained `main` branch remains
 the original upstream Apache-licensed snapshot. **It is not this candidate.**
 No GitHub release, npm publication, remote CI pass or registry namespace ownership
-is claimed. Use the reviewed full-repository archive until publication completes.
+is claimed. Clone `mit-main` or use the reviewed full-repository archive.
 [Publishing instructions](docs/development/PUBLISHING.md) preserve upstream `main`
-and publish `mit-main` without a force push.
+and update `mit-main` without a force push.
 
 The selected MIT base remains
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. The review retained upstream and Pi

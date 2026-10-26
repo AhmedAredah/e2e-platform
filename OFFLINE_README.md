@@ -1,10 +1,9 @@
 # Working with the complete checkout
 
 This repository contains the MIT upstream source snapshot, the reviewed extension
-port, desktop drivers, tests, examples and documentation. The reviewed release branch is
-`mit-main`; its GitHub publication is pending repository write access. Use the
-reviewed full-repository archive for this candidate. Once published, select the
-branch explicitly when cloning. The base is commit
+port, desktop drivers, tests, examples and documentation. The reviewed candidate
+branch is `mit-main`. Select that branch explicitly when cloning, or use the
+reviewed full-repository archive. The base is commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`; later Apache-licensed upstream
 commits are not this fork's base. The canonical repository is
 [AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform).

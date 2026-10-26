@@ -7,10 +7,11 @@ Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
 
-The current prerelease is **0.2.0-rc.2**, delivered in the reviewed full-repository archive.
-The GitHub fork exists, but publishing its `mit-main` branch is pending repository
-write access; the hosted `main` branch is still the upstream Apache snapshot. The new OS accessibility drivers are
-experimental; portable tests do not replace their pending live platform qualification. Read
+The current prerelease is **0.2.0-rc.2**. Its source branch is
+[`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main); a prepared
+full-repository archive also includes Git history and a local installation kit.
+The new OS accessibility drivers are experimental; portable tests do not replace
+their pending live platform qualification. Read
 [RELEASE_STATUS.md](RELEASE_STATUS.md) for tested scope and remaining release gates.
 
 The fork starts from upstream commit
