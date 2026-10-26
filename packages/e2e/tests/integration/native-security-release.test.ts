@@ -33,7 +33,7 @@ function evidence(root: string): string {
 it('redacts config output, fragmented worker output, titles and thrown errors in the compiled CLI', async () => {
   const project = createProject({
     'e2e.config.ts': `console.log('config ${STATIC}'); export default { targets: [{ platform: 'desktop' }], secrets: { audit: '${STATIC}' }, workers: 2, artifacts: [], reporters: ['list'] };`,
-    'tests/leak.e2e.ts': `import { test } from '@e2e-cpp/core'; test('title ${STATIC}', async () => { process.stdout.write('${STATIC.slice(0, 11)}'); process.stdout.write('${STATIC.slice(11)}\\n'); process.stderr.write('${STATIC}\\n'); throw new Error('failure ${STATIC}'); });`,
+    'tests/leak.e2e.ts': `import { test } from '@e2e-platform/core'; test('title ${STATIC}', async () => { process.stdout.write('${STATIC.slice(0, 11)}'); process.stdout.write('${STATIC.slice(11)}\\n'); process.stderr.write('${STATIC}\\n'); throw new Error('failure ${STATIC}'); });`,
   });
   try {
     const result = await runCli(project.dir);
@@ -47,7 +47,7 @@ it('redacts config output, fragmented worker output, titles and thrown errors in
 
 it('restores provider secret redaction and pixel taint across isolated session workers', async () => {
   const project = createProject({
-    'e2e.config.ts': `import { defineEngine, LOCATOR_ACTION_KINDS } from '@e2e-cpp/core/engine';
+    'e2e.config.ts': `import { defineEngine, LOCATOR_ACTION_KINDS } from '@e2e-platform/core/engine';
 let echo = '';
 const engine = defineEngine({ name: 'security-fixture', version: '1', spiVersion: 1, platform: 'desktop',
   async startAttempt() { echo = ''; },
@@ -58,8 +58,8 @@ const engine = defineEngine({ name: 'security-fixture', version: '1', spiVersion
 });
 export default { targets: [{ engine }], secrets: { token: () => '${PROVIDER}' }, workers: 2, cache: 'off', artifacts: [], reporters: ['json'],
 agents: { default: { executor: { name: 'audit', cache: 'off', async runStep(context) { const observation = await context.observe({ pixels: true }); if (observation.text.includes('${PROVIDER}') || observation.pixels !== undefined || observation.pixelsWithheld !== 'PIXEL_TAINTED') throw new Error('restored protection missing'); return { status: 'passed', summary: 'restored protection verified' }; } } } } };`,
-    'tests/setup.e2e.ts': `import { test, secrets } from '@e2e-cpp/core'; test.setup('seed', { sessions: ['member'] }, async ({ screen, session }) => { await screen.getByRole('textbox').fill(secrets.get('token')); await session.save('member'); });`,
-    'tests/consumer.e2e.ts': `import { test } from '@e2e-cpp/core'; test('consumer', { session: 'member' }, async ({ agent }) => { await agent.act('inspect restored state'); });`,
+    'tests/setup.e2e.ts': `import { test, secrets } from '@e2e-platform/core'; test.setup('seed', { sessions: ['member'] }, async ({ screen, session }) => { await screen.getByRole('textbox').fill(secrets.get('token')); await session.save('member'); });`,
+    'tests/consumer.e2e.ts': `import { test } from '@e2e-platform/core'; test('consumer', { session: 'member' }, async ({ agent }) => { await agent.act('inspect restored state'); });`,
   });
   try {
     const result = await runCli(project.dir);

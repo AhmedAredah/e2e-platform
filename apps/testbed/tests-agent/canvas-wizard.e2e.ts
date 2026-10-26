@@ -5,8 +5,8 @@
  * screenshot rather than replay positions; the DOM shows the picks at the end.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('act walks an eight-screen wizard painted on a canvas', async ({ web, agent, screen }) => {
   await web.goto('/canvas-wizard');

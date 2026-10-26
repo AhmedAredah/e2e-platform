@@ -1,9 +1,9 @@
 /**
- * The `@e2e-cpp/core/agent` entrypoint: the builders that assemble a step
+ * The `@e2e-platform/core/agent` entrypoint: the builders that assemble a step
  * executor on the AI SDK. `createAgent` is the golden path;
  * `createToolLoopExecutor` is the same loop with a caller's own prompt and
  * tool vocabulary. The socket vocabulary itself — `StepExecutor`, verdicts,
- * `BLOCKABLE_CODES` — lives on the main `@e2e-cpp/core` entrypoint, so a hand-rolled
+ * `BLOCKABLE_CODES` — lives on the main `@e2e-platform/core` entrypoint, so a hand-rolled
  * executor needs no import from here (and no AI SDK) at all.
  */
 

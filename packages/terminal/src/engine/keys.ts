@@ -1,4 +1,4 @@
-import { parseKey } from '@e2e-cpp/core/engine';
+import { parseKey } from '@e2e-platform/core/engine';
 import { TerminalError } from '../model/types.ts';
 
 const SIMPLE: Readonly<Record<string, string>> = {

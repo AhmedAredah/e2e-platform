@@ -1,4 +1,4 @@
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test.describe('todos', { tags: ['todos'] }, () => {
   test.beforeEach(async ({ app }) => {

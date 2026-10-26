@@ -6,8 +6,8 @@
  * where the tree alone should carry the step.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('enters a code on the drawn keypad through points', async ({ web, agent, screen }) => {
   await web.goto('/canvas-flow');

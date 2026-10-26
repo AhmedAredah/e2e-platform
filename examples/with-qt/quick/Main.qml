@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 ApplicationWindow {
-    width: 520; height: 400; visible: true
+    width: 520; height: 480; visible: true
     title: "C++ Qt Quick calculator"
     objectName: "quick-calculator"
     ColumnLayout {
@@ -13,6 +13,11 @@ ApplicationWindow {
         TextField { id: quantity; objectName: "quantity"; text: "3"; placeholderText: "Quantity"; Accessible.name: "Quantity" }
         TextField { id: price; objectName: "unit-price"; text: "12.5"; placeholderText: "Unit price"; Accessible.name: "Unit price" }
         TextField { objectName: "password"; echoMode: TextInput.Password; placeholderText: "Project password"; Accessible.name: "Project password" }
+        ComboBox {
+            id: currency; objectName: "currency"; Accessible.name: "Currency"
+            textRole: "label"; valueRole: "code"; currentIndex: 1
+            model: [{ label: "US dollars", code: "USD" }, { label: "Euros", code: "EUR" }]
+        }
         CheckBox { id: tax; objectName: "tax"; text: "Include 10% tax" }
         Button {
             id: calculate; objectName: "calculate"; text: "Calculate"
@@ -24,7 +29,7 @@ ApplicationWindow {
             id: finish; interval: 80
             onTriggered: {
                 var total = Number(quantity.text) * Number(price.text) * (tax.checked ? 1.1 : 1.0) + (badCalculation ? 1 : 0)
-                result.text = "Total: " + total.toFixed(2) + " USD"
+                result.text = "Total: " + total.toFixed(2) + " " + currency.currentValue
                 status.text = "Calculated"
                 calculate.enabled = true
             }

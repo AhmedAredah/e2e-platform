@@ -1,13 +1,13 @@
 ---
-title: MCP server (e2e-cpp mcp)
+title: MCP server (e2e-platform mcp)
 description: Let a coding agent inspect and interact with your app over MCP.
 ---
 
 ```bash
-npx --no-install e2e-cpp mcp [--config <path>] [--target <name>] [--headless]
+npx --no-install e2e-platform mcp [--config <path>] [--target <name>] [--headless]
 ```
 
-`e2e-cpp mcp` lets coding agents such as Claude Code and Cursor inspect your app,
+`e2e-platform mcp` lets coding agents such as Claude Code and Cursor inspect your app,
 try locators, and take masked screenshots before writing tests. It runs over
 stdio and uses the project's configured engine.
 
@@ -16,11 +16,11 @@ tool catalog reloads from the config whenever a session opens.
 
 ## Setup
 
-The server ships with `@e2e-cpp/core`. `e2e-cpp init` offers to register it in
+The server ships with `@e2e-platform/core`. `e2e-platform init` offers to register it in
 `.mcp.json` (Claude Code) and `.cursor/mcp.json` (Cursor). By hand:
 
 ```bash
-claude mcp add e2e-cpp -- npx --no-install e2e-cpp mcp
+claude mcp add e2e-platform -- npx --no-install e2e-platform mcp
 ```
 
 For clients that use a `mcpServers` config, add:
@@ -28,13 +28,13 @@ For clients that use a `mcpServers` config, add:
 ```json
 {
   "mcpServers": {
-    "e2e-cpp": { "command": "npx", "args": ["--no-install", "e2e-cpp", "mcp"] }
+    "e2e-platform": { "command": "npx", "args": ["--no-install", "e2e-platform", "mcp"] }
   }
 }
 ```
 
 Start the server in the project directory. Config discovery works like
-`e2e-cpp run`. Set `--config` for another location, or pass `config` to
+`e2e-platform run`. Set `--config` for another location, or pass `config` to
 `open_session` for a single session.
 
 | Flag | Behavior |
@@ -93,11 +93,11 @@ into the trace cache; its artifacts land under
 
 | URI | Content |
 | --- | --- |
-| `e2e://guide` | The agent skill's overview, the text `e2e-cpp guide` prints. |
+| `e2e://guide` | The agent skill's overview, the text `e2e-platform guide` prints. |
 | `e2e://guide/{topic}` | One topic: `setup`, `writing-tests`, `agent`, `running`, `explore`, `debugging`, `mcp`. |
 
 ## Exit codes
 
-`e2e-cpp mcp` exits 0 when the client disconnects or a signal ends it, and 2
+`e2e-platform mcp` exits 0 when the client disconnects or a signal ends it, and 2
 when the command line is invalid. Config and engine failures come back as
 tool errors with the same codes the CLI prints.

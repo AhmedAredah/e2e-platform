@@ -1,4 +1,4 @@
-import { test as base } from '@e2e-cpp/core';
+import { test as base } from '@e2e-platform/core';
 import type { TerminalFixture } from './engine/terminal.ts';
 export { TerminalEngine, terminal, type TerminalOptions, type TerminalFixture } from './engine/terminal.ts';
 export { TerminalSession } from './model/session.ts';

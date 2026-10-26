@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { EngineError, defineEngine } from '@e2e-cpp/core/engine';
+import { EngineError, defineEngine } from '@e2e-platform/core/engine';
 import { playwright, surfaceOf } from '../../src/index.ts';
 import { PlaywrightSurface } from '../../src/surface.ts';
 

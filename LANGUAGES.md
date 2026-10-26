@@ -11,26 +11,28 @@ C#/.NET console app with an ASP.NET Core endpoint, and a Rust standard-library a
 | Local HTTP example | `http.server` fixture | ASP.NET Core/Kestrel | Bounded standard-library TCP fixture |
 | Test authoring | TypeScript | TypeScript | TypeScript |
 | Dedicated foreign-language test SDK | Not included | Not included | Not included |
-| Native GUI adapters for these ecosystems | Not included | Not included | Not included |
+| Desktop accessibility | Linux AT-SPI driver written in Python | Windows UIA driver written in C# | macOS AX driver written in Rust |
 
 HTTP tests operate at the protocol boundary. They do not establish support for
 all framework-specific features, WebSockets, gRPC, or arbitrary authentication.
 The Python and Rust HTTP servers are small local test fixtures, not production
 server implementations. Tkinter, PySide/PyQt, wxPython, Kivy, WPF, WinForms, WinUI,
-Avalonia, MAUI, Slint, egui, iced and Tauri require separate qualified adapters.
+Avalonia, MAUI, Slint, egui, iced and Tauri require explicit platform and control
+qualification. OS accessibility drivers may serve several of these toolkits;
+a toolkit name is not a guarantee that its controls expose every required pattern.
 The existing C++ Qt helper is not a Python binding.
 
 ## Verify all three applications
 
 Install the repository's pinned Node/pnpm dependencies and build the six core
-boundary packages, then use installed Python 3.10+, a .NET 10 SDK, and a Rust
+boundary packages, then use installed Python 3.12+, a .NET 10 SDK, and a Rust
 compiler supporting edition 2024. The .NET app uses only the SDK's shared
 framework; the Rust app has no registry dependencies and builds with
 `--offline --locked`. No Python packages are required.
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm build:cpp
+pnpm build:native
 node scripts/languages/verify.mjs
 ```
 
@@ -56,12 +58,12 @@ for each tested OS/toolchain combination.
 
 ## Reusable launch profiles
 
-`@e2e-cpp/process` exports `ApplicationLaunchProfile`, `PythonLaunchProfile`,
+`@e2e-platform/process` exports `ApplicationLaunchProfile`, `PythonLaunchProfile`,
 `DotnetLaunchProfile` and `ExecutableLaunchProfile`. Use the executable profile for
 Rust, C++, self-contained .NET apphosts and other compiled programs.
 
 ```ts
-import { PythonLaunchProfile, runProcess } from '@e2e-cpp/process';
+import { PythonLaunchProfile, runProcess } from '@e2e-platform/process';
 
 const app = new PythonLaunchProfile({
   identity: 'my-company.calculator',
@@ -97,10 +99,15 @@ C# uses an abstract operation and calculator interface; Rust uses traits and
 composition. New SDKs or GUI toolkits should extend those boundaries rather than
 forking the runner.
 
-## Next boundaries
+## Desktop drivers and remaining boundaries
 
-The next useful milestones are separately packaged Qt Python bindings, a Windows
-UI Automation adapter, and toolkit-specific or WebDriver/Appium integrations.
-Native pytest, NUnit/xUnit and Cargo test authoring would require a versioned
-runner-host protocol and dedicated clients. None of those capabilities are
-implemented by this CLI/HTTP milestone.
+See [DESKTOP.md](DESKTOP.md). A driver's implementation language does not restrict
+which application's controls it can inspect. The Python AT-SPI driver can inspect
+accessible C++ GTK controls; the C# UIA driver can inspect accessible native Windows
+controls. Exact toolkit/OS combinations must still pass their live checks.
+
+These are application-control backends, not pytest, NUnit/xUnit, C++ or Cargo
+implementations of the full test runner. Native-language test-authoring SDKs remain
+future work. The runner, locators, assertions and reports stay in TypeScript.
+The existing C++ Qt helper remains the direct cooperative route for Qt; a Python
+Qt binding and hybrid DOM/native coordination are not included.

@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('assertion mismatch with a short wait', async ({ app, screen }) => {
   await app.open();

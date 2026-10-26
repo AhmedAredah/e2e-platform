@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Browser, Dialog, Route } from 'playwright';
-import type { EngineFixtureContext, OperationContext } from '@e2e-cpp/core/engine';
+import type { EngineFixtureContext, OperationContext } from '@e2e-platform/core/engine';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { createWebFixture } from '../../src/web.ts';

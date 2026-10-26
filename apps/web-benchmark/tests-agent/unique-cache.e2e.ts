@@ -6,8 +6,8 @@
  * the value is in the key and every run misses.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect, unique } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect, unique } from '@e2e-platform/core';
 
 test('act adds an address with a run-unique label', async ({ app, agent, screen }) => {
   const label = `Cabin ${Date.now().toString(36)}`;

@@ -14,4 +14,4 @@ See .claude/skills/writing-pr/SKILL.md. No test logs, no history.
 - [ ] Breaking change: title carries `!`, the changeset body names what breaks and what replaces it, and the deprecation warning landed a window earlier (stability policy in CONTRIBUTING.md).
 - [ ] Docs updated in the same PR: the `docs/**/*.mdx` page for the behavior, and `skills/e2e/` if the skill describes it.
 - [ ] Contract change: emitted `.d.ts` reviewed, `tests/types/sdk-types.ts` updated; wire change edits the schema and both fixtures.
-- [ ] Engine contract change (`@e2e-cpp/core/engine`): changesets for `@e2e-cpp/core`, `@e2e-cpp/playwright`, and `@e2e-cpp/agent-device`.
+- [ ] Engine contract change (`@e2e-platform/core/engine`): changesets for `@e2e-platform/core`, `@e2e-platform/playwright`, and `@e2e-platform/agent-device`.

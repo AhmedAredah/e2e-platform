@@ -1,4 +1,4 @@
-import type { E2EConfig } from '@e2e-cpp/core';
+import type { E2EConfig } from '@e2e-platform/core';
 
 export default {
   projectId: 'dev.e2e.examples.cpp-cli',

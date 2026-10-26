@@ -1,19 +1,19 @@
 # Working with the complete checkout
 
 This archive contains the MIT upstream source snapshot and its fetched ancestry,
-the reviewed C++ extension port, tests, examples and documentation. The current
-development branch is `fix/release-hardening`. The base is commit
+the reviewed extension port, desktop drivers, tests, examples and documentation. The current
+development branch is `feat/desktop-platforms`. The base is commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`; later Apache-licensed upstream
 commits are not this fork's base. Nothing has been published or pushed upstream.
 
-Start with [CPP_SUPPORT.md](CPP_SUPPORT.md) for the support matrix and extension
+Start with [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) for the support matrix and extension
 architecture, [native/README.md](native/README.md) for adding native helpers, and
 [verification/README.md](verification/README.md) for verification commands.
 [RELEASE_STATUS.md](RELEASE_STATUS.md) records the current candidate's results and
 qualification limits. Detailed release evidence is provided separately from the
 source archive; older evidence remains in Git history and previous archives.
 The archive also includes a generated, checksummed `release-packages/` install kit.
-See [INSTALL_CPP.md](INSTALL_CPP.md) for using it in another project.
+See [INSTALL.md](INSTALL.md) for using it in another project.
 The new packages are workspace source packages; their inclusion does not mean
 that these package versions have been published to a registry.
 
@@ -21,12 +21,12 @@ that these package versions have been published to a registry.
 
 | Location | Purpose |
 | --- | --- |
-| `packages/` | Reusable TypeScript modules prepared for packaging, public contracts and their tests. The C++ additions are process, checks, native, terminal and protocol. |
-| `native/qt/` | C++ Qt helper, installed headers, internal adapters/protocol, CMake configuration and compiled tests. Future toolkit helpers belong beside it. |
-| `examples/` | Standalone consumer examples, including C++ CLI/Qt and Python, C# and Rust CLI/HTTP applications. |
+| `packages/` | Reusable TypeScript modules prepared for packaging, public contracts and their tests. The boundary packages are process, checks, native, terminal and protocol. |
+| `native/qt/` | C++ Qt helper, installed headers, internal adapters/protocol, CMake configuration and compiled tests. OS sidecars live in `native/linux-atspi/`, `windows-uia/`, and `macos-ax/`. |
+| `examples/` | Standalone consumer examples, including C++ CLI/Qt and Python, C# and Rust CLI/HTTP applications and `with-desktop/` accessible GUI fixtures. |
 | `apps/` | Upstream testbed and browser/mobile benchmark applications used to qualify the shared runner. |
 | `docs/` | Documentation pages, checked code examples and required site assets. |
-| `scripts/` | Build, validation and release tooling; C++ verification and installation tooling is under `scripts/cpp/`; language build and verification scripts are under `scripts/languages/`. |
+| `scripts/` | Build, validation and release tooling; C++ verification and installation tooling is under `scripts/native/`; language build and verification scripts are under `scripts/languages/`. |
 | `skills/` | Consumer integration guidance bundled with the core package. |
 | `verification/` | Stable instructions for reproducing checks; generated run evidence is kept outside tracked source. |
 | `release-packages/` | Generated, checksummed local installation kit included with the downloadable archive. |
@@ -39,7 +39,7 @@ and run output. The installation kit is the deliberate generated-file exception.
 ## Open and inspect
 
 Extract the entire archive, including its `.git` directory. Open the extracted
-`e2e-cpp` folder in your editor. Git needs no network connection for these steps:
+`e2e-platform` folder in your editor. Git needs no network connection for these steps:
 
 ```sh
 git status
@@ -73,8 +73,9 @@ your OS and architecture. Provision them on the machine where tests will run:
    Qt examples do not require a browser download.
 5. For the language examples, provision Python 3.12+, the .NET 10 SDK and a
    compatible Rust/Cargo toolchain before disconnecting. See [LANGUAGES.md](LANGUAGES.md)
-   for explicit tool paths and the versions actually qualified. The included demos
-   use no third-party Python, NuGet or Cargo packages.
+   for explicit tool paths and the versions actually qualified. The CLI/HTTP demos
+   use no third-party Python, NuGet or Cargo packages. Desktop drivers have
+   additional system/targeting-pack/crate prerequisites; follow [DESKTOP.md](DESKTOP.md).
 6. Keep the resulting dependency store and SDK installations locally. A later
    reinstall can use `pnpm install --offline --frozen-lockfile` only if the store
    already contains everything needed for that platform. Native install scripts
@@ -89,10 +90,10 @@ Model-dependent operations without usable replay data will fail explicitly.
 From the repository root, after installing dependencies:
 
 ```sh
-pnpm build:cpp
-pnpm test:cpp
-node scripts/cpp/verify.mjs
-node scripts/cpp/verify.mjs --qt --require-quick
+pnpm build:native
+pnpm test:native
+node scripts/native/verify.mjs
+node scripts/native/verify.mjs --qt --require-quick
 ```
 
 The last command requires the selected Qt kit and a suitable graphical backend.

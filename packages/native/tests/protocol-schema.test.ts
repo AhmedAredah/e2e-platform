@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { ENGINE_ERROR_CODES, LOCATOR_ACTION_KINDS } from '@e2e-cpp/core/engine';
+import { ENGINE_ERROR_CODES, LOCATOR_ACTION_KINDS } from '@e2e-platform/core/engine';
 import { describe, expect, it } from 'vitest';
 import { parseSnapshot } from '../src/driver/snapshot.ts';
 import { NativeTransport, RpcNativeDriver } from '../src/index.ts';

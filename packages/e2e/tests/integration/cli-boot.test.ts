@@ -1,5 +1,5 @@
 /**
- * The CLI starts without the optional `ai` peer dependency. `e2e-cpp init` is the
+ * The CLI starts without the optional `ai` peer dependency. `e2e-platform init` is the
  * first command a project runs, before its dependencies exist, and `npx e2e`
  * installs the package with no peers at all. The built CLI is spawned under a
  * resolve hook that fails `ai` the way a missing package does; a static import

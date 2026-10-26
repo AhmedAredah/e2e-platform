@@ -3,7 +3,7 @@
  * OS permission dialog, and a keyboard that covers the control to tap next.
  */
 
-import type { Screen } from '@e2e-cpp/core';
+import type { Screen } from '@e2e-platform/core';
 import { expect, openScenario, test } from './fixtures.ts';
 
 test.describe('permission prompt', () => {

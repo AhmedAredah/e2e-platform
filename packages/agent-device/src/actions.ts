@@ -1,6 +1,6 @@
 /** The action kinds a device surface declares, and the pointer dispatch that agrees with them. */
 
-import type { LocatorActionKind, PointerAction, PointerActionKind, ViewportPoint } from '@e2e-cpp/core/engine';
+import type { LocatorActionKind, PointerAction, PointerActionKind, ViewportPoint } from '@e2e-platform/core/engine';
 import type { AgentDeviceClient } from './options.ts';
 import { unsupported } from './support.ts';
 

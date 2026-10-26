@@ -1,10 +1,10 @@
-# @e2e-cpp/protocol
+# @e2e-platform/protocol
 
 Bounded HTTP clients for CLI, service, and end-to-end tests. Uses Node's built-in
 `fetch`; no UI, model, or additional runtime dependency is required.
 
 ```ts
-import { createHttpClient } from '@e2e-cpp/protocol';
+import { createHttpClient } from '@e2e-platform/protocol';
 const api = createHttpClient({ baseUrl: 'http://127.0.0.1:8080', timeoutMs: 2000 });
 const response = await api.post('/jobs', { json: { input: 'fixture.csv' } });
 response.expectStatus(201);
@@ -41,7 +41,7 @@ bounded fetch operation, and `FetchHttpClient` selects it by default. The factor
 delegates to `FetchHttpClient`; subclass tests verify serialization and effect
 observation through a custom transport without duplicating HTTP policy.
 
-Tests run after `pnpm build:cpp` from the repository root. The protocol suite
+Tests run after `pnpm build:native` from the repository root. The protocol suite
 includes a built-CLI failure test that checks console output and report artifacts
 for leaked response data.
 

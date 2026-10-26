@@ -3,12 +3,12 @@ title: Telemetry
 description: The fork CLI has no telemetry destination and sends no usage events.
 ---
 
-The `e2e-cpp` CLI does not collect or send usage telemetry. The upstream
+The `e2e-platform` CLI does not collect or send usage telemetry. The upstream
 project's destination and ingestion key have been removed. This applies to
 normal commands, CI and model-free runs.
 
 ```bash
-npx --no-install e2e-cpp telemetry
+npx --no-install e2e-platform telemetry
 ```
 
 The command reports `Status: disabled (this fork has no telemetry destination)`.

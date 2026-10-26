@@ -8,7 +8,7 @@ recorded checks and qualification limits.
 
 ## Prerequisites
 
-Follow [INSTALL_CPP.md](../INSTALL_CPP.md) for consumer installation and
+Follow [INSTALL.md](../INSTALL.md) for consumer installation and
 [OFFLINE_README.md](../OFFLINE_README.md) for source dependencies and toolchains.
 Source verification needs the pinned pnpm version, a supported Node.js version,
 CMake and a C++17 compiler. Qt checks also need the selected Qt 6 development kit
@@ -22,7 +22,7 @@ From the repository root:
 ```sh
 pnpm install --frozen-lockfile
 pnpm check:local
-pnpm test:cpp
+pnpm test:native
 pnpm test:scripts
 ```
 
@@ -34,12 +34,12 @@ checks does not establish that browser/mobile integration suites passed.
 ## Compiled applications and installed consumers
 
 ```sh
-node scripts/cpp/verify.mjs
-node scripts/cpp/verify.mjs --qt --require-quick
+node scripts/native/verify.mjs
+node scripts/native/verify.mjs --qt --require-quick
 pnpm verify:qt:install
 pnpm verify:qt:exports
-pnpm pack:cpp
-node scripts/cpp/install-kit-smoke.mjs --kit release-packages
+pnpm pack:native
+node scripts/native/install-kit-smoke.mjs --kit release-packages
 # Requires Python, .NET and Rust installed; no skipped language counts as a pass.
 pnpm verify:languages
 ```
@@ -50,8 +50,8 @@ failure; a timeout, crash, skipped suite or missing dependency cannot pass the
 negative test. The final summary must be present and the verifier must exit zero.
 
 The installed Qt check builds both static and shared helpers and compiles a
-separate CMake consumer of each installation. `pack:cpp` creates the installation
-kit described in [INSTALL_CPP.md](../INSTALL_CPP.md). Test that kit from a separate
+separate CMake consumer of each installation. `pack:native` creates the installation
+kit described in [INSTALL.md](../INSTALL.md). Test that kit from a separate
 project to check the consumer path as well as the source checkout.
 
 | Output | Location |
@@ -77,3 +77,22 @@ Re-run the required CI matrix on each supported platform. Offscreen Qt results d
 not establish physical desktop input, X11/Wayland, GPU or native-dialog behavior.
 Keep generated output outside tracked source; include only the current evidence
 needed to review a release in its separate evidence bundle.
+
+
+## Desktop accessibility drivers
+
+The current candidate is `e2e-platform` 0.2.0-rc.1. Start with
+[DESKTOP.md](../DESKTOP.md) and the [declared profiles](../docs/development/support-profiles.json).
+Driver tests and native acceptance instructions live with each implementation:
+Python [AT-SPI](../native/linux-atspi/README.md), C# [UIA](../native/windows-uia/README.md),
+Rust [AX](../native/macos-ax/README.md), C++ [Qt](../native/qt/README.md).
+
+`E2E_TEST_PYTHON=/usr/bin/python3 pnpm --filter @e2e-platform/native test` additionally
+runs the actual Python protocol host with an injected provider through the shared
+runner. This tests interoperability, not a live GTK desktop. Native graphical
+checks must run on eligible hosts and fail when unavailable. Do not count fake
+providers, cross-compilation or configured CI jobs as platform certification.
+
+Run builds before integration tests, and do not clean/rebuild shared `dist` directories
+while those tests are in flight. One qualification attempt here was invalidated
+by a concurrent build; a later isolated full run passed all 163 core files.

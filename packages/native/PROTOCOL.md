@@ -5,11 +5,18 @@ ship with the native package. They document serialization; authentication,
 bounded execution, masking and stateful protocol rules still require the
 runtime checks below. Schemas do not imply support for every listed action.
 
-This bridge controls one cooperating application. It is not an OS-wide desktop
-automation service. The application must opt in to the bridge; the Qt reference
-helper uses the application's Qt event path rather than global OS input.
+This bridge controls one owned application. It is not an OS-wide desktop
+automation service. With `native()`/`qt()`, the application opts in to an embedded
+helper; the Qt reference helper uses its event path rather than global OS input.
+With `desktop()`, an owned OS accessibility sidecar launches the application and
+scopes its tree to that process. The sidecar speaks the same protocol.
 
-The engine launches `app.appPath` with `app.launchArguments`, without a shell.
+The embedded-helper engine launches `app.appPath` with `app.launchArguments`,
+without a shell. The desktop engine instead launches the configured driver with
+its literal argument prefix followed by `-- app.appPath ...app.launchArguments`.
+The driver owns the target and removes `E2E_NATIVE_TOKEN` and `E2E_NATIVE_PORT`
+from the target environment before launch. It must terminate its target when
+the authenticated connection closes or shutdown is requested.
 The child receives `E2E_NATIVE_TOKEN` (a fresh 32-byte random hexadecimal token)
 and `E2E_NATIVE_PORT=0`. The helper listens on IPv4 loopback on an ephemeral TCP
 port and writes exactly one readiness line to stdout:
@@ -44,8 +51,11 @@ it silently ignores. Unsupported node/action combinations return an explicit
 error. The default profile declares `tap`, `fill`, `clear`, `focus`, `press`,
 `check`, `uncheck`, `selectOption`, and `hover`; configure a narrower action
 list for another helper. Keyboard and screenshots can be disabled separately.
+The OS accessibility profiles set both to false and declare only their supported
+semantic actions; a driver must never silently emulate unsupported patterns or
+claim a screenshot is masked without a verified masking implementation.
 
-`LocatorAction` and `SemanticNode` are the public types from `@e2e-cpp/core/engine`.
+`LocatorAction` and `SemanticNode` are the public types from `@e2e-platform/core/engine`.
 Common action payloads are `{kind:'tap'}`, `{kind:'fill',value,sensitive}`,
 `{kind:'press',key}`, and `{kind:'selectOption',value}`, where an option is a
 label string or `{label}`, `{value}`, or `{index}`. Check/uncheck operations

@@ -5,7 +5,7 @@
  * polling, strictness, and staleness stay with the runner.
  */
 
-import { EngineError, matchesText, type LocatorExpression, type SemanticQuery } from '@e2e-cpp/core/engine';
+import { EngineError, matchesText, type LocatorExpression, type SemanticQuery } from '@e2e-platform/core/engine';
 import { isWithin, type ProjectedNode } from './nodes.ts';
 import { compileSelector } from './selector.ts';
 

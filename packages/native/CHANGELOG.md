@@ -1,4 +1,15 @@
-# @e2e-cpp/native
+# @e2e-platform/native
+
+## 0.2.0-rc.1
+
+### Minor Changes
+
+- Rename the unpublished fork to e2e-platform, add separately installed desktop accessibility sidecars with explicit capabilities and platform gates, complete Qt Quick ComboBox selection, and make CLI scaffolding usable with the local installation kit. Tests continue to use the shared TypeScript runner; OS drivers require their documented native platform qualification.
+
+### Patch Changes
+
+- Updated dependencies
+  - @e2e-platform/process@0.2.0-rc.1
 
 ## 0.2.0-rc.0
 
@@ -48,5 +59,5 @@
 - Updated dependencies [fb6e336]
 - Updated dependencies [e9c2914]
 - Updated dependencies
-  - @e2e-cpp/core@0.2.0-rc.0
-  - @e2e-cpp/process@0.2.0-rc.0
+  - @e2e-platform/core@0.2.0-rc.0
+  - @e2e-platform/process@0.2.0-rc.0

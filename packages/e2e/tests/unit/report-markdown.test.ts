@@ -21,7 +21,7 @@ const FINISHED_AT = '2026-01-01T00:00:08.400Z';
 function page(overrides: Partial<Report1Document['run']> = {}): Report1Document {
   const status = overrides.status ?? 'passed';
   return reportDocument({
-    runner: { name: '@e2e-cpp/core', version: '0.9.0' },
+    runner: { name: '@e2e-platform/core', version: '0.9.0' },
     exitCode: status === 'passed' ? 0 : 1,
     finishedAt: FINISHED_AT,
     targets: [reportTarget()],
@@ -157,7 +157,7 @@ describe('renderMarkdownReport', () => {
     const body = renderMarkdownReport(spent(page({ status: 'failed', results: [passing, failing, flaky, skipped, judged] })), links);
     expect(body).toBe(
       [
-        '### 🔴 e2e-cpp: 1 failed, 1 flaky, 2 passed, 1 skipped',
+        '### 🔴 e2e-platform: 1 failed, 1 flaky, 2 passed, 1 skipped',
         '4 agent steps · 1 replayed from cache · 17 model calls · 128.4k tokens (62% cached) · $0.31',
         '',
         [
@@ -201,7 +201,7 @@ describe('renderMarkdownReport', () => {
           '</details>',
         ].join('\n'),
         '',
-        '<sub>e2e-cpp 0.9.0 · 8.4s · web · [run artifacts](https://github.com/o/r/actions/runs/9)</sub>',
+        '<sub>e2e-platform 0.9.0 · 8.4s · web · [run artifacts](https://github.com/o/r/actions/runs/9)</sub>',
         '',
       ].join('\n'),
     );
@@ -210,20 +210,20 @@ describe('renderMarkdownReport', () => {
   it('is a passing headline, the folded list, and the footer when everything passed, with no spend line for a deterministic run', () => {
     expect(renderMarkdownReport(page({ results: [passing] }))).toBe(
       [
-        '### 🟢 e2e-cpp: 1 passed',
+        '### 🟢 e2e-platform: 1 passed',
         '',
         '<details>\n<summary>All 1 test in 1 file</summary>\n\n**tests/smoke.e2e.ts** · 1 passed · 850ms\n- 🟢 opens the app (850ms)\n</details>',
         '',
-        '<sub>e2e-cpp 0.9.0 · 8.4s · web</sub>',
+        '<sub>e2e-platform 0.9.0 · 8.4s · web</sub>',
         '',
       ].join('\n'),
     );
   });
 
   it('names the page after its title, so two comments on one pull request read apart', () => {
-    expect(renderMarkdownReport(page({ results: [passing] }), { title: 'regression' })).toContain('### 🟢 e2e-cpp regression: 1 passed\n');
-    expect(renderMarkdownReport(page({ results: [passing] }), { title: '  ' })).toContain('### 🟢 e2e-cpp: 1 passed\n');
-    expect(renderMarkdownReport(explored(), { title: 'nightly' })).toContain('### 🔴 e2e-cpp nightly explore: 1 issue\n');
+    expect(renderMarkdownReport(page({ results: [passing] }), { title: 'regression' })).toContain('### 🟢 e2e-platform regression: 1 passed\n');
+    expect(renderMarkdownReport(page({ results: [passing] }), { title: '  ' })).toContain('### 🟢 e2e-platform: 1 passed\n');
+    expect(renderMarkdownReport(explored(), { title: 'nightly' })).toContain('### 🔴 e2e-platform nightly explore: 1 issue\n');
   });
 
   it('names the failed step whatever its status, and never retells the steps before it', () => {
@@ -290,12 +290,12 @@ describe('renderMarkdownReport', () => {
         errors: [{ category: 'infrastructure', code: 'APP_UNREACHABLE', message: 'http://127.0.0.1:3000 did not answer', retryable: true, phase: 'launch' }],
       }),
     );
-    expect(body).toContain('### 🔴 e2e-cpp: no tests ran\n\n> **APP_UNREACHABLE** (launch) http://127.0.0.1:3000 did not answer\n');
+    expect(body).toContain('### 🔴 e2e-platform: no tests ran\n\n> **APP_UNREACHABLE** (launch) http://127.0.0.1:3000 did not answer\n');
     expect(body).not.toContain('<details>');
   });
 
   it('says no tests selected when nothing ran and nothing failed', () => {
-    expect(renderMarkdownReport(page())).toBe('### 🟢 e2e-cpp: no tests selected\n\n<sub>e2e-cpp 0.9.0 · 8.4s · web</sub>\n');
+    expect(renderMarkdownReport(page())).toBe('### 🟢 e2e-platform: no tests selected\n\n<sub>e2e-platform 0.9.0 · 8.4s · web</sub>\n');
   });
 
   it('escapes what a test wrote, keeps it on one line, and keeps a link destination closed', () => {
@@ -477,7 +477,7 @@ describe('renderMarkdownReport', () => {
     const errors = Array.from({ length: 40 }, (_, index) => ({ category: 'infrastructure' as const, code: `RUN_ERROR_${index}`, message: 'e'.repeat(240), retryable: false }));
     const body = renderMarkdownReport(page({ status: 'error', results: wide, errors }));
     expect(body.length).toBeLessThanOrEqual(60_000);
-    expect(body.startsWith('### 🔴 e2e-cpp: 60 failed\n')).toBe(true);
+    expect(body.startsWith('### 🔴 e2e-platform: 60 failed\n')).toBe(true);
     expect(body).toContain('> and 20 more');
     expect(body).toContain("_Truncated to fit a pull request comment; the full report is in `report.json`._");
     expect(body.trimEnd().endsWith('</sub>')).toBe(true);
@@ -542,7 +542,7 @@ describe('renderMarkdownReport for an exploration', () => {
     );
     expect(body).toBe(
       [
-        '### 🔴 e2e-cpp explore: 1 issue, 1 warning',
+        '### 🔴 e2e-platform explore: 1 issue, 1 warning',
         '',
         '**Goal:** Explore checkout  ',
         '**Steps:** 2 of 8 steps · 1 passed · 1 failed · the step limit was reached',
@@ -562,7 +562,7 @@ describe('renderMarkdownReport for an exploration', () => {
         '',
         'The cart is the weak spot.',
         '',
-        '<sub>e2e-cpp 0.9.0 · 8.4s · web</sub>',
+        '<sub>e2e-platform 0.9.0 · 8.4s · web</sub>',
         '',
       ].join('\n'),
     );
@@ -577,14 +577,14 @@ describe('renderMarkdownReport for an exploration', () => {
   });
 
   it('says what an exploration without findings amounts to, and keeps a failure that is not the verdict', () => {
-    expect(renderMarkdownReport(explored({ findings: [] }, 'passed'))).toContain('### 🟢 e2e-cpp explore: no findings\n');
-    expect(renderMarkdownReport(explored({ findings: [], steps: [], ended: 'stuck' }, 'blocked'))).toContain('### 🔴 e2e-cpp explore: explored nothing\n');
+    expect(renderMarkdownReport(explored({ findings: [] }, 'passed'))).toContain('### 🟢 e2e-platform explore: no findings\n');
+    expect(renderMarkdownReport(explored({ findings: [], steps: [], ended: 'stuck' }, 'blocked'))).toContain('### 🔴 e2e-platform explore: explored nothing\n');
     const provider = explored({ findings: [] }, 'error');
     provider.run.results[0]!.status = 'failed';
     provider.run.results[0]!.attempts[0]!.status = 'failed';
     provider.run.results[0]!.attempts[0]!.error = { category: 'infrastructure', code: 'MODEL_PROVIDER_FAILED', message: 'gateway 502', retryable: true };
     const body = renderMarkdownReport(provider);
-    expect(body).toContain('### 🔴 e2e-cpp explore: did not finish\n');
+    expect(body).toContain('### 🔴 e2e-platform explore: did not finish\n');
     expect(body).toContain('**🔴 Explore checkout**\n\n**MODEL_PROVIDER_FAILED**\n\n> gateway 502\n\n`explore:3` · Evidence: screenshot');
   });
 
@@ -635,7 +635,7 @@ describe('markdownReporter', () => {
     const rows = await markdownReporter.onRunFinished!(finished(explored(), root), new AbortController().signal);
     expect(rows).toEqual([{ label: 'Markdown', text: path.join('.e2e', 'summary.md') }]);
     const text = readFileSync(path.join(root, '.e2e', 'summary.md'), 'utf8');
-    expect(text.startsWith('### 🔴 e2e-cpp explore: 1 issue\n')).toBe(true);
+    expect(text.startsWith('### 🔴 e2e-platform explore: 1 issue\n')).toBe(true);
     expect(text).toContain('   Evidence: screenshot `.e2e/artifacts/web/explore/attempt-0/finding-0.png`');
     // Artifacts at the project root itself list from `.`.
     await markdownReporter.onRunFinished!(finished(explored(), root, root), new AbortController().signal);

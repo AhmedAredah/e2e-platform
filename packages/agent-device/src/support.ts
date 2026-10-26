@@ -1,6 +1,6 @@
 /** Shared helpers for the agent-device engine: error constructors, filenames, PNG headers, gestures, the screen location and size. */
 
-import { EngineError, type Momentum, type ScrollDirection, type ViewportSize } from '@e2e-cpp/core/engine';
+import { EngineError, type Momentum, type ScrollDirection, type ViewportSize } from '@e2e-platform/core/engine';
 
 export interface Point {
   readonly x: number;

@@ -1,5 +1,5 @@
 import { connect, type Socket } from 'node:net';
-import { EngineError, ENGINE_ERROR_CODES } from '@e2e-cpp/core/engine';
+import { EngineError, ENGINE_ERROR_CODES } from '@e2e-platform/core/engine';
 import { NativeTransport, type RequestContext } from './native-transport.ts';
 
 /** One connection, one in-flight request. A late answer cannot mutate the next request. */

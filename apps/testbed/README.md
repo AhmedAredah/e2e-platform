@@ -1,7 +1,7 @@
-# @e2e-cpp/testbed
+# @e2e-platform/testbed
 
-Dogfood workspace for the [`@e2e-cpp/core`](../../packages/e2e) runner: a real project consuming the
-built `@e2e-cpp/core` package exactly like a user would, against playground apps we
+Dogfood workspace for the [`@e2e-platform/core`](../../packages/e2e) runner: a real project consuming the
+built `@e2e-platform/core` package exactly like a user would, against playground apps we
 control. This is where every runner feature has a deterministic test. Hard UI
 surfaces live in the benchmarks (`web-benchmark`, `mobile-benchmark`), not
 here.
@@ -38,14 +38,14 @@ here.
 ## Commands
 
 ```bash
-pnpm --filter @e2e-cpp/core build               # the testbed runs the built runner
-pnpm --filter @e2e-cpp/testbed test    # typecheck + local suite (starts the app itself)
-pnpm --filter @e2e-cpp/testbed test:headed
-pnpm --filter @e2e-cpp/testbed app     # run the playground manually
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent     # real model calls
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:dogfood
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed explore:garden
-pnpm --filter @e2e-cpp/testbed test:stress                            # reporters only
+pnpm --filter @e2e-platform/core build               # the testbed runs the built runner
+pnpm --filter @e2e-platform/testbed test    # typecheck + local suite (starts the app itself)
+pnpm --filter @e2e-platform/testbed test:headed
+pnpm --filter @e2e-platform/testbed app     # run the playground manually
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:agent     # real model calls
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:dogfood
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed explore:garden
+pnpm --filter @e2e-platform/testbed test:stress                            # reporters only
 ```
 
 The local suite runs in CI on every push. Reports land in `.e2e/report.json`;
@@ -60,8 +60,8 @@ There is no scheduled provider-backed run. Each config builds its model with the
 `E2E_MODEL` variable so the same suite can be replayed across providers:
 
 ```bash
-AI_GATEWAY_API_KEY=...  pnpm --filter @e2e-cpp/testbed test:agent
-E2E_MODEL=openai/gpt-5.6-luna AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent
+AI_GATEWAY_API_KEY=...  pnpm --filter @e2e-platform/testbed test:agent
+E2E_MODEL=openai/gpt-5.6-luna AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:agent
 ```
 
 Agentic assertions are structurally comparable across models, not textually
@@ -72,7 +72,7 @@ To see where the tokens went, record the run and open the trace in
 [unbox-ai](https://github.com/tester-army/unbox-ai):
 
 ```bash
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent -- --ai-trace
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:agent -- --ai-trace
 npx unbox-ai .e2e/ai-trace.json          # viewer: treemap, waterfall, diffed turns
 npx unbox-ai runs .e2e/ai-trace.json     # one line per agent step, from the terminal
 ```
@@ -83,7 +83,7 @@ first, in this directory:
 
 ```bash
 npx unbox-ai devtools                    # live viewer on http://localhost:4983
-E2E_DEVTOOLS=1 AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent -- --workers 1
+E2E_DEVTOOLS=1 AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:agent -- --workers 1
 ```
 
 The devtools recorder names runs after their first prompt and keeps one

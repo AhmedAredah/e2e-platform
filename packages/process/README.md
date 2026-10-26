@@ -1,9 +1,9 @@
-# @e2e-cpp/process
+# @e2e-platform/process
 
 Run native applications and C++ command-line programs from e2e tests. Commands launch directly with an argument array, never through a shell. No compiler, model, or extra runtime dependency is required by the process API.
 
 ```ts
-import { runProcess } from '@e2e-cpp/process';
+import { runProcess } from '@e2e-platform/process';
 
 const result = await runProcess({
   executable: '/absolute/path/to/solver',
@@ -28,7 +28,7 @@ An output subscriber receives `{ stream: 'stdout' | 'stderr', bytes: Buffer }` f
 ## e2e fixture
 
 ```ts
-import { test, expect } from '@e2e-cpp/process/test';
+import { test, expect } from '@e2e-platform/process/test';
 
 test('prints its version', async ({ processes }) => {
   const result = await processes.run({
@@ -54,7 +54,7 @@ The public `ProcessRunner` abstract class owns finite-command exit assertions. `
 import {
   LocalProcessRunner, ProcessRunner, ProcessWorkspace,
   type ProcessOptions, type ProcessSession,
-} from '@e2e-cpp/process';
+} from '@e2e-platform/process';
 
 class AuditedRunner extends ProcessRunner {
   private readonly local = new LocalProcessRunner();

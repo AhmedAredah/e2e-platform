@@ -36,9 +36,9 @@ jobs:
       - name: Error code reference
         run: pnpm docs:check-errors
       - name: Install browsers
-        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       - name: Testbed
-        run: pnpm --filter @e2e-cpp/testbed test
+        run: pnpm --filter @e2e-platform/testbed test
 
   test:
     runs-on: ubuntu-24.04
@@ -55,6 +55,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
-        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       - name: Unit and integration tests
         run: pnpm test

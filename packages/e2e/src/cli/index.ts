@@ -1,4 +1,4 @@
-/** e2e-cpp CLI. */
+/** e2e-platform CLI. */
 
 import { existsSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
@@ -17,7 +17,7 @@ import type { BuiltinReporter } from '../types.ts';
 import { cliSessionEvent, runCompletedEvent } from '../telemetry/events.ts';
 import { Telemetry } from '../telemetry/telemetry.ts';
 import { cache, type CacheCommand } from './cache.ts';
-import { DOCS_URL } from './docs-url.ts';
+import { documentationCommand } from './docs-help.ts';
 import { guide } from './guide.ts';
 import { init } from './init.ts';
 import { mcp } from './mcp.ts';
@@ -78,7 +78,7 @@ const FILES_DESCRIPTION =
 
 /**
  * A flag commander took for a file because a `--` came before it, which is
- * what a package manager forwards from `pnpm test:e2e-cpp -- --headed`. Left
+ * what a package manager forwards from `pnpm test:e2e-platform -- --headed`. Left
  * alone, the flag is dropped and the run goes on without it, so the action
  * fails as a usage error naming the command that keeps the flag a flag: the
  * whole tail from the first such value, so option values stay with their
@@ -91,9 +91,9 @@ function rejectForwardedFlags(command: Command, files: readonly string[]): void 
   const tail = files.slice(first).join(' ');
   const manager = detectPackageManager(cwd);
   const forwarded = `${runScriptCommand(manager, 'test:e2e')} -- ${tail}`;
-  const direct = execCommand(manager, `e2e-cpp ${command.name()} ${tail}`);
+  const direct = execCommand(manager, `e2e-platform ${command.name()} ${tail}`);
   command.error(
-    `error: "${files[first]}" is a flag, not a test file. It arrived as a file because a "--" came before it; "${forwarded}" reaches e2e-cpp as "${command.name()} -- ${tail}" when the package manager forwards the separator. Run the CLI directly instead: ${direct}`,
+    `error: "${files[first]}" is a flag, not a test file. It arrived as a file because a "--" came before it; "${forwarded}" reaches e2e-platform as "${command.name()} -- ${tail}" when the package manager forwards the separator. Run the CLI directly instead: ${direct}`,
     { exitCode: 2 },
   );
 }
@@ -115,7 +115,7 @@ const TAG_MODES = ['any', 'all'] as const satisfies readonly TagMode[];
 const LIST_REPORTERS = ['list', 'json'] as const;
 type ListReporter = (typeof LIST_REPORTERS)[number];
 
-/** One `e2e-cpp list` line: `file › title [target] #tag`, with the skip reason when there is one. Titles and tags are bounded like every untrusted field. */
+/** One `e2e-platform list` line: `file › title [target] #tag`, with the skip reason when there is one. Titles and tags are bounded like every untrusted field. */
 function formatListedPair(pair: ListedPair): string {
   const tags = pair.tags.map((tag) => ` #${bounded(tag)}`).join('');
   const line = `${pair.file} › ${pair.titlePath.map(bounded).join(' › ')} [${pair.target}]${tags}`;
@@ -159,7 +159,7 @@ function examples(commands: readonly string[]): string {
 }
 
 function docsLine(path = ''): string {
-  return `Docs: ${pc.underline(`${DOCS_URL}${path}`)}`;
+  return `Docs: ${pc.underline(documentationCommand(path))}`;
 }
 
 /** `run`, `cache ls`: the command path below the root, as the session event names it. */
@@ -210,7 +210,7 @@ async function runToOutcome(
 
 /** Builds the commander program. */
 function createProgram(version: string, telemetry: Telemetry): Command {
-  const program = new Command('e2e-cpp');
+  const program = new Command('e2e-platform');
   // The help option, the error hint, and the help styles are copied into each
   // subcommand as it is created, so they are set before any `.command()`.
   program
@@ -226,25 +226,25 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       styleSubcommandTerm: pc.cyan,
       styleArgumentTerm: pc.cyan,
     })
-    .addHelpText('before', `${pc.bold(`e2e-cpp v${version}`)} ${pc.dim('·')} an open framework for agentic end-to-end testing\n`)
+    .addHelpText('before', `${pc.bold(`e2e-platform v${version}`)} ${pc.dim('·')} an open framework for agentic end-to-end testing\n`)
     .addHelpText(
       'after',
       [
         '',
         examples([
-          'e2e-cpp init',
-          'e2e-cpp run',
-          'e2e-cpp run tests/signup.e2e.ts --headed',
-          'e2e-cpp run --tag smoke --reporter list,junit',
-          "e2e-cpp explore 'Explore checkout like a first-time buyer and find bugs'",
-          'e2e-cpp list --tag smoke',
-          'e2e-cpp cache ls',
-          'e2e-cpp guide',
-          'e2e-cpp mcp',
-          'e2e-cpp telemetry disable',
+          'e2e-platform init',
+          'e2e-platform run',
+          'e2e-platform run tests/signup.e2e.ts --headed',
+          'e2e-platform run --tag smoke --reporter list,junit',
+          "e2e-platform explore 'Explore checkout like a first-time buyer and find bugs'",
+          'e2e-platform list --tag smoke',
+          'e2e-platform cache ls',
+          'e2e-platform guide',
+          'e2e-platform mcp',
+          'e2e-platform telemetry disable',
         ]),
         '',
-        `Run ${pc.cyan('e2e-cpp <command> --help')} for the flags of one command.`,
+        `Run ${pc.cyan('e2e-platform <command> --help')} for the flags of one command.`,
         docsLine(),
       ].join('\n'),
     );
@@ -264,13 +264,13 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .command('init')
     .summary('scaffold an ESM package, e2e.config.ts, an example test, .gitignore entries, and the agent skill')
     .description(
-      'Scaffold a project without touching existing files: an ESM package.json, e2e.config.ts, tests/example.e2e.ts, .gitignore entries, and the e2e-cpp skill for coding agents. Prompts for the engine, for AI support, and for the skill directories, then offers to install the dependencies; --yes takes the defaults, with the skill in .agents/skills and .claude/skills.',
+      'Scaffold a project without touching existing files: an ESM package.json, e2e.config.ts, tests/example.e2e.ts, .gitignore entries, and the e2e-platform skill for coding agents. Prompts for the engine, for AI support, and for the skill directories, then offers to install the dependencies; --yes takes the defaults, with the skill in .agents/skills and .claude/skills.',
     )
     .argument('[directory]', 'project directory, created when missing (default: the current directory)')
-    .option('-y, --yes', 'skip the prompts: Playwright, AI on, no installation')
+    .option('-y, --yes', 'skip the prompts: CLI tests, no model, no installation')
     .addHelpText(
       'after',
-      ['', examples(['e2e-cpp init', 'e2e-cpp init my-app', 'e2e-cpp init --yes']), '', docsLine('/reference/cli')].join('\n'),
+      ['', examples(['e2e-platform init', 'e2e-platform init my-app', 'e2e-platform init --yes']), '', docsLine('/reference/cli')].join('\n'),
     )
     .action(async (directory: string | undefined, options: { yes?: boolean }) => {
       process.exitCode = await init(resolvePath(process.cwd(), directory ?? '.'), {
@@ -285,7 +285,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .command('login')
     .summary('sign in to a ChatGPT, GitHub Copilot, or SuperGrok subscription for agent steps')
     .description(
-      'Sign in once to a personal subscription and store the login for @e2e-cpp/oauth models: openai (ChatGPT Plus/Pro, the Codex sign-in), github-copilot (GitHub Copilot; reuses the GitHub CLI login or runs a device flow for your OAuth App), spacexai (SuperGrok or X Premium+, device code). The config then constructs the model with chatgpt(), copilot(), or grok() from @e2e-cpp/oauth. Requires @e2e-cpp/oauth in the project.',
+      'Sign in once to a personal subscription and store the login for @e2e-platform/oauth models: openai (ChatGPT Plus/Pro, the Codex sign-in), github-copilot (GitHub Copilot; reuses the GitHub CLI login or runs a device flow for your OAuth App), spacexai (SuperGrok or X Premium+, device code). The config then constructs the model with chatgpt(), copilot(), or grok() from @e2e-platform/oauth. Requires @e2e-platform/oauth in the project.',
     )
     .addArgument(new Argument('[provider]', 'openai, github-copilot, or spacexai; omitted, a picker').choices(LOGIN_PROVIDERS))
     .option('--device', 'ChatGPT: show a code to enter on another device instead of opening a browser')
@@ -294,7 +294,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .option('--enterprise-url <host>', 'GitHub Copilot: the GitHub Enterprise host')
     .addHelpText(
       'after',
-      ['', examples(['e2e-cpp login openai', 'e2e-cpp login github-copilot --from-gh', 'e2e-cpp login spacexai', 'e2e-cpp login']), '', docsLine('/subscriptions')].join('\n'),
+      ['', examples(['e2e-platform login openai', 'e2e-platform login github-copilot --from-gh', 'e2e-platform login spacexai', 'e2e-platform login']), '', docsLine('/subscriptions')].join('\n'),
     )
     .action(async (provider: string | undefined, options: LoginOptions) => {
       process.exitCode = await login(process.cwd(), provider, options);
@@ -305,19 +305,19 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .summary('forget a stored subscription login')
     .description('Remove the stored login of one provider (openai, github-copilot, spacexai). Without a provider, a picker over the stored logins.')
     .addArgument(new Argument('[provider]', 'openai, github-copilot, or spacexai; omitted, a picker').choices(LOGIN_PROVIDERS))
-    .addHelpText('after', ['', examples(['e2e-cpp logout', 'e2e-cpp logout openai']), '', docsLine('/subscriptions')].join('\n'))
+    .addHelpText('after', ['', examples(['e2e-platform logout', 'e2e-platform logout openai']), '', docsLine('/subscriptions')].join('\n'))
     .action(async (provider: string | undefined) => {
       process.exitCode = await logout(process.cwd(), provider);
     });
 
   program
     .command('guide')
-    .summary('print the e2e-cpp skill for coding agents')
+    .summary('print the e2e-platform skill for coding agents')
     .description(
       'Print the skill that init installs: how to set up e2e, write tests, use agent steps, run the CLI, and read a failing run. Without a topic, prints the overview and the topic list.',
     )
     .argument('[topic]', `one of ${skillTopics().join(', ')}`)
-    .addHelpText('after', ['', examples(['e2e-cpp guide', 'e2e-cpp guide writing-tests']), '', docsLine('/reference/cli#e2e-guide')].join('\n'))
+    .addHelpText('after', ['', examples(['e2e-platform guide', 'e2e-platform guide writing-tests']), '', docsLine('/reference/cli#e2e-guide')].join('\n'))
     .action((topic: string | undefined) => {
       process.exitCode = guide(topic);
     });
@@ -326,7 +326,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .command('mcp')
     .summary('serve the project to a coding agent over MCP')
     .description(
-      'Serve an MCP server over stdio for a coding agent such as Claude Code or Cursor: open_session opens a live session on one target of any config the agent names, call runs the session\'s tools (observe, tap, type, press, select, scroll, navigate, type_secret, locate, screenshot, and the project\'s own), tools describes them, close_session ends it. The agent explores the real app before writing a test. Register it with the client, e.g. claude mcp add e2e-cpp -- npx --no-install e2e-cpp mcp.',
+      'Serve an MCP server over stdio for a coding agent such as Claude Code or Cursor: open_session opens a live session on one target of any config the agent names, call runs the session\'s tools (observe, tap, type, press, select, scroll, navigate, type_secret, locate, screenshot, and the project\'s own), tools describes them, close_session ends it. The agent explores the real app before writing a test. Register it with the client, e.g. claude mcp add e2e-platform -- npx --no-install e2e-platform mcp.',
     )
     .option('--config <path>', 'config file (default: the nearest e2e.config.ts)')
     .option('--target <name>', 'target every session opens on (default: the only target, or the one open_session names)')
@@ -335,7 +335,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       'after',
       [
         '',
-        examples(['e2e-cpp mcp', 'e2e-cpp mcp --target web --headless', 'claude mcp add e2e-cpp -- npx --no-install e2e-cpp mcp']),
+        examples(['e2e-platform mcp', 'e2e-platform mcp --target web --headless', 'claude mcp add e2e-platform -- npx --no-install e2e-platform mcp']),
         '',
         docsLine('/reference/mcp'),
       ].join('\n'),
@@ -383,14 +383,14 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       [
         '',
         examples([
-          'e2e-cpp run',
-          'e2e-cpp run tests/signup.e2e.ts --headed',
-          "e2e-cpp run 'tests/**/*.smoke.e2e.ts' --target web --tag smoke",
-          'e2e-cpp run --tag smoke,billing --tag-mode all',
-          'e2e-cpp run --reporter list,junit --workers 4 --retries 2',
-          'e2e-cpp run --agent ux tests/onboarding.e2e.ts',
-          'e2e-cpp run --agent buyer,admin tests/checkout.e2e.ts',
-          'AI_GATEWAY_API_KEY=... e2e-cpp run --no-cache',
+          'e2e-platform run',
+          'e2e-platform run tests/signup.e2e.ts --headed',
+          "e2e-platform run 'tests/**/*.smoke.e2e.ts' --target web --tag smoke",
+          'e2e-platform run --tag smoke,billing --tag-mode all',
+          'e2e-platform run --reporter list,junit --workers 4 --retries 2',
+          'e2e-platform run --agent ux tests/onboarding.e2e.ts',
+          'e2e-platform run --agent buyer,admin tests/checkout.e2e.ts',
+          'AI_GATEWAY_API_KEY=... e2e-platform run --no-cache',
         ]),
         '',
         exitCodesSection(EXIT_CODES),
@@ -454,7 +454,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .command('explore')
     .summary('explore the app toward a goal and report findings, without a test file')
     .description(
-      'Run the agent against the app with a goal instead of a test: it plans one exploration step at a time, drives the app, reports every defect it has evidence of, and ends with an assessment. The run writes .e2e/report.json like e2e-cpp run, with the exploration record under run.explore. The model is the one the selected agent holds, as for e2e-cpp run.',
+      'Run the agent against the app with a goal instead of a test: it plans one exploration step at a time, drives the app, reports every defect it has evidence of, and ends with an assessment. The run writes .e2e/report.json like e2e-platform run, with the exploration record under run.explore. The model is the one the selected agent holds, as for e2e-platform run.',
     )
     .argument('[goal]', 'what to explore, in a sentence (default: "Explore the app and find bugs")')
     .optionsGroup('Selection:')
@@ -485,11 +485,11 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       [
         '',
         examples([
-          'e2e-cpp explore',
-          "e2e-cpp explore 'Explore the checkout flow like a first-time buyer and report anything off'",
-          'e2e-cpp explore --target web --max-steps 4 --headed',
-          "e2e-cpp explore --agent ux 'Review onboarding as a first-time user'",
-          "e2e-cpp explore 'Hunt for broken forms and dead links' --video",
+          'e2e-platform explore',
+          "e2e-platform explore 'Explore the checkout flow like a first-time buyer and report anything off'",
+          'e2e-platform explore --target web --max-steps 4 --headed',
+          "e2e-platform explore --agent ux 'Review onboarding as a first-time user'",
+          "e2e-platform explore 'Hunt for broken forms and dead links' --video",
         ]),
         '',
         exitCodesSection(EXPLORE_EXIT_CODES),
@@ -531,7 +531,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
             video: options.video,
             interruptSignal: signals.interruptSignal,
             forceSignal: signals.forceSignal,
-            notice: (message) => process.stderr.write(`e2e-cpp explore: ${message}\n`),
+            notice: (message) => process.stderr.write(`e2e-platform explore: ${message}\n`),
           }),
         ),
     );
@@ -563,7 +563,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       'after',
       [
         '',
-        examples(['e2e-cpp list', 'e2e-cpp list tests/signup.e2e.ts', 'e2e-cpp list --tag smoke --target web', 'e2e-cpp list --reporter json']),
+        examples(['e2e-platform list', 'e2e-platform list tests/signup.e2e.ts', 'e2e-platform list --tag smoke --target web', 'e2e-platform list --reporter json']),
         '',
         docsLine('/reference/cli#e2e-list'),
       ].join('\n'),
@@ -611,11 +611,11 @@ function createProgram(version: string, telemetry: Telemetry): Command {
     .command('cache')
     .summary('inspect, measure, and clear the trace cache')
     .description(
-      'Read the trace cache the runs write under .e2e/cache: what a committed cache holds, how much room it takes, and how to empty it. Reads the same config as e2e-cpp run, so cache.dir and --config decide which store is meant.',
+      'Read the trace cache the runs write under .e2e/cache: what a committed cache holds, how much room it takes, and how to empty it. Reads the same config as e2e-platform run, so cache.dir and --config decide which store is meant.',
     )
     .addHelpText(
       'after',
-      ['', examples(['e2e-cpp cache ls', 'e2e-cpp cache stats', 'e2e-cpp cache clear']), '', docsLine('/reference/cli#e2e-cache')].join('\n'),
+      ['', examples(['e2e-platform cache ls', 'e2e-platform cache stats', 'e2e-platform cache clear']), '', docsLine('/reference/cli#e2e-cache')].join('\n'),
     );
 
   const cacheSubcommand = (name: CacheCommand, summary: string, description: string): void => {
@@ -648,7 +648,7 @@ function createProgram(version: string, telemetry: Telemetry): Command {
       'after',
       [
         '',
-        examples(['e2e-cpp telemetry', 'e2e-cpp telemetry disable', 'E2E_TELEMETRY_DEBUG=1 e2e-cpp run']),
+        examples(['e2e-platform telemetry', 'e2e-platform telemetry disable', 'E2E_TELEMETRY_DEBUG=1 e2e-platform run']),
         '',
         docsLine('/telemetry'),
       ].join('\n'),

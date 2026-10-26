@@ -103,8 +103,8 @@ test('switches organizations', { session: 'admin' }, async ({ app, agent }) => {
 `describe` body is a type error and a `COLLECTION_ERROR`.
 
 ```ts
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('app opens', async ({ app, web }) => {
   await app.open();
@@ -124,7 +124,7 @@ test.describe('checkout', { tags: ['smoke'], serial: true }, () => {
 `test.setup` declares the sessions it saves, and must save each exactly once:
 
 ```ts
-import { credentials } from '@e2e-cpp/core';
+import { credentials } from '@e2e-platform/core';
 
 test.setup('authenticate', { sessions: ['member'] }, async ({ app, screen, session }) => {
   await app.open('/login');
@@ -251,7 +251,7 @@ export interface SuiteFixtures {
 ```
 
 Everything else is a fixture the target's engine contributes, or one of
-[your own](#your-own-fixtures). `@e2e-cpp/playwright` contributes
+[your own](#your-own-fixtures). `@e2e-platform/playwright` contributes
 [`web`](/reference/playwright) and exports a `test` typed with it; a device
 engine contributes `device`. Reaching for a fixture the engine does not
 contribute fails with `UNSUPPORTED_CAPABILITY`; declare `requires: ['web']`
@@ -268,7 +268,7 @@ up afterward, including after a failure. In each fixture function, code before
 after `use` tears it down.
 
 ```ts
-import { test as base } from '@e2e-cpp/playwright';
+import { test as base } from '@e2e-platform/playwright';
 
 export const test = base.extend<{ workspace: Workspace }>({
   workspace: async ({ web }, use) => {

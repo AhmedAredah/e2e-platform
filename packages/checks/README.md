@@ -1,9 +1,9 @@
-# @e2e-cpp/checks
+# @e2e-platform/checks
 
 Deterministic assertions on actual native-application output. No AI or network calls.
 
 ```ts
-import { assertComparison, compareCsv, compareJson, compareNumbers, readJsonFile } from '@e2e-cpp/checks';
+import { assertComparison, compareCsv, compareJson, compareNumbers, readJsonFile } from '@e2e-platform/checks';
 
 assertComparison(compareJson(await readJsonFile('result.json'), { total: 10 }, {
   numbers: { absolute: 0.00001, relative: 0.000001 },
@@ -52,8 +52,8 @@ a CSV validator accepts a JSON validator. Override only the policy that varies a
 remaining traversal, evidence limits and diagnostics:
 
 ```ts
-import { OutputValidator, NumericValidator, JsonValidator } from '@e2e-cpp/checks';
-import type { ComparisonResult } from '@e2e-cpp/checks';
+import { OutputValidator, NumericValidator, JsonValidator } from '@e2e-platform/checks';
+import type { ComparisonResult } from '@e2e-platform/checks';
 
 class MassBalanceValidator extends OutputValidator<{ incoming: number; outgoing: number }> {
   private readonly numbers = new NumericValidator();

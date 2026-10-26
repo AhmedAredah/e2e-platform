@@ -1,4 +1,4 @@
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test('calculates a project from a natural-language goal', async ({ app, agent, screen }) => {
   await app.open();

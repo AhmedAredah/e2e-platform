@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Page } from 'playwright';
-import type { EngineFixtureContext } from '@e2e-cpp/core/engine';
+import type { EngineFixtureContext } from '@e2e-platform/core/engine';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { createWebFixture, type Web } from '../../src/web.ts';
 

@@ -13,8 +13,8 @@ and cannot resize it.
 1280 by 720. Add one target for each size you want to test:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 const app = { url: 'http://localhost:3000' };
 
@@ -28,8 +28,8 @@ export default {
 ```
 
 Each test runs once per target, with a separate result labeled `desktop`,
-`tablet`, or `phone`. Run one size with `npx --no-install e2e-cpp run --target phone`, or list
-the selected test-target pairs with `npx --no-install e2e-cpp list`.
+`tablet`, or `phone`. Run one size with `npx --no-install e2e-platform run --target phone`, or list
+the selected test-target pairs with `npx --no-install e2e-platform list`.
 
 Targets with the same `command` share one app process. Every retry starts
 at the target's configured size.
@@ -39,8 +39,8 @@ at the target's configured size.
 `web.setViewport` resizes the page for the rest of the attempt:
 
 ```ts
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('the menu collapses on a narrow screen', async ({ app, screen, web }) => {
   await app.open('/');

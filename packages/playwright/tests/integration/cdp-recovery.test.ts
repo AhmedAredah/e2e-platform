@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { chromium } from 'playwright';
-import type { EngineFixtureContext, EngineHandle, OperationContext } from '@e2e-cpp/core/engine';
+import type { EngineFixtureContext, EngineHandle, OperationContext } from '@e2e-platform/core/engine';
 import { playwright, surfaceOf, type PlaywrightConnectOptions, type Web } from '../../src/index.ts';
 import { closeRemoteChrome, launchRemoteChrome, type RemoteChrome } from '../helpers/cdp-host.ts';
 import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';

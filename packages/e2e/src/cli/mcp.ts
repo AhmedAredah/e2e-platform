@@ -57,12 +57,12 @@ export async function mcp(version: string, options: McpCommandOptions): Promise<
       version,
       stdin: process.stdin,
       stdout,
-      log: (line) => process.stderr.write(`e2e-cpp mcp: ${line}\n`),
+      log: (line) => process.stderr.write(`e2e-platform mcp: ${line}\n`),
       signal: stop.signal,
     });
   } catch (cause) {
     const error = classifyError(cause);
-    process.stderr.write(`e2e-cpp mcp: ${error.code}: ${errorMessage(cause)}\n`);
+    process.stderr.write(`e2e-platform mcp: ${error.code}: ${errorMessage(cause)}\n`);
     return exitCodeForCategory(error.category);
   } finally {
     process.off('SIGINT', onSignal);

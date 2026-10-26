@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { isAbsolute, resolve } from 'node:path';
-import { ConfigurationError, defineEngine, EngineError, OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, resolveExpression, type Engine, type EngineAppDeclaration, type EngineAppCheckInfo, type EngineAttemptContext, type EngineFixtureContext, type EngineHandle, type EngineInitInfo, type EngineSnapshot, type LocatorExpression, type OperationContext, type SemanticNode } from '@e2e-cpp/core/engine';
+import { ConfigurationError, defineEngine, EngineError, OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, resolveExpression, type Engine, type EngineAppDeclaration, type EngineAppCheckInfo, type EngineAttemptContext, type EngineFixtureContext, type EngineHandle, type EngineInitInfo, type EngineSnapshot, type LocatorExpression, type OperationContext, type SemanticNode } from '@e2e-platform/core/engine';
 import { TerminalSession } from '../model/session.ts';
 import { boundedInteger, TerminalError, type TerminalCommand, type TerminalDimensions, type TerminalOperation, type TerminalSessionOptions, type TerminalSnapshot } from '../model/types.ts';
 import type { TerminalTransport, TerminalTransportFactory } from '../transport/base.ts';

@@ -9,7 +9,7 @@ let dir: string;
 let stderr: string[];
 const nodePath = process.env['NODE_PATH'];
 
-/** vitest puts the workspace's virtual store on NODE_PATH, which would let a bare temp project resolve @e2e-cpp/oauth. */
+/** vitest puts the workspace's virtual store on NODE_PATH, which would let a bare temp project resolve @e2e-platform/oauth. */
 function setNodePath(value: string | undefined): void {
   if (value === undefined) delete process.env['NODE_PATH'];
   else process.env['NODE_PATH'] = value;
@@ -33,12 +33,12 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-/** A stand-in `@e2e-cpp/oauth` in the project's node_modules that records every call. */
+/** A stand-in `@e2e-platform/oauth` in the project's node_modules that records every call. */
 function installFakeOAuth(): string {
-  const root = path.join(dir, 'node_modules', '@e2e-cpp', 'oauth');
+  const root = path.join(dir, 'node_modules', '@e2e-platform', 'oauth');
   mkdirSync(root, { recursive: true });
   const log = path.join(dir, 'calls.json');
-  writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: '@e2e-cpp/oauth', type: 'module', exports: { './cli': './cli.js' } }));
+  writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: '@e2e-platform/oauth', type: 'module', exports: { './cli': './cli.js' } }));
   writeFileSync(
     path.join(root, 'cli.js'),
     `import { writeFileSync } from 'node:fs';
@@ -50,10 +50,10 @@ export const runLogout = async (provider) => record({ runLogout: [provider] });
   return log;
 }
 
-describe('e2e-cpp login / logout', () => {
-  it('exits 1 with the install line when the project lacks @e2e-cpp/oauth', async () => {
+describe('e2e-platform login / logout', () => {
+  it('exits 1 with the install line when the project lacks @e2e-platform/oauth', async () => {
     expect(await login(dir, 'spacexai', {})).toBe(1);
-    expect(stderr.join('')).toContain('npm i -D @e2e-cpp/oauth');
+    expect(stderr.join('')).toContain('npm i -D @e2e-platform/oauth');
     expect(await logout(dir, 'spacexai')).toBe(1);
   });
 

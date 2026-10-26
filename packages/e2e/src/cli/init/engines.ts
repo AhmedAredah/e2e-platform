@@ -19,13 +19,86 @@ export interface EnginePreset {
 /** Builds prompt choices and scaffolds with defaults for the machine running init. */
 export function getEnginePresets() {
   const ios = os.platform() === 'darwin';
+  const desktopBackend = ios ? 'macos-ax' : os.platform() === 'win32' ? 'windows-uia' : 'linux-atspi';
   return [
+    {
+      id: 'cli',
+      label: 'CLI application',
+      hint: 'deterministic process tests; no model required',
+      dependencies: siblingDependency('@e2e-platform/process'),
+      imports: [],
+      config: `  modelPolicy: 'forbid',
+  targets: [{ name: 'cli', platform: 'process' }],`,
+      example: `import { test, expect } from '@e2e-platform/process/test';
+
+test('CLI prints its version', async ({ processes }) => {
+  // Replace this Node executable with your application's executable or runtime.
+  const result = await processes.run({
+    executable: process.execPath,
+    args: ['--version'],
+    timeoutMs: 5000,
+  });
+  expect(result.stdout.bytes.toString('utf8')).toMatch(/^v[0-9]+\\./);
+});
+`,
+      needsAppUrl: false,
+    },
+    {
+      id: 'qt',
+      label: 'Qt desktop',
+      hint: 'application linked with E2E::QtBridge',
+      dependencies: siblingDependency('@e2e-platform/native'),
+      imports: ["import { qt } from '@e2e-platform/native';"],
+      config: `  targets: [{
+    name: 'qt',
+    engine: qt(),
+    // Build your application with the native/qt helper before running.
+    app: { appPath: process.env.APP_PATH ?? './build/my-app', launchArguments: [] },
+  }],
+  workers: 1,`,
+      example: `import { test, expect } from '@e2e-platform/core';
+
+test('desktop control is accessible', async ({ app, screen }) => {
+  await app.open();
+  // Set this objectName on a visible control in your application.
+  await expect(screen.getByTestId('main-control')).toBeVisible();
+});
+`,
+      needsAppUrl: false,
+    },
+    {
+      id: 'desktop',
+      label: 'Desktop accessibility',
+      hint: 'OS accessibility sidecar; build and permission setup required',
+      dependencies: siblingDependency('@e2e-platform/native'),
+      imports: ["import { desktop } from '@e2e-platform/native';"],
+      config: `  targets: [{
+    name: 'desktop',
+    engine: desktop({
+      backend: '${desktopBackend}',
+      // Build/install the matching native driver and provide its executable.
+      executable: process.env.E2E_DRIVER ?? '/absolute/path/to/desktop-driver',
+      args: [], // Runtime prefix arguments, if your driver needs them.
+    }),
+    app: { appPath: process.env.APP_PATH ?? './build/my-app', launchArguments: [] },
+  }],
+  workers: 1,`,
+      example: `import { test, expect } from '@e2e-platform/core';
+
+test('desktop control is accessible', async ({ app, screen }) => {
+  await app.open();
+  // Use a control's real accessibility role and name.
+  await expect(screen.getByRole('button', { name: 'Submit' })).toBeVisible();
+});
+`,
+      needsAppUrl: false,
+    },
     {
       id: 'playwright',
       label: 'Web',
       hint: 'Playwright',
-      dependencies: { ...siblingDependency('@e2e-cpp/playwright'), playwright: playwrightRange(SIBLING_VERSIONS?.['playwright']) },
-      imports: ["import { playwright } from '@e2e-cpp/playwright';"],
+      dependencies: { ...siblingDependency('@e2e-platform/playwright'), playwright: playwrightRange(SIBLING_VERSIONS?.['playwright']) },
+      imports: ["import { playwright } from '@e2e-platform/playwright';"],
       config: `  targets: [{
     engine: playwright({
       url: process.env.APP_URL ?? 'http://localhost:3000',
@@ -33,8 +106,8 @@ export function getEnginePresets() {
       // command: { executable: 'npm', args: ['run', 'dev'] },
     }),
   }],`,
-      example: `import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+      example: `import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('app opens', async ({ app, web }) => {
   await app.open('/');
@@ -55,8 +128,8 @@ test('app opens', async ({ app, web }) => {
       id: 'agent-device',
       label: 'Mobile (iOS/Android)',
       hint: 'agent-device',
-      dependencies: siblingDependency('@e2e-cpp/agent-device'),
-      imports: ["import { agentDevice } from '@e2e-cpp/agent-device';"],
+      dependencies: siblingDependency('@e2e-platform/agent-device'),
+      imports: ["import { agentDevice } from '@e2e-platform/agent-device';"],
       config: ios
         ? `  // Replace Settings with your app's bundle id.
   targets: [{ name: 'ios', engine: agentDevice({ platform: 'ios', app: 'Settings' }) }],
@@ -64,8 +137,8 @@ test('app opens', async ({ app, web }) => {
         : `  // Replace com.android.settings with your app's package name.
   targets: [{ name: 'android', engine: agentDevice({ platform: 'android', app: 'com.android.settings' }) }],
   workers: 1,`,
-      example: `import { test } from '@e2e-cpp/agent-device';
-import { expect } from '@e2e-cpp/core';
+      example: `import { test } from '@e2e-platform/agent-device';
+import { expect } from '@e2e-platform/core';
 
 test('Settings opens', async ({ screen }) => {
   await expect(${ios ? "screen.getByRole('button', { name: 'General' })" : "screen.getByText('Network & internet')"}).toBeVisible();
@@ -96,7 +169,7 @@ test('Settings opens', async ({ screen }) => {
       imports: [],
       config: `  // Add an engine here when your tests need to drive an app.
   targets: [{ name: 'default', platform: 'custom' }],`,
-      example: `import { test, expect } from '@e2e-cpp/core';
+      example: `import { test, expect } from '@e2e-platform/core';
 
 test('app responds', async () => {
   const response = await fetch(process.env.APP_URL ?? 'http://localhost:3000');
@@ -109,7 +182,7 @@ test('app responds', async () => {
 }
 
 export type EngineId = ReturnType<typeof getEnginePresets>[number]['id'];
-export const DEFAULT_ENGINE_ID = 'playwright' satisfies EngineId;
+export const DEFAULT_ENGINE_ID = 'cli' satisfies EngineId;
 
 /** Resolves a preset with the common shape used by scaffold generation. */
 export function getEnginePreset(id: EngineId): EnginePreset {

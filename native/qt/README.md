@@ -18,7 +18,9 @@ cmake --install native/qt/build --config Release --prefix /path/to/test-tools
 ```
 
 Pass `-DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/compiler` if CMake does not find Qt.
-Use `-DE2E_QT_WITH_QUICK=OFF` for Widgets-only builds. An installed copy exposes
+Use `-DE2E_QT_WITH_QUICK=OFF` for Widgets-only builds. The Quick control tests
+also need the Qt Quick Controls QML runtime module (for example
+`qml6-module-qtquick-controls` on Debian/Ubuntu). An installed copy exposes
 `find_package(e2eQtBridge CONFIG REQUIRED)` and `E2E::QtBridge`. Alternatively:
 
 ```cmake
@@ -94,8 +96,17 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   A custom nested event loop without a newly opened modal window still relies on
   the runner's operation deadline and is not automatically acknowledged early.
 - Widgets support input, buttons, check/radio state and QComboBox selection.
-  Quick supports text, buttons and checkable controls; Quick `selectOption`
-  is explicitly unsupported. Model/view virtual cells, custom canvases,
+  Quick supports text, buttons, checkable controls and non-editable Qt Quick
+  Controls ComboBox selection by exact label, string valueRole or zero-based
+  index. Public `textAt`/`valueAt` lookups resolve the option, then Qt keyboard
+  events change the selection and deliver `activated` signals. Intermediate
+  navigation also activates intervening options; assert application state after
+  selection. Models are limited to 10,000 items; duplicate labels/values require
+  an explicit index. Missing/invalid options, disabled/hidden controls and open
+  popups are refused before selection input. Editable ComboBoxes and custom
+  delegate input semantics require separate adapters. Model changes or rejected
+  navigation after dispatch report an uncertain action, never a silent success.
+  Model/view virtual cells, custom canvases,
   clipboard, drag/drop, native dialogs and embedded WebEngine DOMs need
   additional adapters; this helper does not manufacture their semantics.
 - Password/no-echo editors and objects marked `e2eSecure=true` are redacted
@@ -137,4 +148,5 @@ the installed development package. Preserve those files when redistributing it.
 Primary references: [Qt Test](https://doc.qt.io/qt-6/qttest-index.html),
 [Qt Quick Test](https://doc.qt.io/qt-6/qtquicktest-index.html),
 [Qt object/QML inspection](https://doc.qt.io/qt-6/qtqml-cppintegration-interactqmlfromcpp.html),
+[Qt Quick ComboBox](https://doc.qt.io/qt-6/qml-qtquick-controls-combobox.html),
 and [Qt accessibility](https://doc.qt.io/qt-6/accessible.html).

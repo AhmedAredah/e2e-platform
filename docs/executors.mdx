@@ -21,9 +21,9 @@ This example gives the agent tools to read the screen and tap a button by
 its accessible name.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createToolLoopExecutor } from '@e2e-cpp/core/agent';
-import { playwright, surfaceOf } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createToolLoopExecutor } from '@e2e-platform/core/agent';
+import { playwright, surfaceOf } from '@e2e-platform/playwright';
 import { gateway, tool } from 'ai';
 import { z } from 'zod';
 
@@ -84,8 +84,8 @@ verdict so the executor cannot claim to have checked something it does not
 understand.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig, StepExecutor } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig, StepExecutor } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 const scripted: StepExecutor = {
   name: 'scripted',
@@ -151,13 +151,13 @@ configured model and raise `MODEL_UNAVAILABLE` without one.
 
 ### Driving the page yourself
 
-Use `surfaceOf(handle)` from `@e2e-cpp/playwright` to access the current
+Use `surfaceOf(handle)` from `@e2e-platform/playwright` to access the current
 attempt's `Page` and `BrowserContext`. Both accessors throw `INVALID_STATE`
 outside an active attempt.
 
 ```ts
-import type { E2EConfig, StepExecutor } from '@e2e-cpp/core';
-import { playwright, surfaceOf } from '@e2e-cpp/playwright';
+import type { E2EConfig, StepExecutor } from '@e2e-platform/core';
+import { playwright, surfaceOf } from '@e2e-platform/playwright';
 
 const engine = playwright({ url: 'http://localhost:3000' });
 const own: StepExecutor = {

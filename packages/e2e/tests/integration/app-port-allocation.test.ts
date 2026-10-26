@@ -2,7 +2,7 @@ import { readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { playwright } from '@e2e-cpp/playwright';
+import { playwright } from '@e2e-platform/playwright';
 import type { E2EConfig } from '../../src/index.ts';
 import { assertValidReport } from '../helpers/report-schema.ts';
 import {
@@ -26,7 +26,7 @@ const TITLE = 'reads the allocated base URL';
 
 /** Appends what the test saw, one line per attempt: the fixture's base URL beside where the browser landed. */
 const TEST = `import { appendFileSync } from 'node:fs';
-import { test } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/core';
 
 test('${TITLE}', async ({ app, web }) => {
   await app.open('/');
@@ -42,8 +42,8 @@ const DECLARATION = {
 };
 
 /** The same declaration as a config file, so the worker path re-resolves it from disk. */
-const CONFIG_SOURCE = `import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+const CONFIG_SOURCE = `import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [{

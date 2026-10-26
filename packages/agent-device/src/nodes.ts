@@ -7,7 +7,7 @@
  * ids the surface owns.
  */
 
-import type { SemanticNode, ViewportSize } from '@e2e-cpp/core/engine';
+import type { SemanticNode, ViewportSize } from '@e2e-platform/core/engine';
 import type { Rect } from './support.ts';
 
 /** The subset of an agent-device snapshot node this engine reads. */

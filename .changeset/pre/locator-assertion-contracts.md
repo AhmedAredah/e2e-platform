@@ -1,5 +1,5 @@
 ---
-'@e2e-cpp/core': patch
+'@e2e-platform/core': patch
 ---
 
 Prevent stale locator references from passing hidden assertions, give one-shot

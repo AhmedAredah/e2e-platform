@@ -109,7 +109,7 @@ export function reportDocument(overrides: Partial<Report1Document['run']> = {}):
     run: {
       id: 'run-1',
       specVersion: '0.1',
-      runner: { name: '@e2e-cpp/core', version: '0.0.0' },
+      runner: { name: '@e2e-platform/core', version: '0.0.0' },
       status: 'passed',
       exitCode: 0,
       startedAt: REPORT_AT,

@@ -39,7 +39,7 @@ commit, 11 in its first hardening commit, and 7 in its second hardening commit.
 License and notice files are recorded separately from implementation files.
 
 The maintainer authorized offering the original extension work under MIT.
-The `e2e-cpp contributors` copyright notice identifies the original fork
+The `e2e-platform contributors` copyright notice identifies the original fork
 contributions collectively. It does not replace the upstream copyright
 notice, assign ownership, or grant rights in third-party material.
 
@@ -102,3 +102,13 @@ material must be reflected in the relevant files and distribution notices.
 
 Primary license texts are the [MIT license](https://opensource.org/license/mit)
 and [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+
+The 0.2.0-rc.1 desktop work was independently implemented on this MIT checkout.
+The project and unpublished npm scope were renamed to `e2e-platform` and
+`@e2e-platform/*`. Current `scripts/native/` files formerly lived in `scripts/cpp/`;
+`SUPPORT_MATRIX.md` and `INSTALL.md` formerly used the `CPP_SUPPORT.md` and
+`INSTALL_CPP.md` names. The original extension-origin inventory intentionally
+retains its historical source paths and before-port hashes. New OS sidecar source
+and examples have separate MIT notices; externally installed SDKs and dependencies
+retain their own terms. No later Apache-only upstream implementation was copied.

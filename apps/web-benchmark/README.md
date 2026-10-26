@@ -1,8 +1,8 @@
-# @e2e-cpp/web-benchmark
+# @e2e-platform/web-benchmark
 
 A Next.js app of self-contained scenarios that are hard to automate, and the
 e2e suites written against them. This is where we test writing tests with
-`@e2e-cpp/core`: every scenario isolates one awkward surface (shadow roots, a canvas-only
+`@e2e-platform/core`: every scenario isolates one awkward surface (shadow roots, a canvas-only
 UI, nested iframes, native dialogs, a second tab, drag and drop, a DOM that
 remounts every second, an accessibility tree that lies) so a test either
 handles that surface or fails for exactly that reason.
@@ -34,16 +34,16 @@ planted bug.
 
 ## Commands
 
-Build the runner first; the suites run the built `@e2e-cpp/core` CLI by path, like
-the testbed does: pnpm links no `@e2e-cpp/core` bin for a workspace package whose `dist`
+Build the runner first; the suites run the built `@e2e-platform/core` CLI by path, like
+the testbed does: pnpm links no `@e2e-platform/core` bin for a workspace package whose `dist`
 does not exist yet at install time, and CI installs before it builds.
 
 ```bash
 pnpm build                                          # from the repo root, once
-pnpm --filter @e2e-cpp/web-benchmark test            # build the app, run tests/
-pnpm --filter @e2e-cpp/web-benchmark test:headed
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/web-benchmark test:agent
-pnpm --filter @e2e-cpp/web-benchmark dev             # browse the scenarios on :4280
+pnpm --filter @e2e-platform/web-benchmark test            # build the app, run tests/
+pnpm --filter @e2e-platform/web-benchmark test:headed
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/web-benchmark test:agent
+pnpm --filter @e2e-platform/web-benchmark dev             # browse the scenarios on :4280
 ```
 
 ### Writing tests
@@ -54,9 +54,9 @@ already answering on port 4280 is used as is and nothing is started or
 stopped. Run one file at a time from the package directory:
 
 ```bash
-pnpm --filter @e2e-cpp/web-benchmark dev
+pnpm --filter @e2e-platform/web-benchmark dev
 cd apps/web-benchmark
-node node_modules/@e2e-cpp/core/dist/cli/bin.js run tests/login-form.e2e.ts --headed
+node node_modules/@e2e-platform/core/dist/cli/bin.js run tests/login-form.e2e.ts --headed
 ```
 
 Two things bite here:

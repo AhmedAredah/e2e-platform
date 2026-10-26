@@ -3,8 +3,8 @@
  * verified deterministically afterwards, so a wrong model verdict cannot pass.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('files an expense and waits out the async save', async ({ web, agent, screen }) => {
   await web.goto('/');

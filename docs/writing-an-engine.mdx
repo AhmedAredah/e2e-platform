@@ -4,10 +4,10 @@ description: Implement the e2e engine contract for another UI platform.
 ---
 
 An engine connects `screen`, `app`, and agent calls to a UI platform through
-the `@e2e-cpp/core/engine` contract. Use it to support a desktop app, a TV, or another
+the `@e2e-platform/core/engine` contract. Use it to support a desktop app, a TV, or another
 platform.
 
-The existing `@e2e-cpp/playwright` and `@e2e-cpp/agent-device` packages use the
+The existing `@e2e-platform/playwright` and `@e2e-platform/agent-device` packages use the
 same public `defineEngine` API. Read their implementations alongside this
 guide for complete examples.
 
@@ -41,7 +41,7 @@ This skeleton assumes a `createClient` adapter for your platform. Its nodes
 must follow the semantic tree contract described below.
 
 ```ts title="src/index.ts"
-import { defineEngine, type EngineHandle } from '@e2e-cpp/core/engine';
+import { defineEngine, type EngineHandle } from '@e2e-platform/core/engine';
 
 export function hyperdrive(options: { device: string; app: string }): EngineHandle {
   const client = createClient(options);
@@ -94,7 +94,7 @@ an inbox, a database, or a test API. Add those through
 [`test.extend`](/reference/test#your-own-fixtures).
 
 <Note>
-Import shared types and helpers from `@e2e-cpp/core/engine`, and declare `@e2e-cpp/core` as a
+Import shared types and helpers from `@e2e-platform/core/engine`, and declare `@e2e-platform/core` as a
 peer dependency so the engine and runner share their error classes.
 The public exports include errors, text and URL matching, assertion polling,
 JSON validation, and cancellation helpers. There is no internal subpath.
@@ -233,7 +233,7 @@ fixtures: {
 ```
 
 ```ts title="tests/fixtures.ts"
-import { test as base } from '@e2e-cpp/core';
+import { test as base } from '@e2e-platform/core';
 import type { Device } from 'e2e-engine-hyperdrive';
 
 export const test = base.extend<{ device: Device }>();
@@ -265,7 +265,7 @@ runner's contract and provides examples for these checks.
 
 <CardGroup cols={2}>
   <Card title="Engine contract" icon="gear" href="/reference/engine">
-    Every type and hook of `@e2e-cpp/core/engine`.
+    Every type and hook of `@e2e-platform/core/engine`.
   </Card>
   <Card title="agent-device reference" icon="mobile-screen" href="/reference/agent-device">
     A complete device engine to read alongside.

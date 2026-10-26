@@ -36,7 +36,7 @@ const locatorError = reportError({
 export function sampleReport(): Report1Document {
   return reportDocument({
     id: '0192f3a0-0000-7000-8000-000000000000',
-    runner: { name: '@e2e-cpp/core', version: '1.2.3' },
+    runner: { name: '@e2e-platform/core', version: '1.2.3' },
     status: 'failed',
     exitCode: 1,
     startedAt: STARTED_AT,

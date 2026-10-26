@@ -1,14 +1,14 @@
 ---
-"@e2e-cpp/core": minor
-"@e2e-cpp/process": minor
-"@e2e-cpp/checks": minor
-"@e2e-cpp/protocol": minor
-"@e2e-cpp/native": minor
-"@e2e-cpp/terminal": minor
-"@e2e-cpp/playwright": patch
-"@e2e-cpp/agent-device": patch
-"@e2e-cpp/github": patch
-"@e2e-cpp/oauth": patch
+"@e2e-platform/core": minor
+"@e2e-platform/process": minor
+"@e2e-platform/checks": minor
+"@e2e-platform/protocol": minor
+"@e2e-platform/native": minor
+"@e2e-platform/terminal": minor
+"@e2e-platform/playwright": patch
+"@e2e-platform/agent-device": patch
+"@e2e-platform/github": patch
+"@e2e-platform/oauth": patch
 ---
 
 Establish the MIT-based fork and local installation kit under independent package

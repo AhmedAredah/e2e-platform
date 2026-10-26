@@ -2,8 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { OperationContext } from '@e2e-cpp/core/engine';
-import type { ProcessSession } from '@e2e-cpp/process';
+import type { OperationContext } from '@e2e-platform/core/engine';
+import type { ProcessSession } from '@e2e-platform/process';
 import { describe, expect, it, vi } from 'vitest';
 import { NativeEngine, type NativeProcessLaunch } from '../src/index.ts';
 

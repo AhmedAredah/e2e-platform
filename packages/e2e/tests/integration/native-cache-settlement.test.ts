@@ -16,7 +16,7 @@ function suite(serial: boolean): string {
     await agent.act('tap Submit');
     await expect(screen.getByRole('button', { name: 'Submit' })).toBeVisible();
   });`;
-  return `import { test, expect } from '@e2e-cpp/core';\n${serial
+  return `import { test, expect } from '@e2e-platform/core';\n${serial
     ? `test.describe('shared flow', { serial: true }, () => { ${member('first')} ${member('second')} });`
     : member('first')}`;
 }

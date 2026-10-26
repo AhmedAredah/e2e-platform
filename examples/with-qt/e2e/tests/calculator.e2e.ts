@@ -2,7 +2,7 @@ import { rejects } from 'node:assert/strict';
 import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test('imports a project, edits its data, computes asynchronously, and exports', async ({ app, screen }) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'e2e-qt-example-'));

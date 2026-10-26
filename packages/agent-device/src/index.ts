@@ -1,11 +1,11 @@
 /**
- * `@e2e-cpp/agent-device` public surface: the `agentDevice()` engine factory,
+ * `@e2e-platform/agent-device` public surface: the `agentDevice()` engine factory,
  * the `device` fixture types, and a `test` typed with that fixture. `expect`
- * and `credentials` still come from `@e2e-cpp/core`; the agent-side tool pack lives on
- * the `@e2e-cpp/agent-device/tools` subpath so this entry never loads the AI SDK.
+ * and `credentials` still come from `@e2e-platform/core`; the agent-side tool pack lives on
+ * the `@e2e-platform/agent-device/tools` subpath so this entry never loads the AI SDK.
  */
 
-import { test as base } from '@e2e-cpp/core';
+import { test as base } from '@e2e-platform/core';
 import type { Device } from './device.ts';
 
 export { agentDevice } from './engine.ts';
@@ -15,6 +15,6 @@ export type { BiometricSensor, Device, DeviceOrientation, DevicePermission, Fore
 
 /**
  * `test` typed with this engine's contributed `device` fixture. The same
- * runtime `test` as `@e2e-cpp/core`'s; only the fixture types differ.
+ * runtime `test` as `@e2e-platform/core`'s; only the fixture types differ.
  */
 export const test = base.extend<{ device: Device }>();

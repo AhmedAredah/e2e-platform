@@ -11,7 +11,7 @@ import {
   OBSERVED_TEXT_LIMIT,
   type NodeRef,
   type SemanticNode,
-} from '@e2e-cpp/core/engine';
+} from '@e2e-platform/core/engine';
 import {
   readDocumentSemanticsFunction,
   SECURE_FIELD_SELECTOR,

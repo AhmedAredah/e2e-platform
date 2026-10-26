@@ -38,7 +38,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run e2e
-        run: npx --no-install e2e-cpp run --reporter list,junit
+        run: npx --no-install e2e-platform run --reporter list,junit
         env:
           APP_URL: http://127.0.0.1:3000
           AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
@@ -66,7 +66,7 @@ jobs:
 ```
 
 The workflow pins actions to commit SHAs and installs dependencies from the
-lockfile. `npx --no-install e2e-cpp` runs the installed version.
+lockfile. `npx --no-install e2e-platform` runs the installed version.
 
 Configure your CI's test-report integration to read `.e2e/junit.xml`. It
 includes startup failures such as `APP_UNREACHABLE` in a `run` suite. Add
@@ -76,7 +76,7 @@ e2e job a required check in your repository settings if it should block merges.
 ## What CI changes
 
 CI mode is on when `CI` is set to a value other than an empty string, `0`,
-or `false`. Use `CI=1 npx --no-install e2e-cpp run` to reproduce these defaults locally:
+or `false`. Use `CI=1 npx --no-install e2e-platform run` to reproduce these defaults locally:
 
 | Setting | Local | CI |
 | --- | --- | --- |
@@ -89,7 +89,7 @@ or `false`. Use `CI=1 npx --no-install e2e-cpp run` to reproduce these defaults 
 Override worker and retry defaults with flags:
 
 ```bash
-npx --no-install e2e-cpp run --workers 4 --retries 0
+npx --no-install e2e-platform run --workers 4 --retries 0
 ```
 
 [Telemetry](/telemetry) attributes CI runs to the vendor rather than to a

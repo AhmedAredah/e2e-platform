@@ -1,8 +1,8 @@
-/** `e2e-cpp telemetry`: whether anonymous usage telemetry is on, and the switch. */
+/** `e2e-platform telemetry`: whether anonymous usage telemetry is on, and the switch. */
 
 import picocolors from 'picocolors';
 import type { Telemetry, TelemetryDisabledBy } from '../telemetry/telemetry.ts';
-import { DOCS_URL } from './docs-url.ts';
+import { documentationCommand } from './docs-help.ts';
 
 export type TelemetryAction = 'status' | 'enable' | 'disable';
 
@@ -12,7 +12,7 @@ const REASONS: Readonly<Record<TelemetryDisabledBy, string>> = {
   E2E_TELEMETRY_DISABLED: 'E2E_TELEMETRY_DISABLED is set',
   DO_NOT_TRACK: 'DO_NOT_TRACK is set',
   unconfigured: 'this fork has no telemetry destination',
-  preference: 'switched off with e2e-cpp telemetry disable',
+  preference: 'switched off with e2e-platform telemetry disable',
   store: 'the preferences directory is not writable',
 };
 
@@ -41,6 +41,6 @@ export function telemetry(action: TelemetryAction, instance: Telemetry): number 
     out(`Status: ${picocolors.red('disabled')} (${REASONS[disabledBy]})`);
     out('Nothing is sent from this machine.');
   }
-  out(`Details: ${DOCS_URL}/telemetry`);
+  out(`Details: ${documentationCommand('/telemetry')}`);
   return 0;
 }

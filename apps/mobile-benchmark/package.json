@@ -1,5 +1,5 @@
 {
-  "name": "@e2e-cpp/mobile-benchmark",
+  "name": "@e2e-platform/mobile-benchmark",
   "version": "0.0.0",
   "private": true,
   "description": "Benchmark Expo app of hard mobile surfaces, with the e2e suites written against them",
@@ -11,8 +11,8 @@
     "prebuild": "expo prebuild",
     "build:benchmark": "eas build --profile benchmark --platform all",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
-    "test": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run",
-    "test:agent": "node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.agent.config.ts"
+    "test": "node node_modules/@e2e-platform/core/dist/cli/bin.js run",
+    "test:agent": "node node_modules/@e2e-platform/core/dist/cli/bin.js run --config e2e.agent.config.ts"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "7.18.16",
@@ -30,11 +30,11 @@
     "react-native-webview": "13.16.1"
   },
   "devDependencies": {
-    "@e2e-cpp/agent-device": "workspace:*",
+    "@e2e-platform/agent-device": "workspace:*",
     "@types/node": "26.4.1",
     "@types/react": "19.1.4",
     "ai": "7.0.97",
-    "@e2e-cpp/core": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
     "typescript": "7.0.2"
   }
 }

@@ -3,12 +3,12 @@ title: e2e/engine
 description: Build an engine with observations, actions, lifecycle hooks, and fixtures.
 ---
 
-Import engine types and helpers from `@e2e-cpp/core/engine`. `defineEngine` validates
+Import engine types and helpers from `@e2e-platform/core/engine`. `defineEngine` validates
 and freezes your implementation, derives its capabilities, and returns a
 handle for `targets` in the config.
 
 ```ts
-import { defineEngine, type EngineHandle } from '@e2e-cpp/core/engine';
+import { defineEngine, type EngineHandle } from '@e2e-platform/core/engine';
 
 export function defineEngine(spec: Engine): EngineHandle;
 export function isEngineHandle(value: unknown): value is EngineHandle;
@@ -730,7 +730,7 @@ export interface EngineAppDeclaration {
 Every field is documented under
 [the app under test](/reference/config#the-app-under-test). The site comes
 back to the engine as `EngineInitInfo.app.site`; `sameSite` from
-`@e2e-cpp/core/engine` applies it to a URL.
+`@e2e-platform/core/engine` applies it to a URL.
 
 ## Session
 
@@ -1033,7 +1033,7 @@ dispatch.
 `LOCATOR_ACTION_KINDS`, `POINTER_ACTION_KINDS`, `KEY_MODIFIERS`,
 `KEY_NAMES`, `parseKey`, `ENGINE_ERROR_CODES`, `RETRYABLE_ENGINE_ERROR_CODES`,
 `OBSERVED_NAME_LIMIT` and `OBSERVED_TEXT_LIMIT` are exported from
-`@e2e-cpp/core/engine`. The `selector` expression kind carries a
+`@e2e-platform/core/engine`. The `selector` expression kind carries a
 platform-native selector string; `frame` scopes a query into a nested
 document.
 
@@ -1148,5 +1148,5 @@ The engine should consume reported faults, stop background readers in cleanup,
 and reject promptly when the cleanup signal aborts.
 
 `resolveExpression(expression, roots)` is the shared deterministic semantic-tree
-locator resolver exported from `@e2e-cpp/core/engine`. Engines can use it to keep
+locator resolver exported from `@e2e-platform/core/engine`. Engines can use it to keep
 role, text, test-id, filtering, and locator combinations consistent.

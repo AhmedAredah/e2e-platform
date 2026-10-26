@@ -31,7 +31,7 @@ describe('the bundled agent skill', () => {
     const overview = readGuide(undefined) ?? '';
     expect(overview.startsWith('# e2e')).toBe(true);
     expect(overview).not.toContain('\n---\n');
-    expect(overview).toContain('npx --no-install e2e-cpp guide <topic>');
+    expect(overview).toContain('npx --no-install e2e-platform guide <topic>');
     for (const topic of skillTopics()) {
       const text = readGuide(topic) ?? '';
       expect(text.startsWith('# ')).toBe(true);

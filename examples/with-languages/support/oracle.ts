@@ -1,5 +1,5 @@
-import { compareJson } from '@e2e-cpp/checks';
-import { expect } from '@e2e-cpp/core';
+import { compareJson } from '@e2e-platform/checks';
+import { expect } from '@e2e-platform/core';
 
 /** The expected value is test-owned; never ask the application to validate its own calculation. */
 export function checkCalculation(actual: unknown): void {

@@ -23,7 +23,7 @@
     "examples/with-qt/e2e/tests*/**/*.ts",
     "scripts/**/*.test.mjs",
     "packages/process/tests/types/api.ts",
-    "scripts/cpp/install-packed.mjs",
+    "scripts/native/install-packed.mjs",
     "examples/with-languages/e2e*.config.ts",
     "examples/with-languages/tests/**/*.ts",
     "scripts/languages/verify.mjs",
@@ -38,8 +38,8 @@
   ],
   "ignoreDependencies": [
     "@ai-sdk/openai-compatible",
-    "@e2e-cpp/core",
-    "@e2e-cpp/playwright",
+    "@e2e-platform/core",
+    "@e2e-platform/playwright",
     "@openrouter/ai-sdk-provider"
   ],
   "rules": {

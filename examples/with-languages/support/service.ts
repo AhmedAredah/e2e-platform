@@ -1,5 +1,5 @@
-import type { ApplicationLaunchProfile, ProcessFixture, ProcessSession } from '@e2e-cpp/process';
-import { createHttpClient, type HttpClient } from '@e2e-cpp/protocol';
+import type { ApplicationLaunchProfile, ProcessFixture, ProcessSession } from '@e2e-platform/process';
+import { createHttpClient, type HttpClient } from '@e2e-platform/protocol';
 
 /** Waits for one bounded, strictly parsed loopback readiness announcement. */
 async function readyPort(child: ProcessSession): Promise<number> {

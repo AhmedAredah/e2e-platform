@@ -1,5 +1,5 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   specVersion: '0.1',

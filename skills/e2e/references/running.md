@@ -3,14 +3,14 @@
 ## Commands
 
 ```bash
-npx --no-install e2e-cpp run [files...] [options]   # run tests
-npx --no-install e2e-cpp explore [goal] [options]   # explore the app toward a goal, no test file (see the explore topic)
-npx --no-install e2e-cpp list [files...] [options]  # print what run would select, without running
-npx --no-install e2e-cpp init [--yes]               # scaffold a project, refresh the agent skill
-npx --no-install e2e-cpp guide [topic]              # print this skill: setup, writing-tests, agent, running, explore, debugging, mcp
-npx --no-install e2e-cpp cache ls|clear|stats       # read or empty the trace cache
-npx --no-install e2e-cpp mcp [--target <name>]      # serve the project to a coding agent over MCP (topic mcp)
-npx --no-install e2e-cpp telemetry [disable|enable] # anonymous usage telemetry: status, or the switch
+npx --no-install e2e-platform run [files...] [options]   # run tests
+npx --no-install e2e-platform explore [goal] [options]   # explore the app toward a goal, no test file (see the explore topic)
+npx --no-install e2e-platform list [files...] [options]  # print what run would select, without running
+npx --no-install e2e-platform init [--yes]               # scaffold a project, refresh the agent skill
+npx --no-install e2e-platform guide [topic]              # print this skill: setup, writing-tests, agent, running, explore, debugging, mcp
+npx --no-install e2e-platform cache ls|clear|stats       # read or empty the trace cache
+npx --no-install e2e-platform mcp [--target <name>]      # serve the project to a coding agent over MCP (topic mcp)
+npx --no-install e2e-platform telemetry [disable|enable] # anonymous usage telemetry: status, or the switch
 ```
 
 `run` flags:
@@ -33,11 +33,11 @@ npx --no-install e2e-cpp telemetry [disable|enable] # anonymous usage telemetry:
 | `--video` | Record every attempt (WebM on a browser engine, MP4 on a device engine) under its artifact directory; the failure recap names the file. Fails with `UNSUPPORTED_ARTIFACT` when the engine cannot record. |
 
 ```bash
-npx --no-install e2e-cpp run tests/signup.e2e.ts
-npx --no-install e2e-cpp run signup.e2e.ts   # the same file by name, from any directory the config globs cover
-npx --no-install e2e-cpp run tests/agent --tag smoke
-npx --no-install e2e-cpp run 'tests/**/*.smoke.e2e.ts' --target chromium --workers 1 --retries 0
-CI=1 npx --no-install e2e-cpp run            # reproduce the CI defaults locally
+npx --no-install e2e-platform run tests/signup.e2e.ts
+npx --no-install e2e-platform run signup.e2e.ts   # the same file by name, from any directory the config globs cover
+npx --no-install e2e-platform run tests/agent --tag smoke
+npx --no-install e2e-platform run 'tests/**/*.smoke.e2e.ts' --target chromium --workers 1 --retries 0
+CI=1 npx --no-install e2e-platform run            # reproduce the CI defaults locally
 ```
 
 `list` takes the same files and the selection flags (`--config`, `--target`,
@@ -47,15 +47,15 @@ app, an engine, or a worker. `--reporter json` prints `{ "pairs": [...] }`.
 Use it to check a filter before a run.
 
 ```bash
-npx --no-install e2e-cpp list --tag smoke
-npx --no-install e2e-cpp list tests/signup.e2e.ts --reporter json
+npx --no-install e2e-platform list --tag smoke
+npx --no-install e2e-platform list tests/signup.e2e.ts --reporter json
 ```
 
-A `package.json` script keeps it short: `"test:e2e": "e2e-cpp run"`, then
+A `package.json` script keeps it short: `"test:e2e": "e2e-platform run"`, then
 `pnpm test:e2e tests/signup.e2e.ts`. pnpm forwards a `--` separator literally,
 so `pnpm test:e2e -- --headed` reaches e2e as `run -- --headed` and is
 rejected with exit 2 rather than run headless; write `pnpm test:e2e --headed`
-or `pnpm exec e2e-cpp run --headed` instead.
+or `pnpm exec e2e-platform run --headed` instead.
 
 ## The trace cache
 
@@ -65,9 +65,9 @@ digest. `cache` commands read the same config as `run`, so `--config` and
 
 | Command | Prints |
 | --- | --- |
-| `e2e-cpp cache ls` | One row per entry: test, target, instruction digest, age, action count. |
-| `e2e-cpp cache stats` | Directory, entry count, total size. |
-| `e2e-cpp cache clear` | Deletes the entries and the directory; files the runner never wrote stay. |
+| `e2e-platform cache ls` | One row per entry: test, target, instruction digest, age, action count. |
+| `e2e-platform cache stats` | Directory, entry count, total size. |
+| `e2e-platform cache clear` | Deletes the entries and the directory; files the runner never wrote stay. |
 
 Use `ls` to see what a committed cache would replay, and `clear` when a
 recorded flow is stale — `--no-cache` only skips the cache for one run.
@@ -104,7 +104,7 @@ recorded flow is stale — `--no-cache` only skips the cache for one run.
   serial members share the group's attempt but keep distinct step IDs.
   The `end` phase carries the redacted error and preserves `blocked` and
   `cancelled` statuses. Accept missing identity when reading older streams.
-- `github()` from `@e2e-cpp/github`: on GitHub Actions, one pull request comment per
+- `github()` from `@e2e-platform/github`: on GitHub Actions, one pull request comment per
   run (edited on rerun) and the job summary; needs `pull-requests: write` and
   `GITHUB_TOKEN` in the step's env.
 - Artifacts (screenshots, Playwright traces, `--video` recordings, `--debug`
@@ -156,7 +156,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install chromium --with-deps
-      - run: npx --no-install e2e-cpp run --reporter list,junit
+      - run: npx --no-install e2e-platform run --reporter list,junit
         env:
           E2E_USER_ADMIN_USERNAME: ${{ secrets.E2E_USER_ADMIN_USERNAME }}
           E2E_USER_ADMIN_PASSWORD: ${{ secrets.E2E_USER_ADMIN_PASSWORD }}

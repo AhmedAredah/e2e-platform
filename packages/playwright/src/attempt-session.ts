@@ -2,7 +2,7 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { Browser, BrowserContext, BrowserContextOptions, Page } from 'playwright';
-import { EngineError, raceAbort, withinCleanupBudget, type EngineCleanupContext, type OperationContext, type VideoSegment, type ViewportSize } from '@e2e-cpp/core/engine';
+import { EngineError, raceAbort, withinCleanupBudget, type EngineCleanupContext, type OperationContext, type VideoSegment, type ViewportSize } from '@e2e-platform/core/engine';
 import { attachPersistent, recoveryFailed, targetIdentity, type CdpEndpointResolver, type SessionBinding } from './cdp-recovery.ts';
 import { connectionAbort, withConnectionBudget, type ConnectionBudget } from './operation-budget.ts';
 import { RefRegistry } from './refs.ts';

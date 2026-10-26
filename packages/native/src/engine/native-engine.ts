@@ -2,13 +2,13 @@ import { createRequire } from 'node:module';
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { startProcess, type ProcessSession } from '@e2e-cpp/process';
+import { startProcess, type ProcessSession } from '@e2e-platform/process';
 import {
   ConfigurationError, EngineError, defineEngine, resolveExpression,
   type EngineAppDeclaration, type EngineAttemptContext, type EngineCleanupContext,
   type EngineHandle, type EngineInitInfo, type EngineSnapshot, type LocatorAction,
   type LocatorActionKind, type NodeRef, type OperationContext,
-} from '@e2e-cpp/core/engine';
+} from '@e2e-platform/core/engine';
 import { JsonRpcTcpTransport, cancelled, isRecord } from '../transport/json-rpc-tcp.ts';
 import type { NativeTransport, RequestContext } from '../transport/native-transport.ts';
 import { NativeDriver } from '../driver/native-driver.ts';

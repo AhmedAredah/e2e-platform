@@ -28,3 +28,11 @@ verification/*
 .DS_Store
 Thumbs.db
 **/.next/
+
+# Native language build caches and local interpreter state.
+**/target/
+**/bin/
+**/obj/
+**/__pycache__/
+**/*.pyc
+**/*.egg-info/

@@ -1,5 +1,5 @@
 /** One deadline for connection recovery and the operation it precedes. */
-import { EngineError, raceAbort } from '@e2e-cpp/core/engine';
+import { EngineError, raceAbort } from '@e2e-platform/core/engine';
 
 export interface ConnectionBudget {
   readonly timeoutMs: number;

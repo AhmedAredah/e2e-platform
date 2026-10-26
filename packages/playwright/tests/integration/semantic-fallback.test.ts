@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import type { SemanticNode } from '@e2e-cpp/core/engine';
+import type { SemanticNode } from '@e2e-platform/core/engine';
 import { playwright, surfaceOf } from '../../src/index.ts';
 import { decodePng } from '../helpers/png.ts';
 

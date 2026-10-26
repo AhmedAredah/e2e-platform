@@ -3,14 +3,14 @@ title: Coding agents
 description: Give a coding agent the skill, a live app session, and reports it can use to write and debug tests.
 ---
 
-`e2e-cpp init` installs a skill for writing and running tests, plus MCP
+`e2e-platform init` installs a skill for writing and running tests, plus MCP
 configuration for inspecting the app. Coding agents use the CLI to run
 tests and the reports to investigate failures.
 
 ## The skill
 
 ```bash
-npx --no-install e2e-cpp init
+npx --no-install e2e-platform init
 ```
 
 | Path | Used by |
@@ -23,7 +23,7 @@ after upgrading e2e to refresh them.
 
 Without `init`, copy this fork's `skills/e2e/` directory from the source archive
 into the project's chosen skill directory.
-`npx --no-install e2e-cpp guide [topic]` prints it from the installed package.
+`npx --no-install e2e-platform guide [topic]` prints it from the installed package.
 
 For agents that need an explicit pointer, add this line to your project
 instructions. `init` leaves those files unchanged:
@@ -34,7 +34,7 @@ End-to-end tests use e2e; read .agents/skills/e2e/SKILL.md before writing or run
 
 ## How an agent looks at the app
 
-`e2e-cpp mcp` lets the coding agent open and interact with one target. Its
+`e2e-platform mcp` lets the coding agent open and interact with one target. Its
 `locate` tool checks a `screen.*` locator against the current app and returns
 the test code when exactly one element matches.
 
@@ -42,7 +42,7 @@ the test code when exactly one element matches.
 `.cursor/mcp.json` for Cursor. To register it with Claude Code by hand:
 
 ```bash
-claude mcp add e2e-cpp -- npx --no-install e2e-cpp mcp
+claude mcp add e2e-platform -- npx --no-install e2e-platform mcp
 ```
 
 See the [MCP server reference](/reference/mcp) for its tools, session rules,
@@ -55,7 +55,7 @@ first. It uses `agent.act` for one goal at a time and checks the outcome
 with `expect`. Known fields and exact values can use `screen` directly:
 
 ```ts title="tests/checkout.e2e.ts"
-import { test, expect, credentials } from '@e2e-cpp/core';
+import { test, expect, credentials } from '@e2e-platform/core';
 
 test('a signed-in user reaches checkout', async ({ screen, app, agent }) => {
   const user = credentials.user('customer');
@@ -83,7 +83,7 @@ The main rules are:
 ## How an agent runs it
 
 ```bash
-npx --no-install e2e-cpp run tests/checkout.e2e.ts
+npx --no-install e2e-platform run tests/checkout.e2e.ts
 ```
 
 Run one file while iterating. For model configuration and credentials, see
@@ -96,7 +96,7 @@ Every run writes `.e2e/report.json`. For a report that is easier to read,
 run:
 
 ```bash
-npx --no-install e2e-cpp run tests/checkout.e2e.ts --reporter list,markdown
+npx --no-install e2e-platform run tests/checkout.e2e.ts --reporter list,markdown
 ```
 
 This writes `.e2e/summary.md` and a page for each failed or flaky test under

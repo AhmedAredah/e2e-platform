@@ -4,7 +4,7 @@
  * — never a burned budget or a fabricated success.
  */
 
-import { test } from '@e2e-cpp/playwright';
+import { test } from '@e2e-platform/playwright';
 
 test('missing credentials conclude blocked, not failed', async ({ web, agent }) => {
   await web.goto('/');

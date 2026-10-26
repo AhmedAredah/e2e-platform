@@ -1,4 +1,4 @@
-import { test } from '@e2e-cpp/playwright';
+import { test } from '@e2e-platform/playwright';
 
 test.skip('bare skip without a reason', async () => {});
 

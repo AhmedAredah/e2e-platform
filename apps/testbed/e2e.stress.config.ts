@@ -1,4 +1,4 @@
-import type { E2EConfig } from '@e2e-cpp/core';
+import type { E2EConfig } from '@e2e-platform/core';
 import base from './e2e.config.ts';
 
 /** Reporter stress suite: failures, timeouts, skips, flakes, hostile titles. Never part of CI. */

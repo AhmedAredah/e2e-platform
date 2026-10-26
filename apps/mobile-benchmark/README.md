@@ -1,4 +1,4 @@
-# @e2e-cpp/mobile-benchmark
+# @e2e-platform/mobile-benchmark
 
 An Expo app (iOS and Android) of self-contained scenarios that are hard to
 automate on a device, and the e2e suites written against them. Every
@@ -49,10 +49,10 @@ Native projects are generated with CNG (`ios/` and `android/` are ignored);
 
 ```bash
 pnpm build                                              # from the repo root, once
-pnpm --filter @e2e-cpp/mobile-benchmark ios              # build + install on the booted simulator
-pnpm --filter @e2e-cpp/mobile-benchmark android          # same for the running emulator
-pnpm --filter @e2e-cpp/mobile-benchmark test             # tests/ on both targets
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/mobile-benchmark test:agent
+pnpm --filter @e2e-platform/mobile-benchmark ios              # build + install on the booted simulator
+pnpm --filter @e2e-platform/mobile-benchmark android          # same for the running emulator
+pnpm --filter @e2e-platform/mobile-benchmark test             # tests/ on both targets
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/mobile-benchmark test:agent
 ```
 
 The configs pin the app by bundle id (`dev.e2e.benchmark`) and expect it
@@ -66,7 +66,7 @@ authoring:
 
 ```bash
 cd apps/mobile-benchmark
-node node_modules/@e2e-cpp/core/dist/cli/bin.js run tests/login-form.e2e.ts --target ios-simulator
+node node_modules/@e2e-platform/core/dist/cli/bin.js run tests/login-form.e2e.ts --target ios-simulator
 ```
 
 Android note: the Android Gradle Plugin's prefab step fails on very new JDKs

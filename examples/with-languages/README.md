@@ -22,7 +22,7 @@ of the source archive.
 From the repository root, after installing workspace dependencies and toolchains:
 
 ```sh
-pnpm build:cpp
+pnpm build:native
 node scripts/languages/verify.mjs
 ```
 

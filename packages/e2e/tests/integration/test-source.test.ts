@@ -8,7 +8,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -19,7 +19,7 @@ import { createProject } from '../helpers/run-project.ts';
 const execFileAsync = promisify(execFile);
 const CLI = fileURLToPath(new URL('../../dist/cli/bin.js', import.meta.url));
 
-const CONFIG = `import { defineEngine } from '@e2e-cpp/core/engine';
+const CONFIG = `import { defineEngine } from '@e2e-platform/core/engine';
 
 export default {
   targets: [
@@ -38,13 +38,13 @@ export default {
 };
 `;
 
-const DIRECT = `import { test } from '@e2e-cpp/core';
+const DIRECT = `import { test } from '@e2e-platform/core';
 
 test('declares its source', async () => {});
 `;
 
 /** A project helper every test goes through, as suites with shared setup have. */
-const HELPER = `import { test } from '@e2e-cpp/core';
+const HELPER = `import { test } from '@e2e-platform/core';
 
 export function dashboardTest(title: string, body: () => Promise<void>) {
   return test(title, async () => {
@@ -58,7 +58,7 @@ const WRAPPED = `import { dashboardTest } from '../support/test.ts';
 dashboardTest('declares its source through a helper', async () => {});
 `;
 
-const SHARED = `import { test } from '@e2e-cpp/core';
+const SHARED = `import { test } from '@e2e-platform/core';
 
 test('declares its source in an imported module', async () => {});
 `;
@@ -121,5 +121,28 @@ describe('test source location', () => {
       line: 3,
       column: 1,
     });
+  });
+});
+
+
+describe('source locations in consumer paths', () => {
+  it.each(['ordinary consumer & tests', 'consumer (desktop) 100% # app'])('preserves spaces and punctuation in %s', async (directory) => {
+    const prefix = `${directory}/`;
+    const project = createProject({
+      [`${prefix}e2e.config.ts`]: CONFIG,
+      [`${prefix}tests/negative.e2e.ts`]: `import { test, expect } from '@e2e-platform/core';
+
+test('planted failure', () => { expect(1).toBe(2); });
+`,
+    });
+    const consumer = path.join(project.dir, directory);
+    try {
+      await expect(execFileAsync(process.execPath, [CLI, 'run', '--workers', '1', '--no-cache'], { cwd: consumer })).rejects.toMatchObject({ code: 1 });
+      const report = JSON.parse(readFileSync(path.join(consumer, '.e2e', 'report.json'), 'utf8')) as Report;
+      const result = report.run.results[0]!;
+      expect(result.file).toBe('tests/negative.e2e.ts');
+      expect(result.source).toEqual({ file: 'tests/negative.e2e.ts', line: 3, column: 1 });
+      expect(existsSync(path.join(consumer, result.source!.file))).toBe(true);
+    } finally { project.cleanup(); }
   });
 });

@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('continues only after the banner and the overlay are gone', async ({ app, screen }) => {
   await app.open('/e/overlay-trap');

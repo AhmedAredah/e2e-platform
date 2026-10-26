@@ -1,6 +1,6 @@
 {
-  "name": "@e2e-cpp/process",
-  "version": "0.2.0-rc.0",
+  "name": "@e2e-platform/process",
+  "version": "0.2.0-rc.1",
   "description": "Bounded subprocess fixtures for native and C++ end-to-end tests",
   "license": "MIT",
   "type": "module",
@@ -32,11 +32,11 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
+    "@e2e-platform/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "devDependencies": {
     "@types/node": "26.6.2",
-    "@e2e-cpp/core": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
     "typescript": "7.0.2",
     "vitest": "5.0.1"
   },

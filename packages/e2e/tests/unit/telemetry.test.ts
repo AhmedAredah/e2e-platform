@@ -30,7 +30,7 @@ function tempDir(): string {
 function unwritableDir(): string {
   const blocker = path.join(tempDir(), 'blocker');
   writeFileSync(blocker, '');
-  return path.join(blocker, '@e2e-cpp/core');
+  return path.join(blocker, '@e2e-platform/core');
 }
 
 /** Takes write permission away from `dir` until the test ends. */
@@ -173,10 +173,10 @@ describe('telemetry store', () => {
   });
 
   it('resolves the config directory from XDG_CONFIG_HOME, the home directory, or APPDATA', () => {
-    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '/xdg' }, 'linux')).toBe(path.join('/xdg', 'e2e-cpp'));
-    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '  ' }, 'darwin')).toBe(path.join(os.homedir(), '.config', 'e2e-cpp'));
+    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '/xdg' }, 'linux')).toBe(path.join('/xdg', 'e2e-platform'));
+    expect(telemetryConfigDir({ XDG_CONFIG_HOME: '  ' }, 'darwin')).toBe(path.join(os.homedir(), '.config', 'e2e-platform'));
     expect(telemetryConfigDir({ APPDATA: 'C:\\Users\\me\\AppData\\Roaming' }, 'win32')).toBe(
-      path.join('C:\\Users\\me\\AppData\\Roaming', 'e2e-cpp'),
+      path.join('C:\\Users\\me\\AppData\\Roaming', 'e2e-platform'),
     );
   });
 });
@@ -210,10 +210,10 @@ describe('Telemetry', () => {
     telemetry.notice();
     telemetry.notice();
     expect(output).toHaveLength(1);
-    expect(output[0]).toContain('e2e-cpp collects anonymous usage telemetry');
-    expect(output[0]).toContain('e2e-cpp telemetry disable');
+    expect(output[0]).toContain('e2e-platform collects anonymous usage telemetry');
+    expect(output[0]).toContain('e2e-platform telemetry disable');
     expect(output[0]).toContain('E2E_TELEMETRY_DISABLED=1');
-    expect(output[0]).toContain('/telemetry');
+    expect(output[0]).toContain('npx --no-install e2e-platform guide setup');
     expect(TelemetryStore.open(configDir)!.wasNotified(NOTICE_VERSION)).toBe(true);
 
     telemetry.record(cliSessionEvent('run', ['--headed']));
@@ -233,7 +233,7 @@ describe('Telemetry', () => {
     expect(properties['distinct_id']).toBe(TelemetryStore.open(configDir)!.anonymousId);
     expect(properties['session_id']).toBe(telemetry.sessionId);
     expect(properties['project_id']).toMatch(/^[a-f0-9]{64}$/u);
-    expect(properties['$lib']).toBe('@e2e-cpp/core');
+    expect(properties['$lib']).toBe('@e2e-platform/core');
     expect(properties['$lib_version']).toBe('1.2.3');
     expect(properties['e2e_version']).toBe('1.2.3');
     expect(properties['$process_person_profile']).toBe(false);

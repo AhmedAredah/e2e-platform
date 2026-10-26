@@ -8,9 +8,9 @@
  * grammar has no verb for them yet.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
-import type { Agent, App, Screen } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
+import type { Agent, App, Screen } from '@e2e-platform/core';
 
 interface Scenario {
   readonly slug: string;

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:e2e-cpp:native-bridge:1",
+  "$id": "urn:e2e-platform:native-bridge:1",
   "title": "E2E native bridge protocol v1 canonical frames",
   "description": "Structural conformance only. Runtime enforces stateful request correlation, authentication, capability subsets, tree limits, secure pixel coverage and PNG consistency. JSON Schema counts Unicode code points; runtime text bounds count UTF-16 units.",
   "oneOf": [

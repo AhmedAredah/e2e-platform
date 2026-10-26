@@ -1,8 +1,10 @@
-import type { EngineHandle } from '@e2e-cpp/core/engine';
+import type { EngineHandle } from '@e2e-platform/core/engine';
 import { NativeEngine } from './engine/native-engine.ts';
+import { DesktopEngine, type DesktopOptions } from './engine/desktop-engine.ts';
 import type { NativeOptions } from './options.ts';
 
 export { NativeEngine } from './engine/native-engine.ts';
+export { DesktopEngine, type DesktopBackend, type DesktopOptions } from './engine/desktop-engine.ts';
 export type { NativeProcessLaunch } from './engine/native-process.ts';
 export { NativeDriver, type NativeInitialization, type NativeScreenshot } from './driver/native-driver.ts';
 export { RpcNativeDriver } from './driver/rpc-native-driver.ts';
@@ -15,3 +17,6 @@ export function native(options: NativeOptions = {}): EngineHandle { return new N
 
 /** Qt profile of the native protocol; the application must include the Qt helper. */
 export function qt(options: NativeOptions = {}): EngineHandle { return native({ ...options, platform: options.platform ?? 'qt' }); }
+
+/** Launch an owned OS accessibility driver for the declared application. */
+export function desktop(options: DesktopOptions): EngineHandle { return new DesktopEngine(options).handle(); }

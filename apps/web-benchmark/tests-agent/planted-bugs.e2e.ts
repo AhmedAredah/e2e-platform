@@ -5,8 +5,8 @@
  * its way and reports it counts too: the agent caught it either way.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 /** Whether the flow reported the product misbehaving, as an act verdict or a judgment. */
 async function caughtTheBug(flow: () => Promise<void>): Promise<boolean> {

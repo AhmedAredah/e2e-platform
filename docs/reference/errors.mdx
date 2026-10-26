@@ -31,10 +31,10 @@ export class AgentError extends Error {
 ```
 
 Test files load in their own module realm, so `instanceof AgentError` can be
-false. Use `isAgentError` from `@e2e-cpp/core` and branch on `code`:
+false. Use `isAgentError` from `@e2e-platform/core` and branch on `code`:
 
 ```ts
-import { isAgentError } from '@e2e-cpp/core';
+import { isAgentError } from '@e2e-platform/core';
 
 try {
   await agent.act('upgrade the workspace to Pro');
@@ -89,11 +89,11 @@ These appear in terminal output and in the report as plain string codes.
 | `INVALID_APP_URL` | Base URL with userinfo, a query, a fragment, a non-HTTP scheme, plain HTTP on a non-loopback host, port 0 on a host other than a literal loopback address (`127.0.0.1`, `[::1]`), a loopback address the run could not bind a free port on, or unparseable | configuration | 2 |
 | `INVALID_GLOB` | Empty pattern, a leading `!` exclusion, braces, character classes, extglobs, a backslash separator, an absolute path, a `..` segment, a trailing `/` or `.`, a pattern that names only the project root, or a `**` that is not a whole segment | configuration | 2 |
 | `UNKNOWN_TARGET` | `--target` named an ID that is not configured | configuration | 2 |
-| `TARGET_REQUIRED` | `e2e-cpp mcp`: the config declares several targets and neither `--target` nor `open_session` named one | configuration | 2 |
-| `NO_SESSION` | `e2e-cpp mcp`: `call`, `tools`, or `close_session` before `open_session` or after the session ended (the message names why), or naming a `session` id that is not the open one | configuration | 2 |
-| `SESSION_OPEN` | `e2e-cpp mcp`: `open_session` while a session is already open; use it or `close_session` first | configuration | 2 |
-| `UNKNOWN_TOPIC` | `e2e-cpp mcp`: an `e2e://guide/{topic}` resource named a topic the skill does not have; the message lists them | configuration | 2 |
-| `UNKNOWN_TOOL` | `e2e-cpp mcp`: `call` or `tools` named a tool the session's catalog does not have; the message lists the catalog | configuration | 2 |
+| `TARGET_REQUIRED` | `e2e-platform mcp`: the config declares several targets and neither `--target` nor `open_session` named one | configuration | 2 |
+| `NO_SESSION` | `e2e-platform mcp`: `call`, `tools`, or `close_session` before `open_session` or after the session ended (the message names why), or naming a `session` id that is not the open one | configuration | 2 |
+| `SESSION_OPEN` | `e2e-platform mcp`: `open_session` while a session is already open; use it or `close_session` first | configuration | 2 |
+| `UNKNOWN_TOPIC` | `e2e-platform mcp`: an `e2e://guide/{topic}` resource named a topic the skill does not have; the message lists them | configuration | 2 |
+| `UNKNOWN_TOOL` | `e2e-platform mcp`: `call` or `tools` named a tool the session's catalog does not have; the message lists the catalog | configuration | 2 |
 | `UNSUPPORTED_ARTIFACT` | A configured artifact kind (`screenshot`, `trace`, `video`) the target's engine cannot produce | configuration | 2 |
 | `ARTIFACT_PATH_INVALID` | A runner-managed artifact path escapes its attempt directory | test | 1 |
 | `UNSUPPORTED_CAPABILITY` | A fixture, action, or tier the target's engine does not declare: a contributed fixture it does not contribute, `screen` without `locate`, state restore without `state`, screenshots without `artifacts` | configuration | 2 |
@@ -120,7 +120,7 @@ These appear in terminal output and in the report as plain string codes.
 | `WORKER_PROTOCOL` | A worker reported a unit other than the one it was running, or started an attempt while another was still running | infrastructure | 3 |
 | `SESSION_KEY_INVALID` | A worker received a session key that is not 32 bytes. Packaging or IPC fault. | infrastructure | 3 |
 | `REPORT_WRITE_FAILED` | `report.json` or `ai-trace.json` could not be written. Recorded as a run error; the in-memory outcome is still complete. A `junit.xml` that could not be written is the `junit` reporter's stderr line instead | infrastructure | 3 |
-| `EVALUATE_FAILED` | `web.evaluate` threw inside the page (`@e2e-cpp/playwright`) | test | 1 |
+| `EVALUATE_FAILED` | `web.evaluate` threw inside the page (`@e2e-platform/playwright`) | test | 1 |
 | `INTERRUPTED` | A user or CI signal aborted the run | interrupted | 130 |
 
 Errors raised by argument validation in test code use `INVALID_ARGUMENT` and

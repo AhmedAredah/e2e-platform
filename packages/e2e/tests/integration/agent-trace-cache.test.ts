@@ -26,7 +26,7 @@ import type {
   StepExecutorContext,
 } from '../../src/agent/executor.ts';
 
-const SUITE = `import { test, expect } from '@e2e-cpp/core';
+const SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test('cached step increments twice', async ({ app, agent, screen }) => {
   await app.open();
@@ -220,7 +220,7 @@ describe('trace cache: divergence hands the step over mid-step', () => {
   });
 });
 
-const WRONG_EXPECT_SUITE = `import { test, expect } from '@e2e-cpp/core';
+const WRONG_EXPECT_SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test('cached step increments twice', async ({ app, agent, screen }) => {
   await app.open();
@@ -229,7 +229,7 @@ test('cached step increments twice', async ({ app, agent, screen }) => {
 });
 `;
 
-const WRONG_EXPECT_WITH_TEARDOWN_SUITE = `import { test, expect } from '@e2e-cpp/core';
+const WRONG_EXPECT_WITH_TEARDOWN_SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test.afterEach(async ({ app }) => {
   await app.open();
@@ -303,7 +303,7 @@ describe('trace cache: unconfirmed traces are withheld and poisoned entries evic
   }, 240_000);
 });
 
-const STORAGE_SUITE = `import { test, expect } from '@e2e-cpp/core';
+const STORAGE_SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test('saves the marker', async ({ app, agent, screen }) => {
   await app.open('/storage');
@@ -431,7 +431,7 @@ describe('trace cache: the recorded end state gates self-finalization', () => {
   }, 240_000);
 });
 
-const TRAILING_ACT_SUITE = `import { test } from '@e2e-cpp/core';
+const TRAILING_ACT_SUITE = `import { test } from '@e2e-platform/core';
 
 test('cached step increments twice', async ({ app, agent }) => {
   await app.open();
@@ -472,7 +472,7 @@ describe('trace cache: only a verification step confirms a write', () => {
   }, 120_000);
 });
 
-const TOOLS_ONLY_SUITE = `import { test } from '@e2e-cpp/core';
+const TOOLS_ONLY_SUITE = `import { test } from '@e2e-platform/core';
 
 test('tools-only step', async ({ agent }) => {
   await agent.act('do the work with your own tools');
@@ -681,7 +681,7 @@ describe('trace cache: modes that never write', () => {
   }, 120_000);
 });
 
-const PIN_SUITE = `import { test, expect } from '@e2e-cpp/core';
+const PIN_SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test('picks the red pin', async ({ app, agent, screen }) => {
   await app.open('/canvas');

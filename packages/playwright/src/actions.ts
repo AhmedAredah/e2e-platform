@@ -1,7 +1,7 @@
 /** Locator action dispatch for the Playwright engine. */
 
 import type { Page } from 'playwright';
-import { EngineError, type LocatorAction, type NodeRef, type PointerAction, type ViewportPoint } from '@e2e-cpp/core/engine';
+import { EngineError, type LocatorAction, type NodeRef, type PointerAction, type ViewportPoint } from '@e2e-platform/core/engine';
 import {
   asActionable,
   isClassified,

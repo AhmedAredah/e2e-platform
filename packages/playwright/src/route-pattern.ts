@@ -12,7 +12,7 @@ function escapeRegexpChar(ch: string): string {
 function testPattern(source: string, flags: string, input: string): boolean {
   return new RegExp(source, flags).test(input);
 }
-import type { TextPattern } from '@e2e-cpp/core/engine';
+import type { TextPattern } from '@e2e-platform/core/engine';
 
 /**
  * Compiles a string route pattern: `*` matches within one path segment, `**`

@@ -3,11 +3,11 @@
  * manually and inspect the verdicts — the interesting output is the report,
  * not the exit code:
  *
- *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.dogfood-edge.config.ts
+ *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-platform/core/dist/cli/bin.js run --config e2e.dogfood-edge.config.ts
  */
 
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 import { gateway } from 'ai';
 
 export default {

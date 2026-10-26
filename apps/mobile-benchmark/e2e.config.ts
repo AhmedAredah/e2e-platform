@@ -1,5 +1,5 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { agentDevice } from '@e2e-cpp/agent-device';
+import type { E2EConfig } from '@e2e-platform/core';
+import { agentDevice } from '@e2e-platform/agent-device';
 
 /**
  * Deterministic suite against the benchmark app on an iOS simulator and an

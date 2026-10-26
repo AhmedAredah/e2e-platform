@@ -4,18 +4,18 @@ description: Commands, flags, output formats, and exit codes.
 ---
 
 ```bash
-npx --no-install e2e-cpp init [directory]
-npx --no-install e2e-cpp login [provider]
-npx --no-install e2e-cpp logout [provider]
-npx --no-install e2e-cpp guide [topic]
-npx --no-install e2e-cpp mcp [options]
-npx --no-install e2e-cpp run [files...] [options]
-npx --no-install e2e-cpp explore [goal] [options]
-npx --no-install e2e-cpp list [files...] [options]
-npx --no-install e2e-cpp cache ls|clear|stats [--config <path>]
-npx --no-install e2e-cpp telemetry [status|enable|disable]
-npx --no-install e2e-cpp --help
-npx --no-install e2e-cpp --version
+npx --no-install e2e-platform init [directory]
+npx --no-install e2e-platform login [provider]
+npx --no-install e2e-platform logout [provider]
+npx --no-install e2e-platform guide [topic]
+npx --no-install e2e-platform mcp [options]
+npx --no-install e2e-platform run [files...] [options]
+npx --no-install e2e-platform explore [goal] [options]
+npx --no-install e2e-platform list [files...] [options]
+npx --no-install e2e-platform cache ls|clear|stats [--config <path>]
+npx --no-install e2e-platform telemetry [status|enable|disable]
+npx --no-install e2e-platform --help
+npx --no-install e2e-platform --version
 ```
 
 The CLI needs Node.js 22.22.3+ in the 22.x line, or 24.8.0+. Install this fork
@@ -26,35 +26,40 @@ not established. See [C++ applications](/cpp) for the kit workflow.
 
 | Flag | Behavior |
 | --- | --- |
-| `-h`, `--help` | Prints the help of the command it follows and exits 0. `e2e-cpp help run` is the same as `e2e-cpp run --help`. |
-| `-v`, `--version` | Prints the installed `@e2e-cpp/core` version and exits 0. |
+| `-h`, `--help` | Prints the help of the command it follows and exits 0. `e2e-platform help run` is the same as `e2e-platform run --help`. |
+| `-v`, `--version` | Prints the installed `@e2e-platform/core` version and exits 0. |
 
 ```console
-$ npx --no-install e2e-cpp --version
+$ npx --no-install e2e-platform --version
 0.1.0
 ```
 
 Output is colored on a terminal or in CI, plain when piped or when `NO_COLOR`
-is set. `FORCE_COLOR` keeps the colors. `@e2e-cpp/core` without a command prints the
+is set. `FORCE_COLOR` keeps the colors. `@e2e-platform/core` without a command prints the
 help on stderr and exits 2.
 
 ## e2e init
 
-Scaffolds a project and adds `@e2e-cpp/core` to `devDependencies`. Existing
+Scaffolds a project and adds `@e2e-platform/core` to `devDependencies`. Existing
 config and test files are skipped. With a `directory` argument the project is
 scaffolded there.
 
 For a new project, the wizard asks you to choose:
 
-- The engine. **Web** (Playwright, the default) adds `@e2e-cpp/playwright`.
-  **Mobile (iOS/Android)** adds `@e2e-cpp/agent-device`, defaults to iOS on
-  macOS and Android elsewhere, and opens Settings. **None** adds nothing.
+- The application driver. **CLI application** is the default and adds
+  `@e2e-platform/process`; the example runs Node's version command without a model.
+  **Qt desktop** and **Desktop accessibility** add `@e2e-platform/native` and
+  require an application and installed helper before running. Qt uses the
+  application-linked helper; Desktop chooses the host's accessibility sidecar.
+  **Web** adds `@e2e-platform/playwright`. **Mobile (iOS/Android)** adds
+  `@e2e-platform/agent-device`, defaults to iOS on macOS and Android elsewhere,
+  and opens Settings. **None** adds nothing.
 - A model provider or subscription for agent steps. Choose Vercel AI Gateway,
   OpenRouter, an OpenAI-compatible endpoint, ChatGPT, GitHub Copilot, or
   SuperGrok. Choose None for tests that only use locators. The wizard adds
   the required packages and model config. Subscription users then sign in
-  with `e2e-cpp login`. See [Models](/models) and [Subscriptions](/subscriptions).
-- Where to install the agent skill (see [e2e-cpp guide](#e2e-guide)):
+  with `e2e-platform login`. See [Models](/models) and [Subscriptions](/subscriptions).
+- Where to install the agent skill (see [e2e-platform guide](#e2e-guide)):
   `.agents/skills/` for Codex, Cursor, Copilot, Gemini CLI, OpenCode, and
   Zed, and `.claude/skills/` for Claude Code. Both are preselected.
 - Where to register the [MCP server](/reference/mcp): `.mcp.json` for
@@ -64,26 +69,38 @@ After confirming the file changes, choose whether to install the selected
 dependencies. The installer follows the project's `packageManager` field or
 lockfile, then the invoking package manager, then npm. This source candidate
 still writes version ranges for missing fork packages. Decline installation until
-each `@e2e-cpp/*` dependency points to an installed local tarball; init preserves
+each `@e2e-platform/*` dependency points to an installed local tarball; init preserves
 existing dependency entries. Pack optional workspace modules locally before use.
 
 | Argument or flag | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `[directory]` | path | the working directory | Where to scaffold; created when missing |
-| `-y`, `--yes` | boolean | `false` | Uses the Web engine and Vercel AI Gateway, installs the skill and MCP config in both locations, and skips dependency installation |
+| `-y`, `--yes` | boolean | `false` | Uses deterministic CLI tests without a model, installs the skill and MCP config in both locations, and skips dependency installation |
 
 | Creates | Content |
 | --- | --- |
-| `package.json` | Created as a private ESM package when missing; otherwise only missing dependencies and scripts are added. Sibling packages (`@e2e-cpp/playwright`, `@e2e-cpp/agent-device`, `@e2e-cpp/oauth`) get the caret range of the version released with the CLI, or that exact version when the CLI is a prerelease. A `test:e2e` script runs `e2e-cpp run` unless one exists |
+| `package.json` | Created as a private ESM package when missing; otherwise only missing dependencies and scripts are added. Sibling packages (`@e2e-platform/process`, `@e2e-platform/native`, `@e2e-platform/playwright`, `@e2e-platform/agent-device`, `@e2e-platform/oauth`) get the caret range of the version released with the CLI, or that exact version when the CLI is a prerelease. A `test:e2e` script runs `e2e-platform run` unless one exists |
 | `e2e.config.ts` | One target for the selected engine. Playwright reads `APP_URL` (default `http://localhost:3000`) and shows the `command` option in a comment. With a gateway, `agents.default` is `createAgent({ model, system })` |
-| `tests/example.e2e.ts` | An app-open test that passes against any page, plus a commented agent test. Device setup gets a Settings check instead |
+| `tests/example.e2e.ts` | The CLI default checks Node version output; replace the executable and assertion for your app. Desktop presets require real accessible controls and driver setup. Optional web/device presets supply their own examples |
 | `.gitignore` | Appends `node_modules/`, `.e2e/artifacts/`, `.e2e/cache/`, `.e2e/sessions/`, `.e2e/report.json`, `.e2e/ai-trace.json`, `.e2e/junit.xml`, `.e2e/summary.md`, `.e2e/failures/`, and `.e2e/logs/`. Committing the cache is opt-in; see [commit your traces](/cache#commit-your-traces) |
-| `.agents/skills/e2e/`, `.claude/skills/e2e/` | `SKILL.md` and one `references/<topic>.md` per `e2e-cpp guide` topic |
-| `.mcp.json`, `.cursor/mcp.json` | Registers `e2e-cpp mcp` without changing other servers |
+| `.agents/skills/e2e/`, `.claude/skills/e2e/` | `SKILL.md` and one `references/<topic>.md` per `e2e-platform guide` topic |
+| `.mcp.json`, `.cursor/mcp.json` | Registers `e2e-platform mcp` without changing other servers |
 
 ```bash
-npx --no-install e2e-cpp init --yes
+npx --no-install e2e-platform init --yes
 ```
+
+For the unpublished local kit, install the checksummed `core` and `process`
+tarballs into your project first. `init --yes` preserves these `file:` dependency
+entries, and its example runs with those modules alone. Do not replace local
+package entries with registry names until the fork is published. Desktop
+presets require `APP_PATH` and, for OS accessibility, `E2E_DRIVER`; edit the
+runtime prefix arguments and application arguments in the generated config.
+The helper README lists OS permissions and the tested control subset. A
+scaffold does not establish platform support.
+
+CLI help links to the bundled `e2e-platform guide` topics, so the fork does not
+assume an upstream documentation site describes its installed version.
 
 Re-running `init` keeps an existing config and adds no packages for it. Once
 a skill directory exists, later runs refresh copies that differ from the
@@ -96,31 +113,31 @@ without `--yes` exits 2 and names the flag.
 ## e2e login
 
 ```bash
-npx --no-install e2e-cpp login openai              # ChatGPT, browser sign-in
-npx --no-install e2e-cpp login openai --device     # sign in with a device code
-npx --no-install e2e-cpp login github-copilot --from-gh  # use your GitHub CLI login
-npx --no-install e2e-cpp login github-copilot --client-id <id> [--enterprise-url <host>]
-npx --no-install e2e-cpp login spacexai            # SuperGrok, device code
-npx --no-install e2e-cpp login                     # choose a provider
+npx --no-install e2e-platform login openai              # ChatGPT, browser sign-in
+npx --no-install e2e-platform login openai --device     # sign in with a device code
+npx --no-install e2e-platform login github-copilot --from-gh  # use your GitHub CLI login
+npx --no-install e2e-platform login github-copilot --client-id <id> [--enterprise-url <host>]
+npx --no-install e2e-platform login spacexai            # SuperGrok, device code
+npx --no-install e2e-platform login                     # choose a provider
 ```
 
 Signs in to a subscription and stores credentials in
-`~/.config/e2e-cpp/oauth.json`. Requires `@e2e-cpp/oauth` in the project; if it is
+`~/.config/e2e-platform/oauth.json`. Requires `@e2e-platform/oauth` in the project; if it is
 missing, the command exits 1 with an install command. An unknown provider
 exits 2. See [Subscriptions](/subscriptions) for model configuration.
 
 ## e2e logout
 
 ```bash
-npx --no-install e2e-cpp logout           # pick one of the stored logins
-npx --no-install e2e-cpp logout openai    # forget one
+npx --no-install e2e-platform logout           # pick one of the stored logins
+npx --no-install e2e-platform logout openai    # forget one
 ```
 
 ## e2e guide
 
 ```bash
-npx --no-install e2e-cpp guide            # the overview
-npx --no-install e2e-cpp guide setup      # one topic
+npx --no-install e2e-platform guide            # the overview
+npx --no-install e2e-platform guide setup      # one topic
 ```
 
 Prints the skill that `init` installs. `guide` alone prints the overview;
@@ -133,7 +150,7 @@ See [Coding agents](/coding-agents).
 ## e2e mcp
 
 ```bash
-npx --no-install e2e-cpp mcp [--config <path>] [--target <name>] [--headless]
+npx --no-install e2e-platform mcp [--config <path>] [--target <name>] [--headless]
 ```
 
 An MCP server on stdio that gives a coding agent a live session on the app.
@@ -144,7 +161,7 @@ Flags, tools, and session rules are on the [MCP server](/reference/mcp) page.
 ### Positional arguments
 
 ```bash
-e2e-cpp run [files...]
+e2e-platform run [files...]
 ```
 
 Test files, directories, or globs relative to the project root:
@@ -176,7 +193,7 @@ still fails the run.
 A positional starting with `-` that names no file is a usage error, exit 2.
 This is what `pnpm test:e2e -- --headed` produces: the `--` reaches e2e and
 `--headed` would otherwise be taken for a file. The message names the direct
-form, `pnpm exec e2e-cpp run --headed`.
+form, `pnpm exec e2e-platform run --headed`.
 
 When nothing is left to run, `NO_TESTS` names the cause: no file matched the
 globs (with look-alike files such as `tests/login.test.ts`), a positional
@@ -214,7 +231,7 @@ execution order with its per-phase split, model calls, tokens, and cost when
 the provider reported one.
 
 ```console
-$ npx --no-install e2e-cpp run --debug
+$ npx --no-install e2e-platform run --debug
 ...
 [e2e debug] phase timings (wall 14.2s)
   phase               count   total     avg     max
@@ -240,13 +257,13 @@ cache, `-` when it reports no split. The report records the same per step
 (`usage.modelCachedTokens`).
 
 ```bash
-npx --no-install e2e-cpp run
-npx --no-install e2e-cpp run tests/signup.e2e.ts --tag smoke
-npx --no-install e2e-cpp run tests/agent
-npx --no-install e2e-cpp run 'tests/**/*.smoke.e2e.ts'
-npx --no-install e2e-cpp run --target web,webkit --tag smoke,billing --tag-mode all
-npx --no-install e2e-cpp run --reporter json --workers 4 --retries 2
-npx --no-install e2e-cpp run --reporter list,junit
+npx --no-install e2e-platform run
+npx --no-install e2e-platform run tests/signup.e2e.ts --tag smoke
+npx --no-install e2e-platform run tests/agent
+npx --no-install e2e-platform run 'tests/**/*.smoke.e2e.ts'
+npx --no-install e2e-platform run --target web,webkit --tag smoke,billing --tag-mode all
+npx --no-install e2e-platform run --reporter json --workers 4 --retries 2
+npx --no-install e2e-platform run --reporter list,junit
 ```
 
 ### Output
@@ -254,9 +271,9 @@ npx --no-install e2e-cpp run --reporter list,junit
 | Reporter | Writes |
 | --- | --- |
 | `list` | Terminal progress, failures with code frames, and a run summary. On a TTY, live progress includes the current agent step, model turns, tool calls, and reasoning excerpts. Untrusted fields are capped at 8 KiB and stripped of control characters. |
-| `json` | The report document to stdout and nothing else there, so `e2e-cpp run --reporter json \| jq` works. Same document as `.e2e/report.json`, described by `schema/report-v1.schema.json` in the package. The shape changes only with the `schemaVersion` field (`report-1` today). Cannot be combined with `list`. |
+| `json` | The report document to stdout and nothing else there, so `e2e-platform run --reporter json \| jq` works. Same document as `.e2e/report.json`, described by `schema/report-v1.schema.json` in the package. The shape changes only with the `schemaVersion` field (`report-1` today). Cannot be combined with `list`. |
 | `junit` | `.e2e/junit.xml` beside the report. One `<testsuite>` per file, one `<testcase>` per test-target pair named `title > path [target]`. A test-class error is a `<failure>`, any other an `<error>`, a skip a `<skipped>` with its reason. Run-level errors form a `run` suite. |
-| `markdown` | `.e2e/summary.md` with counts, cost, errors, and failure details. Failed and flaky tests also get a page under `.e2e/failures/` with steps, model turns, and the screen at failure. Exploration runs show findings. [`@e2e-cpp/github`](/github) uses this summary for pull request comments. |
+| `markdown` | `.e2e/summary.md` with counts, cost, errors, and failure details. Failed and flaky tests also get a page under `.e2e/failures/` with steps, model turns, and the screen at failure. Exploration runs show findings. [`@e2e-platform/github`](/github) uses this summary for pull request comments. |
 
 Every run writes `.e2e/report.json` under the artifact parent whatever the
 reporters are. A `junit.xml` or `summary.md` that could not be written is a
@@ -288,7 +305,7 @@ cleanup budget.
 ## e2e explore
 
 ```bash
-e2e-cpp explore [goal]
+e2e-platform explore [goal]
 ```
 
 A run with no test file. The agent gets a goal, plans one exploration step
@@ -321,16 +338,16 @@ Exit codes: `0` when steps ran and no finding of kind `issue` was reported,
 on Ctrl-C.
 
 ```bash
-npx --no-install e2e-cpp explore
-npx --no-install e2e-cpp explore 'Explore the checkout flow like a first-time buyer and report anything off'
-npx --no-install e2e-cpp explore --target web --max-steps 4 --headed
-npx --no-install e2e-cpp explore 'Hunt for broken forms and dead links' --agent thorough --video
+npx --no-install e2e-platform explore
+npx --no-install e2e-platform explore 'Explore the checkout flow like a first-time buyer and report anything off'
+npx --no-install e2e-platform explore --target web --max-steps 4 --headed
+npx --no-install e2e-platform explore 'Hunt for broken forms and dead links' --agent thorough --video
 ```
 
 ## e2e list
 
 ```bash
-e2e-cpp list [files...]
+e2e-platform list [files...]
 ```
 
 A dry run. `list` selects tests exactly as `run` does, prints one line per
@@ -349,10 +366,10 @@ accepts `list` (the default) or `json`.
 Pairs a filter removed are not listed.
 
 ```bash
-npx --no-install e2e-cpp list
-npx --no-install e2e-cpp list tests/signup.e2e.ts
-npx --no-install e2e-cpp list --tag smoke --target web
-npx --no-install e2e-cpp list --reporter json
+npx --no-install e2e-platform list
+npx --no-install e2e-platform list tests/signup.e2e.ts
+npx --no-install e2e-platform list --tag smoke --target web
+npx --no-install e2e-platform list --reporter json
 ```
 
 ## e2e cache
@@ -363,15 +380,15 @@ default directory is `.e2e/cache/`.
 
 | Command | Prints |
 | --- | --- |
-| `e2e-cpp cache ls` | One row per entry: the test and target it was recorded for, the first 12 characters of its instruction digest, its age, and how many actions a replay would run (`(truncated)` when recording hit the action cap). Rows are grouped by test, then target, oldest first. |
-| `e2e-cpp cache stats` | The store directory, the number of readable entries, their total size, and the number of unreadable files when there are any. |
-| `e2e-cpp cache clear` | Deletes every cache file, then the directory when nothing else is left in it, and reports how many files went. |
+| `e2e-platform cache ls` | One row per entry: the test and target it was recorded for, the first 12 characters of its instruction digest, its age, and how many actions a replay would run (`(truncated)` when recording hit the action cap). Rows are grouped by test, then target, oldest first. |
+| `e2e-platform cache stats` | The store directory, the number of readable entries, their total size, and the number of unreadable files when there are any. |
+| `e2e-platform cache clear` | Deletes every cache file, then the directory when nothing else is left in it, and reports how many files went. |
 
 ```bash
-npx --no-install e2e-cpp cache ls
-npx --no-install e2e-cpp cache stats
-npx --no-install e2e-cpp cache clear
-npx --no-install e2e-cpp cache ls --config packages/web/e2e.config.ts
+npx --no-install e2e-platform cache ls
+npx --no-install e2e-platform cache stats
+npx --no-install e2e-platform cache clear
+npx --no-install e2e-platform cache ls --config packages/web/e2e.config.ts
 ```
 
 ```text
@@ -394,7 +411,7 @@ exit 2 and say so.
 ## e2e telemetry
 
 The fork CLI has no telemetry destination and sends no usage events.
-`e2e-cpp telemetry` reports this disabled status. The inherited `enable` and
+`e2e-platform telemetry` reports this disabled status. The inherited `enable` and
 `disable` commands save a compatibility preference without configuring a
 transport. Environment opt-out flags remain recognized, and debug mode does not
 activate collection. See [Telemetry](/telemetry).

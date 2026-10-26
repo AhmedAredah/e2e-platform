@@ -2,7 +2,8 @@
 
 The Widgets example imports a CSV, edits quantities/prices, applies tax,
 calculates asynchronously and exports JSON. The optional Quick example tests
-the same calculation through QML controls. Both contain the real native helper.
+the same calculation through QML controls, including a value-role currency
+ComboBox selected through real keyboard events. Both contain the real native helper.
 
 The Widgets example exports only a completed valid calculation for its current
 quantity, price, tax and currency. Editing those inputs invalidates the result;
@@ -19,7 +20,7 @@ From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm build:cpp
+pnpm build:native
 cmake -S examples/with-qt -B examples/with-qt/build -DCMAKE_BUILD_TYPE=Release
 cmake --build examples/with-qt/build --config Release
 ctest --test-dir examples/with-qt/build -C Release --output-on-failure
@@ -53,6 +54,7 @@ normal deterministic assertion must then fail:
 
 ```sh
 E2E_QT_BAD_CALCULATION=1 pnpm test
+E2E_QT_BAD_CALCULATION=1 pnpm test:quick
 ```
 
 The expected result is a test failure for `83.50` versus `82.50`, not a process
@@ -68,9 +70,12 @@ See [helper scope and limits](../../native/qt/README.md) and
 [the native protocol](../../packages/native/PROTOCOL.md).
 
 Native component checks were rerun for this MIT fork on October 24, 2026, with
-GCC 13.3, Qt 6.4.2 and the Linux offscreen platform: the calculator, bridge and
-surface suites passed. The built MIT runner passed all three Widgets tests and
-the Quick test. The planted wrong calculation exited 1 with `ASSERTION_FAILED`;
+GCC 13.3, Qt 6.4.2 and the Linux offscreen platform: a fresh build passed four
+CTest suites (91 Qt Test rows), including actual Quick ComboBox label/value/index,
+activation, invalid/ambiguous selection, disabled/hidden/stale controls, secure
+redaction and changed-model regressions. The built MIT runner passed all three
+Widgets tests and the Quick test with currency selection. The Quick planted
+wrong calculation exited 1 with `ASSERTION_FAILED`;
 every attempt completed cleanup. The runner verifier writes exact workflow results to
 `.e2e/cpp/verification.json` at the repository root and detailed example reports
 under `e2e/.e2e/`. Windows, macOS and real desktop sessions require separate

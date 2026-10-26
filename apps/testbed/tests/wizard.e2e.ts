@@ -1,4 +1,4 @@
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test.describe('workspace wizard', { serial: true, tags: ['wizard'] }, () => {
   let chosenPlan = '';

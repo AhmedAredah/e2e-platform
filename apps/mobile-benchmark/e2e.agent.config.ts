@@ -1,6 +1,6 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createAgent } from '@e2e-cpp/core/agent';
-import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createAgent } from '@e2e-platform/core/agent';
+import { agentDeviceTools } from '@e2e-platform/agent-device/tools';
 import { gateway } from 'ai';
 import base, { android, ios } from './e2e.config.ts';
 
@@ -8,7 +8,7 @@ import base, { android, ios } from './e2e.config.ts';
  * Agentic suite against the same app and account as the deterministic one.
  * Each step spends real model calls and real device time, so it runs by hand:
  *
- *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/mobile-benchmark test:agent
+ *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/mobile-benchmark test:agent
  *
  * `E2E_MODEL` overrides the pinned model so one suite dogfoods several
  * providers.

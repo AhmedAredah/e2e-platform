@@ -317,7 +317,7 @@ export interface Report1Document {
   run: {
     id: string;
     specVersion: '0.1';
-    runner: { name: '@e2e-cpp/core'; version: string };
+    runner: { name: '@e2e-platform/core'; version: string };
     status: BuildReportOptions['status'] | 'blocked';
     exitCode: BuildReportOptions['exitCode'];
     startedAt: string;
@@ -675,7 +675,7 @@ export function buildReport(options: BuildReportOptions): Report1Document {
       id: options.runId,
       specVersion: '0.1',
       runner: {
-        name: '@e2e-cpp/core',
+        name: '@e2e-platform/core',
         version: packageVersion(import.meta.url, '../../package.json', '0.0.0'),
       },
       status: deriveRunStatus(options.status, options.results, options.serialGroups, options.runErrors),

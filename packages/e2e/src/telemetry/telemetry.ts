@@ -9,7 +9,7 @@
  * constructs this class.
  *
  * Off means off at every step. `E2E_TELEMETRY_DISABLED`, `DO_NOT_TRACK`, an
- * `e2e-cpp telemetry disable`, or a preferences directory that cannot be written
+ * `e2e-platform telemetry disable`, or a preferences directory that cannot be written
  * each stop events from being queued, and `flush` reads the preferences file
  * again before sending, so a choice saved from another terminal while the
  * command ran wins too. `E2E_TELEMETRY_DEBUG` prints every event to stderr
@@ -24,7 +24,7 @@
 
 import { randomBytes } from 'node:crypto';
 import picocolors from 'picocolors';
-import { DOCS_URL } from '../cli/docs-url.ts';
+import { documentationCommand } from '../cli/docs-help.ts';
 import { isCiMode } from '../config/resolve.ts';
 import { envFlag } from '../internal/env.ts';
 import { timestamp } from '../internal/ids.ts';
@@ -44,7 +44,7 @@ export type TelemetryDisabledBy = 'E2E_TELEMETRY_DISABLED' | 'DO_NOT_TRACK' | 'u
 export interface TelemetryOptions {
   /** Internal injection only. The distributed CLI deliberately supplies none. */
   readonly destination?: TelemetryDestination;
-  /** The e2e-cpp version, sent with every event. */
+  /** The e2e-platform version, sent with every event. */
   readonly version: string;
   readonly env?: NodeJS.ProcessEnv;
   /** The project directory the command runs in; hashed into the project id, never sent. */
@@ -61,8 +61,8 @@ export interface TelemetryOptions {
 /** The one-time notice: what is collected, and the two ways out. */
 function noticeText(): string {
   return [
-    `${picocolors.bold('e2e-cpp collects anonymous usage telemetry')} to improve the framework: the command, the versions, the OS, and run counts. Never test names, app data, or credentials.`,
-    `Opt out with ${picocolors.cyan('e2e-cpp telemetry disable')} or ${picocolors.cyan('E2E_TELEMETRY_DISABLED=1')}. What is sent: ${picocolors.underline(`${DOCS_URL}/telemetry`)}`,
+    `${picocolors.bold('e2e-platform collects anonymous usage telemetry')} to improve the framework: the command, the versions, the OS, and run counts. Never test names, app data, or credentials.`,
+    `Opt out with ${picocolors.cyan('e2e-platform telemetry disable')} or ${picocolors.cyan('E2E_TELEMETRY_DISABLED=1')}. What is sent: ${picocolors.underline(documentationCommand('/telemetry'))}`,
     '',
     '',
   ].join('\n');
@@ -200,7 +200,7 @@ export class Telemetry {
         distinct_id: distinctId,
         project_id: project ?? null,
         session_id: this.sessionId,
-        $lib: '@e2e-cpp/core',
+        $lib: '@e2e-platform/core',
         $lib_version: this.version,
         // Anonymous events: PostHog keeps no person profile for the id.
         $process_person_profile: false,

@@ -14,7 +14,7 @@ const base = { name: 'deterministic', version: '1', spiVersion: 1, platform: 'de
 
 /** Runs a small real fixture against an in-process engine. */
 async function execute(engine: Engine, body: string, extra = {}) {
-  return runProject({ 'tests/native.e2e.ts': `import { test } from '@e2e-cpp/core'; test('native', async (fixtures) => { ${body} });` }, {
+  return runProject({ 'tests/native.e2e.ts': `import { test } from '@e2e-platform/core'; test('native', async (fixtures) => { ${body} });` }, {
     appUrl: '', config: { targets: [{ engine: defineEngine(engine), app: { appPath: '/bin/example', launchArguments: ['--test'] } }], artifacts: [], modelPolicy: 'forbid', ...extra },
   });
 }
@@ -42,7 +42,7 @@ describe('native runtime integration', () => {
   it('propagates CLI --no-model into file-configured workers', async () => {
     const project = createProject({
       'e2e.config.ts': `export default { targets: [{ platform: 'desktop' }], workers: 2, artifacts: [], modelPolicy: 'allow' };`,
-      'tests/policy.e2e.ts': `import { test } from '@e2e-cpp/core'; test('acquires deterministic agent', ({ agent }) => { void agent; });`,
+      'tests/policy.e2e.ts': `import { test } from '@e2e-platform/core'; test('acquires deterministic agent', ({ agent }) => { void agent; });`,
     });
     try {
       const cli = fileURLToPath(new URL('../../dist/cli/bin.js', import.meta.url));

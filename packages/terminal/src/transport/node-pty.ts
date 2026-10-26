@@ -1,4 +1,4 @@
-import { terminateProcessTree } from '@e2e-cpp/process';
+import { terminateProcessTree } from '@e2e-platform/process';
 import { boundedInteger, TerminalError, type TerminalCommand, type TerminalDimensions, type TerminalExit } from '../model/types.ts';
 import { TerminalTransport } from './base.ts';
 import type { IPty } from 'node-pty';

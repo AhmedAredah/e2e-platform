@@ -5,7 +5,7 @@
  */
 
 import type { Dialog as PwDialog } from 'playwright';
-import { EngineError } from '@e2e-cpp/core/engine';
+import { EngineError } from '@e2e-platform/core/engine';
 import { ErrorLatch, message } from './support.ts';
 
 /** A native dialog as a test's handler sees it. */

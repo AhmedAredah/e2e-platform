@@ -2,7 +2,7 @@
 
 import { chromium, type Browser, type ElementHandle, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { SemanticNode } from '@e2e-cpp/core/engine';
+import type { SemanticNode } from '@e2e-platform/core/engine';
 import { captureDocument } from '../../src/observation.ts';
 
 let browser: Browser;

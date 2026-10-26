@@ -38,10 +38,10 @@ describe('runScriptCommand', () => {
 
 describe('execCommand', () => {
   it('runs the installed binary with each manager', () => {
-    expect(execCommand('npm', 'e2e-cpp guide')).toBe('npm exec e2e-cpp guide');
-    expect(execCommand('pnpm', 'e2e-cpp guide')).toBe('pnpm exec e2e-cpp guide');
-    expect(execCommand('yarn', 'e2e-cpp guide')).toBe('yarn e2e-cpp guide');
-    expect(execCommand('bun', 'e2e-cpp guide')).toBe('bun run e2e-cpp guide');
+    expect(execCommand('npm', 'e2e-platform guide')).toBe('npm exec e2e-platform guide');
+    expect(execCommand('pnpm', 'e2e-platform guide')).toBe('pnpm exec e2e-platform guide');
+    expect(execCommand('yarn', 'e2e-platform guide')).toBe('yarn e2e-platform guide');
+    expect(execCommand('bun', 'e2e-platform guide')).toBe('bun run e2e-platform guide');
   });
 });
 

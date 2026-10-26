@@ -2,7 +2,7 @@
 
 This directory contains application-side helpers. TypeScript packages under
 `packages/` own the test runner integration, process lifetime, transports and
-validation. Keeping those responsibilities separate lets another C++ toolkit
+validation. Keeping those responsibilities separate lets another toolkit
 reuse the runner and protocol without acquiring a dependency on Qt.
 
 ## Existing class boundaries
@@ -10,7 +10,7 @@ reuse the runner and protocol without acquiring a dependency on Qt.
 | Layer | Abstract or extensible class | Current implementation |
 | --- | --- | --- |
 | Executable supervision | `ProcessRunner` | `LocalProcessRunner` |
-| Native runner integration | `NativeEngine`, protected factories | `native()` and `qt()` |
+| Native runner integration | `NativeEngine`, protected factories | `native()`, `qt()` and `desktop()` |
 | Native semantic surface | `NativeDriver` | `RpcNativeDriver` |
 | Native request transport | `NativeTransport` | `JsonRpcTcpTransport` |
 | Qt toolkit surface | C++ `ObjectAdapter` | `WidgetsAdapter`, `QuickAdapter` |
@@ -25,7 +25,7 @@ its assertion behavior. Another transport can extend `NativeTransport`, while
 an engine subclass overrides its protected factory to inject that transport.
 The public contracts and representative subclass tests live beside each package.
 
-## Add another C++ GUI toolkit
+## Add another GUI toolkit or platform
 
 Use `native/<toolkit>/` for a new application-side helper and
 `examples/with-<toolkit>/` for its smallest real demonstration application.
@@ -69,6 +69,18 @@ The helper has its own [MIT license](qt/LICENSE) and
 Keep future helper folders equally self-contained, with their own build
 configuration, public headers, internal modules, license information and tests.
 
-GTK/gtkmm, wxWidgets, JUCE, FLTK, Dear ImGui, OS accessibility backends, scene
-engines and embedded targets remain future integrations. Their status and the
-available routes are listed in [CPP_SUPPORT.md](../CPP_SUPPORT.md).
+## OS accessibility sidecars
+
+| Directory | Language | Boundary |
+| --- | --- | --- |
+| [linux-atspi](linux-atspi/README.md) | Python | AT-SPI provider, bounded protocol session and owned Linux application |
+| [windows-uia](windows-uia/README.md) | C# | UIA pattern adapters, bounded server and Job Object process ownership |
+| [macos-ax](macos-ax/README.md) | Rust | AX provider trait, system FFI, protocol and owned child process |
+
+Each sidecar implements the same authenticated application-control protocol and
+is installed separately. The TypeScript `DesktopEngine` supplies the sidecar
+command and application argv. No native-language implementation duplicates the
+runner's scheduler or reports. Read [DESKTOP.md](../DESKTOP.md) for prerequisites,
+capabilities and experimental status. Portable tests do not establish live OS
+behavior. Dedicated custom-control, scene-engine and embedded adapters remain
+future integrations; see [SUPPORT_MATRIX.md](../SUPPORT_MATRIX.md).

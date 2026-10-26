@@ -44,7 +44,7 @@ jobs:
           rustup toolchain install 1.99.1 --profile minimal
           rustup override set 1.99.1
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:cpp
+      - run: pnpm build:native
       - run: node --test scripts/languages/report.test.mjs scripts/languages/service.test.mjs
       - run: node scripts/languages/verify.mjs
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

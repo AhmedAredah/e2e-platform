@@ -1,4 +1,14 @@
-# @e2e-cpp/core
+# @e2e-platform/core
+
+## 0.2.0-rc.1
+
+### Minor Changes
+
+- Rename the unpublished fork to e2e-platform, add separately installed desktop accessibility sidecars with explicit capabilities and platform gates, complete Qt Quick ComboBox selection, and make CLI scaffolding usable with the local installation kit. Tests continue to use the shared TypeScript runner; OS drivers require their documented native platform qualification.
+
+### Patch Changes
+
+- 0258a4b: Stop repeated assertion and locator-wait observations at their deadline, preserving a known mismatch instead of issuing an expired backend request. Keep immediate initial observations and short negation grace windows, while propagating genuine backend failures unchanged.
 
 ## 0.2.0-rc.0
 

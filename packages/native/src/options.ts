@@ -1,4 +1,4 @@
-import { ConfigurationError, LOCATOR_ACTION_KINDS, type LocatorActionKind } from '@e2e-cpp/core/engine';
+import { ConfigurationError, LOCATOR_ACTION_KINDS, type LocatorActionKind } from '@e2e-platform/core/engine';
 import { isRecord } from './transport/json-rpc-tcp.ts';
 
 const DEFAULT_ACTIONS = ['tap', 'fill', 'clear', 'focus', 'press', 'check', 'uncheck', 'selectOption', 'hover'] as const;

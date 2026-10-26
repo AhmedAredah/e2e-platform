@@ -1,4 +1,4 @@
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test('hover reveals the card menu action', async ({ app, screen }) => {
   await app.open('/board');

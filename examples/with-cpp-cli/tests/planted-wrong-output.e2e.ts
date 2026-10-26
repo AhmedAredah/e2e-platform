@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { expect, test } from '@e2e-cpp/process/test';
-import { compareJson } from '@e2e-cpp/checks';
+import { expect, test } from '@e2e-platform/process/test';
+import { compareJson } from '@e2e-platform/checks';
 import { evidence, executable, exportedResult } from '../test-support.ts';
 
 test('rejects the planted wrong result even though the program exits successfully', async ({ processes }) => {

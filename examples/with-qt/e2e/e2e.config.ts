@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
-import type { E2EConfig } from '@e2e-cpp/core';
-import { qt } from '@e2e-cpp/native';
+import type { E2EConfig } from '@e2e-platform/core';
+import { qt } from '@e2e-platform/native';
 
 const executable = process.platform === 'win32' ? '../build/Release/e2e_qt_demo.exe' : '../build/e2e_qt_demo';
 

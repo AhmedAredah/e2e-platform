@@ -1,5 +1,5 @@
 {
-  "name": "@e2e-cpp/docs",
+  "name": "@e2e-platform/docs",
   "private": true,
   "description": "The e2e documentation site, built with Mintlify",
   "type": "module",
@@ -10,9 +10,9 @@
     "check:online": "mint validate && mint broken-links"
   },
   "devDependencies": {
-    "@e2e-cpp/agent-device": "workspace:*",
-    "@e2e-cpp/core": "workspace:*",
-    "@e2e-cpp/playwright": "workspace:*",
+    "@e2e-platform/agent-device": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
+    "@e2e-platform/playwright": "workspace:*",
     "@types/node": "26.4.1",
     "agent-device": "0.21.6",
     "ai": "7.0.97",

@@ -36,11 +36,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
-        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       - name: Build
         run: pnpm run build
       - name: Run test
-        run: pnpm --filter @e2e-cpp/web-benchmark run test
+        run: pnpm --filter @e2e-platform/web-benchmark run test
       # Preserve reports as workflow artifacts; no pull-request messages are sent.
       - name: Upload report
         if: ${{ !cancelled() }}
@@ -81,13 +81,13 @@ jobs:
           fi
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
-        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       - name: Build
         run: pnpm run build
       - name: Run test:agent
         env:
           AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
-        run: pnpm --filter @e2e-cpp/web-benchmark run test:agent
+        run: pnpm --filter @e2e-platform/web-benchmark run test:agent
       - name: Upload report
         if: ${{ !cancelled() }}
         continue-on-error: true

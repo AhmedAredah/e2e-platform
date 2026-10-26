@@ -419,7 +419,7 @@ export class ListReporter implements Reporter {
     const version = packageVersion(import.meta.url, '../../package.json', '0.0.0');
     this.print('');
     this.print(
-      `${pc.bold(pc.black(pc.bgCyan(' RUN ')))} ${pc.cyan(`e2e v${version}`)} ${pc.gray(event.projectRoot)}`,
+      `${pc.bold(pc.black(pc.bgCyan(' RUN ')))} ${pc.cyan(`e2e-platform v${version}`)} ${pc.gray(event.projectRoot)}`,
     );
     const details = [`run ${event.runId}`, `targets: ${event.targets.join(', ')}`];
     if (event.agents !== undefined) {

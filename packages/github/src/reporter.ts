@@ -1,5 +1,5 @@
 import { appendFile, readFile } from 'node:fs/promises';
-import { renderMarkdownReport, type FinishedRun, type MarkdownReportOptions, type Reporter, type ReporterSummary } from '@e2e-cpp/core';
+import { renderMarkdownReport, type FinishedRun, type MarkdownReportOptions, type Reporter, type ReporterSummary } from '@e2e-platform/core';
 import { detectActions, type ActionsContext, type ActionsDeps } from './actions.ts';
 import { upsertComment } from './post.ts';
 
@@ -11,7 +11,7 @@ export interface GitHubOptions {
    * project are the same, as in a matrix: `key: process.env.MATRIX_BROWSER`.
    * Without it, matrix replicas of one job share a comment and the last one
    * to finish wins. Never the run id: a rerun must find the old comment. The
-   * key is also the comment's name in its headline: `e2e-cpp chromium: 77 passed`.
+   * key is also the comment's name in its headline: `e2e-platform chromium: 77 passed`.
    */
   key?: string;
 }
@@ -26,7 +26,7 @@ export interface ReportDeps extends ActionsDeps {
  * The GitHub reporter. Add it to `reporters` beside the built-in ids:
  *
  * ```ts
- * import { github } from '@e2e-cpp/github';
+ * import { github } from '@e2e-platform/github';
  * export default { targets, reporters: ['list', github()] } satisfies E2EConfig;
  * ```
  *
@@ -77,7 +77,7 @@ function commentMarker(run: FinishedRun, context: ActionsContext, key: string | 
   const parts = Object.entries(fields).flatMap(([name, value]) =>
     value === undefined || value === '' ? [] : [`${name}=${markerField(value)}`],
   );
-  return `<!-- e2e-cpp-github ${parts.join(' ')} -->`;
+  return `<!-- e2e-platform-github ${parts.join(' ')} -->`;
 }
 
 function sourceUrl(context: ActionsContext): MarkdownReportOptions['sourceUrl'] {

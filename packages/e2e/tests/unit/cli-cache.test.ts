@@ -1,4 +1,4 @@
-/** `e2e-cpp cache ls`, `clear`, and `stats` over a real store directory. */
+/** `e2e-platform cache ls`, `clear`, and `stats` over a real store directory. */
 
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
@@ -53,7 +53,7 @@ async function seed(entries: readonly { keyHash: string; trace: ActionTrace }[])
 }
 
 async function invoke(...args: string[]): Promise<void> {
-  await main(['node', '@e2e-cpp/core', ...args, '--config', path.join(root, 'e2e.config.ts')]);
+  await main(['node', '@e2e-platform/core', ...args, '--config', path.join(root, 'e2e.config.ts')]);
 }
 
 beforeEach(() => {
@@ -73,7 +73,7 @@ afterEach(() => {
   process.exitCode = undefined;
 });
 
-describe('e2e-cpp cache ls', () => {
+describe('e2e-platform cache ls', () => {
   it('prints the provenance, age, and action count of every entry', async () => {
     await seed([
       {
@@ -115,7 +115,7 @@ describe('e2e-cpp cache ls', () => {
   });
 });
 
-describe('e2e-cpp cache stats', () => {
+describe('e2e-platform cache stats', () => {
   it('prints the directory, the entry count, and the size', async () => {
     await seed([
       { keyHash: 'a'.repeat(64), trace: trace(undefined, 1) },
@@ -135,7 +135,7 @@ describe('e2e-cpp cache stats', () => {
   });
 });
 
-describe('e2e-cpp cache clear', () => {
+describe('e2e-platform cache clear', () => {
   it('deletes the entries and the directory', async () => {
     await seed([
       { keyHash: 'a'.repeat(64), trace: trace(undefined, 1) },
@@ -172,7 +172,7 @@ describe('e2e-cpp cache clear', () => {
   });
 });
 
-describe('e2e-cpp cache configuration', () => {
+describe('e2e-platform cache configuration', () => {
   it('refuses a custom store it cannot enumerate', async () => {
     writeConfig(
       [

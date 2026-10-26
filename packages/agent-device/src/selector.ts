@@ -7,7 +7,7 @@
  */
 
 import { parseSelectorChain } from 'agent-device/selectors';
-import { EngineError } from '@e2e-cpp/core/engine';
+import { EngineError } from '@e2e-platform/core/engine';
 import { normalizeKind, type ProjectedNode } from './nodes.ts';
 import { message } from './errors.ts';
 

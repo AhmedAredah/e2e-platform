@@ -1,14 +1,14 @@
 /**
- * The suite's `test`: the one `@e2e-cpp/agent-device` exports, typed with the
- * engine's contributed `device` fixture. `expect` is `@e2e-cpp/core`'s.
+ * The suite's `test`: the one `@e2e-platform/agent-device` exports, typed with the
+ * engine's contributed `device` fixture. `expect` is `@e2e-platform/core`'s.
  */
 
-import type { Device } from '@e2e-cpp/agent-device';
-import type { Screen } from '@e2e-cpp/core';
-import { expect } from '@e2e-cpp/core';
+import type { Device } from '@e2e-platform/agent-device';
+import type { Screen } from '@e2e-platform/core';
+import { expect } from '@e2e-platform/core';
 
-export { test } from '@e2e-cpp/agent-device';
-export { expect } from '@e2e-cpp/core';
+export { test } from '@e2e-platform/agent-device';
+export { expect } from '@e2e-platform/core';
 
 /**
  * Every attempt opens the app on its home list, where each scenario is a row

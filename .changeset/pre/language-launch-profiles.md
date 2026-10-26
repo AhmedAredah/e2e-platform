@@ -1,5 +1,5 @@
 ---
-'@e2e-cpp/process': minor
+'@e2e-platform/process': minor
 ---
 
 Add extensible, immutable launch profiles for explicit Python interpreters,

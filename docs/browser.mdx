@@ -5,11 +5,11 @@ description: Mock an API, handle a dialog, download a file, reach into an iframe
 
 Use `screen`, `app`, and `expect` for navigation, interactions, and checks.
 For browser-specific operations such as request mocking, dialogs, and
-downloads, use `web`. Import `test` from `@e2e-cpp/playwright` to access it:
+downloads, use `web`. Import `test` from `@e2e-platform/playwright` to access it:
 
 ```ts
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('the dashboard loads', async ({ app, screen, web }) => {
   await app.open('/dashboard');
@@ -120,8 +120,8 @@ The browser and the initial viewport are options of the engine. Two browsers
 on one app are two targets:
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 const app = { url: 'http://localhost:3000' };
 

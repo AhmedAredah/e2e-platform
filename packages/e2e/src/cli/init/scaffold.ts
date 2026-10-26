@@ -3,7 +3,7 @@ import { getEnginePreset, type EngineId } from './engines.ts';
 import { dependencyRange } from './versions.ts';
 import { getGatewayPreset, type GatewayId } from './gateways.ts';
 
-const AGENT_IMPORT = "import { createAgent } from '@e2e-cpp/core/agent';";
+const AGENT_IMPORT = "import { createAgent } from '@e2e-platform/core/agent';";
 
 /** The model choice `init` writes: which gateway, and for an OpenAI-compatible one, where. */
 export interface ScaffoldModel {
@@ -33,19 +33,19 @@ export function createScaffold(engineId: EngineId, model: ScaffoldModel | undefi
   const engine = getEnginePreset(engineId);
   const gateway = model === undefined ? undefined : getGatewayPreset(model.gateway);
   const imports = [
-    "import type { E2EConfig } from '@e2e-cpp/core';",
+    "import type { E2EConfig } from '@e2e-platform/core';",
     ...(gateway === undefined ? [] : [AGENT_IMPORT]),
     ...engine.imports,
     ...(gateway === undefined ? [] : [gateway.import]),
   ];
   const configFields = [
     ...(model === undefined ? [] : [agentConfig(model)]),
-    engine.config,
+    model === undefined || engineId !== 'cli' ? engine.config : engine.config.replace("  modelPolicy: 'forbid',\n", ''),
   ];
 
   return {
     dependencies: {
-      '@e2e-cpp/core': dependencyRange(packageVersion(import.meta.url, '../../../package.json', '0.0.0')),
+      '@e2e-platform/core': dependencyRange(packageVersion(import.meta.url, '../../../package.json', '0.0.0')),
       ...engine.dependencies,
       ...(gateway === undefined ? {} : { ai: '^7.0.0', ...gateway.dependencies }),
     },

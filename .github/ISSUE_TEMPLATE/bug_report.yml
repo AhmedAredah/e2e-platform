@@ -25,8 +25,8 @@ body:
     id: versions
     attributes:
       label: Versions
-      description: Output of `npx --no-install e2e-cpp --version`, plus the engine package version and Node version.
-      placeholder: "e2e-cpp 0.1.0, @e2e-cpp/native 0.1.0, node 24.22.1"
+      description: Output of `npx --no-install e2e-platform --version`, plus the engine package version and Node version.
+      placeholder: "e2e-platform 0.1.0, @e2e-platform/native 0.1.0, node 24.22.1"
     validations:
       required: true
   - type: dropdown
@@ -34,12 +34,12 @@ body:
     attributes:
       label: Engine
       options:
-        - "@e2e-cpp/native (Qt)"
-        - "@e2e-cpp/process"
-        - "@e2e-cpp/terminal"
-        - "@e2e-cpp/protocol"
-        - "@e2e-cpp/playwright"
-        - "@e2e-cpp/agent-device"
+        - "@e2e-platform/native (Qt)"
+        - "@e2e-platform/process"
+        - "@e2e-platform/terminal"
+        - "@e2e-platform/protocol"
+        - "@e2e-platform/playwright"
+        - "@e2e-platform/agent-device"
         - custom engine
         - not engine specific
     validations:

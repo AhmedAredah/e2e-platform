@@ -4,7 +4,7 @@
  * The signal is not an `E2EError`: a skip is a verdict, not a failure, and it
  * must never be classified, retried, or reported as one. The attempt runner
  * recognizes it by brand, not by class, because a test module loads in its
- * own realm and may resolve `@e2e-cpp/core` to another copy of this package (the built
+ * own realm and may resolve `@e2e-platform/core` to another copy of this package (the built
  * `dist` next to a runner on `src`, or a nested install).
  */
 

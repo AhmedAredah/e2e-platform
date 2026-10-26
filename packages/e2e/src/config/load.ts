@@ -79,7 +79,7 @@ export function missingConfigError(cwd: string): ConfigurationError {
   const searched = `no ${CONFIG_NAMES.join(' or ')} found in ${root} or its parent directories`;
   const remedy =
     lookalike === undefined
-      ? 'run e2e-cpp init to create one, or pass --config <path>'
+      ? 'run e2e-platform init to create one, or pass --config <path>'
       : `found ${lookalike}, but only ${CONFIG_NAMES.join(' and ')} are loaded: rename it and keep it an ES module`;
   return new ConfigurationError('CONFIG_NOT_FOUND', `${searched}; ${remedy}`);
 }
@@ -140,7 +140,7 @@ function registerLoader(): NamespacedUnregister {
     // tests run from source (tsc rewrites import specifiers, not URLs).
     nodeModule.register(import.meta.url.replace(/load(\.[jt]s)$/, 'esm-hooks$1'));
   }
-  return register({ namespace: '@e2e-cpp/core' });
+  return register({ namespace: '@e2e-platform/core' });
 }
 
 /**

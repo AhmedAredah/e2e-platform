@@ -1,5 +1,5 @@
 /**
- * `e2e-cpp mcp` over a pipe whose reader falls behind. The server's stdout is a
+ * `e2e-platform mcp` over a pipe whose reader falls behind. The server's stdout is a
  * non-blocking pipe once Node has set `process.stdout` up, so a protocol
  * stream that wrote the descriptor directly died with EAGAIN as soon as
  * responses outgrew the pipe buffer (a screenshot, a guide resource). The
@@ -16,8 +16,8 @@ import { createProject, type FixtureProject } from '../helpers/run-project.ts';
 const PACKAGE_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CLI = path.join(PACKAGE_ROOT, 'dist', 'cli', 'bin.js');
 
-const CONFIG = `import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+const CONFIG = `import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [{ name: 'web', platform: 'web', engine: playwright({ url: 'http://127.0.0.1:1' }) }],
@@ -27,7 +27,7 @@ export default {
 /** Well past any pipe buffer: each guide read answers with tens of kilobytes. */
 const READS = 40;
 
-describe('e2e-cpp mcp stdout backpressure', { timeout: 60_000 }, () => {
+describe('e2e-platform mcp stdout backpressure', { timeout: 60_000 }, () => {
   let project: FixtureProject;
   let server: ChildProcessWithoutNullStreams;
 

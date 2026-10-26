@@ -1,4 +1,4 @@
-import type { EngineSnapshot, LocatorAction, LocatorActionKind, NodeRef, ObservationPixels } from '@e2e-cpp/core/engine';
+import type { EngineSnapshot, LocatorAction, LocatorActionKind, NodeRef, ObservationPixels } from '@e2e-platform/core/engine';
 import type { RequestContext } from '../transport/native-transport.ts';
 
 export interface NativeInitialization {

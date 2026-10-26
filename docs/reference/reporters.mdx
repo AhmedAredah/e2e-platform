@@ -8,8 +8,8 @@ Add reporter objects to `reporters` in `e2e.config.ts`, alongside the
 and `onRunFinished` to process the final report and artifacts.
 
 ```ts
-import type { E2EConfig, Reporter } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig, Reporter } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 const upload: Reporter = {
   name: 'upload',
@@ -60,7 +60,7 @@ naming the file. `markdown` does the same with `summary.md` through
 `renderMarkdownReport(report, options)`, also exported, so your own reporter
 can post the same page elsewhere; `failurePages` links each block to a page
 by result id. The built-in reporter also writes one page per failed or flaky
-test under `failures/`, with the screen at failure inline. [`@e2e-cpp/github`](/github) is that
+test under `failures/`, with the screen at failure inline. [`@e2e-platform/github`](/github) is that
 reporter for GitHub Actions.
 
 JUnit adds a `lifecycle` suite for each failed attempt cleanup and for a failed
@@ -118,7 +118,7 @@ An `end` phase also includes the step's redacted `error` and `explanation`
 when present. Preserve its `status`, including `blocked` and `cancelled`,
 instead of treating every non-passed step as a product failure.
 
-`explore` appears only in an `e2e-cpp explore` run: `started`, `planning`,
+`explore` appears only in an `e2e-platform explore` run: `started`, `planning`,
 `step-started`, `step-finished`, `finding`, and `finished`. The record of all
 of it is `run.explore` in the report.
 

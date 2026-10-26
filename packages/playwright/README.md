@@ -1,25 +1,25 @@
-# @e2e-cpp/playwright
+# @e2e-platform/playwright
 
 > Fork installation: these package names are local release identities. Use the
-> checksummed kit in [INSTALL_CPP.md](../../INSTALL_CPP.md), or pack the needed
+> checksummed kit in [INSTALL.md](../../INSTALL.md), or pack the needed
 > workspace module locally. Registry availability is not established.
 
-The browser engine for [`@e2e-cpp/core`](https://www.npmjs.com/package/e2e), built on
+The browser engine for [`@e2e-platform/core`](https://www.npmjs.com/package/e2e), built on
 [Playwright](https://playwright.dev).
 
-`@e2e-cpp/core` ships no engine of its own: every target names the engine that drives
+`@e2e-platform/core` ships no engine of its own: every target names the engine that drives
 it, and this package is the one for browsers. It implements the public
-`@e2e-cpp/core/engine` contract, so a device or desktop engine plugs into the same
+`@e2e-platform/core/engine` contract, so a device or desktop engine plugs into the same
 seam with no privilege either way.
 
 ## Install
 
 After building the source repository, pack this optional module with
-`pnpm --filter @e2e-cpp/playwright pack --pack-destination /absolute/path/to/tarballs`.
+`pnpm --filter @e2e-platform/playwright pack --pack-destination /absolute/path/to/tarballs`.
 Replace the paths below with your local tarballs; the core comes from the release kit.
 
 ```bash
-npm install --save-dev /path/to/e2e-cpp-core-0.1.0.tgz /path/to/e2e-cpp-playwright-0.1.0.tgz playwright@1.63.0
+npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.1.tgz /path/to/e2e-platform-playwright-0.2.0-rc.1.tgz playwright@1.63.0
 ```
 
 Bring your own Playwright: `playwright` is a peer dependency (`>=1.63.0 <2`),
@@ -29,8 +29,8 @@ outside the range may be rejected by your package manager as an unmet peer
 (npm's `ERESOLVE`), so upgrade `playwright` within the range.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [{ name: 'web', engine: playwright({ url: 'http://localhost:3000' }) }],
@@ -86,7 +86,7 @@ for the lifecycle and ownership contract.
 The engine contributes `web`: navigation, routes, cookies, dialogs, frames,
 downloads, keyboard and mouse, plus `expect(web).toHaveURL()` and
 `toHaveTitle()` and `toHaveClass()`. Import `test` from this package to have it
-typed; it is the same runtime `test` as `@e2e-cpp/core`'s.
+typed; it is the same runtime `test` as `@e2e-platform/core`'s.
 
 Route and dialog callbacks belong to the attempt that started them. Before the
 verdict and after context cleanup, the runner waits for callbacks already in
@@ -98,8 +98,8 @@ forcibly interrupted; a handler that does not finish fails settlement with
 `CLEANUP_TIMEOUT`, while browser cleanup still runs.
 
 ```ts
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('signs in', async ({ app, screen, web }) => {
   await app.open('/login');

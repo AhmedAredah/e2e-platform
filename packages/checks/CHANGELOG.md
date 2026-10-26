@@ -1,4 +1,10 @@
-# @e2e-cpp/checks
+# @e2e-platform/checks
+
+## 0.2.0-rc.1
+
+### Minor Changes
+
+- Rename the unpublished fork to e2e-platform, add separately installed desktop accessibility sidecars with explicit capabilities and platform gates, complete Qt Quick ComboBox selection, and make CLI scaffolding usable with the local installation kit. Tests continue to use the shared TypeScript runner; OS drivers require their documented native platform qualification.
 
 ## 0.2.0-rc.0
 

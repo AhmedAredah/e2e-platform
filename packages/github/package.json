@@ -1,9 +1,9 @@
 {
-  "name": "@e2e-cpp/github",
-  "version": "0.2.0-rc.0",
+  "name": "@e2e-platform/github",
+  "version": "0.2.0-rc.1",
   "description": "GitHub reporter for e2e: one pull request comment per run, from GitHub Actions",
   "keywords": [
-    "@e2e-cpp/core",
+    "@e2e-platform/core",
     "testing",
     "agentic",
     "end-to-end",
@@ -43,10 +43,10 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
+    "@e2e-platform/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "devDependencies": {
-    "@e2e-cpp/core": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
     "@types/node": "26.4.1",
     "typescript": "7.0.2",
     "vitest": "5.0.0"

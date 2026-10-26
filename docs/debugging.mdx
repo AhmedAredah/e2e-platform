@@ -77,6 +77,11 @@ jq '.run.results[] | select(.status != "passed") | .attempts[-1]
     | {status, error, failure, steps: [.steps[] | select(.status != "passed") | {api, label, source, status, error}], artifacts}' .e2e/report.json
 ```
 
+Each result's `source` points to the test declaration, while an attempt's error
+source points to the failing call. Source paths are relative to the project root
+and preserve spaces and punctuation in consumer directories; they should resolve
+to the actual file when joined with that root.
+
 Check `run.errors` for run-level failures, then the last attempt of each
 failed result:
 
@@ -117,8 +122,8 @@ artifact with `TRACE_WITHHELD` and leaves the file untouched. See the
 ## Watch it happen
 
 ```bash
-npx --no-install e2e-cpp run --headed          # a visible browser
-npx --no-install e2e-cpp run --video           # requires an engine that records video
+npx --no-install e2e-platform run --headed          # a visible browser
+npx --no-install e2e-platform run --video           # requires an engine that records video
 ```
 
 `--video` requires recording support from every selected engine. Unsupported
@@ -151,9 +156,9 @@ report; use `expect` or an artifact for anything a later reader needs.
 Use these flags to inspect agent behavior:
 
 ```bash
-npx --no-install e2e-cpp run --debug     # timings and a step table on stderr
-npx --no-install e2e-cpp run --ai-trace  # every model call, for a trace viewer
-npx --no-install e2e-cpp run --no-cache  # run the agent live instead of replaying
+npx --no-install e2e-platform run --debug     # timings and a step table on stderr
+npx --no-install e2e-platform run --ai-trace  # every model call, for a trace viewer
+npx --no-install e2e-platform run --no-cache  # run the agent live instead of replaying
 ```
 
 `--debug` appends two tables after the reporter's output: phase timings for
@@ -206,7 +211,7 @@ Every code, its class, and its exit code are in the
 
 <CardGroup cols={2}>
   <Card title="CLI reference" icon="terminal" href="/reference/cli#e2e-run">
-    Every flag of `e2e-cpp run`.
+    Every flag of `e2e-platform run`.
   </Card>
   <Card title="Errors" icon="triangle-exclamation" href="/reference/errors">
     Every error code.

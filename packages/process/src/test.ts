@@ -1,7 +1,7 @@
-import { test as base } from '@e2e-cpp/core';
+import { test as base } from '@e2e-platform/core';
 import { ProcessWorkspace, type ProcessFixture } from './fixtures/workspace.ts';
 
-export { expect } from '@e2e-cpp/core';
+export { expect } from '@e2e-platform/core';
 
 export type { ProcessFixture } from './fixtures/workspace.ts';
 

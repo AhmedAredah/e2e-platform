@@ -1,0 +1,65 @@
+name: desktop-contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main, mit-cpp]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+
+jobs:
+  linux-atspi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install accessibility and display prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 at-spi2-core dbus-x11 xvfb xauth
+      - uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - name: Shared runner and Python protocol interoperability
+        env:
+          E2E_TEST_PYTHON: /usr/bin/python3
+        run: pnpm --filter @e2e-platform/native test
+      - run: python3 -m unittest discover -s native/linux-atspi/tests -v
+      - name: Real GTK accessible controls
+        run: dbus-run-session -- xvfb-run -a /usr/bin/python3 native/linux-atspi/tests/live_smoke.py
+
+  windows-uia:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.402'
+      - run: dotnet run --project native/windows-uia/tests/ProtocolTests/E2E.Platform.Desktop.Protocol.Tests.csproj -c Release
+      - run: dotnet build native/windows-uia/src/Driver/E2E.Platform.WindowsUia.csproj -c Release
+      - run: dotnet build examples/with-desktop/dotnet/AccessibleDemo.csproj -c Release
+
+  rust-ax:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Select compiler
+        run: rustup toolchain install 1.99.1 --profile minimal
+      - run: cargo +1.99.1 test --locked --manifest-path native/macos-ax/Cargo.toml
+      - if: runner.os == 'macOS'
+        run: cargo +1.99.1 build --locked --manifest-path examples/with-desktop/rust/Cargo.toml

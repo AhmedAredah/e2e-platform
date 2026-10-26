@@ -1,7 +1,7 @@
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Browser, ElementHandle, Page } from 'playwright';
-import { EngineError, TestError, type OperationContext } from '@e2e-cpp/core/engine';
+import { EngineError, TestError, type OperationContext } from '@e2e-platform/core/engine';
 import { captureDocument, ROOT_NODE_ID } from '../../src/observation.ts';
 import { PlaywrightSurface } from '../../src/surface.ts';
 import { BrowserConnection } from '../../src/browser-connection.ts';

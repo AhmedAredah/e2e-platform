@@ -1,9 +1,9 @@
 {
-  "name": "@e2e-cpp/oauth",
-  "version": "0.2.0-rc.0",
+  "name": "@e2e-platform/oauth",
+  "version": "0.2.0-rc.1",
   "description": "Sign in to a personal ChatGPT, GitHub Copilot, or SuperGrok subscription and use it as an AI SDK model",
   "keywords": [
-    "@e2e-cpp/core",
+    "@e2e-platform/core",
     "ai-sdk",
     "oauth",
     "chatgpt",
@@ -25,7 +25,7 @@
   },
   "type": "module",
   "bin": {
-    "e2e-cpp-oauth": "./dist/bin.js"
+    "e2e-platform-oauth": "./dist/bin.js"
   },
   "exports": {
     ".": {

@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('title with  bell, [31mANSI[0m, and a tab\tinside', async ({ app }) => {
   await app.open();

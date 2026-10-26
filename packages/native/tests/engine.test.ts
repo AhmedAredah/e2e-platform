@@ -3,12 +3,12 @@ import { closeSync, fstatSync, openSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { type E2EConfig, type StepExecutor } from '@e2e-cpp/core';
-import { run } from '@e2e-cpp/core/runner';
+import { type E2EConfig, type StepExecutor } from '@e2e-platform/core';
+import { run } from '@e2e-platform/core/runner';
 import type { RequestContext } from '../src/index.ts';
 import { NativeEngine, NativeTransport, RpcNativeDriver, native } from '../src/index.ts';
 import { describe, expect, it, vi } from 'vitest';
-import type { OperationContext } from '@e2e-cpp/core/engine';
+import type { OperationContext } from '@e2e-platform/core/engine';
 
 const helper = fileURLToPath(new URL('./fixtures/mock-helper.mjs', import.meta.url));
 
@@ -28,7 +28,7 @@ test('native scenario', async ({ app, screen }) => { ${body} });\n`);
   } finally { await rm(cwd, { recursive: true, force: true }); }
 }
 
-describe('native engine through the real e2e-cpp runner', () => {
+describe('native engine through the real e2e-platform runner', () => {
   it('keeps the existing application alive when restart is already aborted', async () => {
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'e2e-native-preabort-'));
     const engine = new NativeEngine({ screenshots: false });

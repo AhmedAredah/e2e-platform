@@ -29,16 +29,16 @@ describe('explainModuleError', () => {
   });
 
   it('tells a declared-but-uninstalled package apart from a missing one, naming the manager', () => {
-    const cause = nodeError('ERR_MODULE_NOT_FOUND', `Cannot find package '@e2e-cpp/core' imported from ${importer}`);
-    writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ devDependencies: { '@e2e-cpp/core': '^0.5.0' } }));
+    const cause = nodeError('ERR_MODULE_NOT_FOUND', `Cannot find package '@e2e-platform/core' imported from ${importer}`);
+    writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ devDependencies: { '@e2e-platform/core': '^0.5.0' } }));
     writeFileSync(path.join(dir, 'pnpm-lock.yaml'), '');
     expect(explainModuleError(cause, importer)).toBe(
-      `Cannot find package '@e2e-cpp/core' imported from ${importer}; @e2e-cpp/core is declared in ${path.join(dir, 'package.json')} but is not installed: run pnpm install`,
+      `Cannot find package '@e2e-platform/core' imported from ${importer}; @e2e-platform/core is declared in ${path.join(dir, 'package.json')} but is not installed: run pnpm install`,
     );
 
     writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ packageManager: 'bun@1.0.0' }));
-    const subpath = nodeError('ERR_MODULE_NOT_FOUND', `Cannot find package '@e2e-cpp/playwright/extra' imported from ${importer}`);
-    expect(explainModuleError(subpath, importer)).toContain('; add it to the project: bun add -d @e2e-cpp/playwright');
+    const subpath = nodeError('ERR_MODULE_NOT_FOUND', `Cannot find package '@e2e-platform/playwright/extra' imported from ${importer}`);
+    expect(explainModuleError(subpath, importer)).toContain('; add it to the project: bun add -d @e2e-platform/playwright');
   });
 
   it('leaves relative and absolute module paths to the loader message', () => {
@@ -47,31 +47,31 @@ describe('explainModuleError', () => {
   });
 
   it('lists the subpaths a package exports and suggests the closest one', () => {
-    const manifestDir = path.join(dir, 'node_modules', '@e2e-cpp/core');
+    const manifestDir = path.join(dir, 'node_modules', '@e2e-platform/core');
     mkdirSync(manifestDir, { recursive: true });
     const manifestPath = path.join(manifestDir, 'package.json');
     writeFileSync(
       manifestPath,
-      JSON.stringify({ name: '@e2e-cpp/core', exports: { '.': './dist/index.js', './agent': './dist/agent.js', './engine': './dist/engine.js' } }),
+      JSON.stringify({ name: '@e2e-platform/core', exports: { '.': './dist/index.js', './agent': './dist/agent.js', './engine': './dist/engine.js' } }),
     );
     const cause = nodeError(
       'ERR_PACKAGE_PATH_NOT_EXPORTED',
       `Package subpath './agnet' is not defined by "exports" in ${manifestPath} imported from ${importer}`,
     );
     expect(explainModuleError(cause, importer)).toBe(
-      `${cause.message}; @e2e-cpp/core exports @e2e-cpp/core, @e2e-cpp/core/agent, @e2e-cpp/core/engine; did you mean "@e2e-cpp/core/agent"?`,
+      `${cause.message}; @e2e-platform/core exports @e2e-platform/core, @e2e-platform/core/agent, @e2e-platform/core/engine; did you mean "@e2e-platform/core/agent"?`,
     );
   });
 
   it('explains removed, misspelled, and type-only exports of e2e', () => {
     const missing = (name: string) =>
-      new SyntaxError(`The requested module '@e2e-cpp/core' does not provide an export named '${name}'`);
+      new SyntaxError(`The requested module '@e2e-platform/core' does not provide an export named '${name}'`);
     expect(explainModuleError(missing('defineConfig'), importer)).toContain(
       'defineConfig was removed in e2e 0.5: default-export the object and end it with satisfies E2EConfig',
     );
     expect(explainModuleError(missing('expct'), importer)).toContain('did you mean "expect"?');
     expect(explainModuleError(missing('E2EConfig'), importer)).toContain(
-      "import type { E2EConfig } from '@e2e-cpp/core'",
+      "import type { E2EConfig } from '@e2e-platform/core'",
     );
     expect(explainModuleError(missing('somethingElse'), importer)).toContain('e2e exports test, expect');
     const other = new SyntaxError("The requested module 'lodash' does not provide an export named 'nope'");

@@ -8,7 +8,7 @@
  * nothing to read unless the reader opens it. An `e2e explore` run
  * renders its record instead: the goal, every finding with its evidence,
  * and the assessment. The built-in `markdown` reporter writes the page as
- * `summary.md` beside `report.json`; `@e2e-cpp/github` posts it as the pull
+ * `summary.md` beside `report.json`; `@e2e-platform/github` posts it as the pull
  * request comment.
  *
  * Everything a test or the agent wrote (titles, labels, error messages,
@@ -117,10 +117,10 @@ function countText(counts: Counters): string {
     .join(', ');
 }
 
-/** `e2e regression`, or `@e2e-cpp/core` when the page has no title. */
+/** `e2e regression`, or `@e2e-platform/core` when the page has no title. */
 function pageName(options: MarkdownReportOptions): string {
   const title = options.title?.trim() ?? '';
-  return title === '' ? 'e2e-cpp' : `e2e-cpp ${cell(title, MAX_ID_CHARS)}`;
+  return title === '' ? 'e2e-platform' : `e2e-platform ${cell(title, MAX_ID_CHARS)}`;
 }
 
 function headline(run: ReportRun, options: MarkdownReportOptions): string {
@@ -352,7 +352,7 @@ function footer(run: ReportRun, options: MarkdownReportOptions): string[] {
   const duration = formatDuration(Date.parse(run.finishedAt) - Date.parse(run.startedAt));
   const shown = run.targets.slice(0, MAX_FOOTER_TARGETS).map((target) => cell(target.id, MAX_ID_CHARS));
   if (run.targets.length > shown.length) shown.push(`and ${run.targets.length - shown.length} more`);
-  const parts = [`e2e-cpp ${cell(run.runner.version, MAX_ID_CHARS)}`, duration];
+  const parts = [`e2e-platform ${cell(run.runner.version, MAX_ID_CHARS)}`, duration];
   if (run.targets.length === 1) parts.push(shown[0] ?? '');
   else if (run.targets.length > 1) parts.push(`${plural(run.targets.length, 'target')} (${shown.join(', ')})`);
   if (options.artifactsUrl !== undefined) parts.push(link('run artifacts', options.artifactsUrl));

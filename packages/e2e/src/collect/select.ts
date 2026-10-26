@@ -308,7 +308,7 @@ function describeNoTests(
     if (nearMisses.length > 0) {
       return `${where}; found ${nameFiles(nearMisses)}, which the pattern does not match: rename to *.e2e.ts, or set tests in the config to a glob that matches`;
     }
-    return `${where}; create tests/example.e2e.ts (e2e-cpp init writes one), or set tests in the config`;
+    return `${where}; create tests/example.e2e.ts (e2e-platform init writes one), or set tests in the config`;
   }
   if (!files.some((file) => file.selected) && unmatchedPositionals.length > 0) {
     // A positional may be a whole path or just a file name, so a near miss is looked for as either.
@@ -320,7 +320,7 @@ function describeNoTests(
   }
   if (tests.length === 0) {
     const named = nameFiles(discovered);
-    return `${named} registered no tests; import { test } from '@e2e-cpp/core' (or from the engine package) and call test() at the top level of the module`;
+    return `${named} registered no tests; import { test } from '@e2e-platform/core' (or from the engine package) and call test() at the top level of the module`;
   }
   const reasons = new Map<string, Set<string>>();
   const count = (reason: string, test: CollectedTest): void => {

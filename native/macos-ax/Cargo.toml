@@ -1,0 +1,23 @@
+[package]
+name = "e2e-platform-macos-ax"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+description = "PID-scoped macOS Accessibility driver for e2e-platform"
+
+[dependencies]
+serde = "=1.0.229"
+serde_json = "=1.0.145"
+
+[features]
+# Typecheck the macOS FFI module on another OS; never enables a runtime backend.
+check-macos = []
+
+[lib]
+name = "e2e_platform_macos_ax"
+path = "src/lib.rs"
+
+[[bin]]
+name = "e2e-platform-macos-ax"
+path = "src/main.rs"

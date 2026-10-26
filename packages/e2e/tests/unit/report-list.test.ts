@@ -234,7 +234,7 @@ describe('ListReporter', () => {
     const { lines, output } = capture();
     plainReporter(output).handle(runStarted({ targets: ['chromium', 'firefox'], ci: true }));
     // The version is whatever the package carries: a stable tuple or a canary prerelease.
-    expect(lines[1]).toMatch(/^ RUN {2}e2e v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)? \/project$/);
+    expect(lines[1]).toMatch(/^ RUN {2}e2e-platform v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)? \/project$/);
     expect(lines[2]).toContain('run run-1');
     expect(lines[2]).toContain('targets: chromium, firefox');
     expect(lines[2]).toContain('CI');
@@ -592,7 +592,7 @@ describe('ListReporter', () => {
       writeFileSync(
         file,
         [
-          "import { test } from '@e2e-cpp/playwright';",
+          "import { test } from '@e2e-platform/playwright';",
           '',
           'await app.open();',
           'await expect(status).toContainText("Welcome");',

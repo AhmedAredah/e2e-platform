@@ -4,7 +4,7 @@
     "id": "018f0f5c-7b2a-7abc-8abc-0123456789ab",
     "specVersion": "0.1",
     "runner": {
-      "name": "@e2e-cpp/core",
+      "name": "@e2e-platform/core",
       "version": "0.1.0"
     },
     "status": "passed",

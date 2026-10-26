@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "candidate": "0.2.0-rc.1",
+  "testLanguage": "TypeScript/JavaScript",
+  "applicationLanguages": [
+    "Python",
+    "C#/.NET",
+    "C++",
+    "Rust"
+  ],
+  "profiles": [
+    {
+      "backend": "qt",
+      "implementationLanguage": "C++",
+      "scope": "Cooperating Qt6 Widgets/Quick applications",
+      "actions": [
+        "tap",
+        "fill",
+        "clear",
+        "focus",
+        "press",
+        "check",
+        "uncheck",
+        "selectOption",
+        "hover"
+      ],
+      "keyboard": true,
+      "screenshots": "source-masked Qt helper capture",
+      "qualification": {
+        "status": "qualified-limited",
+        "os": "Linux x64",
+        "qt": "6.4.2",
+        "inputBackend": "offscreen/software",
+        "limits": [
+          "Selected reference controls",
+          "No Windows/macOS result",
+          "Quick selectOption requires supported non-editable closed-popup ComboBox"
+        ]
+      }
+    },
+    {
+      "backend": "linux-atspi",
+      "implementationLanguage": "Python",
+      "scope": "Owned target PID exposing AT-SPI interfaces",
+      "actions": [
+        "tap",
+        "fill",
+        "clear",
+        "focus",
+        "check",
+        "uncheck",
+        "selectOption"
+      ],
+      "keyboard": false,
+      "screenshots": false,
+      "qualification": {
+        "status": "experimental",
+        "portableTests": 53,
+        "liveStatus": "blocked",
+        "reason": "Host denies AF_UNIX required by D-Bus"
+      }
+    },
+    {
+      "backend": "windows-uia",
+      "implementationLanguage": "C#",
+      "scope": "Owned target PID exposing Windows UIA patterns",
+      "actions": [
+        "tap",
+        "fill",
+        "clear",
+        "focus",
+        "check",
+        "uncheck",
+        "selectOption"
+      ],
+      "keyboard": false,
+      "screenshots": false,
+      "qualification": {
+        "status": "experimental",
+        "portableTests": 34,
+        "compileStatus": "Cross-compiled driver and WPF fixture on Linux",
+        "liveStatus": "not-run",
+        "reason": "Requires interactive Windows host"
+      }
+    },
+    {
+      "backend": "macos-ax",
+      "implementationLanguage": "Rust",
+      "scope": "Owned target PID exposing macOS AX controls",
+      "actions": [
+        "tap",
+        "fill",
+        "clear",
+        "focus",
+        "check",
+        "uncheck"
+      ],
+      "keyboard": false,
+      "screenshots": false,
+      "qualification": {
+        "status": "experimental",
+        "portableTests": 21,
+        "compileStatus": "Platform source typechecked; Apple frameworks not linked on Linux",
+        "liveStatus": "not-run",
+        "reason": "Requires macOS, SDK and Accessibility permission"
+      }
+    }
+  ],
+  "rules": [
+    "A driver action still requires a supported control interface",
+    "Application language alone does not qualify a toolkit",
+    "A source workflow is not a recorded platform pass",
+    "No foreign-language full runner SDKs are included"
+  ]
+}

@@ -12,6 +12,9 @@ env:
   DO_NOT_TRACK: '1'
 
 jobs:
+  desktop-contracts:
+    uses: ./.github/workflows/desktop-contracts.yml
+
   language-platforms:
     uses: ./.github/workflows/languages.yml
 
@@ -29,7 +32,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:local
-      - run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+      - run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       # Includes core/security integrations, every public package and script tests.
       # Provider tests use local mock servers; live-provider suites are excluded.
       - run: pnpm test
@@ -51,10 +54,10 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:cpp
+      - run: pnpm test:native
       - run: pnpm test:scripts
-      - run: node scripts/cpp/verify.mjs
-      - run: node scripts/cpp/install-kit-smoke.mjs
+      - run: node scripts/native/verify.mjs
+      - run: node scripts/native/install-kit-smoke.mjs
 
   qt-linux:
     runs-on: ubuntu-24.04
@@ -75,13 +78,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qt6-base-dev qt6-declarative-dev qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts qml6-module-qtqml-workerscript qml6-module-qtquick-templates qml6-module-qtquick-window
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:cpp
-      - run: node scripts/cpp/verify.mjs --qt-only --require-quick
+      - run: pnpm build:native
+      - run: node scripts/native/verify.mjs --qt-only --require-quick
       - run: pnpm verify:qt:install
       - run: pnpm verify:qt:exports
 
   package:
-    needs: [quality, command-platforms, qt-linux, language-platforms]
+    needs: [quality, command-platforms, qt-linux, language-platforms, desktop-contracts]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -94,12 +97,12 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm pack:cpp
+      - run: pnpm pack:native
       # Validate the exact six tarballs that the next step uploads.
-      - run: node scripts/cpp/install-kit-smoke.mjs --kit release-packages
+      - run: node scripts/native/install-kit-smoke.mjs --kit release-packages
       - run: git rev-parse HEAD > release-packages/source-revision.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: e2e-cpp-local-install-kit-${{ github.sha }}
+          name: e2e-platform-local-install-kit-${{ github.sha }}
           path: release-packages/
           if-no-files-found: error

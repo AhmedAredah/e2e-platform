@@ -10,7 +10,7 @@ The example source is [MIT licensed](LICENSE).
 ## From this source checkout
 
 Install the repository's JavaScript dependencies and build its packages first
-(see [CPP_SUPPORT.md](../../CPP_SUPPORT.md)). Install CMake 3.21 or newer and a
+(see [SUPPORT_MATRIX.md](../../SUPPORT_MATRIX.md)). Install CMake 3.21 or newer and a
 C++17 compiler: GCC/Clang, Xcode command-line tools, or Visual Studio 2022 C++
 build tools. CTest comes with CMake.
 
@@ -18,8 +18,8 @@ From the repository root:
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm build:cpp
-node scripts/cpp/verify.mjs
+pnpm build:native
+node scripts/native/verify.mjs
 ```
 
 The script builds this executable, runs CTest, links the built local packages
@@ -34,7 +34,7 @@ non-link package installation.
 From this directory, after installing and building the workspace from its root:
 
 ```bash
-pnpm build:cpp
+pnpm build:native
 pnpm test:ctest
 pnpm test:e2e
 ```
@@ -82,7 +82,7 @@ The bundled writer deliberately accepts only the sum schema; another operation
 needs a suitable output writer/schema and independent expected values.
 
 Last checked for the MIT fork on 2026-10-24 on Linux x64 with GCC 13.3,
-CMake 3.28.3, Node 24.22.1 and the built `@e2e-cpp/core` 0.1.0 packages.
+CMake 3.28.3, Node 24.22.1 and the built `@e2e-platform/core` 0.1.0 packages.
 Three native CTests and three real runner tests passed. The separate planted
 wrong-output test exited 1 with `ASSERTION_FAILED`, with complete cleanup.
 Windows and macOS require separate execution.

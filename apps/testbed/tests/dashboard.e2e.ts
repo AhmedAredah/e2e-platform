@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test.describe('dashboard', { tags: ['auth'] }, () => {
   test('authenticated session reaches the dashboard directly', { session: 'admin' }, async ({ app, screen, web }) => {

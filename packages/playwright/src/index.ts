@@ -1,11 +1,11 @@
 /**
- * `@e2e-cpp/playwright` public surface: the `playwright()` engine factory, the
+ * `@e2e-platform/playwright` public surface: the `playwright()` engine factory, the
  * `web` fixture types, and a `test` typed with that fixture. Everything else a
- * test needs (`expect`, `credentials`) comes from `@e2e-cpp/core` itself: this package
+ * test needs (`expect`, `credentials`) comes from `@e2e-platform/core` itself: this package
  * contributes a surface, it does not re-export the test API.
  */
 
-import { test as base } from '@e2e-cpp/core';
+import { test as base } from '@e2e-platform/core';
 import type { Web } from './web.ts';
 
 export { playwright, surfaceOf } from './engine.ts';
@@ -26,6 +26,6 @@ export type {
 
 /**
  * `test` typed with this engine's contributed `web` fixture. The same
- * runtime `test` as `@e2e-cpp/core`'s; only the fixture types differ.
+ * runtime `test` as `@e2e-platform/core`'s; only the fixture types differ.
  */
 export const test = base.extend<{ web: Web }>();

@@ -1,5 +1,5 @@
 ---
-"@e2e-cpp/core": patch
+"@e2e-platform/core": patch
 ---
 
 Require acknowledged engine disposal within the configured cleanup budget,

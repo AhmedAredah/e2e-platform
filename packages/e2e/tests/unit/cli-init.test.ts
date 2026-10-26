@@ -52,46 +52,39 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-describe('e2e-cpp init', () => {
-  it('adds the runner, Playwright, and AI with --yes and does not install or prompt', async () => {
+describe('e2e-platform init', () => {
+  it('adds a runnable deterministic CLI example with --yes and does not install or prompt', async () => {
     expect(await init(dir, { yes: true })).toBe(0);
     // The runner pins itself the way it pins engines: a caret on a stable version, exact on a canary.
     const runnerVersion = (JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../package.json'), 'utf8')) as { version: string }).version;
     expect(JSON.parse(read('package.json'))).toEqual({
       private: true,
       type: 'module',
-      devDependencies: { '@e2e-cpp/core': dependencyRange(runnerVersion), '@e2e-cpp/playwright': '0.x', playwright: '^1', ai: '^7.0.0' },
-      scripts: { 'test:e2e': 'e2e-cpp run' },
+      devDependencies: { '@e2e-platform/core': dependencyRange(runnerVersion), '@e2e-platform/process': '0.x' },
+      scripts: { 'test:e2e': 'e2e-platform run' },
     });
-    expect(read('e2e.config.ts')).toContain('agents: {\n    default: createAgent({');
-    // The default gateway is written out as its own provider's constructor, never implied by the runner.
-    expect(read('e2e.config.ts')).toContain("import { gateway } from 'ai';");
-    expect(read('e2e.config.ts')).toContain("model: gateway('openai/gpt-5.6-luna'),");
-    expect(read('e2e.config.ts')).toContain('// The Vercel AI Gateway serves the model id and reads AI_GATEWAY_API_KEY.');
-    expect(read('tests/example.e2e.ts')).toContain('// With the model key in the environment, uncomment:');
-    expect(read('e2e.config.ts')).toContain("playwright({\n      url: process.env.APP_URL ?? 'http://localhost:3000',");
-    expect(read('e2e.config.ts')).toContain('// command: {');
-    expect(read('tests/example.e2e.ts')).toContain("test('app opens'");
-    expect(read('tests/example.e2e.ts')).toContain("await app.open('/');");
-    expect(read('tests/example.e2e.ts')).toContain("await expect(web.locator('body')).toBeVisible();");
-    expect(read('tests/example.e2e.ts')).toContain('// test(');
-    expect(read('tests/example.e2e.ts')).not.toContain('fetch(');
-    expect(JSON.parse(read('.mcp.json'))).toEqual({ mcpServers: { 'e2e-cpp': { command: 'npx', args: ['--no-install', 'e2e-cpp', 'mcp'] } } });
-    expect(JSON.parse(read('.cursor/mcp.json'))).toEqual({ mcpServers: { 'e2e-cpp': { command: 'npx', args: ['--no-install', 'e2e-cpp', 'mcp'] } } });
+    expect(read('e2e.config.ts')).toContain("modelPolicy: 'forbid'");
+    expect(read('e2e.config.ts')).not.toContain('createAgent');
+    expect(read('e2e.config.ts')).not.toContain('playwright');
+    expect(read('tests/example.e2e.ts')).toContain("from '@e2e-platform/process/test'");
+    expect(read('tests/example.e2e.ts')).toContain('executable: process.execPath');
+    expect(read('tests/example.e2e.ts')).toContain("args: ['--version']");
+    expect(JSON.parse(read('.mcp.json'))).toEqual({ mcpServers: { 'e2e-platform': { command: 'npx', args: ['--no-install', 'e2e-platform', 'mcp'] } } });
+    expect(JSON.parse(read('.cursor/mcp.json'))).toEqual({ mcpServers: { 'e2e-platform': { command: 'npx', args: ['--no-install', 'e2e-platform', 'mcp'] } } });
     expect(read('.gitignore')).toContain('node_modules/');
     expect(read('.gitignore')).toContain('.e2e/junit.xml');
     expect(read('.gitignore')).toContain('.e2e/summary.md');
     expect(read('.gitignore')).toContain('.e2e/cache/');
-    expect(output()).toContain('.e2e/cache/ is ignored; committing agent.act replays is opt-in, see https://e2e.tester.army/docs/cache#commit-your-traces');
+    expect(output()).toContain('.e2e/cache/ is ignored; committing agent.act replays is opt-in, see npx --no-install e2e-platform guide running');
     expect(read('.agents/skills/e2e/SKILL.md')).toMatch(/^---\nname: e2e\n/);
     expect(read('.claude/skills/e2e/references/setup.md')).toContain('# Setting up e2e');
     expect(clack.confirm).not.toHaveBeenCalled();
     expect(clack.select).not.toHaveBeenCalled();
     expect(clack.multiselect).not.toHaveBeenCalled();
     expect(spawnSync).not.toHaveBeenCalled();
-    expect(output()).toContain('Add scripts: test:e2e (e2e-cpp run)');
+    expect(output()).toContain('Add scripts: test:e2e (e2e-platform run)');
     expect(output()).toContain('No tsconfig.json');
-    expect(output()).toContain('Next: npm install, then APP_URL=http://localhost:3000 npm run test:e2e');
+    expect(output()).toContain('Next: npm install, then npm run test:e2e');
   });
 
   it('keeps quiet about tsconfig.json when the project has one', async () => {
@@ -101,6 +94,10 @@ describe('e2e-cpp init', () => {
   });
 
   it.each([
+    { engine: 'cli', ai: false },
+    { engine: 'cli', ai: true },
+    { engine: 'qt', ai: false },
+    { engine: 'desktop', ai: false },
     { engine: 'none', ai: false },
     { engine: 'none', ai: true },
     { engine: 'playwright', ai: false },
@@ -114,9 +111,11 @@ describe('e2e-cpp init', () => {
     const manifest = JSON.parse(read('package.json'));
     const device = engine === 'agent-device';
     expect(Object.keys(manifest.devDependencies)).toEqual([
-      '@e2e-cpp/core',
-      ...(engine === 'playwright' ? ['@e2e-cpp/playwright', 'playwright'] : []),
-      ...(device ? ['@e2e-cpp/agent-device'] : []),
+      '@e2e-platform/core',
+      ...(engine === 'playwright' ? ['@e2e-platform/playwright', 'playwright'] : []),
+      ...(device ? ['@e2e-platform/agent-device'] : []),
+      ...(engine === 'cli' ? ['@e2e-platform/process'] : []),
+      ...(engine === 'qt' || engine === 'desktop' ? ['@e2e-platform/native'] : []),
       ...(ai ? ['ai', '@openrouter/ai-sdk-provider'] : []),
     ]);
     expect(manifest.devDependencies.ai).toBe(ai ? '^7.0.0' : undefined);
@@ -126,12 +125,12 @@ describe('e2e-cpp init', () => {
     expect(read('e2e.config.ts').includes("model: openrouter('openai/gpt-5.6-luna'),")).toBe(ai);
     expect(read('e2e.config.ts').includes('// OpenRouter serves the model id and reads OPENROUTER_API_KEY.')).toBe(ai);
     expect(clack.text).not.toHaveBeenCalled();
-    expect(read('e2e.config.ts').includes('@e2e-cpp/playwright')).toBe(engine === 'playwright');
-    expect(read('tests/example.e2e.ts').includes('@e2e-cpp/playwright')).toBe(engine === 'playwright');
-    expect(read('e2e.config.ts').includes('@e2e-cpp/agent-device')).toBe(device);
-    expect(read('tests/example.e2e.ts').includes('@e2e-cpp/agent-device')).toBe(device);
+    expect(read('e2e.config.ts').includes('@e2e-platform/playwright')).toBe(engine === 'playwright');
+    expect(read('tests/example.e2e.ts').includes('@e2e-platform/playwright')).toBe(engine === 'playwright');
+    expect(read('e2e.config.ts').includes('@e2e-platform/agent-device')).toBe(device);
+    expect(read('tests/example.e2e.ts').includes('@e2e-platform/agent-device')).toBe(device);
     expect(read('e2e.config.ts').includes('APP_URL')).toBe(engine === 'playwright');
-    expect(output()).toContain(`Next: npm install, then ${device ? '' : 'APP_URL=http://localhost:3000 '}npm run test:e2e`);
+    expect(output()).toContain(`Next: npm install, then ${engine === 'playwright' || engine === 'none' ? 'APP_URL=http://localhost:3000 ' : ''}npm run test:e2e`);
     expect(spawnSync).not.toHaveBeenCalled();
   });
 
@@ -147,8 +146,11 @@ describe('e2e-cpp init', () => {
     expect(await init(dir)).toBe(0);
     expect(clack.select).toHaveBeenCalledTimes(2);
     expect(clack.select).toHaveBeenCalledWith(expect.objectContaining({
-      initialValue: 'playwright',
+      initialValue: 'cli',
       options: [
+        expect.objectContaining({ value: 'cli', label: 'CLI application' }),
+        expect.objectContaining({ value: 'qt', label: 'Qt desktop' }),
+        expect.objectContaining({ value: 'desktop', label: 'Desktop accessibility' }),
         expect.objectContaining({ value: 'playwright', label: 'Web', hint: 'Playwright' }),
         expect.objectContaining({ value: 'agent-device', label: 'Mobile (iOS/Android)', hint: 'agent-device' }),
         expect.objectContaining({ value: 'none', label: 'None' }),
@@ -188,9 +190,9 @@ describe('e2e-cpp init', () => {
   });
 
   it.each([
-    { gateway: 'chatgpt', provider: 'openai', line: "import { chatgpt } from '@e2e-cpp/oauth/chatgpt';", model: "model: chatgpt('gpt-5.5'),", sdk: '@ai-sdk/openai' },
-    { gateway: 'copilot', provider: 'github-copilot', line: "import { copilot } from '@e2e-cpp/oauth/copilot';", model: "model: copilot('claude-sonnet-5'),", sdk: '@ai-sdk/openai-compatible' },
-    { gateway: 'grok', provider: 'spacexai', line: "import { grok } from '@e2e-cpp/oauth/grok';", model: "model: grok('grok-4'),", sdk: '@ai-sdk/xai' },
+    { gateway: 'chatgpt', provider: 'openai', line: "import { chatgpt } from '@e2e-platform/oauth/chatgpt';", model: "model: chatgpt('gpt-5.5'),", sdk: '@ai-sdk/openai' },
+    { gateway: 'copilot', provider: 'github-copilot', line: "import { copilot } from '@e2e-platform/oauth/copilot';", model: "model: copilot('claude-sonnet-5'),", sdk: '@ai-sdk/openai-compatible' },
+    { gateway: 'grok', provider: 'spacexai', line: "import { grok } from '@e2e-platform/oauth/grok';", model: "model: grok('grok-4'),", sdk: '@ai-sdk/xai' },
   ] as const)('writes a $gateway subscription model and names the sign-in as the next step', async ({ gateway, provider, line, model, sdk }) => {
     vi.mocked(clack.select).mockResolvedValueOnce('playwright').mockResolvedValueOnce(gateway);
     vi.mocked(clack.confirm).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
@@ -199,12 +201,12 @@ describe('e2e-cpp init', () => {
     expect(clack.text).not.toHaveBeenCalled();
     expect(read('e2e.config.ts')).toContain(line);
     expect(read('e2e.config.ts')).toContain(model);
-    expect(read('e2e.config.ts')).toContain(`sign in once with \`e2e-cpp login ${provider}\``);
+    expect(read('e2e.config.ts')).toContain(`sign in once with \`e2e-platform login ${provider}\``);
     const devDependencies = JSON.parse(read('package.json')).devDependencies;
     expect(devDependencies).toHaveProperty('ai', '^7.0.0');
-    expect(devDependencies).toHaveProperty('@e2e-cpp/oauth');
+    expect(devDependencies).toHaveProperty('@e2e-platform/oauth');
     expect(devDependencies).toHaveProperty(sdk);
-    expect(output()).toContain(`e2e-cpp login ${provider}, then`);
+    expect(output()).toContain(`e2e-platform login ${provider}, then`);
   });
 
   it('validates the endpoint the way config resolution will', async () => {
@@ -270,8 +272,8 @@ describe('e2e-cpp init', () => {
     'preserves existing dependency versions and type %s',
     async (type) => {
       const manifest = `${JSON.stringify({
-        name: 'existing-app', type, scripts: { 'test:e2e': 'e2e-cpp run --workers 1' },
-        dependencies: { '@e2e-cpp/core': 'workspace:*', '@e2e-cpp/playwright': 'workspace:*', playwright: '1.59.0-alpha-2026-01-01', ai: '^7.0.12' },
+        name: 'existing-app', type, scripts: { 'test:e2e': 'e2e-platform run --workers 1' },
+        dependencies: { '@e2e-platform/core': 'workspace:*', '@e2e-platform/process': 'file:../kit/process.tgz', '@e2e-platform/playwright': 'workspace:*', playwright: '1.59.0-alpha-2026-01-01', ai: '^7.0.12' },
       }, null, 4)}\n`;
       writeFileSync(path.join(dir, 'package.json'), manifest);
       for (let run = 0; run < 2; run += 1) {
@@ -284,9 +286,9 @@ describe('e2e-cpp init', () => {
   );
 
   it.each([
-    ['e2e-cpp run --workers 1', 'npm run test:e2e'],
-    ['e2e runner --ci', 'npm exec e2e-cpp run'],
-    ['vitest', 'npm exec e2e-cpp run'],
+    ['e2e-platform run --workers 1', 'npm run test:e2e'],
+    ['e2e runner --ci', 'npm exec e2e-platform run'],
+    ['vitest', 'npm exec e2e-platform run'],
   ])('keeps an existing test:e2e script (%s) and points the run step at %s', async (script, step) => {
     writeFileSync(path.join(dir, 'package.json'), `${JSON.stringify({ name: 'existing-app', scripts: { 'test:e2e': script } })}\n`);
     vi.mocked(clack.select).mockResolvedValueOnce('playwright').mockResolvedValueOnce('none');
@@ -300,7 +302,7 @@ describe('e2e-cpp init', () => {
     const manifest = {
       name: 'existing-app', type: 'commonjs', scripts: { dev: 'vite' },
       dependencies: { ai: '^7.0.12' },
-      devDependencies: { '@e2e-cpp/playwright': 'file:../engine', vite: '^7.0.0' },
+      devDependencies: { '@e2e-platform/playwright': 'file:../engine', vite: '^7.0.0' },
       custom: { enabled: true },
     };
     writeFileSync(path.join(dir, 'package.json'), `${JSON.stringify(manifest, null, 4).replaceAll('\n', '\r\n')}\r\n`);
@@ -309,8 +311,8 @@ describe('e2e-cpp init', () => {
     await init(dir);
     expect(JSON.parse(read('package.json'))).toEqual({
       ...manifest,
-      scripts: { dev: 'vite', 'test:e2e': 'e2e-cpp run' },
-      devDependencies: { ...manifest.devDependencies, '@e2e-cpp/core': expect.any(String), playwright: '^1' },
+      scripts: { dev: 'vite', 'test:e2e': 'e2e-platform run' },
+      devDependencies: { ...manifest.devDependencies, '@e2e-platform/core': expect.any(String), playwright: '^1' },
     });
     expect(read('package.json')).toContain('\r\n    "name"');
   });
@@ -326,7 +328,7 @@ describe('e2e-cpp init', () => {
     await init(dir);
     const written = JSON.parse(read('package.json'));
     expect(written.dependencies).toEqual(manifest.dependencies);
-    expect(Object.keys(written.devDependencies)).toEqual(['@e2e-cpp/core', '@e2e-cpp/playwright']);
+    expect(Object.keys(written.devDependencies)).toEqual(['@e2e-platform/core', '@e2e-platform/playwright']);
   });
 
   it.each([
@@ -340,7 +342,7 @@ describe('e2e-cpp init', () => {
     expect(readdirSync(dir)).toEqual(['package.json']);
     expect(spawnSync).not.toHaveBeenCalled();
     expect(output()).toMatch(reason);
-    expect(output()).toContain('fix it before running e2e-cpp init');
+    expect(output()).toContain('fix it before running e2e-platform init');
   });
 
   it('refuses to prompt without a terminal and names --yes', async () => {
@@ -349,7 +351,7 @@ describe('e2e-cpp init', () => {
     expect(clack.select).not.toHaveBeenCalled();
     expect(clack.confirm).not.toHaveBeenCalled();
     expect(output()).toContain('needs an interactive terminal');
-    expect(output()).toContain('pass --yes to accept the defaults (Playwright, the Vercel AI Gateway, no installation)');
+    expect(output()).toContain('pass --yes to accept the defaults (CLI tests, no model, no installation)');
   });
 
   it('scaffolds with --yes without a terminal', async () => {
@@ -362,8 +364,8 @@ describe('e2e-cpp init', () => {
     expect(await init(target, { yes: true, directory: 'apps/web' })).toBe(0);
     expect(existsSync(path.join(target, 'e2e.config.ts'))).toBe(true);
     expect(existsSync(path.join(target, 'tests', 'example.e2e.ts'))).toBe(true);
-    expect(output()).toContain('e2e-cpp init apps/web');
-    expect(output()).toContain('Next: cd apps/web, then npm install, then APP_URL=http://localhost:3000 npm run test:e2e');
+    expect(output()).toContain('e2e-platform init apps/web');
+    expect(output()).toContain('Next: cd apps/web, then npm install, then npm run test:e2e');
   });
 
   it('quotes a directory the shell would otherwise split, for the platform it runs on', async () => {
@@ -413,8 +415,8 @@ describe('e2e-cpp init', () => {
     writeFileSync(path.join(dir, config), '// custom config\n');
     await init(dir, { yes: true });
     expect(read(config)).toBe('// custom config\n');
-    expect(Object.keys(JSON.parse(read('package.json')).devDependencies)).toEqual(['@e2e-cpp/core']);
-    expect(JSON.parse(read('package.json')).scripts).toEqual({ 'test:e2e': 'e2e-cpp run' });
+    expect(Object.keys(JSON.parse(read('package.json')).devDependencies)).toEqual(['@e2e-platform/core']);
+    expect(JSON.parse(read('package.json')).scripts).toEqual({ 'test:e2e': 'e2e-platform run' });
     if (config.endsWith('.mts')) expect(existsSync(path.join(dir, 'e2e.config.ts'))).toBe(false);
   });
 
@@ -446,7 +448,7 @@ describe('e2e-cpp init', () => {
       initialValues: ['.mcp.json', '.cursor/mcp.json'],
       required: false,
     }));
-    expect(read('.mcp.json')).toContain('"e2e-cpp"');
+    expect(read('.mcp.json')).toContain('"e2e-platform"');
     expect(clack.confirm).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('create .claude/skills/e2e/') }));
     expect(existsSync(path.join(dir, '.agents/skills'))).toBe(false);
     expect(output()).toContain('Created .claude/skills/e2e/');
@@ -482,7 +484,7 @@ describe('e2e-cpp init', () => {
     expect(output()).toContain('reinstall e2e');
   });
 
-  it('offers the skill to an initialized project and points at e2e-cpp guide when declined', async () => {
+  it('offers the skill to an initialized project and points at e2e-platform guide when declined', async () => {
     writeFileSync(path.join(dir, 'e2e.config.ts'), '// custom config\n');
     vi.mocked(clack.multiselect).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     vi.mocked(clack.confirm).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
@@ -492,8 +494,8 @@ describe('e2e-cpp init', () => {
     expect(existsSync(path.join(dir, '.agents'))).toBe(false);
     expect(existsSync(path.join(dir, '.claude'))).toBe(false);
     expect(existsSync(path.join(dir, '.mcp.json'))).toBe(false);
-    expect(output()).toContain('npm exec e2e-cpp guide');
-    expect(output()).toContain('claude mcp add e2e -- npx --no-install e2e-cpp mcp');
+    expect(output()).toContain('npm exec e2e-platform guide');
+    expect(output()).toContain('claude mcp add e2e -- npx --no-install e2e-platform mcp');
   });
 
   it('is idempotent', async () => {

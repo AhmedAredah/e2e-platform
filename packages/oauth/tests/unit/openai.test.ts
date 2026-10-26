@@ -173,17 +173,17 @@ describe('Codex requests', () => {
       body: JSON.stringify({ model: 'gpt-5.5', input: [], max_output_tokens: 100, include: ['x'] }),
     });
     const credentials = { access: 'a', refresh: 'r', expires: 0, accountId: 'acct', residency: 'eu' };
-    const sent = (await (await sendCodexRequest(original, credentials, echoUpstream, { originator: 'e2e-cpp', apiUrl: 'https://chatgpt.com/backend-api/codex/responses' })).json()) as Echo;
+    const sent = (await (await sendCodexRequest(original, credentials, echoUpstream, { originator: 'e2e-platform', apiUrl: 'https://chatgpt.com/backend-api/codex/responses' })).json()) as Echo;
     expect(sent.url).toBe('https://chatgpt.com/backend-api/codex/responses');
-    expect(sent.headers).toMatchObject({ 'chatgpt-account-id': 'acct', originator: 'e2e-cpp', 'x-openai-internal-codex-residency': 'eu' });
+    expect(sent.headers).toMatchObject({ 'chatgpt-account-id': 'acct', originator: 'e2e-platform', 'x-openai-internal-codex-residency': 'eu' });
     expect(JSON.parse(sent.body)).toEqual({ model: 'gpt-5.5', input: [], stream: true, store: false, instructions: 'Follow the user request.', include: ['x', 'reasoning.encrypted_content'] });
   });
 
   it('leaves other paths untouched apart from the headers', async () => {
     const other = new Request('https://api.openai.com/v1/models');
-    const sent = (await (await sendCodexRequest(other, { access: 'a', refresh: 'r', expires: 0 }, echoUpstream, { originator: 'e2e-cpp', apiUrl: 'https://c/x' })).json()) as Echo;
+    const sent = (await (await sendCodexRequest(other, { access: 'a', refresh: 'r', expires: 0 }, echoUpstream, { originator: 'e2e-platform', apiUrl: 'https://c/x' })).json()) as Echo;
     expect(sent.url).toBe('https://api.openai.com/v1/models');
-    expect(sent.headers).toMatchObject({ originator: 'e2e-cpp' });
+    expect(sent.headers).toMatchObject({ originator: 'e2e-platform' });
   });
 
   it('serves generateText with a forced tool call from a backend that only streams', async () => {

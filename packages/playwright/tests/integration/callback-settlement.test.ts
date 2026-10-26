@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, vi } from 'vitest';
-import { run } from '@e2e-cpp/core/runner';
+import { run } from '@e2e-platform/core/runner';
 import { playwright } from '../../src/engine.ts';
 import { startFixtureApp } from '../helpers/fixture-app.ts';
 

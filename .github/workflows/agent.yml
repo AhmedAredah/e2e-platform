@@ -88,7 +88,7 @@ jobs:
           fi
       - run: pnpm install --frozen-lockfile
       - name: Install browsers
-        run: pnpm --filter @e2e-cpp/playwright exec playwright install chromium --with-deps
+        run: pnpm --filter @e2e-platform/playwright exec playwright install chromium --with-deps
       - name: Build
         run: pnpm run build
       - name: Run ${{ matrix.script }}
@@ -103,7 +103,7 @@ jobs:
           if [ -n "$MODEL_INPUT" ]; then
             export E2E_MODEL="$MODEL_INPUT"
           fi
-          pnpm --filter @e2e-cpp/testbed run ${{ matrix.script }}
+          pnpm --filter @e2e-platform/testbed run ${{ matrix.script }}
       # The JSON report is the only durable evidence of a model-dependent run.
       - name: Upload report
         if: ${{ !cancelled() }}

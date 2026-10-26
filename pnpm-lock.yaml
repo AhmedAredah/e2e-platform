@@ -185,10 +185,10 @@ importers:
         specifier: 13.16.1
         version: 13.16.1(react-native@0.86.2(@babel/core@7.29.7(supports-color@8.1.1))(@types/react@19.1.4)(react@19.2.3)(supports-color@8.1.1))(react@19.2.3)
     devDependencies:
-      '@e2e-cpp/agent-device':
+      '@e2e-platform/agent-device':
         specifier: workspace:*
         version: link:../../packages/agent-device
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../packages/e2e
       '@types/node':
@@ -206,10 +206,10 @@ importers:
 
   apps/testbed:
     dependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../packages/e2e
-      '@e2e-cpp/playwright':
+      '@e2e-platform/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright
     devDependencies:
@@ -234,10 +234,10 @@ importers:
 
   apps/web-benchmark:
     dependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../packages/e2e
-      '@e2e-cpp/playwright':
+      '@e2e-platform/playwright':
         specifier: workspace:*
         version: link:../../packages/playwright
       next:
@@ -250,7 +250,7 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
     devDependencies:
-      '@e2e-cpp/github':
+      '@e2e-platform/github':
         specifier: workspace:*
         version: link:../../packages/github
       '@types/node':
@@ -274,13 +274,13 @@ importers:
 
   docs:
     devDependencies:
-      '@e2e-cpp/agent-device':
+      '@e2e-platform/agent-device':
         specifier: workspace:*
         version: link:../packages/agent-device
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../packages/e2e
-      '@e2e-cpp/playwright':
+      '@e2e-platform/playwright':
         specifier: workspace:*
         version: link:../packages/playwright
       '@types/node':
@@ -304,28 +304,28 @@ importers:
 
   examples/with-cpp-cli:
     devDependencies:
-      '@e2e-cpp/checks':
+      '@e2e-platform/checks':
         specifier: workspace:*
         version: link:../../packages/checks
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../packages/e2e
-      '@e2e-cpp/process':
+      '@e2e-platform/process':
         specifier: workspace:*
         version: link:../../packages/process
 
   examples/with-languages:
     devDependencies:
-      '@e2e-cpp/checks':
+      '@e2e-platform/checks':
         specifier: workspace:*
         version: link:../../packages/checks
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../packages/e2e
-      '@e2e-cpp/process':
+      '@e2e-platform/process':
         specifier: workspace:*
         version: link:../../packages/process
-      '@e2e-cpp/protocol':
+      '@e2e-platform/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@types/node':
@@ -337,10 +337,10 @@ importers:
 
   examples/with-qt/e2e:
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../../../packages/e2e
-      '@e2e-cpp/native':
+      '@e2e-platform/native':
         specifier: workspace:*
         version: link:../../../packages/native
       ai:
@@ -359,7 +359,7 @@ importers:
         specifier: 4.6.6
         version: 4.6.6
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
       '@types/node':
@@ -423,7 +423,7 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: 3.0.47
         version: 3.0.47(zod@4.6.6)
-      '@e2e-cpp/playwright':
+      '@e2e-platform/playwright':
         specifier: workspace:*
         version: link:../playwright
       '@openrouter/ai-sdk-provider':
@@ -456,7 +456,7 @@ importers:
 
   packages/github:
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
       '@types/node':
@@ -471,11 +471,11 @@ importers:
 
   packages/native:
     dependencies:
-      '@e2e-cpp/process':
+      '@e2e-platform/process':
         specifier: workspace:*
         version: link:../process
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
       '@types/node':
@@ -527,7 +527,7 @@ importers:
 
   packages/playwright:
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
       '@types/node':
@@ -551,7 +551,7 @@ importers:
 
   packages/process:
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
       '@types/node':
@@ -585,10 +585,10 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
     devDependencies:
-      '@e2e-cpp/core':
+      '@e2e-platform/core':
         specifier: workspace:*
         version: link:../e2e
-      '@e2e-cpp/process':
+      '@e2e-platform/process':
         specifier: workspace:*
         version: link:../process
       '@types/node':

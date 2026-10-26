@@ -90,8 +90,8 @@ describe('FileCredentialStore', () => {
   });
 
   it('defaults to the XDG config directory', () => {
-    expect(defaultCredentialsPath({ XDG_CONFIG_HOME: '/tmp/xdg' })).toBe('/tmp/xdg/e2e-cpp/oauth.json');
-    expect(defaultCredentialsPath({})).toMatch(/\.config\/e2e-cpp\/oauth\.json$/);
+    expect(defaultCredentialsPath({ XDG_CONFIG_HOME: '/tmp/xdg' })).toBe('/tmp/xdg/e2e-platform/oauth.json');
+    expect(defaultCredentialsPath({})).toMatch(/\.config\/e2e-platform\/oauth\.json$/);
   });
 });
 

@@ -1,5 +1,5 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { github } from '@e2e-cpp/github';
+import type { E2EConfig } from '@e2e-platform/core';
+import { github } from '@e2e-platform/github';
 import { gateway } from 'ai';
 import base from './e2e.config.ts';
 
@@ -8,7 +8,7 @@ import base from './e2e.config.ts';
  * It runs only through explicit workflow dispatch or a local command;
  * each step spends real model calls. By hand:
  *
- *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/web-benchmark test:agent
+ *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/web-benchmark test:agent
  *
  * `E2E_MODEL` overrides the pinned model so one suite dogfoods several
  * providers.

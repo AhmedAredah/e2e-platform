@@ -8,7 +8,7 @@ import { installFakeLoopModel, loopCalls } from '../helpers/fake-loop-model.ts';
 import { runProject } from '../helpers/run-project.ts';
 import { assertValidReport } from '../helpers/report-schema.ts';
 
-const SUITE = `import { test } from '@e2e-cpp/core';
+const SUITE = `import { test } from '@e2e-platform/core';
 test('fallback', async ({ agent }) => { await agent.act('inspect the current result', { timeout: 1500 }); });`;
 const VIEWPORT = { width: 2, height: 2 };
 

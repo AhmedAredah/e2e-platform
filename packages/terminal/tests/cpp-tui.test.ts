@@ -17,7 +17,7 @@ describe.skipIf(!hasCompiler)('compiled C++ TUI through the PTY', () => {
   let directory: string;
   let executable: string;
   beforeAll(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'e2e-cpp-terminal-'));
+    directory = await mkdtemp(join(tmpdir(), 'e2e-platform-terminal-'));
     executable = join(directory, 'menu');
     execFileSync(compiler, ['-std=c++17', fileURLToPath(new URL('./fixtures/menu.cpp', import.meta.url)), '-o', executable], { timeout: 30_000, stdio: 'pipe' });
   });

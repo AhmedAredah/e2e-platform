@@ -5,8 +5,8 @@
  * the screenshot; the DOM learns the result only when the drawn OK is pressed.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('act enters a ten-digit code on a keypad painted on a canvas', async ({ web, agent, screen }) => {
   await web.goto('/canvas-flow');

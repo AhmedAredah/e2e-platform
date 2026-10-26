@@ -1,0 +1,41 @@
+---
+title: Desktop accessibility
+description: Choose a native driver by platform and accessible controls.
+icon: desktop
+---
+
+The desktop drivers share the existing TypeScript runner, locators, assertions and
+reports. Application language and driver language are independent: Python AT-SPI
+inspects Linux accessible controls, C# UI Automation inspects Windows controls,
+and Rust AX inspects macOS controls. The C++ Qt helper provides the cooperative
+Qt Widgets/Quick path.
+
+## Platform profiles
+
+| Profile | Required host | Status |
+| --- | --- | --- |
+| `qt()` | Matching Qt 6 kit | Offscreen tests cover selected Widgets/Quick controls. |
+| `desktop({ backend: 'linux-atspi', executable, args })` | Linux accessibility/D-Bus session | Experimental; run the real GTK fixture to qualify the host. |
+| `desktop({ backend: 'windows-uia', executable })` | Windows interactive desktop | Experimental; compile and run the WPF fixture on Windows. |
+| `desktop({ backend: 'macos-ax', executable })` | macOS with Accessibility permission | Experimental; compile and run the AppKit fixture on macOS. |
+
+The OS sidecar executable is configured separately from the application's `appPath`.
+It receives the target executable and arguments as literal argv, launches the target,
+and scopes inspection to its process. It does not attach to arbitrary running apps.
+See the repository's `DESKTOP.md` and `native/<backend>/README.md` for installation
+commands, capability lists and native qualification scripts.
+
+## Accessible behavior
+
+Control patterns must support the requested action. A missing pattern produces an
+explicit unsupported-capability error. Observe and assert the state after actions;
+an accepted invocation does not establish business success. Password values are
+suppressed before serialization. Bounded trees declare truncation.
+
+The new OS backends do not advertise screenshots or global keyboard input. They
+also do not promise clipboard, drag/drop, IME, custom-painted controls, native/DOM
+context switching or every toolkit version. A fake-provider contract test does not
+count as native desktop qualification. Check `RELEASE_STATUS.md` before release.
+
+Tests remain TypeScript for applications written in Python, C#, Rust and C++.
+Native-language test-authoring SDKs are a separate extension.

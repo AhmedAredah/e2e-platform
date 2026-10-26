@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { DotnetLaunchProfile, ExecutableLaunchProfile, PythonLaunchProfile, type ApplicationLaunchProfile } from '@e2e-cpp/process';
+import { DotnetLaunchProfile, ExecutableLaunchProfile, PythonLaunchProfile, type ApplicationLaunchProfile } from '@e2e-platform/process';
 
 interface RuntimeEntry { executable: string; entrypoint: string; buildFingerprint: string; version: string; }
 const directory = fileURLToPath(new URL('../', import.meta.url));

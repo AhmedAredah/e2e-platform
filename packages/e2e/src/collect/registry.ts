@@ -396,7 +396,7 @@ const PACKAGE_ROOT = path.dirname(path.dirname(path.dirname(fileURLToPath(import
  */
 const RUNNER_ROOTS = ['src', 'dist'].map((dir) => `${path.join(PACKAGE_ROOT, dir)}${path.sep}`);
 /** `at name (file:line:column)` or `at file:line:column`, with or without a `file://` scheme. */
-const STACK_FRAME = /\(?(?:file:\/\/)?([^()\s]+?):(\d+):(\d+)\)?$/;
+const STACK_FRAME = /^(.*):(\d+):(\d+)$/;
 const NODE_MODULES_SEGMENT = /[\\/]node_modules[\\/]/;
 
 /** The path with symlinks resolved, or the path itself when it cannot be resolved. */
@@ -423,10 +423,17 @@ function captureSource(moduleFile: string | undefined): SourceLocation | undefin
   if (stack === undefined) return undefined;
   let outsideModule: SourceLocation | undefined;
   for (const line of stack.split('\n').slice(1)) {
-    const match = STACK_FRAME.exec(line.trim());
+    const frame = line.trim().replace(/^at\s+/, '');
+    const opening = frame.indexOf(' (');
+    const locationText = opening >= 0 && frame.endsWith(')') ? frame.slice(opening + 2, -1) : frame;
+    const match = STACK_FRAME.exec(locationText);
     if (match === null) continue;
     // The loader imports every module with a cache-busting query, which is not part of the file.
-    const file = decodeURIComponent(match[1]!).replace(/[?#].*$/, '');
+    const rawFile = match[1]!;
+    let file: string;
+    try { file = rawFile.startsWith('file:') ? fileURLToPath(new URL(rawFile)) : rawFile; }
+    catch { continue; }
+    if (!path.isAbsolute(file)) continue;
     if (RUNNER_ROOTS.some((root) => file.startsWith(root)) || file.startsWith('node:')) continue;
     const location = { file, line: Number(match[2]), column: Number(match[3]) };
     if (moduleFile !== undefined && (file === moduleFile || realPath(file) === moduleFile)) {

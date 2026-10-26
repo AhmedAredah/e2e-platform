@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { expect, it } from 'vitest';
-import { createAgent } from '@e2e-cpp/core/agent';
+import { createAgent } from '@e2e-platform/core/agent';
 import { buildEngine } from '../../src/engine.ts';
 import { AgentDeviceSurface } from '../../src/surface.ts';
 import { agentDeviceTools } from '../../src/tools.ts';
@@ -21,7 +21,7 @@ it('offers no pixel verbs after a secret fill and captures no pixels', async () 
   const root = fileURLToPath(new URL('../../../e2e/tests/tmp-projects/', import.meta.url));
   mkdirSync(root, { recursive: true });
   const project = mkdtempSync(path.join(root, 'tool-pixels-'));
-  writeFileSync(path.join(project, 'test.e2e.ts'), `import { test, credentials } from '@e2e-cpp/core';
+  writeFileSync(path.join(project, 'test.e2e.ts'), `import { test, credentials } from '@e2e-platform/core';
     test('withhold pixels', async ({ screen, agent }) => {
       await screen.getByRole('textbox', { name: 'Password' }).fill(credentials.user('audit').password);
       await agent.act('inspect the pixels');

@@ -1,6 +1,6 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
-import { github } from '@e2e-cpp/github';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
+import { github } from '@e2e-platform/github';
 
 /**
  * Deterministic suite against the benchmark scenarios. `pnpm test` builds the

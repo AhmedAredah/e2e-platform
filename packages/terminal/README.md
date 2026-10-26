@@ -1,4 +1,4 @@
-# @e2e-cpp/terminal
+# @e2e-platform/terminal
 
 Run a CLI/TUI through a real PTY and reconstruct its visible terminal cells with
 `@xterm/headless`. Cursor movement, erasure, wrapped lines, alternate screens,
@@ -7,7 +7,7 @@ handled by a terminal emulator rather than raw output-line matching.
 
 ```ts
 // e2e.config.ts
-import { terminal } from '@e2e-cpp/terminal';
+import { terminal } from '@e2e-platform/terminal';
 export default {
   modelPolicy: 'forbid',
   targets: [{ name: 'menu', engine: terminal({ columns: 80, rows: 24 }),
@@ -16,8 +16,8 @@ export default {
 ```
 
 ```ts
-import { test } from '@e2e-cpp/terminal';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/terminal';
+import { expect } from '@e2e-platform/core';
 test('accepts a name', async ({ terminal, screen }) => {
   await terminal.waitFor('Name:');
   await terminal.write('Ada');
@@ -88,8 +88,8 @@ POSIX cleanup targets the owned PTY process group. Windows uses taskkill while
 the root is alive. Detached sessions, escaped groups, Windows breakaway children,
 and descendants after a Windows root has exited are not guaranteed contained.
 
-Tests: run `vitest run` from this package after building `@e2e-cpp/core` and
-`@e2e-cpp/process`. `tests/pty.test.ts` requires the working optional native peer;
+Tests: run `vitest run` from this package after building `@e2e-platform/core` and
+`@e2e-platform/process`. `tests/pty.test.ts` requires the working optional native peer;
 its process-group check is Linux-only. Windows/macOS code paths require actual
 OS validation before support can be considered qualified.
 

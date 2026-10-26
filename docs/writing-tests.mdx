@@ -7,7 +7,7 @@ Use agent calls for goals and questions about the screen. Use `screen` and
 `expect` when you know the exact action or value to check. A test can use both.
 
 ```ts title="tests/todos.e2e.ts"
-import { test, expect } from '@e2e-cpp/core';
+import { test, expect } from '@e2e-platform/core';
 
 test('todos survive a filter round-trip', async ({ app, agent, screen }) => {
   await app.open('/todos');
@@ -35,7 +35,7 @@ use a `Secret`. The model sees its name, and the runner fills its value.
 See [Signing in](/authentication).
 
 ```ts
-import { credentials } from '@e2e-cpp/core';
+import { credentials } from '@e2e-platform/core';
 
 const member = credentials.user('member');
 await agent.act('Sign in', {
@@ -152,7 +152,7 @@ Locator assertions retry until they pass or time out. Direct reads such as
 `textContent()` do not retry a mismatched value.
 
 Use the `web` fixture for browser features such as routes, cookies, dialogs,
-frames, and downloads. Import `test` from `@e2e-cpp/playwright` to use it.
+frames, and downloads. Import `test` from `@e2e-platform/playwright` to use it.
 See the [Playwright reference](/reference/playwright) and the
 [screen reference](/reference/screen).
 

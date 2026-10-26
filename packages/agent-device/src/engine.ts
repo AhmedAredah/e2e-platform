@@ -2,13 +2,13 @@
  * The agent-device engine for e2e: a mobile body built with the
  * public `defineEngine`, validated by the same rules and graded by the same
  * capabilities as any other engine. Core imports nothing from here; this
- * package imports the contract from `@e2e-cpp/core/engine` and contributes the
+ * package imports the contract from `@e2e-platform/core/engine` and contributes the
  * `device` fixture the way the browser engine contributes `web`.
  */
 
 import { createRequire } from 'node:module';
 import { createAgentDeviceClient } from 'agent-device';
-import { defineEngine, obj, type EngineAppDeclaration, type EngineHandle } from '@e2e-cpp/core/engine';
+import { defineEngine, obj, type EngineAppDeclaration, type EngineHandle } from '@e2e-platform/core/engine';
 import { createDeviceFixture } from './device.ts';
 import type { AgentDeviceOptions, ClientFactory } from './options.ts';
 import { DEVICE_ACTIONS, DEVICE_POINTER_ACTIONS } from './actions.ts';

@@ -11,9 +11,9 @@ Configure an AI SDK model under `agents.default`. This example uses Vercel
 AI Gateway and reads `AI_GATEWAY_API_KEY`:
 
 ```ts
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createAgent } from '@e2e-cpp/core/agent';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createAgent } from '@e2e-platform/core/agent';
+import { playwright } from '@e2e-platform/playwright';
 import { gateway } from 'ai';
 
 export default {
@@ -41,7 +41,7 @@ Keep `ai@^7` installed when using agent steps with any provider.
 
 Tests use `agents.default` unless selected otherwise:
 
-- `e2e-cpp run --agent buyer` chooses another configured agent for the run.
+- `e2e-platform run --agent buyer` chooses another configured agent for the run.
 - `{ agent: 'buyer' }` on a test or group pins that agent. A list such as
   `{ agent: ['buyer', 'admin'] }` runs each test once per agent.
 - `--agent buyer,admin` runs unpinned tests for both agents. It narrows a
@@ -54,7 +54,7 @@ block, then repeat the block for each persona.
 ## act: one goal
 
 ```ts
-import { credentials } from '@e2e-cpp/core';
+import { credentials } from '@e2e-platform/core';
 
 await agent.act('add a todo named "Buy milk" and mark it done');
 await agent.act('invite {email} as an editor', { params: { email: 'ada@example.test' } });
@@ -245,7 +245,7 @@ state no longer matches, the live agent continues from the current screen.
   `target-not-found`, `target-ambiguous`, `end-mismatch`, and so on.
 - A step that records no actions creates no entry and skips the cache's
   end-state observation.
-- `e2e-cpp init` gitignores `.e2e/cache/`; committing entries is opt-in. Remove
+- `e2e-platform init` gitignores `.e2e/cache/`; committing entries is opt-in. Remove
   that line to share replays with CI and teammates (CI stays `read-only`
   unless `cache: 'read-write'` is set explicitly).
 - A failing run evicts the entries it implicates. To rule the cache out of a
@@ -254,8 +254,8 @@ state no longer matches, the live agent continues from the current screen.
 ## Inspect what the model did
 
 ```bash
-npx --no-install e2e-cpp run tests/checkout.e2e.ts --debug      # step table, transcripts as artifacts
-npx --no-install e2e-cpp run tests/checkout.e2e.ts --ai-trace   # writes .e2e/ai-trace.json
+npx --no-install e2e-platform run tests/checkout.e2e.ts --debug      # step table, transcripts as artifacts
+npx --no-install e2e-platform run tests/checkout.e2e.ts --ai-trace   # writes .e2e/ai-trace.json
 npx unbox-ai runs .e2e/ai-trace.json                        # one line per agent step
 npx unbox-ai summary .e2e/ai-trace.json --run 0             # turns, tokens, tool calls of one step
 ```
@@ -286,7 +286,7 @@ the one that knows its screens, and that comes from iterating on it:
 4. **Tools.** A test API the agent may call mid-flow (seed a cart, mint a
    coupon) via `createAgent({ tools })`; see below.
 5. **The model and its options.** `providerOptions` for reasoning effort,
-   or a different model for one persona. `npx --no-install e2e-cpp run --agent <name>` runs
+   or a different model for one persona. `npx --no-install e2e-platform run --agent <name>` runs
    the suite as any configured agent, so two candidates can be compared on
    the same tests; every result records which agent ran it.
 
@@ -297,7 +297,7 @@ per agent step, so a specialised agent gets the same replay benefit.
 ## Beyond the built-in agent
 
 - `createAgent({ tools: { seedCart } })` adds AI SDK tools wrapped with
-  `defineTool(tool({ ... }), { mutates: true })` from `@e2e-cpp/core/agent`, so
+  `defineTool(tool({ ... }), { mutates: true })` from `@e2e-platform/core/agent`, so
   a flow can call a test API mid-step.
 - `createToolLoopExecutor` keeps the loop and replaces the prompt and the
   tool vocabulary.

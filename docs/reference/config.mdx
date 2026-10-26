@@ -8,8 +8,8 @@ its shape without widening its inferred types. The runner also validates the
 config when it loads, including ranges and rules TypeScript cannot check.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [
@@ -409,7 +409,7 @@ export interface AgentConfig {
 ```
 
 Tests use the `default` agent unless you select another with
-`e2e-cpp run --agent <name>`, a test or group option, or an individual `agent.*`
+`e2e-platform run --agent <name>`, a test or group option, or an individual `agent.*`
 call. A test with `{ agent: ['buyer', 'admin'] }` runs once for each agent.
 `default` exists even when the config declares no agents, but has no model.
 
@@ -418,9 +418,9 @@ is `INVALID_CONFIG` on the CLI flag, `COLLECTION_ERROR` on a test or group,
 and `INVALID_ARGUMENT` on a call. See [Agents and personas](/agents).
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createAgent } from '@e2e-cpp/core/agent';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createAgent } from '@e2e-platform/core/agent';
+import { playwright } from '@e2e-platform/playwright';
 import { gateway } from 'ai';
 
 export default {
@@ -460,7 +460,7 @@ export interface ModelInstance {
 ```
 
 Construct the model in your config with an AI SDK provider. For subscription
-sign-in, use [`@e2e-cpp/oauth`](/subscriptions).
+sign-in, use [`@e2e-platform/oauth`](/subscriptions).
 
 | Gateway | Constructor | Package | Reads |
 | --- | --- | --- | --- |
@@ -581,7 +581,7 @@ trust through `writable`.
 
 ### Commit your traces
 
-`e2e-cpp init` adds `.e2e/cache/` to `.gitignore`, so committing entries is
+`e2e-platform init` adds `.e2e/cache/` to `.gitignore`, so committing entries is
 opt-in. Remove that line to share replays with CI and teammates; CI stays
 `read-only` unless `cache: 'read-write'` is set. See
 [Caching agent steps](/cache#commit-your-traces).
@@ -627,8 +627,8 @@ CI mode is on unless `CI` is unset, blank, `0`, or `false`.
 ## Deterministic native configuration
 
 ```ts
-import type { E2EConfig } from '@e2e-cpp/core';
-import { qt } from '@e2e-cpp/qt';
+import type { E2EConfig } from '@e2e-platform/core';
+import { qt } from '@e2e-platform/qt';
 
 export default {
   modelPolicy: 'forbid',
@@ -647,7 +647,7 @@ identity or URL, `appPath` identifies the app for session and cache isolation.
 acquiring the agent fixture, so deterministic code can share fixtures with
 agentic suites. A built-in `act`, `assert`, `waitFor`, or `extract` then fails
 with `MODEL_UNAVAILABLE` before observing the app or replaying an acting trace.
-`e2e-cpp run --no-model` overrides a configured `allow` policy in every worker.
+`e2e-platform run --no-model` overrides a configured `allow` policy in every worker.
 An omitted policy defaults to `allow`, but does not configure an implicit model.
 
 Custom executors remain trusted project code: their `act` and `assert` methods

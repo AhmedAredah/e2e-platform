@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { expect, test } from '@e2e-cpp/process/test';
-import { assertComparison, compareJson } from '@e2e-cpp/checks';
+import { expect, test } from '@e2e-platform/process/test';
+import { assertComparison, compareJson } from '@e2e-platform/checks';
 import { evidence, executable, exportedResult } from '../test-support.ts';
 
 test('exports independently checked numbers from a real C++ executable', async ({ processes }) => {

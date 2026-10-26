@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('a visitor signs up for a trial', async ({ app, agent, screen }) => {
   await app.open('/');

@@ -1,5 +1,5 @@
 /**
- * The `e2e-cpp mcp` server: a live session on the app for a coding agent, with
+ * The `e2e-platform mcp` server: a live session on the app for a coding agent, with
  * the skill as resources, served over one stdio transport. The tool list is
  * four tools and never changes: the session's own vocabulary is a catalog
  * behind `call`, so it follows the config the agent opens rather than the
@@ -36,19 +36,19 @@ export interface ServeOptions {
 
 const INSTRUCTIONS = `e2e is a local-first end-to-end test runner; this server drives an e2e project's app (its e2e.config.ts) live.
 Call open_session (optionally with a target and a config path) to get a session, its tool catalog, and the first observation. Then call {tool, args} runs any catalog tool: observe, tap, type, press, select, scroll, navigate, type_secret, locate, screenshot, and the project's own tools; tools lists them, tools {tool} shows one tool's arguments. close_session when done.
-Write deterministic tests (tests/*.e2e.ts) from what you saw and run them with the CLI: npx --no-install e2e-cpp run <file>. Resources e2e://guide and e2e://guide/{topic} hold the writing guide.`;
+Write deterministic tests (tests/*.e2e.ts) from what you saw and run them with the CLI: npx --no-install e2e-platform run <file>. Resources e2e://guide and e2e://guide/{topic} hold the writing guide.`;
 
 type LogLevel = 'info' | 'warning' | 'error';
 
 /** Serves until the client disconnects or `signal` aborts; resolves with the exit code. */
 export async function serveMcp(options: ServeOptions): Promise<number> {
   const server = new McpServer(
-    { name: '@e2e-cpp/core', title: '@e2e-cpp/core', version: options.version },
+    { name: '@e2e-platform/core', title: '@e2e-platform/core', version: options.version },
     { capabilities: { logging: {}, tools: {}, resources: {} }, instructions: INSTRUCTIONS },
   );
   const log = (level: LogLevel, message: string): void => {
     options.log(`[${level}] ${message}`);
-    if (server.isConnected()) void server.sendLoggingMessage({ level, logger: '@e2e-cpp/core', data: message }).catch(() => undefined);
+    if (server.isConnected()) void server.sendLoggingMessage({ level, logger: '@e2e-platform/core', data: message }).catch(() => undefined);
   };
 
   const host = new SessionHost({
@@ -87,7 +87,7 @@ export async function serveMcp(options: ServeOptions): Promise<number> {
     options.signal?.addEventListener('abort', () => resolve(), { once: true });
   });
   await server.connect(transport);
-  log('info', `e2e-cpp mcp ${options.version} serving ${options.cwd}`);
+  log('info', `e2e-platform mcp ${options.version} serving ${options.cwd}`);
   await closed;
   try {
     const summary = await host.close('server shutdown');
@@ -104,7 +104,7 @@ function registerGuide(server: McpServer): void {
   server.registerResource(
     'guide',
     'e2e://guide',
-    { title: 'e2e-cpp guide', description: 'How to set up e2e, write tests, use agent steps, run the CLI, and read a failing run', mimeType: 'text/markdown' },
+    { title: 'e2e-platform guide', description: 'How to set up e2e, write tests, use agent steps, run the CLI, and read a failing run', mimeType: 'text/markdown' },
     async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/markdown', text: readGuide(undefined) ?? 'The skill is not part of this installation.' }] }),
   );
   server.registerResource(
@@ -114,7 +114,7 @@ function registerGuide(server: McpServer): void {
         resources: skillTopics().map((topic) => ({ uri: `e2e://guide/${topic}`, name: topic, mimeType: 'text/markdown' })),
       }),
     }),
-    { title: 'e2e-cpp guide topic', description: `One topic of the guide: ${skillTopics().join(', ')}`, mimeType: 'text/markdown' },
+    { title: 'e2e-platform guide topic', description: `One topic of the guide: ${skillTopics().join(', ')}`, mimeType: 'text/markdown' },
     async (uri, variables) => {
       const topic = String(variables['topic']);
       const text = readGuide(topic);

@@ -1,4 +1,4 @@
-import type { ProcessOptions } from '@e2e-cpp/process';
+import type { ProcessOptions } from '@e2e-platform/process';
 import type { RequestContext } from '../transport/native-transport.ts';
 
 /**

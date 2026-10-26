@@ -86,4 +86,13 @@ if(BUILD_TESTING)
   add_test(NAME qt-surface-privacy COMMAND e2e_qt_surface_tests)
   set_tests_properties(qt-surface-privacy PROPERTIES TIMEOUT 45
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+  if(E2E_QT_CONFIG_QUICK)
+    add_executable(e2e_qt_quick_controls_tests tests/quick_controls_tests.cpp ${E2E_QT_SURFACE_SOURCES})
+    target_compile_features(e2e_qt_quick_controls_tests PRIVATE cxx_std_17)
+    target_compile_definitions(e2e_qt_quick_controls_tests PRIVATE E2E_QT_HAS_QUICK=1)
+    target_link_libraries(e2e_qt_quick_controls_tests PRIVATE Qt6::Widgets Qt6::Test Qt6::Quick Qt6::Qml)
+    add_test(NAME qt-quick-controls COMMAND e2e_qt_quick_controls_tests)
+    set_tests_properties(qt-quick-controls PROPERTIES TIMEOUT 45
+      ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+  endif()
 endif()

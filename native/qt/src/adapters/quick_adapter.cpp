@@ -5,6 +5,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTest>
+#include <cmath>
 
 namespace e2e::qt::detail {
 namespace {
@@ -117,7 +118,74 @@ void QuickAdapter::typeCharacter(QObject* object, char character) {
 bool QuickAdapter::editable(QObject* object) const { return object->property("readOnly").isValid() && !object->property("readOnly").toBool(); }
 bool QuickAdapter::checkable(QObject* object) const { return object->property("checked").isValid(); }
 QObject* QuickAdapter::focused(QObject* root) const { return static_cast<QQuickWindow*>(root)->activeFocusItem(); }
-void QuickAdapter::selectOption(QObject*, const QJsonValue&) { throw Failure("UNSUPPORTED_CAPABILITY", "Qt Quick selectOption is not implemented"); }
+void QuickAdapter::selectOption(QObject* object, const QJsonValue& option) {
+    // Inspect only the control's public QML API. No private Qt headers or
+    // generated JavaScript are involved, and selection follows the key path so
+    // application handlers receive ComboBox::activated as real input does.
+    if (!object->inherits("QQuickComboBox")) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires a Qt Quick Controls ComboBox");
+    QPointer<QObject> target(object);
+    const int count = target->property("count").toInt();
+    if (count < 1 || count > 10000) throw Failure("NOT_ACTIONABLE", "combobox model is empty or exceeds action bound");
+    QString label, value;
+    bool byLabel = option.isString(), byValue = false;
+    int index = -1;
+    if (byLabel) label = option.toString();
+    else if (option.isObject()) {
+        const QJsonObject selector = option.toObject();
+        if (selector.size() == 1 && selector.value("label").isString()) { byLabel = true; label = selector.value("label").toString(); }
+        else if (selector.size() == 1 && selector.value("value").isString()) { byValue = true; value = selector.value("value").toString(); }
+        else if (selector.size() == 1 && selector.value("index").isDouble()) {
+            const double candidate = selector.value("index").toDouble(-1);
+            if (std::isfinite(candidate) && candidate >= 0 && candidate < count && std::floor(candidate) == candidate) index = int(candidate);
+        }
+    }
+    if (byLabel || byValue) {
+        for (int candidate = 0; candidate < count; ++candidate) {
+            bool match = false;
+            if (byLabel) {
+                QString text;
+                if (!QMetaObject::invokeMethod(target, "textAt", Qt::DirectConnection, Q_RETURN_ARG(QString, text), Q_ARG(int, candidate)))
+                    throw Failure("UNSUPPORTED_CAPABILITY", "combobox text lookup is unavailable");
+                match = text == label;
+            } else {
+                QVariant data;
+                if (!QMetaObject::invokeMethod(target, "valueAt", Qt::DirectConnection, Q_RETURN_ARG(QVariant, data), Q_ARG(int, candidate)))
+                    throw Failure("UNSUPPORTED_CAPABILITY", "combobox value lookup is unavailable");
+                match = data.metaType().id() == QMetaType::QString && data.toString() == value;
+            }
+            if (!target) throw Failure("NODE_STALE", "combobox was destroyed during option lookup");
+            if (match) {
+                if (index >= 0) throw Failure("NOT_ACTIONABLE", "combobox option is ambiguous; select by index");
+                index = candidate;
+            }
+        }
+    }
+    if (index < 0 || index >= count) throw Failure("NOT_ACTIONABLE", "combobox option is absent or selector is invalid");
+    QObject* popup = target->property("popup").value<QObject*>();
+    if (popup && popup->property("visible").toBool()) throw Failure("NOT_ACTIONABLE", "close the combobox popup before selecting an option");
+    // Editable controls route navigation keys into their text editor. Refuse
+    // that different interaction contract instead of setting currentIndex.
+    if (target->property("editable").toBool()) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires a non-editable Qt Quick ComboBox");
+    if (target->property("currentIndex").toInt() == index) return;
+    QString expectedText;
+    QVariant expectedValue;
+    if (!QMetaObject::invokeMethod(target, "textAt", Qt::DirectConnection, Q_RETURN_ARG(QString, expectedText), Q_ARG(int, index))
+        || !QMetaObject::invokeMethod(target, "valueAt", Qt::DirectConnection, Q_RETURN_ARG(QVariant, expectedValue), Q_ARG(int, index)))
+        throw Failure("UNSUPPORTED_CAPABILITY", "combobox option inspection is unavailable");
+    if (!target) throw Failure("NODE_STALE", "combobox was destroyed during option lookup");
+    focus(target);
+    if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox was destroyed during focus");
+    key(target, Qt::Key_Home, Qt::NoModifier);
+    if (!target || target->property("currentIndex").toInt() != 0 || target->property("count").toInt() != count)
+        throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox did not accept initial navigation");
+    for (int step = 0; step < index; ++step) {
+        key(target, Qt::Key_Down, Qt::NoModifier);
+        if (!target || target->property("currentIndex").toInt() != step + 1 || target->property("count").toInt() != count)
+            throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox selection changed or did not reach the requested option");
+    }
+    if (target->property("currentText").toString() != expectedText || target->property("currentValue") != expectedValue)
+        throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox model changed during selection");
+}
 QImage QuickAdapter::capture(QObject* root) {
     auto* window = static_cast<QQuickWindow*>(root);
     if (qint64(window->width()) * window->height() * window->devicePixelRatio() * window->devicePixelRatio() > MaxPixels) throw Failure("ENGINE_FAILURE", "screenshot exceeds pixel limit");

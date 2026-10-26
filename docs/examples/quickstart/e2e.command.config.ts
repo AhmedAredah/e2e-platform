@@ -1,6 +1,6 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createAgent } from '@e2e-cpp/core/agent';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createAgent } from '@e2e-platform/core/agent';
+import { playwright } from '@e2e-platform/playwright';
 import { gateway } from 'ai';
 
 export default {

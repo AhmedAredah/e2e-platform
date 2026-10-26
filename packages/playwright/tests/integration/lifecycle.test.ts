@@ -16,7 +16,7 @@ import type {
   LocatorExpression,
   OperationContext,
   SemanticNode,
-} from '@e2e-cpp/core/engine';
+} from '@e2e-platform/core/engine';
 import { playwright, surfaceOf } from '../../src/index.ts';
 import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';
 import { decodePng } from '../helpers/png.ts';

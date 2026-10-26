@@ -1,20 +1,20 @@
 # e2e
 
 > Fork installation: these package names are local release identities. Use the
-> checksummed kit in [INSTALL_CPP.md](../../INSTALL_CPP.md), or pack the needed
+> checksummed kit in [INSTALL.md](../../INSTALL.md), or pack the needed
 > workspace module locally. Registry availability is not established.
 
-The `@e2e-cpp/core` SDK, runner, and CLI for agentic end-to-end testing. Full
+The `@e2e-platform/core` SDK, runner, and CLI for agentic end-to-end testing. Full
 documentation is included in the repository under `docs/`.
 
 ```bash
-pnpm exec e2e-cpp init
+pnpm exec e2e-platform init
 ```
 
 ## Usage
 
 ```bash
-APP_URL=http://localhost:3000 npx --no-install e2e-cpp run
+APP_URL=http://localhost:3000 npx --no-install e2e-platform run
 ```
 
 After installing the local core and optional engine tarballs, init adds missing
@@ -23,12 +23,12 @@ as the engine and AI SDK v7 for the built-in agent, then asks whether to
 install. Choose Playwright for the config and browser test below. `--yes`
 skips the prompts: Playwright, AI on, no installation. The wizard still offers
 dependency installation and adds version ranges for missing packages. For this
-source candidate, decline installation until each `@e2e-cpp/*` entry refers to a
+source candidate, decline installation until each `@e2e-platform/*` entry refers to a
 local tarball; existing dependency entries are preserved.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [{ name: 'web', engine: playwright({ url: process.env.APP_URL ?? 'http://localhost:3000' }) }],
@@ -87,8 +87,8 @@ server printed, since its output is otherwise discarded. Every option is listed 
 [the app under test](https://e2e.tester.army/docs/reference/config#the-app-under-test).
 
 ```ts
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('user signs in', async ({ app, screen, web }) => {
   await app.open('/login');
@@ -99,7 +99,7 @@ test('user signs in', async ({ app, screen, web }) => {
 ```
 
 The runner itself knows no platform: every target names the engine that
-drives it, and `@e2e-cpp/playwright` is the browser one. Missing Playwright
+drives it, and `@e2e-platform/playwright` is the browser one. Missing Playwright
 browsers are downloaded once, on the first run, before the run's clock starts.
 To provision them ahead of time (for example in a CI image), run
 `npx playwright install chromium`.
@@ -120,7 +120,7 @@ export default {
 ```
 
 ```bash
-AI_GATEWAY_API_KEY=... e2e-cpp run
+AI_GATEWAY_API_KEY=... e2e-platform run
 ```
 
 The model is an AI SDK instance the config constructs; the runner has no
@@ -154,13 +154,13 @@ a host-supplied store keeps its configured mode) — opt out with
 `waitFor`, `extract`) are never cached — every judgment is made fresh, per
 run, from a fresh observation.
 
-`e2e-cpp run --ai-trace` records every model call of the run — prompt, tool
+`e2e-platform run --ai-trace` records every model call of the run — prompt, tool
 definitions, response, usage, cost — to `.e2e/ai-trace.json`, one run per
 agent step, in the AI SDK devtools database shape. Open it with
 [unbox-ai](https://github.com/tester-army/unbox-ai):
 `npx unbox-ai .e2e/ai-trace.json`.
 
-`e2e-cpp run --video` records every attempt: a WebM screencast of the page under
+`e2e-platform run --video` records every attempt: a WebM screencast of the page under
 the attempt's artifact directory, named in the failure recap.
 `artifacts: ['screenshot', 'trace', 'video']` turns it on for every run, and
 `artifacts: { kinds: ['screenshot', 'trace', 'video'], video: { retain:
@@ -168,7 +168,7 @@ the attempt's artifact directory, named in the failure recap.
 
 ## Coding agents
 
-`e2e-cpp init` installs a skill, `SKILL.md` plus one file per topic, into
+`e2e-platform init` installs a skill, `SKILL.md` plus one file per topic, into
 `.agents/skills/e2e/` (read by Codex, Cursor, Copilot, Gemini CLI, OpenCode,
 Zed, and most other agents) and `.claude/skills/e2e/` (Claude Code), so an
 agent working in the project knows how to configure e2e, write tests, and
@@ -177,8 +177,8 @@ directory into the desired project skill directory. An agent without it can prin
 the text:
 
 ```bash
-npx --no-install e2e-cpp guide                # the overview and the topic list
-npx --no-install e2e-cpp guide writing-tests  # one topic
+npx --no-install e2e-platform guide                # the overview and the topic list
+npx --no-install e2e-platform guide writing-tests  # one topic
 ```
 
 ## Current limitations

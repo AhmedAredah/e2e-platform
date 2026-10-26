@@ -2,7 +2,7 @@
  * `ai` is an optional peer dependency, and the CLI loads most of `src` for
  * every command. A static value import of it anywhere but the loader turns a
  * missing package into a module-resolution crash before argv is parsed, which
- * is what `npx --no-install e2e-cpp init` in a fresh project hits: it runs before `ai` is
+ * is what `npx --no-install e2e-platform init` in a fresh project hits: it runs before `ai` is
  * installed. Type imports erase and are fine; anything that needs the SDK at
  * runtime goes through `loadAiSdk()`.
  */

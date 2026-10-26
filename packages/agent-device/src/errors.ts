@@ -14,7 +14,7 @@
  */
 
 import { normalizeAgentDeviceError } from 'agent-device';
-import { EngineError, ConfigurationError, InfrastructureError, TestError, raceAbort } from '@e2e-cpp/core/engine';
+import { EngineError, ConfigurationError, InfrastructureError, TestError, raceAbort } from '@e2e-platform/core/engine';
 import { cancelled } from './support.ts';
 
 /**

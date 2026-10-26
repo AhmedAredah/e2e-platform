@@ -32,10 +32,10 @@ export function getProvider(id: ProviderId): OAuthProvider {
 }
 
 /**
- * How requests identify this harness to a vendor: `e2e-cpp-oauth/<version> (<platform>; <arch>)`,
+ * How requests identify this harness to a vendor: `e2e-platform-oauth/<version> (<platform>; <arch>)`,
  * alongside the `originator` (ChatGPT) and `referrer` (SpaceXAI) the flows send. Never another client's name.
  */
-export const USER_AGENT = `e2e-cpp-oauth/${packageVersion()} (${process.platform}; ${process.arch})`;
+export const USER_AGENT = `e2e-platform-oauth/${packageVersion()} (${process.platform}; ${process.arch})`;
 
 function packageVersion(): string {
   try {
@@ -48,5 +48,5 @@ function packageVersion(): string {
 
 /** How a missing login is described to the user: the CLI command that fixes it. */
 export function loginHint(id: ProviderId): string {
-  return `run \`e2e-cpp login ${id}\` (or \`npx --no-install e2e-cpp-oauth login ${id}\`)`;
+  return `run \`e2e-platform login ${id}\` (or \`npx --no-install e2e-platform-oauth login ${id}\`)`;
 }

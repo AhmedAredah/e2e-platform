@@ -5,7 +5,7 @@ import { fakeCalls, installFakeModel, judgment } from '../helpers/fake-model.ts'
 import { resultByTitle, runProject, type FixtureProject, type RunOutcome } from '../helpers/run-project.ts';
 import { assertValidReport } from '../helpers/report-schema.ts';
 
-const SUITE = `import { test, credentials } from '@e2e-cpp/core';
+const SUITE = `import { test, credentials } from '@e2e-platform/core';
 test('act receives fallback on its first observation', async ({ agent }) => {
   await agent.act('read the visible screenshot');
 });

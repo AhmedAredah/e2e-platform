@@ -15,7 +15,7 @@ it.each(['failed', 'passed', 'ready', 'unit', 'type', 'status', 'file', 'ERROR',
   'preserves failing verdicts and valid JSON with secret %s', async (secret) => {
     const project = createProject({
       'e2e.config.ts': `export default { targets: [{ name: 'target', platform: 'test' }], secrets: { token: ${JSON.stringify(secret)} }, artifacts: [], modelPolicy: 'forbid' };`,
-      'tests/failure.e2e.ts': `import { test } from '@e2e-cpp/core'; test('deliberate failure', async () => { throw new Error('failure fixture'); });`,
+      'tests/failure.e2e.ts': `import { test } from '@e2e-platform/core'; test('deliberate failure', async () => { throw new Error('failure fixture'); });`,
     });
     try {
       const result = await promisify(execFile)(process.execPath, [cli, 'run', '--no-model', '--reporter', 'json'], {
@@ -37,8 +37,8 @@ it.each(['failed', 'passed', 'ready', 'unit', 'type', 'status', 'file', 'ERROR',
 it('redacts worker-resolved provider values from final user-derived identities', async () => {
   const value = 'provider-identity-secret-V91-5932';
   const project = createProject({
-    'e2e.config.ts': `import { defineEngine } from '@e2e-cpp/core/engine'; export default { artifacts: [], modelPolicy: 'forbid', secrets: { token: () => '${value}' }, targets: [{ name: 'native', platform: 'test', engine: defineEngine({ name: 'fixture', version: '1', spiVersion: 1, platform: 'test', actions: ['fill'], async observe() { return { root: { ref: { id: 'field', revision: '' }, role: 'textbox' }, viewport: { width: 20, height: 20 } }; }, async locate() { return [{ ref: { id: 'field', revision: '' }, role: 'textbox' }]; }, async perform() {} }) }] };`,
-    'tests/provider.e2e.ts': `import { test, secrets } from '@e2e-cpp/core'; test('case ${value}', async ({ screen }) => { await screen.getByRole('textbox').fill(secrets.get('token')); });`,
+    'e2e.config.ts': `import { defineEngine } from '@e2e-platform/core/engine'; export default { artifacts: [], modelPolicy: 'forbid', secrets: { token: () => '${value}' }, targets: [{ name: 'native', platform: 'test', engine: defineEngine({ name: 'fixture', version: '1', spiVersion: 1, platform: 'test', actions: ['fill'], async observe() { return { root: { ref: { id: 'field', revision: '' }, role: 'textbox' }, viewport: { width: 20, height: 20 } }; }, async locate() { return [{ ref: { id: 'field', revision: '' }, role: 'textbox' }]; }, async perform() {} }) }] };`,
+    'tests/provider.e2e.ts': `import { test, secrets } from '@e2e-platform/core'; test('case ${value}', async ({ screen }) => { await screen.getByRole('textbox').fill(secrets.get('token')); });`,
   });
   try {
     const result = await promisify(execFile)(process.execPath, [cli, 'run', '--no-model', '--reporter', 'json'], {
@@ -59,7 +59,7 @@ it('preserves distinct confidential test identities and target references in rep
   const second = 'identity-secret-Beta-927';
   const project = createProject({
     'e2e.config.ts': `export default { targets: [{ name: '${first}', platform: 'test' }], secrets: { first: '${first}', second: '${second}' }, artifacts: [], modelPolicy: 'forbid' };`,
-    'tests/identity.e2e.ts': `import { test } from '@e2e-cpp/core'; test('same ${first}', async()=>{}); test('same ${second}', async()=>{});`,
+    'tests/identity.e2e.ts': `import { test } from '@e2e-platform/core'; test('same ${first}', async()=>{}); test('same ${second}', async()=>{});`,
   });
   try {
     const { stdout } = await promisify(execFile)(process.execPath, [cli, 'run', '--no-model', '--reporter', 'json'], {
@@ -77,7 +77,7 @@ it('preserves distinct confidential test identities and target references in rep
 it('delivers each complete MCP response promptly after registering secrets', async () => {
   const value = 'mcp-secret-boundary-Q18-long-value';
   const project = createProject({
-    'e2e.config.ts': `import { defineEngine } from '@e2e-cpp/core/engine'; export default { secrets: { token: '${value}', digit: '1', word: 'text' }, targets: [{ name: 'test', platform: 'test', engine: defineEngine({ name: 'fixture', version: '1', spiVersion: 1, platform: 'test', async observe() { return { root: { ref: { id: 'node' }, role: 'button', name: '${value}' }, viewport: { width: 20, height: 20 } }; } }) }] };`,
+    'e2e.config.ts': `import { defineEngine } from '@e2e-platform/core/engine'; export default { secrets: { token: '${value}', digit: '1', word: 'text' }, targets: [{ name: 'test', platform: 'test', engine: defineEngine({ name: 'fixture', version: '1', spiVersion: 1, platform: 'test', async observe() { return { root: { ref: { id: 'node' }, role: 'button', name: '${value}' }, viewport: { width: 20, height: 20 } }; } }) }] };`,
   });
   const server = spawn(process.execPath, [cli, 'mcp', '--headless'], {
     cwd: project.dir, env: { ...process.env, CI: '', E2E_TELEMETRY_DISABLED: '1' }, stdio: ['pipe', 'pipe', 'pipe'],
@@ -127,7 +127,7 @@ it('keeps buffered output ownership and withholds secrets split between test pai
   const value = 'Cross-owner-secret-D82-9763';
   const events: RunEvent[] = [];
   const { project, outcome } = await runProjectWithConfigFile({
-    'tests/output.e2e.ts': `import { test } from '@e2e-cpp/core';
+    'tests/output.e2e.ts': `import { test } from '@e2e-platform/core';
       test('first', async () => { process.stdout.write('first ${value.slice(0, 12)}'); process.stderr.write('first stderr tail'); });
       test('second', async () => { process.stdout.write('${value.slice(12)} second'); });`,
   }, {

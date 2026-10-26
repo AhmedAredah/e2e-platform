@@ -4,11 +4,11 @@
  * `agent.model`; the executor brings its own transport. Tests never open the
  * app, so the engine surface is never touched.
  *
- *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.dogfood-brain.config.ts
+ *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-platform/core/dist/cli/bin.js run --config e2e.dogfood-brain.config.ts
  */
 
-import type { E2EConfig, StepExecutor, StepVerdict } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig, StepExecutor, StepVerdict } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 import { createGateway, stepCountIs, tool, ToolLoopAgent } from 'ai';
 import { z } from 'zod';
 

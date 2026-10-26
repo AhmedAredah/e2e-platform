@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Apple Pay payment-sheet fixture for the e2e mobile benchmark'
   s.description    = s.summary
   s.license        = { :type => 'MIT' }
-  s.author         = { '@e2e-cpp/core' => 'oskar@tester.army' }
+  s.author         = { '@e2e-platform/core' => 'oskar@tester.army' }
   s.homepage       = 'https://github.com/tester-army/e2e'
   s.platforms      = { :ios => '15.1' }
   s.source         = { :git => 'https://github.com/tester-army/e2e' }

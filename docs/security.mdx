@@ -183,7 +183,7 @@ Files are named by a hash of the expected key and refused if larger than
 1 MiB. Entries store actions and a redacted summary; replay executes only
 the actions. Secret fills store a name and authorize the fill again.
 
-`e2e-cpp init` ignores `.e2e/cache/` in Git. If you choose to
+`e2e-platform init` ignores `.e2e/cache/` in Git. If you choose to
 [commit recordings](/cache#commit-your-traces), review their actions and typed
 values. CI defaults to read-only when no cache mode is configured.
 
@@ -225,7 +225,7 @@ Built-in features may connect to:
 - readiness probes against the `readyUrl` of the app the runner starts
 - a Playwright browser download, once, when the browser is missing
 - the DevTools endpoint you name in `playwright({ connect })`
-- the GitHub API, only from the opt-in `@e2e-cpp/github` reporter
+- the GitHub API, only from the opt-in `@e2e-platform/github` reporter
 - the app under test, and whatever that app itself loads
 
 There is no crash reporting or update check. `--ai-trace` writes a local
@@ -234,10 +234,10 @@ additional connections.
 
 ## MCP and explore
 
-`e2e-cpp mcp` uses stdio and the same action authorization as a test run. It
+`e2e-platform mcp` uses stdio and the same action authorization as a test run. It
 allows one open session at a time and closes idle sessions.
 
-`e2e-cpp explore` carries every configured credential into every step. Usernames
+`e2e-platform explore` carries every configured credential into every step. Usernames
 reach the model as plain text; passwords stay handles. Explore with a config
 that declares only the accounts the exploration needs.
 

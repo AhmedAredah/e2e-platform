@@ -1,8 +1,8 @@
 ---
-"@e2e-cpp/oauth": patch
-"@e2e-cpp/checks": patch
-"@e2e-cpp/protocol": patch
-"@e2e-cpp/terminal": patch
+"@e2e-platform/oauth": patch
+"@e2e-platform/checks": patch
+"@e2e-platform/protocol": patch
+"@e2e-platform/terminal": patch
 ---
 
 Bound OAuth network and refresh operations, preserve independent cancellation for shared refresh callers, and redact credential-bearing provider diagnostics. Correct fork CLI recovery commands and successful help exits.

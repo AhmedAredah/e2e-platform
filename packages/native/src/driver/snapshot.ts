@@ -1,4 +1,4 @@
-import { EngineError, OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, type EngineSnapshot, type ObservationPixels, type SemanticNode } from '@e2e-cpp/core/engine';
+import { EngineError, OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, type EngineSnapshot, type ObservationPixels, type SemanticNode } from '@e2e-platform/core/engine';
 import { isRecord } from '../transport/json-rpc-tcp.ts';
 
 const STATES = ['checked', 'disabled', 'selected', 'expanded', 'pressed', 'focused', 'hidden', 'secure'] as const;

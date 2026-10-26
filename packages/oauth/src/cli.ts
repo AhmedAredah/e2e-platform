@@ -1,7 +1,7 @@
 /**
  * The terminal side of a login. `runLogin`, `runLogout`, and `runStatus` are
  * what the e2e CLI calls; `runOAuthCli` parses argv for the package's own
- * `e2e-cpp-oauth` bin and dispatches to them.
+ * `e2e-platform-oauth` bin and dispatches to them.
  */
 
 import { spawn } from 'node:child_process';
@@ -30,9 +30,9 @@ export interface LoginFlags {
 }
 
 const USAGE = `Usage:
-  e2e-cpp-oauth login [provider] [--device] [--client-id <id>] [--from-gh] [--enterprise-url <host>]
-  e2e-cpp-oauth logout [provider]
-  e2e-cpp-oauth status
+  e2e-platform-oauth login [provider] [--device] [--client-id <id>] [--from-gh] [--enterprise-url <host>]
+  e2e-platform-oauth logout [provider]
+  e2e-platform-oauth status
 
 Without a provider, login and logout show a picker.
 
@@ -115,7 +115,7 @@ export async function runStatus(io: CliIo = defaultIo()): Promise<number> {
   return report(io, async () => {
     const stored = await signedIn();
     if (!io.isTTY) {
-      for (const id of PROVIDER_IDS) io.stdout.write(`${id.padEnd(16)} ${getProvider(id).name.padEnd(16)} ${stored.get(id) ?? `not signed in; e2e-cpp login ${id}`}\n`);
+      for (const id of PROVIDER_IDS) io.stdout.write(`${id.padEnd(16)} ${getProvider(id).name.padEnd(16)} ${stored.get(id) ?? `not signed in; e2e-platform login ${id}`}\n`);
       return;
     }
     clack.intro('Subscriptions');
@@ -126,7 +126,7 @@ export async function runStatus(io: CliIo = defaultIo()): Promise<number> {
       else clack.log.success(line);
     }
     const missing = PROVIDER_IDS.filter((id) => !stored.has(id));
-    clack.outro(missing.length === 0 ? 'Every subscription is signed in.' : `Sign in with ${missing.map((id) => `e2e-cpp login ${id}`).join(' or ')}.`);
+    clack.outro(missing.length === 0 ? 'Every subscription is signed in.' : `Sign in with ${missing.map((id) => `e2e-platform login ${id}`).join(' or ')}.`);
   });
 }
 
@@ -139,7 +139,7 @@ function say(io: CliIo, kind: 'success' | 'info' | 'error', message: string): vo
   clack.log[kind](message);
 }
 
-/** The `e2e-cpp-oauth` bin: argv in, exit code out. */
+/** The `e2e-platform-oauth` bin: argv in, exit code out. */
 export async function runOAuthCli(argv: readonly string[], io: CliIo = defaultIo()): Promise<number> {
   return report(io, async () => {
     const { values, positionals } = parseArgs({

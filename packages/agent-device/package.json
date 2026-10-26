@@ -1,9 +1,9 @@
 {
-  "name": "@e2e-cpp/agent-device",
-  "version": "0.2.0-rc.0",
+  "name": "@e2e-platform/agent-device",
+  "version": "0.2.0-rc.1",
   "description": "agent-device mobile engine (iOS and Android) for e2e agentic end-to-end testing",
   "keywords": [
-    "@e2e-cpp/core",
+    "@e2e-platform/core",
     "testing",
     "agentic",
     "end-to-end",
@@ -54,7 +54,7 @@
   },
   "peerDependencies": {
     "ai": "^7.0.0",
-    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
+    "@e2e-platform/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "peerDependenciesMeta": {
     "ai": {
@@ -65,7 +65,7 @@
     "@types/node": "26.4.1",
     "@types/pngjs": "6.0.5",
     "ai": "7.0.97",
-    "@e2e-cpp/core": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   },

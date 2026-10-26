@@ -2,12 +2,12 @@
  * Dogfood config: the built-in agent extended with project tools (seed/reset
  * over the app's test API), passed as the `agent` value itself. Run manually:
  *
- *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-cpp/core/dist/cli/bin.js run --config e2e.dogfood.config.ts
+ *   AI_GATEWAY_API_KEY=... node node_modules/@e2e-platform/core/dist/cli/bin.js run --config e2e.dogfood.config.ts
  */
 
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
-import { createAgent, defineTool } from '@e2e-cpp/core/agent';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
+import { createAgent, defineTool } from '@e2e-platform/core/agent';
 import { gateway, tool } from 'ai';
 import { z } from 'zod';
 

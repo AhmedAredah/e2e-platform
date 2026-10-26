@@ -1,5 +1,5 @@
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 // Role names match exactly unless told otherwise; the home links' names carry
 // the scenario description too, so these opt into substring matching.

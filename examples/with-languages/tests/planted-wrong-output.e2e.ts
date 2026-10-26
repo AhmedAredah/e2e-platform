@@ -1,4 +1,4 @@
-import { test } from '@e2e-cpp/process/test';
+import { test } from '@e2e-platform/process/test';
 import { applicationProfile } from '../support/profiles.ts';
 import { checkCalculation } from '../support/oracle.ts';
 import { withService } from '../support/service.ts';

@@ -107,7 +107,7 @@ export interface ResolvedConfig {
    * the names `--agent` gave, in order and deduplicated. Never empty.
    */
   readonly agentNames: readonly string[];
-  /** The first of `agentNames`: the run's agent where exactly one is wanted (`e2e-cpp explore`). */
+  /** The first of `agentNames`: the run's agent where exactly one is wanted (`e2e-platform explore`). */
   readonly agent: ResolvedAgentConfig;
   /** Every configured agent, `default` included, by name. */
   readonly agents: ReadonlyMap<string, ResolvedAgentConfig>;
@@ -193,7 +193,7 @@ const FOREIGN_TOP_LEVEL_KEYS: Readonly<Record<string, string>> = {
   webServer: 'the runner starts the app from the engine options: playwright({ url, command: { executable, args } })',
   use: 'browser and app options are engine options: engine: playwright({ ... })',
   projects: 'one target per browser or device: targets: [{ engine }]',
-  agent: 'agents are named: agents: { default: <what agent held> }; e2e-cpp run --agent <name> runs with another',
+  agent: 'agents are named: agents: { default: <what agent held> }; e2e-platform run --agent <name> runs with another',
   screen: 'the test-id attribute is an engine option: engine: playwright({ testIdAttribute })',
 };
 
@@ -629,7 +629,7 @@ function resolveTargets(raw: E2EConfig, projectRoot: string, ports: PortAssignme
       const got = typeof target.engine === 'string' ? `the string ${JSON.stringify(target.engine)}` : `a ${typeof target.engine}`;
       throw new ConfigurationError(
         'INVALID_CONFIG',
-        `${where} engine must be an engine handle, got ${got}; call the engine's factory: playwright({ url }) from @e2e-cpp/playwright, agentDevice({ platform, app }) from @e2e-cpp/agent-device, or your own defineEngine(...)`,
+        `${where} engine must be an engine handle, got ${got}; call the engine's factory: playwright({ url }) from @e2e-platform/playwright, agentDevice({ platform, app }) from @e2e-platform/agent-device, or your own defineEngine(...)`,
       );
     }
     const platform = resolvePlatform(target, where);
@@ -695,7 +695,7 @@ function resolvePlatform(target: Target, where: string): string {
  * The `tests` globs, checked and compiled when the config resolves. A wrong
  * type used to be a raw TypeError reported as a test failure (at config load
  * for `tests: 5`, at collection for `tests: [1]`), and a malformed glob was
- * `INVALID_GLOB` only once a run or `e2e-cpp list` collected, so `explore`,
+ * `INVALID_GLOB` only once a run or `e2e-platform list` collected, so `explore`,
  * `mcp`, and `cache` accepted a config no run could use.
  */
 function normalizeTests(tests: unknown): readonly string[] {

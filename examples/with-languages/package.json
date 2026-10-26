@@ -6,15 +6,15 @@
   "scripts": {
     "build:apps": "node ../../scripts/languages/build.mjs",
     "verify": "node ../../scripts/languages/verify.mjs",
-    "test:e2e": "e2e-cpp run --no-model",
-    "test:e2e:negative": "e2e-cpp run --config e2e.negative.config.ts --no-model",
+    "test:e2e": "e2e-platform run --no-model",
+    "test:e2e:negative": "e2e-platform run --config e2e.negative.config.ts --no-model",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@e2e-cpp/core": "workspace:*",
-    "@e2e-cpp/process": "workspace:*",
-    "@e2e-cpp/protocol": "workspace:*",
-    "@e2e-cpp/checks": "workspace:*",
+    "@e2e-platform/core": "workspace:*",
+    "@e2e-platform/process": "workspace:*",
+    "@e2e-platform/protocol": "workspace:*",
+    "@e2e-platform/checks": "workspace:*",
     "@types/node": "26.6.2",
     "typescript": "7.0.2"
   }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import type { EngineAttemptContext, EngineSnapshot, OperationContext } from '@e2e-cpp/core/engine';
+import type { EngineAttemptContext, EngineSnapshot, OperationContext } from '@e2e-platform/core/engine';
 import { TerminalEngine, terminal } from '../src/engine/terminal.ts';
 import type { TerminalSnapshot } from '../src/model/types.ts';
 import { MemoryTransport } from './helpers.ts';

@@ -25,8 +25,8 @@ for the agent calls shown below.
 | Component testing | No equivalent |
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 
 export default {
   targets: [{
@@ -53,9 +53,9 @@ describe('todos', () => {
 });
 ```
 
-```ts title="@e2e-cpp/core"
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+```ts title="@e2e-platform/core"
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test.describe('todos', () => {
   test('completes one', async ({ app, agent, screen }) => {
@@ -101,7 +101,7 @@ test.describe('todos', () => {
 | `cy.fixture` | `import data from './fixture.json'` |
 | `Cypress.Commands.add` | A function, or a fixture from `test.extend` |
 | `cy.wait(ms)` | Use a locator assertion for the condition you need |
-| `cypress open` | `npx --no-install e2e-cpp run --headed`, plus `--debug` for the step table |
+| `cypress open` | `npx --no-install e2e-platform run --headed`, plus `--debug` for the step table |
 
 Where the behaviour differs from Cypress's:
 

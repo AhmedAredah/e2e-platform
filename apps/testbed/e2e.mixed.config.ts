@@ -1,4 +1,4 @@
-import type { E2EConfig } from '@e2e-cpp/core';
+import type { E2EConfig } from '@e2e-platform/core';
 import agentConfig from './e2e.agent.config.ts';
 
 /**

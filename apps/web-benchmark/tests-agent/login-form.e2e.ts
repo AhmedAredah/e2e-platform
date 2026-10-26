@@ -5,8 +5,8 @@
  * is what makes the test pass or fail; the model only drives.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect, credentials } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect, credentials } from '@e2e-platform/core';
 
 test('act signs in with the benchmark account', async ({ app, agent, screen }) => {
   const account = credentials.user('benchmark');

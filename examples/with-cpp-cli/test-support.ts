@@ -1,4 +1,4 @@
-import { readJsonFile } from '@e2e-cpp/checks';
+import { readJsonFile } from '@e2e-platform/checks';
 import { mkdir, mkdtemp } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 

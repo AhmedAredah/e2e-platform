@@ -233,7 +233,7 @@ test('as the buyer', { agent: 'buyer' }, async () => {});
 test.describe('admin flows', { agent: 'admin' }, () => {});
 await agent.act('approve it', { agent: 'admin' });
 await agent.assert('it is approved', { agent: 'buyer' });
-// createAgent hands back what it was built from, so a host (e2e-cpp explore) can compose on it.
+// createAgent hands back what it was built from, so a host (e2e-platform explore) can compose on it.
 declare const seedCart: ReturnType<typeof defineTool>;
 const projectAgent: DefaultAgent = createAgent({ tools: { seedCart }, system: 'Be thorough.' });
 projectAgent.options.tools?.seedCart satisfies ReturnType<typeof defineTool> | undefined;

@@ -1,6 +1,6 @@
 ---
-"@e2e-cpp/terminal": patch
-"@e2e-cpp/checks": patch
+"@e2e-platform/terminal": patch
+"@e2e-platform/checks": patch
 ---
 
 Report terminal output and response-transport faults at attempt settlement even when no further terminal operation occurs or the session has been restarted or closed. Preserve observable process-exit behavior and document explicit exit assertions.

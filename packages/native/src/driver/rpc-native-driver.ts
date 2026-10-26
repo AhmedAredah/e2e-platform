@@ -1,4 +1,4 @@
-import { EngineError, LOCATOR_ACTION_KINDS, type EngineSnapshot, type LocatorAction, type LocatorActionKind, type NodeRef } from '@e2e-cpp/core/engine';
+import { EngineError, LOCATOR_ACTION_KINDS, type EngineSnapshot, type LocatorAction, type LocatorActionKind, type NodeRef } from '@e2e-platform/core/engine';
 import { isRecord } from '../transport/json-rpc-tcp.ts';
 import type { NativeTransport, RequestContext } from '../transport/native-transport.ts';
 import { NativeDriver, type NativeInitialization, type NativeScreenshot } from './native-driver.ts';

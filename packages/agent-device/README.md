@@ -1,28 +1,28 @@
-# @e2e-cpp/agent-device
+# @e2e-platform/agent-device
 
 > Fork installation: these package names are local release identities. Use the
-> checksummed kit in [INSTALL_CPP.md](../../INSTALL_CPP.md), or pack the needed
+> checksummed kit in [INSTALL.md](../../INSTALL.md), or pack the needed
 > workspace module locally. Registry availability is not established.
 
-The mobile engine for [`@e2e-cpp/core`](https://www.npmjs.com/package/e2e), built on
+The mobile engine for [`@e2e-platform/core`](https://www.npmjs.com/package/e2e), built on
 [agent-device](https://github.com/callstack/agent-device): iOS simulators and
-Android emulators through the same `@e2e-cpp/core/engine` contract the browser engine
+Android emulators through the same `@e2e-platform/core/engine` contract the browser engine
 implements. A test written against `screen`, `expect`, `app`, and `agent` runs
-on a device target unchanged; nothing in `@e2e-cpp/core` core knows this package exists.
+on a device target unchanged; nothing in `@e2e-platform/core` core knows this package exists.
 
 ## Install
 
-Run `npx --no-install e2e-cpp init` and choose **agent-device** for a Settings
+Run `npx --no-install e2e-platform init` and choose **agent-device** for a Settings
 example with optional AI testing. Init defaults to iOS on macOS and Android
 elsewhere; change the platform in `e2e.config.ts` when needed.
 Or add the packages to an existing project:
 
 After building the source repository, pack this optional module with
-`pnpm --filter @e2e-cpp/agent-device pack --pack-destination /absolute/path/to/tarballs`.
+`pnpm --filter @e2e-platform/agent-device pack --pack-destination /absolute/path/to/tarballs`.
 Replace the paths below with your local tarballs; the core comes from the release kit.
 
 ```bash
-npm install --save-dev /path/to/e2e-cpp-core-0.1.0.tgz /path/to/e2e-cpp-agent-device-0.1.0.tgz
+npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.1.tgz /path/to/e2e-platform-agent-device-0.2.0-rc.1.tgz
 ```
 
 `agent-device` needs Xcode with an iOS simulator runtime, or the Android SDK
@@ -30,10 +30,10 @@ with an emulator. Run `npx agent-device doctor` once before handing the target
 to the runner.
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { createAgent } from '@e2e-cpp/core/agent';
-import { agentDevice } from '@e2e-cpp/agent-device';
-import { agentDeviceTools } from '@e2e-cpp/agent-device/tools';
+import type { E2EConfig } from '@e2e-platform/core';
+import { createAgent } from '@e2e-platform/core/agent';
+import { agentDevice } from '@e2e-platform/agent-device';
+import { agentDeviceTools } from '@e2e-platform/agent-device/tools';
 
 const iphone = agentDevice({ platform: 'ios', app: 'Settings' });
 const pixel = agentDevice({ platform: 'android', app: 'com.android.settings' });
@@ -110,8 +110,8 @@ Deterministic device management, recorded as `device.<method>` steps. Import
 `test` from this package to have it typed.
 
 ```ts
-import { test } from '@e2e-cpp/agent-device';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/agent-device';
+import { expect } from '@e2e-platform/core';
 
 test('shows the version offline in dark mode', async ({ agent, device, screen }) => {
   await device.setAppearance('dark');
@@ -136,7 +136,7 @@ the bundle id or package to `openApp` the build by.
 
 ## Agent tools
 
-`@e2e-cpp/agent-device/tools` exports `agentDeviceTools(...engines)`:
+`@e2e-platform/agent-device/tools` exports `agentDeviceTools(...engines)`:
 `open_app`, `swipe` (free-form, in logical pixels), `type_text` (into the
 focused field, for editors that hide it from the tree), `alert`, and
 `screenshot` (the model sees the image). Pass every device engine the config

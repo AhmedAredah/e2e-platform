@@ -4,8 +4,8 @@
  * wrong judgment cannot pass silently.
  */
 
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 import { z } from 'zod';
 
 test('assert judges seeded state, mixed with deterministic steps', async ({

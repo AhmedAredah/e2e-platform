@@ -30,7 +30,7 @@ caching is off for the step.
 To rule the cache out of a failure, run once without it:
 
 ```bash
-npx --no-install e2e-cpp run --no-cache
+npx --no-install e2e-platform run --no-cache
 ```
 
 ## How a replay works
@@ -61,7 +61,7 @@ values like these in `unique()` so the runner substitutes the current value
 when replaying:
 
 ```ts
-import { unique } from '@e2e-cpp/core';
+import { unique } from '@e2e-platform/core';
 
 const name = `E2E ${Date.now()} Company`;
 await agent.act('create a company named {name}', { params: { name: unique(name) } });
@@ -93,7 +93,7 @@ records nothing.
 Follow each `act` with a check of its outcome:
 
 ```ts title="tests/cart.e2e.ts"
-import { expect, test } from '@e2e-cpp/core';
+import { expect, test } from '@e2e-platform/core';
 
 test('adds an item', async ({ app, agent, screen }) => {
   await app.open('/cart');
@@ -115,7 +115,7 @@ Cancelling a run leaves the cache unchanged.
 | --- | --- | --- |
 | `no-entry` | No recording matches this step and its params. | The next verified pass records it. |
 | `retry` | Retries never replay. | Nothing. |
-| `invalid-entry` | The file is unreadable, over 1 MiB, or from another schema version. | `npx --no-install e2e-cpp cache clear`. |
+| `invalid-entry` | The file is unreadable, over 1 MiB, or from another schema version. | `npx --no-install e2e-platform cache clear`. |
 | `truncated` | More than 50 actions, a typed value or URL over 4,096 characters or containing a registered secret, or a control with no usable description. | Split the step, or pass the secret as a `Secret`. |
 | `wrong-context` | The app was on another screen than when the step was recorded: a different route, not a different record, query, or fragment. | Open the same screen before the step. |
 | `target-not-found` | A recorded control did not appear within 15 seconds. | The UI changed. The next passing run re-records. |
@@ -160,12 +160,12 @@ set `cache: 'read-write'`. In `read-only` mode, stale entries remain until
 a read-write run replaces them.
 
 A custom `cache.store` replaces the file store and does not default to
-read-only in CI. `e2e-cpp explore` and `e2e-cpp mcp` do not use the cache. See the
+read-only in CI. `e2e-platform explore` and `e2e-platform mcp` do not use the cache. See the
 [config reference](/reference/config#cache).
 
 ## Commit your traces
 
-`e2e-cpp init` adds `.e2e/cache/` to `.gitignore`, so every machine records its
+`e2e-platform init` adds `.e2e/cache/` to `.gitignore`, so every machine records its
 own and CI starts with none. To share replays, remove that line and commit
 the directory. CI stays `read-only` unless you set `cache: 'read-write'`.
 Treat committed entries as test data and review them in the pull request
@@ -174,9 +174,9 @@ that re-recorded them.
 ## Inspect the cache
 
 ```bash
-npx --no-install e2e-cpp cache ls      # one row per entry: test, target, instruction digest, age, actions
-npx --no-install e2e-cpp cache stats   # entry count and size
-npx --no-install e2e-cpp cache clear   # delete every entry
+npx --no-install e2e-platform cache ls      # one row per entry: test, target, instruction digest, age, actions
+npx --no-install e2e-platform cache stats   # entry count and size
+npx --no-install e2e-platform cache clear   # delete every entry
 ```
 
 <Note>
@@ -190,6 +190,6 @@ call entirely.
     `mode`, `store`, `dir`.
   </Card>
   <Card title="CLI reference" icon="terminal" href="/reference/cli#e2e-cache">
-    `e2e-cpp cache ls`, `stats`, `clear`.
+    `e2e-platform cache ls`, `stats`, `clear`.
   </Card>
 </CardGroup>

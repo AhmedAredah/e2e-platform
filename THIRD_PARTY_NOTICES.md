@@ -59,3 +59,17 @@ The inherited benchmark documentation identifies scenarios copied from
 TesterArmy's benchmark projects. Preserve those source acknowledgments when
 moving or modifying the benchmarks. Example application assets and any
 future copied material must retain their own applicable notices.
+
+
+## Desktop accessibility sidecars (0.2.0-rc.1)
+
+The newly written driver and fixture source in `native/linux-atspi`,
+`native/windows-uia`, `native/macos-ax` and `examples/with-desktop` is MIT.
+Python uses separately installed GNOME AT-SPI/PyGObject/GTK system components;
+C# uses separately installed .NET/Windows UI Automation; Rust calls macOS system
+frameworks and uses the locked serde/serde_json dependency graph. See each
+backend's README, license and dependency notice. System/runtime libraries and
+SDKs are not relicensed by the root MIT notice and are not bundled in the source
+archive. Selected Cargo dependencies use their MIT or Boost Software License 1.0 options;
+see the driver's dependency table and preserve their notices when distributing binaries. This statement does not
+assert that every optional repository dependency has an MIT-only license.

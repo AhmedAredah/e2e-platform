@@ -50,13 +50,13 @@ variable for a name absent from the config is ignored. An empty value is
 This fork has no telemetry destination, so the CLI collects and sends no usage
 telemetry. `E2E_TELEMETRY_DISABLED` and `DO_NOT_TRACK` remain recognized opt-out
 flags; `E2E_TELEMETRY_DEBUG` does not activate collection. The compatibility
-preferences use `$XDG_CONFIG_HOME/e2e-cpp` (default
-`~/.config/e2e-cpp`) or `%APPDATA%\e2e-cpp` on Windows.
+preferences use `$XDG_CONFIG_HOME/e2e-platform` (default
+`~/.config/e2e-platform`) or `%APPDATA%\e2e-platform` on Windows.
 See [Telemetry](/telemetry).
 
 ## Reporters
 
-`@e2e-cpp/github` reads the variables GitHub Actions sets, when a run finishes:
+`@e2e-platform/github` reads the variables GitHub Actions sets, when a run finishes:
 
 | Variable | Reading | Effect |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ See [Telemetry](/telemetry).
 | Variable | Reading | Effect |
 | --- | --- | --- |
 | `PLAYWRIGHT_BROWSERS_PATH` | value | Playwright's browser cache, honored by the engine's `prepare` hook |
-| `E2E_AGENT_DEVICE_POOL_<TARGET>_<digest>` | value | Written by `@e2e-cpp/agent-device` in `prepare` and read by each worker to find its booted device. Not meant to be set by hand |
+| `E2E_AGENT_DEVICE_POOL_<TARGET>_<digest>` | value | Written by `@e2e-platform/agent-device` in `prepare` and read by each worker to find its booted device. Not meant to be set by hand |
 
 ## What app processes inherit
 

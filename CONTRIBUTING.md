@@ -1,7 +1,7 @@
 # Contributing
 
 This fork extends an MIT upstream snapshot with reusable C++ application testing
-modules. Start with [README.md](README.md), [CPP_SUPPORT.md](CPP_SUPPORT.md) and
+modules. Start with [README.md](README.md), [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) and
 [AGENTS.md](AGENTS.md) for the architecture and conventions.
 
 ## License and contribution terms
@@ -34,7 +34,7 @@ pnpm test
 Runner/browser integration tests require the matching Chromium installation:
 
 ```sh
-pnpm --filter @e2e-cpp/playwright exec playwright install chromium
+pnpm --filter @e2e-platform/playwright exec playwright install chromium
 ```
 
 C++ verification also requires CMake and a C++17 compiler. Qt checks need a matching
@@ -92,11 +92,11 @@ configuration and plain changelog generator. No upstream GitHub release links
 are generated for this fork.
 
 ```sh
-pnpm pack:cpp
-node scripts/cpp/install-kit-smoke.mjs
+pnpm pack:native
+node scripts/native/install-kit-smoke.mjs
 ```
 
-`pack:cpp` and root `release` create a checksummed six-package local installation
+`pack:native` and root `release` create a checksummed six-package local installation
 kit. The manual packaging workflow uploads an artifact. They do not publish to
 npm or create a release PR. Package names are local fork identities until the
 maintainer separately establishes registry ownership, support channels and a

@@ -15,7 +15,7 @@ import { resultByTitle, runProject, type FixtureProject } from '../helpers/run-p
 import type { RunOutcome } from '../helpers/run-project.ts';
 import { createAgent } from '../../src/agent/default-agent.ts';
 
-const AGENT_SUITE = `import { test, expect } from '@e2e-cpp/core';
+const AGENT_SUITE = `import { test, expect } from '@e2e-platform/core';
 
 test('judgments and polling', async ({ app, agent, screen }) => {
   await app.open();
@@ -305,7 +305,7 @@ describe('agent judgment tier', () => {
 });
 
 describe('createAgent with a judge', () => {
-  const SUITE = `import { test } from '@e2e-cpp/core';
+  const SUITE = `import { test } from '@e2e-platform/core';
 
 test('the judge judges createAgent assertions', async ({ app, agent }) => {
   await app.open();

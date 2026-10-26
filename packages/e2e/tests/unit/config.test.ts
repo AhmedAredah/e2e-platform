@@ -70,10 +70,10 @@ describe('resolveConfig', () => {
       code: 'INVALID_GLOB',
       message: "'**' must be a complete path segment: tests/**foo/*.ts",
     });
-    expect(resolve({ tests: '@e2e-cpp/core/*.e2e.ts' }).tests).toEqual(['@e2e-cpp/core/*.e2e.ts']);
-    expect(resolve({ tests: ['tests/**/*.e2e.ts', 'tests/**/*.e2e.ts', '@e2e-cpp/core/*.e2e.ts'] }).tests).toEqual([
+    expect(resolve({ tests: '@e2e-platform/core/*.e2e.ts' }).tests).toEqual(['@e2e-platform/core/*.e2e.ts']);
+    expect(resolve({ tests: ['tests/**/*.e2e.ts', 'tests/**/*.e2e.ts', '@e2e-platform/core/*.e2e.ts'] }).tests).toEqual([
       'tests/**/*.e2e.ts',
-      '@e2e-cpp/core/*.e2e.ts',
+      '@e2e-platform/core/*.e2e.ts',
     ]);
   });
 

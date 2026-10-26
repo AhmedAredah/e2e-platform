@@ -115,7 +115,7 @@ child frames off the site are dropped from observations.
 
 The fork CLI has no telemetry destination or ingestion key. It does not collect
 or transmit usage events, including in CI. The inherited preference commands
-remain available, but `e2e-cpp telemetry enable` cannot activate a transport.
+remain available, but `e2e-platform telemetry enable` cannot activate a transport.
 `E2E_TELEMETRY_DISABLED` and `DO_NOT_TRACK` remain recognized opt-out flags.
 Transport tests use an explicitly injected mock destination.
 
@@ -135,7 +135,7 @@ can include:
 Trusted test/config code, custom tools, engines and configured commands can make
 additional connections under their own authority. This is not a network sandbox.
 
-`e2e-cpp run --ai-trace` writes every model call to a local file. Nothing uploads
+`e2e-platform run --ai-trace` writes every model call to a local file. Nothing uploads
 it.
 
 ## Known non-goals

@@ -1,14 +1,14 @@
 ---
-"@e2e-cpp/core": minor
-"@e2e-cpp/process": minor
-"@e2e-cpp/checks": minor
-"@e2e-cpp/protocol": minor
-"@e2e-cpp/native": minor
-"@e2e-cpp/terminal": minor
-"@e2e-cpp/playwright": minor
-"@e2e-cpp/agent-device": minor
-"@e2e-cpp/github": minor
-"@e2e-cpp/oauth": minor
+"@e2e-platform/core": minor
+"@e2e-platform/process": minor
+"@e2e-platform/checks": minor
+"@e2e-platform/protocol": minor
+"@e2e-platform/native": minor
+"@e2e-platform/terminal": minor
+"@e2e-platform/playwright": minor
+"@e2e-platform/agent-device": minor
+"@e2e-platform/github": minor
+"@e2e-platform/oauth": minor
 ---
 
 Coordinate the locally installable hardening candidate across all public modules.

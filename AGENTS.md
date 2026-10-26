@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`@e2e-cpp/core` — an agentic end-to-end testing framework. pnpm monorepo, ESM only,
+`@e2e-platform/core` — an agentic end-to-end testing framework. pnpm monorepo, ESM only,
 TypeScript 7.
 
 This fork begins at MIT upstream commit `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`.
@@ -31,16 +31,16 @@ There is no separate spec. The code is the contract, pinned in three places:
   `reference/errors.mdx` or `reference/engine.mdx`, or documented but raised
   nowhere.
 
-The extension contracts and support boundaries are described in `CPP_SUPPORT.md`
+The extension contracts and support boundaries are described in `SUPPORT_MATRIX.md`
 and the package READMEs. Record design rationale with changes and validation.
 
 ## Layout
 
-- `packages/e2e` — the reusable `@e2e-cpp/core` package: SDK surface, runner, CLI,
-  `@e2e-cpp/core/engine` contract. Core knows the contract and never an engine's
+- `packages/e2e` — the reusable `@e2e-platform/core` package: SDK surface, runner, CLI,
+  `@e2e-platform/core/engine` contract. Core knows the contract and never an engine's
   internals: no `Web`, `browser`, `page`, `route`, or `playwright` noun lives in
   `src/` (grep for them; zero hits is the invariant). The one exception is the
-  `e2e-cpp init` scaffold presets in `src/cli/init/engines.ts`, which write the
+  `e2e-platform init` scaffold presets in `src/cli/init/engines.ts`, which write the
   user's config and so name engine packages as text; the package build records
   the sibling packages' versions in `dist/cli/init/sibling-versions.json` for the
   ranges they write. Each preset owns its prompt label, dependencies, config,
@@ -50,35 +50,35 @@ and the package READMEs. Record design rationale with changes and validation.
     `standalone.ts` opens one attempt with no test body for hosts),
     `src/collect/` registration+selection, `src/locator/` locator AST/engine,
     `src/agent/` the agent (the `act` executor socket plus the judgment
-    methods), `src/mcp/` the `e2e-cpp mcp` server (a live session that rides
+    methods), `src/mcp/` the `e2e-platform mcp` server (a live session that rides
     the `act` socket with a queue executor so every MCP call is a harness
     action).
-- `packages/playwright` — the reusable `@e2e-cpp/playwright` package: the
+- `packages/playwright` — the reusable `@e2e-platform/playwright` package: the
   browser engine, built with the public `defineEngine`, contributing the
-  `web` fixture and `expect(web)`. It depends on `@e2e-cpp/core` (peer), never the
+  `web` fixture and `expect(web)`. It depends on `@e2e-platform/core` (peer), never the
   reverse; a target names it explicitly as `engine: playwright()`. There is
   no default engine and no well-known id registry in core. It imports from
-  `@e2e-cpp/core/engine` only: the semantics every engine must reproduce
+  `@e2e-platform/core/engine` only: the semantics every engine must reproduce
   (error taxonomy, text and URL matching, assertion polling, JSON-value rules)
-  are exported there, and there is no `@e2e-cpp/core/internal` subpath.
-- `apps/testbed` (`@e2e-cpp/testbed`, private) — dogfood project that
+  are exported there, and there is no `@e2e-platform/core/internal` subpath.
+- `apps/testbed` (`@e2e-platform/testbed`, private) — dogfood project that
   consumes the **built** packages like a real user would: the playground app
   where every runner feature (sessions, routes, downloads, frames, uploads,
   serial groups, the executor seams, verdict edge cases, the reporter under
   stress, `explore`) has a deterministic test. Hard UI surfaces belong to the
   benchmarks, not here.
-- `apps/web-benchmark` (`@e2e-cpp/web-benchmark`, private) — a Next.js app of
+- `apps/web-benchmark` (`@e2e-platform/web-benchmark`, private) — a Next.js app of
   self-contained hard-surface scenarios (shadow DOM, canvas, iframes, native
   dialogs, planted bugs) at `/e/<slug>`, copied from the tester-army web
   benchmark, plus the e2e suites written against them (`tests/` and
   `tests-agent/`; deterministic tests gate PRs and model-backed suites are manual).
   Scenario files are copies: keep diffs against
   the source minimal so scenarios port both ways, and never fix a planted bug.
-- `apps/mobile-benchmark` (`@e2e-cpp/mobile-benchmark`, private) — an Expo
+- `apps/mobile-benchmark` (`@e2e-platform/mobile-benchmark`, private) — an Expo
   app of hard mobile surfaces (merged or hidden accessibility trees, native
   alerts over modals, keyboard-covered submits, virtualized lists, a WebView,
   OS permission and payment sheets), copied from the tester-army mobile
-  benchmark, plus the e2e suites on the `@e2e-cpp/agent-device` engine
+  benchmark, plus the e2e suites on the `@e2e-platform/agent-device` engine
   (`tests/` locators only, `tests-agent/` one `agent.act` per scenario).
   Neither runs in CI: no simulator there. Scenario files are copies: keep
   diffs against the source minimal, and name no company a scenario was
@@ -88,15 +88,16 @@ and the package READMEs. Record design rationale with changes and validation.
   `docs/style.css`; `docs/examples/` is typechecked and shown verbatim in the
   quickstart, kept in sync by `scripts/check-docs-examples.ts`).
 - `skills/e2e/` — the agent skill for consumers: `SKILL.md` plus
-  `references/<topic>.md`, one per `e2e-cpp guide` topic. The fork ships its local
-  copy; installing a current upstream skill is not equivalent. The `@e2e-cpp/core` build copies it to `packages/e2e/skills/`
+  `references/<topic>.md`, one per `e2e-platform guide` topic. The fork ships its local
+  copy; installing a current upstream skill is not equivalent. The `@e2e-platform/core` build copies it to `packages/e2e/skills/`
   (gitignored) so the packed package ships it; `src/cli/skill.ts` reads
-  that copy first and the repo source as the fallback, and `e2e-cpp init` writes
+  that copy first and the repo source as the fallback, and `e2e-platform init` writes
   it into a project's `.agents/skills/` and `.claude/skills/`.
 
 - `packages/process`, `checks`, `native`, `terminal`, `protocol` — independent
-  C++ boundary modules. Keep abstract contracts separate from concrete backends
+  application boundary modules. Keep abstract contracts separate from concrete backends
   and use dependency injection for transports, drivers and validators.
+- `native/linux-atspi`, `native/windows-uia`, `native/macos-ax` — separately installed OS accessibility sidecars. Keep protocol, provider, control and process ownership modules separate; never mark portable tests as live OS qualification.
 - `native/qt` — C++17 Qt helper, control adapters, CMake export and native tests.
   New toolkit helpers belong in sibling directories; Qt internals are not an
   installed ABI for third-party adapter plugins.
@@ -119,23 +120,23 @@ pnpm test:web-benchmark   # builds, then runs the real CLI against the benchmark
 Focused work:
 
 ```bash
-pnpm --filter @e2e-cpp/core run build
-pnpm --filter @e2e-cpp/core run test:unit                       # unit only, no build
-pnpm --filter @e2e-cpp/core exec vitest run tests/unit/scheduler.test.ts
-pnpm --filter @e2e-cpp/core exec vitest run -t 'name fragment'
-pnpm --filter @e2e-cpp/playwright run test
-pnpm --filter @e2e-cpp/testbed run test:headed
+pnpm --filter @e2e-platform/core run build
+pnpm --filter @e2e-platform/core run test:unit                       # unit only, no build
+pnpm --filter @e2e-platform/core exec vitest run tests/unit/scheduler.test.ts
+pnpm --filter @e2e-platform/core exec vitest run -t 'name fragment'
+pnpm --filter @e2e-platform/playwright run test
+pnpm --filter @e2e-platform/testbed run test:headed
 ```
 
 - Package `test` scripts do **not** build. Root `build` and `test` order the
-  packages explicitly rather than relying on topological sort, because `@e2e-cpp/core`
+  packages explicitly rather than relying on topological sort, because `@e2e-platform/core`
   devDepends on the playwright engine for its browser-backed integration tests
-  while the engine peer-depends on `@e2e-cpp/core` — pnpm reports that cycle on every
+  while the engine peer-depends on `@e2e-platform/core` — pnpm reports that cycle on every
   install.
 - `pnpm typecheck` runs `build` first, then per-package `typecheck`. The
   package `typecheck` covers `tests/**`, which is what makes
   `tests/types/sdk-types.ts` a test.
-- Integration tests need Chromium: `pnpm --filter @e2e-cpp/playwright exec
+- Integration tests need Chromium: `pnpm --filter @e2e-platform/playwright exec
   playwright install chromium`. The Playwright engine's `prepare` hook
   also installs a missing browser once per run, in the runner, before `plan`
   is emitted and the run's clock starts.
@@ -164,7 +165,7 @@ pnpm --filter @e2e-cpp/testbed run test:headed
   produces timeouts indistinguishable from real failures.
 - Integration tests write throwaway projects into
   `packages/e2e/tests/tmp-projects/` (gitignored) and import the runner from
-  `dist/` via a non-literal specifier so the fixture's `@e2e-cpp/core` self-reference
+  `dist/` via a non-literal specifier so the fixture's `@e2e-platform/core` self-reference
   shares one registry. Stale `dist` means confusing failures — rebuild.
 - Testbed suites beyond the default one never gate a PR: `test:agent` /
   `test:dogfood` (real model calls, need `AI_GATEWAY_API_KEY`, optional
@@ -176,7 +177,7 @@ pnpm --filter @e2e-cpp/testbed run test:headed
 
 ## Inspecting agent runs with unbox-ai
 
-`e2e-cpp run --ai-trace` records every model call of a run to `.e2e/ai-trace.json`
+`e2e-platform run --ai-trace` records every model call of a run to `.e2e/ai-trace.json`
 in the AI SDK devtools database shape (`{ runs[], steps[] }`). One run per
 agent step, named `<test title> · <api> "<label>"`; one entry per model round
 trip (an `act` turn, a `waitFor` poll, a judgment repair round) with the exact
@@ -191,7 +192,7 @@ Use [unbox-ai](https://github.com/tester-army/unbox-ai) to read it — never
 agents: `npx skills add tester-army/unbox-ai`). Start wide, then drill:
 
 ```bash
-AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed test:agent -- --ai-trace --no-cache
+AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed test:agent -- --ai-trace --no-cache
 npx unbox-ai runs apps/testbed/.e2e/ai-trace.json            # one line per agent step
 npx unbox-ai summary apps/testbed/.e2e/ai-trace.json --run 3 # one step: turns, tokens, caching
 npx unbox-ai tools apps/testbed/.e2e/ai-trace.json --run 3   # what the agent called, and how often
@@ -273,22 +274,22 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
 - Provider-backed jobs require explicit manual dispatch. Workflows do not send
   pull-request messages, publish packages or modify upstream repositories.
 - The default documentation check is local and makes no Mintlify requests.
-  `pnpm --filter @e2e-cpp/docs run check:online` is a separate network operation.
+  `pnpm --filter @e2e-platform/docs run check:online` is a separate network operation.
 - Commits use Conventional Commits. Keep PR descriptions about the final behavior
   and relevant validation. Retain third-party attribution in inherited tooling.
 - User-visible changes add a Changeset. Peer ranges point from engines to core,
   never the reverse. The local fork reset to 0.1.0 is intentional; future version
   updates should use Changesets so dependent packages stay coordinated.
-- Root `release` and `pack:cpp` create a checksummed six-package installation kit;
+- Root `release` and `pack:native` create a checksummed six-package installation kit;
   neither publishes. The release workflow is manual and uploads that kit as an
   artifact. No fork namespace ownership or registry publication is established.
 - Each build stamps `dist/.build.json`; package `prepublishOnly` and kit packing
   validate that stamp. Build before packing. `pnpm run canary` only prepares a
   local coordinated snapshot; there is no automatic canary publishing command.
-- Core's package name is `@e2e-cpp/core`; its executable is `e2e-cpp`. Document
-  locally installed commands as `npx --no-install e2e-cpp` or `pnpm exec e2e-cpp`
+- Core's package name is `@e2e-platform/core`; its executable is `e2e-platform`. Document
+  locally installed commands as `npx --no-install e2e-platform` or `pnpm exec e2e-platform`
   so instructions cannot fetch a different upstream package. The OAuth executable
-  is `e2e-cpp-oauth`. Preserve the on-disk consumer skill name `e2e`.
+  is `e2e-platform-oauth`. Preserve the on-disk consumer skill name `e2e`.
 - Private applications are skipped by Changesets (`privatePackages: false`).
   Their dependencies and known audit findings remain visible and are distinct
   from the six-package consumer kit.

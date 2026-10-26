@@ -1,13 +1,13 @@
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
 import { gateway } from 'ai';
 
 /**
  * `e2e explore` against the bug garden (`app/bug-garden.mjs`), a bookshop
  * with planted defects. Manual and opt-in: real model calls.
  *
- *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed explore:garden
- *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/testbed explore:bench
+ *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed explore:garden
+ *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-platform/testbed explore:bench
  *
  * `EXPLORE_APP_URL` points the target at an already running garden (the bench
  * starts one per run); without it the config starts one on port 4275.

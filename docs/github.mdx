@@ -1,9 +1,9 @@
 ---
 title: Pull request comments
-description: The @e2e-cpp/github reporter posts one comment per run from GitHub Actions and keeps it current.
+description: The @e2e-platform/github reporter posts one comment per run from GitHub Actions and keeps it current.
 ---
 
-`@e2e-cpp/github` posts test results as a pull request comment, including
+`@e2e-platform/github` posts test results as a pull request comment, including
 failures, source links, and links to workflow artifacts. Reruns update the
 same comment. The reporter also writes the results to the job summary.
 
@@ -14,13 +14,13 @@ from this repository. Replace `/path/to/` with its location; registry publicatio
 is not established.
 
 ```bash
-npm install --save-dev /path/to/e2e-cpp-github-0.1.0.tgz
+npm install --save-dev /path/to/e2e-platform-github-0.1.0.tgz
 ```
 
 ```ts title="e2e.config.ts"
-import type { E2EConfig } from '@e2e-cpp/core';
-import { playwright } from '@e2e-cpp/playwright';
-import { github } from '@e2e-cpp/github';
+import type { E2EConfig } from '@e2e-platform/core';
+import { playwright } from '@e2e-platform/playwright';
+import { github } from '@e2e-platform/github';
 
 export default {
   targets: [{ engine: playwright({ url: 'http://localhost:3000' }) }],
@@ -41,7 +41,7 @@ jobs:
     steps:
       # ...checkout, install, browsers
       - name: Run e2e
-        run: npx --no-install e2e-cpp run --reporter list,junit
+        run: npx --no-install e2e-platform run --reporter list,junit
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Upload artifacts

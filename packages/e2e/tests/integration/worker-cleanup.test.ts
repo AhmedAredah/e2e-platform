@@ -8,12 +8,12 @@ import { assertValidReport } from '../helpers/report-schema.ts';
 const engineModule = '../../dist/engine/index.js';
 const { defineEngine, EngineError } = await import(engineModule) as typeof import('../../src/engine/index.ts');
 const base = { name: 'cleanup-fixture', version: '1', spiVersion: 1, platform: 'desktop' } as const;
-const PASSING_TEST = `import { test } from '@e2e-cpp/core'; test('passes', () => {});`;
+const PASSING_TEST = `import { test } from '@e2e-platform/core'; test('passes', () => {});`;
 
 /** A real child-worker config; disposal never runs in the parent process. */
 function disposalConfig(body: string, cleanupTimeout: number): string {
   return `import { writeFileSync } from 'node:fs';
-import { defineEngine } from '@e2e-cpp/core/engine';
+import { defineEngine } from '@e2e-platform/core/engine';
 export default { workers: 1, cleanupTimeout: ${cleanupTimeout}, artifacts: [], modelPolicy: 'forbid', cache: 'off', reporters: [],
   targets: [{ engine: defineEngine({ name: 'disposal', version: '1', spiVersion: 1, platform: 'desktop', async dispose() { ${body} } }) }] };`;
 }
@@ -62,8 +62,8 @@ describe('failed attempt cleanup', () => {
       },
     });
     const { outcome, project } = await runProject({
-      'tests/a.e2e.ts': `import { test } from '@e2e-cpp/core'; test('first', () => {}); test('same file', () => {});`,
-      'tests/b.e2e.ts': `import { test } from '@e2e-cpp/core'; test('independent', () => {});`,
+      'tests/a.e2e.ts': `import { test } from '@e2e-platform/core'; test('first', () => {}); test('same file', () => {});`,
+      'tests/b.e2e.ts': `import { test } from '@e2e-platform/core'; test('independent', () => {});`,
     }, { appUrl: '', config: { targets: [{ engine }], retries: 2, artifacts: [], modelPolicy: 'forbid', reporters: [] } });
     try {
       expect(outcome.exitCode).toBe(3);
@@ -97,8 +97,8 @@ describe('failed attempt cleanup', () => {
     const first = `test('first', () => { ${kind === 'failed-body' ? "throw new Error('product failure');" : ''} });`;
     const suite = kind.startsWith('serial') ? `test.describe('flow', { serial: true }, () => { ${first} test('member', () => {}); });` : first;
     const { outcome, project } = await runProject({
-      'tests/a.e2e.ts': `import { test } from '@e2e-cpp/core'; ${suite} test('same file', () => { throw new Error('must not run'); });`,
-      'tests/b.e2e.ts': `import { test } from '@e2e-cpp/core'; test('independent', () => {});`,
+      'tests/a.e2e.ts': `import { test } from '@e2e-platform/core'; ${suite} test('same file', () => { throw new Error('must not run'); });`,
+      'tests/b.e2e.ts': `import { test } from '@e2e-platform/core'; test('independent', () => {});`,
     }, { appUrl: '', config: { targets: [{ engine }], retries: 2, artifacts: [], modelPolicy: 'forbid', reporters: ['junit'] } });
     try {
       expect(outcome.exitCode).toBe(3);
@@ -125,7 +125,7 @@ describe('failed attempt cleanup', () => {
       },
     });
     const { outcome, project } = await runProject({
-      'tests/a.e2e.ts': `import { test } from '@e2e-cpp/core';
+      'tests/a.e2e.ts': `import { test } from '@e2e-platform/core';
         test.setup('seed', { sessions: ['seeded'] }, async ({ session }) => { await session.save('seeded'); });
         test('dependent', { session: 'seeded' }, () => { throw new Error('must not run'); });
         test('unrelated', () => {});`,

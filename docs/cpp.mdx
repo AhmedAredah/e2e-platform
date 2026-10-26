@@ -21,7 +21,7 @@ not fetch a published copy of these fork packages.
 From a checkout with dependencies installed, create the local package kit:
 
 ```bash
-pnpm pack:cpp
+pnpm pack:native
 node release-packages/install.mjs /absolute/path/to/your-project
 ```
 
@@ -34,12 +34,12 @@ Real terminal processes also need the optional `node-pty` peer and native build 
 
 | Application | Use | What this does not imply |
 | --- | --- | --- |
-| Finite command or a CLI using CLI11/Boost/cxxopts | `@e2e-cpp/process` with `@e2e-cpp/checks` | Pipes do not emulate an interactive terminal. |
-| Qt Widgets or Quick app containing the helper | `@e2e-cpp/native` and `native/qt` | Toolkit events are not OS-wide keyboard/mouse input; arbitrary native dialogs and custom controls need qualification. |
-| Interactive terminal | `@e2e-cpp/terminal` | Optional PTY dependencies and terminal features must be qualified separately. |
-| HTTP service | `@e2e-cpp/protocol` | An RPC extension interface does not provide gRPC or WebSocket implementations. |
+| Finite command or a CLI using CLI11/Boost/cxxopts | `@e2e-platform/process` with `@e2e-platform/checks` | Pipes do not emulate an interactive terminal. |
+| Qt Widgets or Quick app containing the helper | `@e2e-platform/native` and `native/qt` | Toolkit events are not OS-wide keyboard/mouse input; arbitrary native dialogs and custom controls need qualification. |
+| Interactive terminal | `@e2e-platform/terminal` | Optional PTY dependencies and terminal features must be qualified separately. |
+| HTTP service | `@e2e-platform/protocol` | An RPC extension interface does not provide gRPC or WebSocket implementations. |
 | C++ server with a browser UI | Existing [web engine](/browser) | Native host controls and file dialogs remain separate surfaces. |
-| GTK, wxWidgets, JUCE, FLTK, ImGui or a game | A new qualified helper/driver or existing exposed interface | Dedicated toolkit drivers are not included merely because the program is C++. |
+| GTK, wxWidgets, JUCE, FLTK, ImGui or a game | A new qualified helper/driver or existing exposed interface | Use the OS [desktop accessibility](/desktop) backend where the toolkit exposes controls, and qualify each combination. |
 
 ## Build the source example
 
@@ -52,7 +52,7 @@ From the repository root:
 ```bash
 pnpm install --frozen-lockfile
 pnpm build
-node scripts/cpp/verify.mjs
+node scripts/native/verify.mjs
 ```
 
 The verifier compiles the actual calculator, runs CTest, then runs the built e2e
@@ -67,8 +67,8 @@ stdout/stderr streams, checks expected exit codes, and owns cleanup. Its working
 directory is temporary, so use explicit retained paths for evidence.
 
 ```ts
-import { test, expect } from '@e2e-cpp/process/test';
-import { assertComparison, compareJson } from '@e2e-cpp/checks';
+import { test, expect } from '@e2e-platform/process/test';
+import { assertComparison, compareJson } from '@e2e-platform/checks';
 
 const executable = process.env['E2E_CPP_BINARY'];
 if (!executable) throw new Error('Set E2E_CPP_BINARY to the compiled calculator path');
@@ -106,8 +106,8 @@ The reference project is `examples/with-qt/`; it includes Widgets and, where the
 kit provides the required modules, a Quick example.
 
 ```ts
-import type { E2EConfig } from '@e2e-cpp/core';
-import { qt } from '@e2e-cpp/native';
+import type { E2EConfig } from '@e2e-platform/core';
+import { qt } from '@e2e-platform/native';
 
 const executable = process.env['E2E_QT_DEMO'];
 if (!executable) throw new Error('Set E2E_QT_DEMO to the compiled helper app path');
@@ -144,7 +144,7 @@ unowned application is not supported, and no UIA/Appium backend is bundled.
 With Qt installed and a desktop available:
 
 ```bash
-node scripts/cpp/verify.mjs --qt
+node scripts/native/verify.mjs --qt
 ```
 
 On Linux, use `xvfb-run -a` for a real X11 window. An offscreen run is useful for
@@ -156,15 +156,15 @@ Set `modelPolicy: 'forbid'` in configuration or run:
 
 <CodeGroup>
 ```bash npm
-npx --no-install e2e-cpp run --no-model
+npx --no-install e2e-platform run --no-model
 ```
 
 ```bash pnpm
-pnpm exec e2e-cpp run --no-model
+pnpm exec e2e-platform run --no-model
 ```
 
 ```bash bun
-bun run e2e-cpp run --no-model
+bun run e2e-platform run --no-model
 ```
 </CodeGroup>
 
@@ -197,7 +197,7 @@ dumps can contain private application data. Review evidence before sharing it.
 Qt helper binaries must match qualified toolkit/compiler/build combinations;
 Qt Test and Qt Quick Test have no normal binary-compatibility guarantee.
 
-See the source checkout's `CPP_SUPPORT.md` for the folder layout, extension
+See the source checkout's `SUPPORT_MATRIX.md` for the folder layout, extension
 contracts, qualification gates and primary-source references. Framework sources:
 [Qt threading](https://doc.qt.io/qt-6/threads-qobject.html),
 [Qt plugin deployment](https://doc.qt.io/qt-6/deployment-plugins.html),

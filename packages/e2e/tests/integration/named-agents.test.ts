@@ -7,8 +7,8 @@ import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';
 import { createProject, runExisting, type FixtureProject } from '../helpers/run-project.ts';
 
 const SUITE = `
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test('asks the agent', async ({ app, agent }) => {
   await app.open();
@@ -18,8 +18,8 @@ test('asks the agent', async ({ app, agent }) => {
 `;
 
 const PINNED_SUITE = `
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test.describe('as the buyer', { agent: 'buyer' }, () => {
   test('buyer browses', async ({ app, agent }) => {
@@ -49,8 +49,8 @@ test('an unknown agent on a call fails that call', async ({ app, agent }) => {
 `;
 
 const PERSONA_SUITE = `
-import { test } from '@e2e-cpp/playwright';
-import { expect } from '@e2e-cpp/core';
+import { test } from '@e2e-platform/playwright';
+import { expect } from '@e2e-platform/core';
 
 test.describe('checkout', { agent: ['buyer', 'admin'] }, () => {
   test('pays for one item', async ({ app, agent }) => {
