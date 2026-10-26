@@ -24,6 +24,8 @@ def walk(node):
 class Client:
     def __init__(self, wrong=False):
         self.token = secrets.token_hex(32)
+        self.socket = None
+        self.stream = None
         self.child = subprocess.Popen([sys.executable, str(DRIVER), "--", sys.executable, str(FIXTURE), *(["--wrong"] if wrong else [])],
                                       env={**os.environ, "E2E_NATIVE_TOKEN": self.token}, stdout=subprocess.PIPE, text=True)
         selector = selectors.DefaultSelector()
@@ -34,32 +36,35 @@ class Client:
             line = self.child.stdout.readline()
             if not line.startswith("E2E_NATIVE_READY "):
                 raise RuntimeError("driver did not become ready")
+            self.socket = socket.create_connection(("127.0.0.1", json.loads(line.split(" ", 1)[1])["port"]), timeout=5)
+            self.stream = self.socket.makefile("rwb")
+            self.request_id = 0
+            self.call("initialize", {"token": self.token, "protocolVersion": 1})
         except Exception:
-            self.child.terminate()
-            try:
-                self.child.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                self.child.kill()
-                self.child.wait(timeout=2)
+            self._cleanup(terminate=True)
             raise
         finally:
             selector.close()
-        self.socket = socket.create_connection(("127.0.0.1", json.loads(line.split(" ", 1)[1])["port"]), timeout=5)
-        self.stream = self.socket.makefile("rwb")
-        self.request_id = 0
-        self.call("initialize", {"token": self.token, "protocolVersion": 1})
 
     def call(self, method, params):
         self.request_id += 1
         self.stream.write(json.dumps({"jsonrpc": "2.0", "id": self.request_id, "method": method, "params": params}).encode() + b"\n")
         self.stream.flush()
-        result = json.loads(self.stream.readline())
+        line = self.stream.readline(1024 * 1024 + 1)
+        if not line.endswith(b"\n") or len(line) > 1024 * 1024:
+            raise RuntimeError("missing or oversized native response")
+        result = json.loads(line)
+        if result.get("id") != self.request_id or result.get("jsonrpc") != "2.0":
+            raise RuntimeError("invalid native response")
         if "error" in result:
             raise RuntimeError(result["error"]["data"]["code"])
         return result["result"]
 
     def snapshot(self):
-        return self.call("snapshot", {})
+        result = self.call("snapshot", {})
+        if result.get("truncated"):
+            raise AssertionError("fixture tree unexpectedly truncated")
+        return result
 
     def node(self, name):
         nodes = [node for node in walk(self.snapshot()["root"]) if node.get("name") == name]
@@ -74,11 +79,29 @@ class Client:
         try:
             self.call("shutdown", {})
         finally:
+            code = self._cleanup()
+        if code:
+            raise AssertionError(f"driver cleanup exit {code}")
+
+    def _cleanup(self, terminate=False):
+        if self.stream is not None:
             self.stream.close()
+        if self.socket is not None:
             self.socket.close()
-            code = self.child.wait(timeout=5)
-            if code:
-                raise AssertionError(f"driver cleanup exit {code}")
+        if terminate and self.child.poll() is None:
+            self.child.terminate()
+        try:
+            return self.child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self.child.terminate()
+            try:
+                return self.child.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.child.kill()
+                return self.child.wait(timeout=2)
+        finally:
+            if self.child.stdout is not None:
+                self.child.stdout.close()
 
 
 def scenario(wrong=False):

@@ -152,12 +152,12 @@ export default {
 
 | Contract member | On a device |
 | --- | --- |
-| `observe` | The accessibility tree with rects. iOS: `Button` is `button`, `TextField` and `SearchField` are `textbox`, `SecureTextField` is a secure `textbox`, `Cell` is `listitem`, `StaticText` is `text`, `Switch` is `switch` with `checked`. Android: `TextView` is `text`, `EditText` is `textbox`, `Switch` and `CheckBox` keep their roles without a `checked` state, layouts are `group`, `RecyclerView` is `list`. The accessibility identifier (iOS) or resource id (Android) is the node's `testId`. Pixels on request, with every secure node's bounds painted black. |
+| `observe` | The accessibility tree with rects. iOS: `Button` is `button`, `TextField` and `SearchField` are `textbox`, `SecureTextField` is a secure `textbox`, `Cell` is `listitem`, `StaticText` is `text`, `Switch` is `switch` with `checked`. Android: `TextView` is `text`, `EditText` is `textbox`, native `password: true` marks a secure textbox, `Switch` and `CheckBox` keep their roles without a `checked` state, layouts are `group`, `RecyclerView` is `list`. The accessibility identifier (iOS) or resource id (Android) is the node's `testId`. Pixels are withheld whenever a full capture finds secure controls. |
 | `perform` | `tap`, `doubleTap`, `longPress`, `fill`, `clear`, `hover`, `check`, `uncheck`, `press` (`Enter` or one character), `swipe`, `dragTo`, and `focus` on editable fields. A tap on a `switch` or `checkbox` lands on its innermost control, since UIKit reports a settings row as one labelled switch with the real toggle as a child. `check` and `uncheck` need a `checked` state, which Android switches lack. `selectOption`, `setInputFiles`, and `scrollIntoView` are not declared. |
 | `locate` | Every `screen` query. Text queries answer with the innermost match. |
 | `app` | `identity` from the pinned `app`, else `appPath`; no `url`. |
 | `session` | `back`; `restart` and `reset` when `app` or `appPath` is pinned. No `open`, so `app.open()` and the agent's `navigate` verb are unavailable. |
-| `artifacts` | Redacted screenshots under `screenshots/NNN-<label>.png`; a screenshot that cannot be redacted fails instead of being written. Video with `--video` as `video/video.mp4`. No traces. |
+| `artifacts` | Screenshots under `screenshots/NNN-<label>.png` for screens with no detected secure controls; secure screens fail instead of being written. Video with `--video` as `video/video.mp4`. No traces. |
 | `location` | `<bundle id> / <screen title>`, the trace cache's anchor. The title is the navigation bar's on iOS and the toolbar's on Android. |
 | `state` | Not declared. `test.setup` and `session:` are unavailable. |
 
@@ -291,6 +291,13 @@ After a secret fill the agent offers neither `screenshot` nor `tap_at`,
 including in later members of the same serial group. Pixels whose masking the
 engine cannot prove are withheld as `MASKING_UNPROVEN`.
 
-An accessibility capture failure still stops the observation. Device
-screenshot masks depend on secure-field bounds from that capture, so the
-engine cannot prove a fallback screenshot safe when those bounds are missing.
+An accessibility capture failure still stops the observation. Secure screens
+remain tree-only, and explicit screenshots fail without writing an artifact.
+Separate accessibility and pixel captures cannot establish atomic masking;
+painting previously observed rectangles could expose a moving password field.
+The engine therefore withholds secure screens even when their bounds are known.
+Full-tree checks run before and after capture, including with interactive-only
+observations. These checks do not identify secrets that the application does
+not mark through accessibility. Android password nodes omit ambiguous rendered
+labels, values and descendants; use their resource/test IDs for deterministic
+location. Native iOS secure fields retain their accessible name.

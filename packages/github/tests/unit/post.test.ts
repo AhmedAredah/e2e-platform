@@ -1,6 +1,7 @@
 /** The comment protocol against a fake GitHub: find by marker, edit or create, and fail with one message. */
 
 import { describe, expect, it } from 'vitest';
+import { inspect } from 'node:util';
 import { upsertComment } from '../../src/post.ts';
 import { fakeGitHub, json } from './fake-github.ts';
 
@@ -67,12 +68,26 @@ describe('upsertComment', () => {
     await expect(upsertComment(params(unauthorized.fetch))).rejects.toThrow('GitHub rejected the token (GITHUB_TOKEN or GH_TOKEN)');
     const broken = fakeGitHub({ 'GET *': () => new Response('upstream sad', { status: 502 }) });
     await expect(upsertComment(params(broken.fetch))).rejects.toThrow(
-      'GitHub responded 502 to GET /repos/octo/app/issues/41/comments?per_page=100&page=1: upstream sad',
+      'GitHub responded 502 to GET /repos/octo/app/issues/41/comments?per_page=100&page=1',
     );
     const notAList = fakeGitHub({ 'GET *': () => json(200, { message: 'odd' }) });
     await expect(upsertComment(params(notAList.fetch))).rejects.toThrow('GitHub answered the comment list with a body that is not a list');
     const noUrl = fakeGitHub({ 'GET *': () => json(200, []), 'POST *': () => json(201, { id: 3 }) });
     await expect(upsertComment(params(noUrl.fetch))).rejects.toThrow('GitHub answered the comment without its html_url');
+  });
+
+  it('discards a private, unfinished API error body without reading or reporting it', async () => {
+    const marker = 'PRIVATE_GITHUB_TOKEN_RESPONSE_95183';
+    let cancelled = false;
+    const { fetch } = fakeGitHub({ 'GET *': () => new Response(new ReadableStream<Uint8Array>({
+      start(controller) { controller.enqueue(new TextEncoder().encode(marker)); },
+      cancel() { cancelled = true; },
+    }), { status: 502 }) });
+    let failure: unknown;
+    try { await upsertComment(params(fetch)); } catch (cause) { failure = cause; }
+    expect(failure).toBeInstanceOf(Error);
+    expect(inspect(failure, { depth: 10 })).not.toContain(marker);
+    expect(cancelled).toBe(true);
   });
 
   it('carries the signal on every request and stops at once when it is aborted', async () => {

@@ -21,6 +21,8 @@ interface MatcherSpec {
   readonly wholeSet?: boolean;
   /** The predicate is meaningful even when zero nodes match. */
   readonly evaluableWithoutNode?: boolean;
+  /** A withheld text field is unknown, even when the matcher is negated. */
+  readonly requiredField?: 'text' | 'value' | 'name';
   readonly predicate: (sample: Sample) => boolean;
   readonly describeExpected: string;
   readonly observed: (sample: Sample) => string;
@@ -140,6 +142,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
    * means anything; visibility matchers also accept zero matches.
    */
   private conditionEvaluable(spec: MatcherSpec, sample: Sample): boolean {
+    if (spec.requiredField !== undefined && sample.node?.[spec.requiredField] === undefined) return false;
     return spec.wholeSet === true || sample.node !== null || spec.evaluableWithoutNode === true;
   }
 
@@ -177,11 +180,16 @@ class AsyncExpectationImpl implements AsyncExpectation {
     return this.poll(
       {
         name,
-        predicate: (sample) => sample.node !== null && def.match(sample.node[def.field] ?? '', pattern),
+        requiredField: def.field,
+        predicate: (sample) => {
+          const actual = sample.node?.[def.field];
+          return actual !== undefined && def.match(actual, pattern);
+        },
         describeExpected: def.describeExpected(describePattern(pattern)),
         observed: (sample) => {
           if (sample.node === null) return 'no node';
-          const raw = sample.node[def.field] ?? '';
+          const raw = sample.node[def.field];
+          if (raw === undefined) return `${def.field} unavailable`;
           return `${def.field} ${JSON.stringify(def.normalize ? normalizeText(raw) : raw)}`;
         },
       },

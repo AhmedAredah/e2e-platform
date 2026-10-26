@@ -113,13 +113,13 @@ impl Cf {
             CFStringCreateWithBytes(ptr::null(), text.as_ptr(), text.len() as isize, UTF8, 0)
         })
     }
-    fn text(&self) -> Option<String> {
+    fn text(&self) -> Option<(String, bool)> {
         if unsafe { CFGetTypeID(self.0) != CFStringGetTypeID() } {
             return None;
         }
         let length = unsafe { CFStringGetLength(self.0) };
         if !(0..=65_536).contains(&length) {
-            return Some("[omitted: text exceeds limit]".to_owned());
+            return Some((String::new(), true));
         }
         let mut buffer = vec![0u16; length as usize];
         unsafe {
@@ -132,11 +132,13 @@ impl Cf {
                 buffer.as_mut_ptr(),
             );
         }
-        let text = String::from_utf16(&buffer).ok()?;
+        let Ok(text) = String::from_utf16(&buffer) else {
+            return Some((String::new(), true));
+        };
         if text.len() > 65_536 {
-            return Some("[omitted: text exceeds limit]".to_owned());
+            return Some((String::new(), true));
         }
-        Some(text)
+        Some((text, false))
     }
     fn boolean(&self) -> Option<bool> {
         let type_id = unsafe { CFGetTypeID(self.0) };
@@ -262,11 +264,24 @@ impl MacOsProvider {
         Ok(Some(Cf::owned(value)?))
     }
     fn text(&self, object: AxRef, name: &str) -> Result<Option<String>> {
-        Ok(self.get(object, name)?.and_then(|value| value.text()))
+        match self.get(object, name)?.and_then(|value| value.text()) {
+            Some((_, true)) => Err(DriverError::new(
+                "ENGINE_FAILURE",
+                "platform metadata is invalid or exceeds its limit",
+            )),
+            value => Ok(value.map(|(text, _)| text)),
+        }
     }
     fn observed_text(&mut self, object: AxRef, name: &str) -> Result<Option<String>> {
-        let value = self.text(object, name)?;
-        Ok(value.and_then(|text| self.text_budget.accept(text)))
+        let value = self.get(object, name)?.and_then(|value| value.text());
+        Ok(value.and_then(|(text, omitted)| {
+            if omitted {
+                self.text_budget.omit();
+                None
+            } else {
+                self.text_budget.accept(text)
+            }
+        }))
     }
     fn boolean(&self, object: AxRef, name: &str) -> Result<Option<bool>> {
         Ok(self.get(object, name)?.and_then(|value| value.boolean()))
@@ -325,6 +340,9 @@ impl MacOsProvider {
                 "ENGINE_FAILURE",
                 "accessible child array exceeded its budget",
             ));
+        }
+        if (size as usize) < take {
+            *truncated = true;
         }
         (0..size)
             .map(|index| {
@@ -386,11 +404,12 @@ impl MacOsProvider {
         if let Some(name) = title.filter(|text| !text.is_empty()).or(description) {
             node["name"] = json!(name);
         }
-        if let Some(test_id) = self
-            .observed_text(object, "AXIdentifier")?
-            .filter(|value| value.len() <= 1024)
-        {
-            node["testId"] = json!(test_id);
+        if let Some(test_id) = self.observed_text(object, "AXIdentifier")? {
+            if test_id.len() <= 1024 {
+                node["testId"] = json!(test_id);
+            } else {
+                self.text_budget.omit();
+            }
         }
         if let Some(value) = self.observed_text(object, "AXValue")? {
             node["value"] = json!(&value);

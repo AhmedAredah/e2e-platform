@@ -305,7 +305,8 @@ per agent step, so a specialised agent gets the same replay benefit.
   can be the `agent`; the runner still owns observations, actions, budgets,
   and the report.
 
-Full reference: https://e2e.tester.army/docs/agents
+The full API reference is `docs/agents.mdx` in the matching source checkout.
+This installed guide is available offline with `e2e-platform guide agent`.
 
 ## In CI
 

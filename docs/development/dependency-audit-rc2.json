@@ -1,0 +1,131 @@
+{
+  "checkedAtUTC": "2026-10-25",
+  "candidate": "0.2.0-rc.2",
+  "workspace": {
+    "info": 0,
+    "low": 1,
+    "moderate": 2,
+    "high": 8,
+    "critical": 0
+  },
+  "productionIncludingPrivateApps": {
+    "info": 0,
+    "low": 0,
+    "moderate": 1,
+    "high": 2,
+    "critical": 0
+  },
+  "findings": [
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-f88m-g3jw-g9cj",
+      "vulnerableVersions": "<0.35.0",
+      "patchedVersions": ">=0.35.0",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "extract-zip",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv",
+      "vulnerableVersions": "<=2.0.1",
+      "patchedVersions": null,
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "decode-uri-component",
+      "severity": "moderate",
+      "advisory": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+      "vulnerableVersions": "<=0.4.2",
+      "patchedVersions": ">=0.5.0",
+      "scope": [
+        "private Expo benchmark"
+      ]
+    },
+    {
+      "module": "extract-zip",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3",
+      "vulnerableVersions": "<=2.0.1",
+      "patchedVersions": null,
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+      "vulnerableVersions": "<0.35.4",
+      "patchedVersions": ">=0.35.4",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "basic-ftp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-c475-qrg2-pj4r",
+      "vulnerableVersions": "<=6.2.0",
+      "patchedVersions": ">=6.2.1",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "node-forge",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+      "vulnerableVersions": "<=1.4.0",
+      "patchedVersions": null,
+      "scope": [
+        "private Expo benchmark"
+      ]
+    },
+    {
+      "module": "katex",
+      "severity": "low",
+      "advisory": "https://github.com/advisories/GHSA-238p-pmpm-9mq7",
+      "vulnerableVersions": ">=0.11.0 <0.18.2",
+      "patchedVersions": ">=0.18.2",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "postcss-selector-parser",
+      "severity": "moderate",
+      "advisory": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf",
+      "vulnerableVersions": "<7.1.6",
+      "patchedVersions": ">=7.1.6",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-wq5f-xc86-pv6w",
+      "vulnerableVersions": "<0.35.5",
+      "patchedVersions": ">=0.35.5",
+      "scope": [
+        "optional Mintlify tooling"
+      ]
+    },
+    {
+      "module": "zod",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+      "vulnerableVersions": "<4.6.6",
+      "patchedVersions": ">=4.6.6",
+      "scope": [
+        "optional Mintlify tooling",
+        "private Expo benchmark"
+      ]
+    }
+  ]
+}

@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Maintainers of this fork must configure their own private conduct-reporting channel before opening a public community. No enforcement contact has been designated in this source distribution; upstream contacts are not the contacts for this fork.
+The repository maintainer, [AhmedAredah](https://github.com/AhmedAredah), handles repository moderation. Report abusive GitHub content using GitHub’s private “Report content” flow. For a matter requiring maintainer review, use an established private contact or open an issue requesting a private reporting channel without posting incident details or personal information. Upstream contacts do not handle reports for this fork. Security vulnerabilities use the separate channel in [SECURITY.md](SECURITY.md).
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -71,6 +71,8 @@ Community leaders will follow these Community Impact Guidelines in determining t
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
+
+Contributor Covenant 2.1 is licensed under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/), as recorded in its [historical license statement](https://github.com/EthicalSource/contributor_covenant/blob/4af50a6e34a6579b2f0b625d897f08713954f8af/README.md#license). This fork adapts the reporting instructions for its own maintainers. This document retains its separate license; the repository's MIT license does not replace it.
 
 Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcement ladder][Mozilla CoC].
 

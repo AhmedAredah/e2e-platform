@@ -1,9 +1,19 @@
 # Install this candidate in another project
 
 Use Node.js 22.22.3 or newer in the 22.x line, or Node.js 24.8.0 or newer.
-The complete repository ZIP includes `release-packages/` with six built npm
-tarballs, a checksum manifest and an installer. These are local candidate builds;
-they have not been published to the fork namespace.
+A prepared full-repository bundle can include `release-packages/` with six built
+npm tarballs, a checksum manifest and an installer. A Git clone or GitHub source ZIP
+contains source only: run `pnpm install --frozen-lockfile` and `pnpm pack:native`
+first. These are candidate builds; they have not been published to the fork namespace.
+
+Install the repository's pinned package manager before those commands:
+
+```sh
+npm install --global pnpm@12.3.4
+```
+
+Use a writable npm global prefix or your Node version manager's normal setup;
+building or running this project does not require elevated privileges.
 
 Create a `package.json` in your test project with `npm init -y`, then run from
 the extracted repository:
@@ -19,7 +29,7 @@ or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.1. Coordinated versions and changelogs use Changesets prerelease mode.
+`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.2. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -119,6 +129,49 @@ for a full TUI test and platform containment limits.
 HTTP services can use `createHttpClient` from `@e2e-platform/protocol`. Launch the
 service with a process fixture, check readiness, then assert status, schema and
 business results. gRPC and WebSocket clients are not included.
+
+## Browser and mobile applications
+
+The six-package kit excludes `@e2e-platform/playwright` and
+`@e2e-platform/agent-device`. Their MIT-baseline source remains in the checkout.
+After `pnpm install --frozen-lockfile`, run these commands from the repository
+root to build the optional modules and pack the ones you need. Choose an existing
+output directory outside your test project's `node_modules`:
+
+```sh
+pnpm build
+pnpm --filter @e2e-platform/playwright pack --pack-destination /absolute/path/to/tarballs
+pnpm --filter @e2e-platform/agent-device pack --pack-destination /absolute/path/to/tarballs
+```
+
+Install the core kit into your test project first. Then, from that project's
+directory, use the actual filenames emitted by `pack` (shown here for this
+candidate). Either engine can be installed independently:
+
+```sh
+# Browser engine:
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.2.tgz playwright@1.63.0
+npx --no-install playwright install chromium
+
+# Mobile engine:
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.2.tgz
+npx --no-install agent-device doctor
+```
+
+Browser downloads need network access or a matching prepared browser cache.
+Linux browser hosts also need Playwright's system libraries; the Playwright
+installation guide covers its optional `install --with-deps` setup. Mobile tests
+require Xcode with a booted iOS simulator on macOS, or an Android SDK and booted
+emulator. The mobile npm package includes its `agent-device` runtime dependency;
+it does not install an operating-system SDK or emulator.
+
+See the [browser starter](packages/playwright/README.md) and
+[mobile starter](packages/agent-device/README.md) for configuration and tests.
+Run `npx --no-install e2e-platform run --no-model` for deterministic tests. If you
+use `e2e-platform init`, install the desired local engine tarball first so the
+initializer preserves its file dependency. Do not accept installation of missing
+unpublished `@e2e-platform/*` registry packages. Keep local tarballs at their
+recorded paths for later lockfile reinstalls.
 
 ## Extend without changing the runner
 

@@ -29,10 +29,10 @@ test('Windows npm shim preserves every argument without shell interpolation', ()
   assert.deepEqual(JSON.parse(result.stdout), { marker: 'npm', args: argumentsWithSyntax });
 }));
 
-test('Windows pnpm .bin shim resolves its JS entry with path characters intact', () => fixture((directory) => {
+for (const extension of ['cjs', 'mjs']) test(`Windows pnpm .bin shim resolves its ${extension} entry with path characters intact`, () => fixture((directory) => {
   const bin = join(directory, 'node_modules/.bin'); mkdirSync(bin, { recursive: true });
-  writeFileSync(join(bin, 'pnpm.cmd'), '@"%~dp0\\..\\pnpm\\bin\\pnpm.cjs" %*');
-  entry(join(directory, 'node_modules/pnpm/bin/pnpm.cjs'), 'pnpm');
+  writeFileSync(join(bin, 'pnpm.cmd'), `@"%~dp0\\..\\pnpm\\bin\\pnpm.${extension}" %*`);
+  entry(join(directory, `node_modules/pnpm/bin/pnpm.${extension}`), 'pnpm');
   const result = runPackageManager('pnpm', argumentsWithSyntax, { encoding: 'utf8', env: { PATH: bin } }, { platform: 'win32' });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { marker: 'pnpm', args: argumentsWithSyntax });

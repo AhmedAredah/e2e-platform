@@ -70,6 +70,7 @@ export interface SessionHostOptions {
 export class SessionHost {
   private live: LiveSession | undefined;
   private opening: Promise<string> | undefined;
+  private closing: Promise<string> | undefined;
   /** Why the previous session ended, for the error a call on a closed session gets. */
   private lastEnd: string | undefined;
 
@@ -86,6 +87,9 @@ export class SessionHost {
 
   /** Opens a session and returns its opening text: the summary, the catalog, and the first screen. */
   open(options: OpenSessionOptions): Promise<string> {
+    if (this.closing !== undefined) {
+      return Promise.reject(new ConfigurationError('SESSION_OPEN', 'the previous session is still closing; wait for close_session before opening another'));
+    }
     if (this.live !== undefined) {
       return Promise.reject(
         new ConfigurationError(
@@ -102,20 +106,34 @@ export class SessionHost {
 
   /** Closes the live session, if any, and returns what happened. */
   async close(reason: string, session?: string): Promise<string> {
+    if (this.opening !== undefined) {
+      // Shutdown owns an in-flight open as well: waiting for its outcome
+      // prevents it from starting an app after the server has torn down.
+      await this.opening.catch(() => undefined);
+    }
     const live = this.live;
-    if (live === undefined) return 'No session is open.';
+    if (live === undefined) return this.closing ?? 'No session is open.';
     if (session !== undefined && session !== live.id) throw this.wrongSession(live, session);
     this.live = undefined;
     this.lastEnd = reason;
     if (live.idleTimer !== undefined) clearTimeout(live.idleTimer);
-    await live.step.end({ status: 'passed', summary: `session closed: ${reason}` });
-    const outcome = await live.step.done;
-    const cleanupErrors = await live.attempt.close();
-    live.abort.abort();
-    const lines = [`Session ${live.id} closed (${reason}); ${live.actions} tool calls ran.`];
-    if (outcome.error !== undefined) lines.push(`The session step ended with: ${errorMessage(outcome.error)}`);
-    for (const error of cleanupErrors) lines.push(`Cleanup: ${error.code}: ${error.message}`);
-    return lines.join('\n');
+    this.closing = this.closeLive(live, reason).finally(() => { this.closing = undefined; });
+    return this.closing;
+  }
+
+  /** Finishes one session before the host can reuse its engine and app processes. */
+  private async closeLive(live: LiveSession, reason: string): Promise<string> {
+    try {
+      await live.step.end({ status: 'passed', summary: `session closed: ${reason}` });
+      const outcome = await live.step.done;
+      const cleanupErrors = await live.attempt.close();
+      const lines = [`Session ${live.id} closed (${reason}); ${live.actions} tool calls ran.`];
+      if (outcome.error !== undefined) lines.push(`The session step ended with: ${errorMessage(outcome.error)}`);
+      for (const error of cleanupErrors) lines.push(`Cleanup: ${error.code}: ${error.message}`);
+      return lines.join('\n');
+    } finally {
+      live.abort.abort();
+    }
   }
 
   /** The session's catalog, or one tool's full contract. */

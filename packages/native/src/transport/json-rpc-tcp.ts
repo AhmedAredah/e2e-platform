@@ -126,15 +126,15 @@ export class JsonRpcTcpTransport extends NativeTransport {
     for (;;) {
       const end = this.buffer.indexOf(10);
       if (end < 0) return;
-      const line = this.buffer.subarray(0, end).toString('utf8');
+      const line = this.buffer.subarray(0, end);
       this.buffer = this.buffer.subarray(end + 1);
       try {
-        const message: unknown = JSON.parse(line);
+        const message: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(line));
         const pending = this.pending;
         if (pending === undefined || !isRecord(message) || message.jsonrpc !== '2.0' || message.id !== pending.id || ('result' in message) === ('error' in message)) throw new Error('invalid response');
         if ('error' in message) {
           const payload = message.error;
-          if (!isRecord(payload) || typeof payload.code !== 'number' || typeof payload.message !== 'string') throw new Error('invalid error');
+          if (!isRecord(payload) || !Number.isInteger(payload.code) || typeof payload.message !== 'string') throw new Error('invalid error');
           const data = isRecord(payload.data) ? payload.data : {};
           const code = typeof data.code === 'string' && ENGINE_ERROR_CODES.includes(data.code as typeof ENGINE_ERROR_CODES[number]) ? data.code as typeof ENGINE_ERROR_CODES[number] : 'ENGINE_FAILURE';
           pending.reject(new EngineError(code, `native bridge ${code}`, { retryable: code === 'NODE_STALE' || code === 'FRAME_NOT_FOUND' }));

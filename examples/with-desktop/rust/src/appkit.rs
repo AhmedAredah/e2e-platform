@@ -1,5 +1,6 @@
 #![allow(clashing_extern_declarations, dead_code)]
 use std::ffi::{CString, c_char, c_void};
+use std::sync::atomic::{AtomicBool, Ordering};
 type Id = *mut c_void;
 type Sel = *const c_void;
 #[repr(C)]
@@ -62,6 +63,7 @@ unsafe extern "C" {
 }
 static mut INPUT: Id = std::ptr::null_mut();
 static mut OUTPUT: Id = std::ptr::null_mut();
+static WRONG_OUTPUT: AtomicBool = AtomicBool::new(false);
 unsafe fn selector(name: &str) -> Sel {
     let name = CString::new(name).unwrap();
     unsafe { sel_registerName(name.as_ptr()) }
@@ -100,12 +102,20 @@ unsafe fn control(kind: &str, frame: Rect, label: &str, id: &str) -> Id {
 }
 unsafe extern "C" fn apply(_: Id, _: Sel, _: Id) {
     unsafe {
-        let value = send0(INPUT, selector("stringValue"));
+        let value = if WRONG_OUTPUT.load(Ordering::Relaxed) {
+            text("planted wrong result")
+        } else {
+            send0(INPUT, selector("stringValue"))
+        };
         set_id(OUTPUT, selector("setStringValue:"), value);
     }
 }
 /// Must run on the GUI/main thread. The owning driver closes the process after the test.
 pub unsafe fn run() {
+    WRONG_OUTPUT.store(
+        std::env::args_os().any(|arg| arg == "--wrong"),
+        Ordering::Relaxed,
+    );
     unsafe {
         let _pool = send0(
             send0(class("NSAutoreleasePool"), selector("alloc")),

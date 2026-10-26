@@ -67,6 +67,7 @@ export class LocatorEngine {
   }
 
   private operationWithin(deadline: Deadline): OperationContext {
+    if (this.signal.aborted) throw new E2EError('infrastructure', 'CANCELLED', 'operation cancelled');
     return {
       signal: this.signal,
       timeoutMs: Math.max(1, deadline.remaining()),

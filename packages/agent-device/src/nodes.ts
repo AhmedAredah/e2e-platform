@@ -25,6 +25,8 @@ export interface RawNode {
   readonly enabled?: boolean;
   readonly selected?: boolean;
   readonly focused?: boolean;
+  /** Explicit native password semantics, including Android EditText controls. */
+  readonly password?: boolean;
   readonly visibleToUser?: boolean;
   readonly hittable?: boolean;
   readonly appName?: string;
@@ -66,6 +68,7 @@ const ROLE_MAP: Readonly<Record<string, string>> = {
   'edit-text': 'textbox',
   'secure-text-field': 'textbox',
   securetextfield: 'textbox',
+  'password-field': 'textbox',
   switch: 'switch',
   toggle: 'switch',
   checkbox: 'checkbox',
@@ -237,7 +240,7 @@ export function projectSnapshot(raw: readonly RawNode[], options: { readonly min
     const id = options.mintId();
     const kind = kindOf(source);
     const role = roleOf(kind, isAndroidClass(source.type));
-    const secure = SECURE_KINDS.has(kind);
+    const secure = source.password === true || SECURE_KINDS.has(kind);
     const checked = checkedOf(role, source.value);
     const states = {
       ...(source.enabled === false ? { disabled: true } : {}),
@@ -260,14 +263,18 @@ export function projectSnapshot(raw: readonly RawNode[], options: { readonly min
       },
     };
     index.push(entry);
-    const childNodes = (children.get(position) ?? []).map((child) => build(child, entry));
+    const childNodes = secure ? [] : (children.get(position) ?? []).map((child) => build(child, entry));
     const node: SemanticNode = {
       ref: { id, revision: '' },
       ...(role === undefined ? {} : { role }),
       // A device label is both the node's accessible name and its visible
       // text, so `toHaveText` and `getByText` read the same string; the model
       // rendering elides `text` whenever it equals `name`, so this costs nothing.
-      ...(source.label === undefined || source.label === '' ? {} : { name: source.label, text: source.label }),
+      // Explicit password nodes can use their rendered contents as the label.
+      // Without separate label provenance, omit it rather than expose a value.
+      ...(source.password === true || source.label === undefined || source.label === '' ? {} : {
+        name: source.label, ...(secure ? {} : { text: source.label }),
+      }),
       // A secure field's value is never observed; the tree carries that it is
       // secure, not what it holds. Android echoes a text view's label as its
       // value, which would render every line twice, so an echo is dropped.

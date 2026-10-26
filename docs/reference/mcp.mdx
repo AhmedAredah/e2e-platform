@@ -58,6 +58,14 @@ protocol; anything a config module writes to stdout is redirected.
 Only one session can be open at a time. The `session` argument is optional;
 when supplied, it must match the current session or the call fails with
 `NO_SESSION`.
+Closing during startup waits for that startup to finish or fail, then releases
+any resources it opened. A replacement `open_session` is rejected with
+`SESSION_OPEN` until the previous session's cleanup finishes; concurrent
+`close_session` calls wait for the same cleanup.
+Startup failures, including an unwritable artifact directory, still run
+declared service teardowns and release the session's credentials.
+Closing a standalone session also cancels its fixture budget; subsequent
+fixture operations fail before dispatching to the engine.
 
 ### The catalog
 

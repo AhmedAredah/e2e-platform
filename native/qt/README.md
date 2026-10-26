@@ -95,7 +95,10 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   restart before another session. Replies are bound to their original connection.
   A custom nested event loop without a newly opened modal window still relies on
   the runner's operation deadline and is not automatically acknowledged early.
-- Widgets support input, buttons, check/radio state and QComboBox selection.
+- Widgets support input, buttons, check/radio state and non-editable QComboBox
+  selection by exact unique label, string user data or zero-based index.
+  Disabled or non-selectable options are refused; navigation skips disabled
+  options and detects model changes and rejected input.
   Quick supports text, buttons, checkable controls and non-editable Qt Quick
   Controls ComboBox selection by exact label, string valueRole or zero-based
   index. Public `textAt`/`valueAt` lookups resolve the option, then Qt keyboard
@@ -111,11 +114,14 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   additional adapters; this helper does not manufacture their semantics.
 - Password/no-echo editors and objects marked `e2eSecure=true` are redacted
   before serialization; their descendants are omitted and screenshot regions
-  are painted black. Sensitive fills mark their target secure in helper-owned
-  state for its remaining lifetime, including when an application declares a
+  are painted black. Detected password/secure controls and sensitive-fill targets
+  remain secure in helper-owned state for their remaining lifetime, including
+  after a password-reveal toggle, when an application declares a
   constant/read-only marker, rejects property writes, or later clears its own
   marker. Destroying the object releases that state; replacement objects do
-  not inherit it. Mark custom secret controls explicitly. The runner also applies its
+  not inherit it. Quick input checks that the intended control retains keyboard
+  focus before each key so redirected focus cannot receive subsequent secret
+  text. Mark custom secret controls explicitly. The runner also applies its
   own secret policy. App-owned logs/files and arbitrary rendering of secrets
   elsewhere are not discovered automatically.
   Captures monitor declared security properties and Quick transforms, then

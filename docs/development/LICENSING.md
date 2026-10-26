@@ -21,6 +21,15 @@ changed upstream licensing to Apache-2.0 on September 21, 2026. This fork's
 source ancestry starts before that change. The MIT copyright and permission
 notice for TesterArmy, Inc. is retained in [LICENSE](../../LICENSE).
 
+The MIT declaration describes this fork's selected release/default-branch
+source and its MIT base, with separately identified third-party exceptions.
+A GitHub fork association records the relationship with upstream; it is not
+upstream endorsement or an additional license grant. GitHub's fork network can
+expose later upstream branches and commits that have Apache-2.0 terms. Their
+presence in that network does not make those revisions MIT. Do not merge or
+relabel them as MIT merely to synchronize the fork. Publish the reviewed MIT
+line as the default branch and build release archives from that line only.
+
 ## Extension provenance
 
 The C++ additions were developed in an earlier local candidate. Its base was
@@ -63,9 +72,22 @@ The final license inventory preserves upstream attribution in the root and
 all five inherited package licenses, and adds fork attribution alongside it.
 The five extension packages and Qt helper/examples carry MIT licenses. The
 vendored `unbox-ai` developer skill also includes its source project's MIT
-license and copyright notice. The provenance of the inherited `unslop` skill
-is recorded in [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md); this
-record does not claim that its current external source repository is MIT.
+license and copyright notice.
+
+The release review identified inherited Pi context-overflow patterns in the
+core package. Their MIT copyright and permission notice is now included in
+[`packages/e2e/NOTICE`](../../packages/e2e/NOTICE) and the core distribution.
+The Code of Conduct is separately licensed Contributor Covenant 2.1 material
+under CC BY 4.0; its attribution and license link are retained in the document.
+
+The nonessential inherited `unslop` developer skill and its lock entry were
+removed from the current tree. Its external dotfiles repository has no
+standalone license. The historical MIT e2e contribution by its named author
+provides provenance, but the release avoids relying on an inferred grant for
+this optional material. Its original addition and the prior review remain in
+Git and the immutable historical audit. Removal does not change the licenses
+or contents of those historical revisions. See
+[THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md) for these boundaries.
 
 The 0.2.0-rc.0 hardening work is recorded in subsequent fork commits. It was
 implemented against this MIT checkout without importing later upstream source.
@@ -85,6 +107,10 @@ a repeated screen of every later edit.
 - Build source archives from the fork's tracked files and intended Git
   ancestry. Do not copy the earlier candidate's entire Git directory into an
   archive described as this MIT-based fork.
+- A full-history archive may include earlier versions of separately
+  attributed material. Label the selected source tree and its exceptions
+  precisely; never describe every object reachable in an upstream fork network
+  as MIT-only.
 - Keep license and attribution files in npm packages and installed native
   helper distributions. Review the complete contents of any binary bundle.
 

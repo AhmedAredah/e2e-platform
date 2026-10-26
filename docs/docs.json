@@ -1,19 +1,19 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "@e2e-platform/core",
-  "description": "An open framework for agentic end-to-end testing.",
+  "name": "e2e-platform",
+  "description": "Independent end-to-end testing for CLI, HTTP, desktop, web and mobile applications.",
   "colors": {
     "primary": "#ff8001",
     "light": "#ffb56c",
     "dark": "#b55b01"
   },
   "logo": {
-    "light": "/logo.png",
-    "dark": "/logo.png",
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
     "href": "/"
   },
-  "favicon": "/favicon.ico",
+  "favicon": "/favicon.svg",
   "fonts": {
     "heading": {
       "family": "Geist",
@@ -48,6 +48,13 @@
               "index",
               "quickstart",
               "writing-tests"
+            ]
+          },
+          {
+            "group": "CLI and desktop",
+            "icon": "desktop",
+            "pages": [
+              "cpp"
             ]
           },
           {

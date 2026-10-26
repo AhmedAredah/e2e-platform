@@ -103,7 +103,7 @@ and the package READMEs. Record design rationale with changes and validation.
   installed ABI for third-party adapter plugins.
 - `examples/with-cpp-cli`, `examples/with-qt` — real compiled consumer fixtures,
   including deliberate wrong-output scenarios that must remain detectable.
-- `scripts/cpp` — verification and checksummed local install-kit tooling.
+- `scripts/native` — verification and checksummed local install-kit tooling.
   Generated evidence belongs in ignored build/output folders, not source.
 
 ## Commands

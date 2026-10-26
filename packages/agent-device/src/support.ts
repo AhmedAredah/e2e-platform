@@ -44,7 +44,11 @@ export function readPngSize(data: Uint8Array): { width: number; height: number }
     if (data[offset] !== byte) return undefined;
   }
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
-  return { width: view.getUint32(16), height: view.getUint32(20) };
+  if (view.getUint32(12) !== 0x49484452) return undefined;
+  const width = view.getUint32(16);
+  const height = view.getUint32(20);
+  if (width === 0 || height === 0) return undefined;
+  return { width, height };
 }
 
 /**

@@ -52,8 +52,20 @@ function signalProcessGroup(child: ChildProcess, signal: NodeJS.Signals): void {
   }
 }
 
+/** A POSIX group can outlive its leader; keep ownership until every member is gone. */
+function processGroupAlive(child: ChildProcess): boolean {
+  if (child.pid === undefined) return false;
+  if (process.platform === 'win32') return child.exitCode === null && child.signalCode === null;
+  try {
+    process.kill(-child.pid, 0);
+    return true;
+  } catch (cause) {
+    return (cause as NodeJS.ErrnoException).code !== 'ESRCH';
+  }
+}
+
 /**
- * Kills every process group this module spawned and has not yet seen exit,
+ * Kills every process group this module spawned and has not yet released,
  * synchronously and without waiting: the last resort before the process
  * exits on the spot, so nothing it started outlives it. A reused process was
  * never spawned here and is left alone.
@@ -228,7 +240,7 @@ export class ManagedProcess {
     let exit: ExitStatus | undefined;
     const exited = new Promise<void>((resolve) => {
       child.once('exit', (code, exitSignal) => {
-        live.delete(child);
+        if (!processGroupAlive(child)) live.delete(child);
         exit = { code, signal: exitSignal };
         resolve();
       });
@@ -382,12 +394,32 @@ export class ManagedProcess {
     if (this.reusedExisting) return;
     const child = this.child;
     this.child = null;
-    if (child === null || child.exitCode !== null || child.signalCode !== null) return;
+    if (child === null) return;
+    if (!processGroupAlive(child)) {
+      live.delete(child);
+      return;
+    }
     const shutdownTimeout = this.command.shutdownTimeout ?? 10_000;
-    signalProcessGroup(child, 'SIGTERM');
+    let leaderExited = child.exitCode !== null || child.signalCode !== null;
     const exited = new Promise<void>((resolve) => {
-      child.once('exit', () => resolve());
+      if (leaderExited) resolve();
+      else child.once('exit', () => { leaderExited = true; resolve(); });
     });
+    signalProcessGroup(child, 'SIGTERM');
+    if (process.platform !== 'win32') {
+      // Waiting for the leader's exit is insufficient: a descendant can
+      // ignore SIGTERM while its parent has already finished successfully.
+      const deadline = Date.now() + shutdownTimeout;
+      while (processGroupAlive(child) && Date.now() < deadline) {
+        const timer = new AbortController();
+        const pause = sleep(Math.min(25, Math.max(0, deadline - Date.now())), timer.signal).catch(() => undefined);
+        await (leaderExited ? pause : Promise.race([pause, exited]));
+        timer.abort();
+      }
+      if (processGroupAlive(child)) signalProcessGroup(child, 'SIGKILL');
+      live.delete(child);
+      return;
+    }
     // The timer is cancelled once the process is gone: left pending, it kept
     // the event loop alive for the whole timeout after the run had ended.
     const timer = new AbortController();
@@ -401,6 +433,7 @@ export class ManagedProcess {
       signalProcessGroup(child, 'SIGKILL');
       await exited.catch(() => undefined);
     }
+    live.delete(child);
   }
 }
 

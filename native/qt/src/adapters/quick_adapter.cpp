@@ -108,12 +108,18 @@ void QuickAdapter::click(QObject* object, Qt::MouseButton button, bool twice, bo
     if (!window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window was destroyed during pointer input");
     QTest::mouseRelease(window, button, Qt::NoModifier, point);
 }
-void QuickAdapter::focus(QObject* object) { static_cast<QQuickItem*>(object)->forceActiveFocus(Qt::OtherFocusReason); }
+void QuickAdapter::focus(QObject* object) {
+    QPointer<QQuickItem> target(static_cast<QQuickItem*>(object));
+    target->forceActiveFocus(Qt::OtherFocusReason);
+    if (!target || !target->hasActiveFocus()) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt Quick focus was redirected or target destroyed");
+}
 void QuickAdapter::key(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text) {
-    sendKeyPair(static_cast<QQuickItem*>(object)->window(), key, modifiers, text);
+    auto* item = static_cast<QQuickItem*>(object);
+    if (!item->hasActiveFocus() || !item->window()) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt Quick target no longer holds keyboard focus");
+    sendKeyPair(item->window(), key, modifiers, text);
 }
 void QuickAdapter::typeCharacter(QObject* object, char character) {
-    sendKeyPair(static_cast<QQuickItem*>(object)->window(), static_cast<Qt::Key>(QChar::fromLatin1(character).toUpper().unicode()), Qt::NoModifier, QString(QChar::fromLatin1(character)));
+    key(object, static_cast<Qt::Key>(QChar::fromLatin1(character).toUpper().unicode()), Qt::NoModifier, QString(QChar::fromLatin1(character)));
 }
 bool QuickAdapter::editable(QObject* object) const { return object->property("readOnly").isValid() && !object->property("readOnly").toBool(); }
 bool QuickAdapter::checkable(QObject* object) const { return object->property("checked").isValid(); }

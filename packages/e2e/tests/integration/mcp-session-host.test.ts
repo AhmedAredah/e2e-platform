@@ -5,10 +5,10 @@
  * opened tears the attempt down and leaves the host ready for the next one.
  */
 
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeEngine, type FakeEngineHandle } from '../helpers/fake-engine.ts';
 
 const sessionModule = new URL('../../dist/mcp/session.js', import.meta.url).href;
@@ -17,8 +17,17 @@ const resolveModule = new URL('../../dist/config/resolve.js', import.meta.url).h
 const { resolveConfig } = (await import(resolveModule)) as typeof import('../../src/config/resolve.ts');
 const secretsModule = new URL('../../dist/secrets.js', import.meta.url).href;
 const { credentials } = (await import(secretsModule)) as typeof import('../../src/secrets.ts');
+const standaloneModule = new URL('../../dist/run/standalone.js', import.meta.url).href;
+const { openStandaloneAttempt } = (await import(standaloneModule)) as typeof import('../../src/run/standalone.ts');
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Holds one lifecycle phase until the test releases it. */
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((done) => { resolve = done; });
+  return { promise, resolve };
+}
 
 describe('SessionHost', { timeout: 60_000 }, () => {
   let dir: string;
@@ -94,6 +103,69 @@ describe('SessionHost', { timeout: 60_000 }, () => {
     expect(credentials.user('admin').username).toBe('admin');
     await second.close('done');
     expect(() => credentials.user('admin')).toThrow(/only available while the e2e runner is active/);
+  });
+
+  it('waits for an in-flight open and tears it down before server shutdown completes', async () => {
+    const launching = deferred();
+    const ready = deferred();
+    const fake = createFakeEngine({ onStartAttempt: async () => { launching.resolve(); await ready.promise; } });
+    const session = host(fake);
+    const opening = session.open({});
+    await launching.promise;
+    let closed = false;
+    const closing = session.close('server shutdown').then((summary) => { closed = true; return summary; });
+    await sleep(10);
+    expect(closed).toBe(false);
+    ready.resolve();
+    await opening;
+    expect(await closing).toContain('server shutdown');
+    expect(session.isOpen).toBe(false);
+    expect(fake.stats()).toMatchObject({ attemptsStarted: 1, attemptsEnded: 1, disposes: 1 });
+  });
+
+  it('rejects a replacement open until prior disposal finishes and shares concurrent closes', async () => {
+    const disposed = deferred();
+    const fake = createFakeEngine({ onDispose: () => disposed.promise });
+    const session = host(fake);
+    await session.open({});
+    const closing = session.close('done');
+    await vi.waitFor(() => expect(fake.stats().disposes).toBe(1));
+    await expect(session.open({})).rejects.toThrow(/still closing/);
+    const repeated = session.close('done again');
+    disposed.resolve();
+    expect(await repeated).toBe(await closing);
+    await session.open({});
+    await session.close('done');
+    expect(fake.stats()).toMatchObject({ attemptsStarted: 2, attemptsEnded: 2, disposes: 2, maxConcurrentAttempts: 1 });
+  });
+
+  it('runs service teardown and releases credentials if artifact-directory creation fails', async () => {
+    const marker = path.join(dir, 'service-stopped');
+    const fake = createFakeEngine({ app: { services: [{
+      name: 'setup', executable: process.execPath, args: ['-e', 'process.exit(0)'], waitForExit: true,
+      teardown: { executable: process.execPath, args: ['-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'stopped')`] },
+    }] } });
+    mkdirSync(path.join(dir, '.e2e'));
+    writeFileSync(path.join(dir, '.e2e', 'artifacts'), 'an unexpected file');
+    await expect(host(fake).open({})).rejects.toThrow();
+    expect(existsSync(marker)).toBe(true);
+    expect(fake.stats()).toMatchObject({ attemptsStarted: 0, attemptsEnded: 0, disposes: 1 });
+    expect(() => credentials.user('admin')).toThrow(/only available while the e2e runner is active/);
+  });
+
+  it('cancels a standalone attempt fixture budget when the attempt closes', async () => {
+    const fake = createFakeEngine();
+    const config = resolveConfig({ targets: [{ name: 'kiosk', platform: 'kiosk', engine: fake.engine }] }, { projectRoot: dir, env: {} });
+    const attempt = await openStandaloneAttempt({
+      config, target: config.targets[0]!, headed: false, env: {}, signal: new AbortController().signal,
+      timeoutMs: 5_000, artifactsRoot: path.join(dir, '.e2e', 'artifacts'),
+    });
+    await attempt.close();
+    expect(attempt.budget.signal.aborted).toBe(true);
+    const previous = fake.operations.length;
+    await expect(attempt.fixtures.app.open('/')).rejects.toMatchObject({ code: 'CANCELLED' });
+    await expect(attempt.fixtures.screen.getByRole('button').textContent()).rejects.toMatchObject({ code: 'CANCELLED' });
+    expect(fake.operations).toHaveLength(previous);
   });
 
   it('tears down an attempt whose first observation failed, then opens the next one', async () => {

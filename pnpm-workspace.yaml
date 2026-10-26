@@ -23,7 +23,7 @@ allowBuilds:
   node-pty: true
 
 # Security fixes are scoped to compatible dependency lines. The private mobile
-# showcase still has upstream advisories; see RELEASE_STATUS.md.
+# showcase and optional docs tooling still have upstream advisories; see RELEASE_STATUS.md.
 overrides:
   'fast-uri@>=3.0.0 <3.1.9': 3.1.9
   'js-yaml@<3.15.2': 3.15.2
@@ -38,3 +38,17 @@ overrides:
   'hono@>=4.0.0 <4.13.11': 4.13.11
   'sharp@>=0.34.0 <0.35.5': 0.35.5
   'xcode>uuid': 11.1.1
+  'qs@>=6.0.0 <6.16.0': 6.16.0
+  'adm-zip@>=0.6.0 <0.6.1': 0.6.1
+  'brace-expansion@>=1.0.0 <1.1.21': 1.1.21
+  'axios@>=1.0.0 <1.20.0': 1.20.0
+  'http-cache-semantics@>=4.0.0 <4.3.0': 4.3.0
+  '@modelcontextprotocol/sdk@>=1.0.0 <1.32.0': 1.32.0
+  'follow-redirects@>=1.0.0 <1.16.1': 1.16.1
+  'vite@>=8.0.0 <8.1.6': 8.1.6
+  'launch-editor@>=2.0.0 <2.14.2': 2.14.2
+  'body-parser@>=1.0.0 <1.20.9': 1.20.9
+  'zod@>=4.0.0 <4.6.6': 4.6.6
+  'fflate@>=0.7.0 <0.7.5': 0.7.5
+  'fflate@>=0.8.0 <0.8.3': 0.8.3
+  'image-size@>=2.0.0 <2.0.3': 2.0.3

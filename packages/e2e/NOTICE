@@ -1,0 +1,30 @@
+Pi context-overflow detection patterns
+
+The patterns in src/agent/model/overflow.ts were adapted by the upstream
+MIT-licensed e2e project from Pi, formerly badlogic/pi-mono and now
+earendil-works/pi. The corresponding compiled code is distributed in dist/.
+
+Source comparison: https://github.com/earendil-works/pi/blob/32850ef7c5edff7a6eee0214516fbb7382bf292d/packages/ai/src/utils/overflow.ts
+License: https://github.com/earendil-works/pi/blob/32850ef7c5edff7a6eee0214516fbb7382bf292d/LICENSE
+
+MIT License
+
+Copyright (c) 2025 Mario Zechner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

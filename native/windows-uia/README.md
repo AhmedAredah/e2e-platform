@@ -64,7 +64,8 @@ UIA Control View. Provider-supplied initial AutomationIds are trusted metadata
 and are frozen for each retained element. Password fields and fields filled
 with `sensitive:true` have no name, value, text, attributes or children in a
 snapshot. Their test IDs remain usable. Sensitive state survives temporary
-absence from the observed tree. Provider labels elsewhere in the application
+absence from the observed tree and later changes to the provider's password
+flag, including reveal-password controls. Provider labels elsewhere in the application
 are the application's responsibility; a malicious provider is not a sandbox.
 Selection containers do not copy selected descendants' text into their own
 value, avoiding a second route for sensitive content.

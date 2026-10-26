@@ -174,7 +174,7 @@ does not interrupt replay.
 | `app.open('/path')` and the agent's `navigate` verb | No URL. The attempt starts in the pinned `app`; there is no `navigate` |
 | `test.setup` saves a session, `session:` restores it | Not available. A simulator has no portable session snapshot; sign in per test or seed the app |
 | Secret input | `type_secret` and `screen.getByLabel(...).fill(secret)` fill declared secrets into secure fields |
-| Playwright trace per attempt | No Playwright trace; screenshots mask secure fields |
+| Playwright trace per attempt | No Playwright trace; screenshots are withheld when secure controls are detected |
 | `--video` writes a WebM screencast | `--video` writes an MP4 of the device screen with taps shown |
 | The cache anchors on the page path | The cache anchors on the location `<bundle id> / <screen title>`, the title read off the navigation bar |
 

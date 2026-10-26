@@ -115,9 +115,10 @@ export interface NodeRef {
 
 /**
  * Per-field bounds an engine applies to observation-tree nodes. A `name` or
- * `text` whose length reaches its limit was cut at exactly that limit, so
- * "length >= limit" is a precise truncation signal; every shorter value is
- * complete. Single-node reads are unbounded and always carry the full value.
+ * `text` at its limit may be truncated. A producer can omit an oversized field
+ * altogether to avoid disclosing a secret prefix; absence does not assert an
+ * empty or complete value. Single-node reads remain subject to the engine's
+ * capabilities, privacy policy, and backend limits.
  */
 export const OBSERVED_NAME_LIMIT = 256;
 export const OBSERVED_TEXT_LIMIT = 512;
@@ -128,9 +129,9 @@ export interface SemanticNode {
   readonly ref: NodeRef;
   /** Semantic role. */
   readonly role?: string;
-  /** Accessible name, cut at `OBSERVED_NAME_LIMIT`. */
+  /** Accessible name, bounded by `OBSERVED_NAME_LIMIT` in observations; may be omitted. */
   readonly name?: string;
-  /** Visible text, cut at `OBSERVED_TEXT_LIMIT`. */
+  /** Visible text, bounded by `OBSERVED_TEXT_LIMIT` in observations; may be omitted. */
   readonly text?: string;
   /** Current input value; never reported for a secure field. */
   readonly value?: string;

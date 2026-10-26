@@ -348,7 +348,10 @@ class LocatorImpl extends ScreenImpl implements Locator {
 
   async inputValue(): Promise<string> {
     const node = await this.readGuarded();
-    return node.value ?? '';
+    if (node.value === undefined) {
+      throw new ConfigurationError('UNSUPPORTED_CAPABILITY', `the target does not expose a readable input value: ${this.label}`);
+    }
+    return node.value;
   }
 
   async getAttribute(name: string): Promise<string | null> {

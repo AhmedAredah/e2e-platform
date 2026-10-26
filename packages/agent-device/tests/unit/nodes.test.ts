@@ -92,6 +92,32 @@ describe('snapshot projection', () => {
     expect(projected.roots[0]?.selector).toBe('id="save button"');
   });
 
+  it('honors Android native password flags without exposing rendered labels or descendants', () => {
+    const secret = 'ANDROID_PRIVATE_PASSWORD_48291';
+    const projected = project([
+      { index: 0, type: 'android.widget.EditText', password: true, label: secret, value: secret, identifier: 'password-input' },
+      { index: 1, parentIndex: 0, type: 'android.widget.TextView', label: secret, value: secret },
+    ]);
+    expect(projected.roots[0]).toMatchObject({ role: 'textbox', testId: 'password-input', inputPurpose: 'password', states: { secure: true } });
+    expect(projected.index).toHaveLength(1);
+    expect(JSON.stringify(projected.roots)).not.toContain(secret);
+    expect(projected.roots[0]?.name).toBeUndefined();
+    expect(projected.roots[0]?.text).toBeUndefined();
+    expect(projected.roots[0]?.value).toBeUndefined();
+    expect(projected.roots[0]?.children).toBeUndefined();
+  });
+
+  it('keeps a secure native accessible name while omitting text and descendant values', () => {
+    const projected = project([
+      { index: 0, type: 'SecureTextField', label: 'Password', value: 'private' },
+      { index: 1, parentIndex: 0, type: 'StaticText', label: 'private' },
+    ]);
+    expect(projected.roots[0]?.name).toBe('Password');
+    expect(projected.roots[0]?.text).toBeUndefined();
+    expect(projected.index).toHaveLength(1);
+    expect(JSON.stringify(projected.roots)).not.toContain('private');
+  });
+
   it('strips the @ prefix off refs and leaves a node without a ref unactionable', () => {
     const { index } = project([{ ref: '@e7', type: 'button' }, { ref: 'e8', type: 'button' }, { type: 'static-text', label: 'x' }]);
     expect(index.map((entry) => entry.ref)).toEqual(['e7', 'e8', '']);

@@ -41,6 +41,12 @@ Real terminal processes also need the optional `node-pty` peer and native build 
 | C++ server with a browser UI | Existing [web engine](/browser) | Native host controls and file dialogs remain separate surfaces. |
 | GTK, wxWidgets, JUCE, FLTK, ImGui or a game | A new qualified helper/driver or existing exposed interface | Use the OS [desktop accessibility](/desktop) backend where the toolkit exposes controls, and qualify each combination. |
 
+Terminal observations omit an oversized title or text field in full; clipping
+before runner redaction could expose a secret prefix. Explicit terminal snapshots
+and locator reads retain the complete visible fields. Native bridge frames and
+HTTP response JSON reject invalid UTF-8 instead of accepting replacement characters
+as application data. Errors omit the malformed payload from diagnostics.
+
 ## Build the source example
 
 Install the repository's pinned pnpm/Node prerequisites, CMake 3.21 or newer and
@@ -139,7 +145,8 @@ source text fields are omitted whole to preserve later secret redaction.
 embedded helper while preserving the engine's authentication and process
 supervision. The sidecar must implement the native bridge protocol and own its
 application lifecycle; direct attachment to an arbitrary Appium endpoint or an
-unowned application is not supported, and no UIA/Appium backend is bundled.
+unowned application is not supported. The separate [desktop accessibility](/desktop)
+sidecars include Windows UIA; Appium is not bundled.
 
 With Qt installed and a desktop available:
 

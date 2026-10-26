@@ -52,7 +52,6 @@ import {
   type RawNode,
 } from './nodes.ts';
 import type { AgentDeviceClient, AgentDeviceOptions, AgentDevicePlatform, ClientFactory } from './options.ts';
-import { maskPng } from './png.ts';
 import { DevicePool, deviceSelection } from './pool.ts';
 import {
   invalidState,
@@ -541,7 +540,7 @@ export class AgentDeviceSurface {
     this.generation = new Map(projected.index.map((entry) => [entry.id, this.bind(entry, projected.index)]));
     const viewport = await this.viewportFor(projected, operation);
     const location = screenLocation(raw.appBundleId ?? raw.appName ?? this.appIdentity, screenTitle(projected));
-    const capture = options?.pixels === true ? await this.capturePixels(operation, projected, viewport) : undefined;
+    const capture = options?.pixels === true ? await this.capturePixels(operation, viewport) : undefined;
     return {
       root: screenRoot(projected.roots, viewport),
       viewport,
@@ -881,21 +880,19 @@ export class AgentDeviceSurface {
   }
 
   /**
-   * A redacted screenshot artifact. The device paints secure fields as dots,
-   * but the last typed character shows in clear, so every secure node's
-   * bounds are painted over before the file is kept. A secure node without
-   * bounds cannot be masked, and an image that cannot be redacted is not
-   * written at all.
+   * A screenshot artifact only when full accessibility captures contain no
+   * secure controls. The device cannot atomically capture pixels and masks,
+   * so painting previously observed rectangles cannot establish safe redaction.
    */
   async screenshot(label: string | undefined, operation: OperationContext): Promise<string> {
     const attempt = this.attempt;
     if (attempt === undefined) throw invalidState('screenshot outside an attempt');
-    const masked = await this.maskedScreenshot(operation.signal);
+    const data = await this.checkedScreenshot(operation);
     attempt.screenshots += 1;
     const name = `${String(attempt.screenshots).padStart(3, '0')}-${sanitizeFilename(label ?? 'screenshot')}.png`;
     const relative = path.join('screenshots', name);
     mkdirSync(path.join(attempt.artifactsDir, 'screenshots'), { recursive: true });
-    writeFileSync(path.join(attempt.artifactsDir, relative), masked.data);
+    writeFileSync(path.join(attempt.artifactsDir, relative), data);
     return relative;
   }
 
@@ -924,85 +921,46 @@ export class AgentDeviceSurface {
     }, signal);
   }
 
-  /**
-   * Screenshot with every secure node on the current screen painted over.
-   * Observes first so the regions describe the screen the pixels show;
-   * throws when a secure field cannot be covered, because an image that may
-   * hold a credential must not leave the engine.
-   */
-  private async maskedScreenshot(signal?: AbortSignal): Promise<{ data: Uint8Array; masked: number }> {
-    const operation: OperationContext = {
-      signal: signal ?? new AbortController().signal,
-      timeoutMs: 30_000,
-      runId: '',
-      attemptId: '',
-      origin: 'test',
-    };
-    const projected = this.project(await this.snapshotOrEmpty(operation, false));
-    const data = await this.rawScreenshot(signal);
-    const masked = redactSecure(data, projected, projected.viewport ?? this.knownViewport);
-    if (masked === undefined) {
-      throw new EngineError('ENGINE_FAILURE', 'a secure field on screen could not be masked; screenshot withheld', {
-        retryable: false,
-      });
-    }
-    return masked;
+  /** Checks the full tree even when model observations request only interactive controls. */
+  private async permitsPixels(operation: OperationContext): Promise<boolean> {
+    const raw = await this.snapshot(operation, false);
+    if (raw.nodes === undefined || raw.snapshotQuality?.state === 'sparse') return false;
+    let id = 0;
+    const projected = projectSnapshot(raw.nodes, { mintId: () => `capture-${++id}` });
+    return !projected.index.some((entry) => entry.node.states?.secure === true);
+  }
+
+  /** Refuses secure screens rather than claiming post-capture rectangles are safe masks. */
+  private async checkedScreenshot(operation: OperationContext): Promise<Uint8Array> {
+    const refused = () => new EngineError('ENGINE_FAILURE', 'mobile screenshot withheld: secure controls or incomplete accessibility capture', { retryable: false });
+    if (!await this.permitsPixels(operation)) throw refused();
+    const data = await this.rawScreenshot(operation.signal);
+    if (!await this.permitsPixels(operation)) throw refused();
+    if (readPngSize(data) === undefined) throw new EngineError('ENGINE_FAILURE', 'mobile screenshot has an invalid PNG header', { retryable: false });
+    return data;
   }
 
   /**
-   * Viewport pixels for an observation. Best-effort: a screenshot that cannot
-   * be produced or redacted costs the observation its image, not the step.
+   * Viewport pixels for an observation. A refused capture costs the
+   * observation its image, not its semantic tree.
    */
   private async capturePixels(
     operation: OperationContext,
-    projected: ProjectedSnapshot,
     viewport: ViewportSize,
   ): Promise<{ pixels: ObservationPixels; masked: number } | undefined> {
     let raw: Uint8Array;
     try {
-      raw = await this.rawScreenshot(operation.signal);
+      raw = await this.checkedScreenshot(operation);
     } catch {
       return undefined;
     }
-    const redacted = redactSecure(raw, projected, viewport);
-    if (redacted === undefined) return undefined;
-    const size = readPngSize(redacted.data);
+    const size = readPngSize(raw);
     if (size === undefined) return undefined;
-    const scale = viewport.width > 0 ? size.width / viewport.width : 1;
+    const scale = size.width / viewport.width;
+    if (!Number.isFinite(scale) || scale <= 0 || !Number.isFinite(viewport.height) || viewport.height <= 0 || Math.abs(size.height / scale - viewport.height) > 1) return undefined;
     return {
-      pixels: { data: redacted.data, mediaType: 'image/png', width: size.width, height: size.height, scale },
-      masked: redacted.masked,
+      pixels: { data: raw, mediaType: 'image/png', width: size.width, height: size.height, scale },
+      masked: 0,
     };
-  }
-}
-
-/**
- * Paints every secure node's bounds black on a screenshot of the same
- * screen. Returns the masked bytes and how many regions were covered, or
- * undefined when a secure node has no bounds or the image format cannot be
- * edited: the caller then withholds the image rather than ship one it could
- * not prove redacted. Bounds are in logical points; the image may be at
- * device scale, so they are scaled by the image-to-viewport ratio.
- */
-function redactSecure(
-  data: Uint8Array,
-  projected: ProjectedSnapshot,
-  viewport: ViewportSize | undefined,
-): { data: Uint8Array; masked: number } | undefined {
-  const secure = projected.index.filter((entry) => entry.node.states?.secure === true);
-  if (secure.length === 0) return { data, masked: 0 };
-  const size = readPngSize(data);
-  if (size === undefined) return undefined;
-  const scale = viewport !== undefined && viewport.width > 0 ? size.width / viewport.width : 1;
-  const rects: Rect[] = [];
-  for (const entry of secure) {
-    const rect = entry.node.rect;
-    if (rect === undefined) return undefined;
-    rects.push({ x: rect.x * scale, y: rect.y * scale, width: rect.width * scale, height: rect.height * scale });
-  }
-  try {
-    return { data: maskPng(data, rects), masked: rects.length };
-  } catch {
-    return undefined;
   }
 }

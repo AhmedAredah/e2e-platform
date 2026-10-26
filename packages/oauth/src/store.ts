@@ -177,8 +177,8 @@ function parseCredentials(text: string, source: string): CredentialsFile {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
-  } catch (cause) {
-    throw new Error(`${source} is not valid JSON`, { cause });
+  } catch {
+    throw new Error(`${source} is not valid JSON`);
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new Error(`${source} must hold an object keyed by provider id`);

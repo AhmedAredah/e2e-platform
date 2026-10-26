@@ -21,6 +21,7 @@ import { createFakeClient, SETTINGS_NODES, SETTINGS_SNAPSHOT, type FakeClient } 
 
 /** Deliberately not `process.cwd()`: relative build paths must resolve here, not there. */
 const PROJECT_ROOT = '/project';
+const NONSECURE_SNAPSHOT = { ...SETTINGS_SNAPSHOT, nodes: SETTINGS_NODES.filter((node) => node.type !== 'secure-text-field') };
 
 /** An agent's operation: the agent reads the screen right after acting, so its actions settle. */
 function operation(signal = new AbortController().signal): OperationContext {
@@ -545,8 +546,9 @@ describe('observation', () => {
     await expect(pinned.engine.observe!(operation())).rejects.toMatchObject({ code: 'INVALID_STATE' });
   });
 
-  it('captures pixels on request, masks every secure node, and degrades to tree-only when it cannot', async () => {
+  it('captures nonsecure screens and withholds pixels whenever secure controls are present', async () => {
     const h = harness();
+    h.fake.respond('capture.snapshot', () => NONSECURE_SNAPSHOT);
     // 390x844 viewport at 3x: a white RGBA image of the device's size.
     const image = { width: 1170, height: 2532, channels: 4 as const, pixels: new Uint8Array(1170 * 2532 * 4).fill(255) };
     const png = encodePng(image);
@@ -557,14 +559,17 @@ describe('observation', () => {
     await openAttempt(h);
     const snapshot = await h.engine.observe!(operation(), { pixels: true });
     expect(snapshot.pixels).toMatchObject({ mediaType: 'image/png', width: 1170, height: 2532, scale: 3 });
-    // One secure node on the Settings fixture: the Password field at y=270, 44 tall.
-    expect(snapshot.maskedRegionCount).toBe(1);
+    expect(snapshot.maskedRegionCount).toBe(0);
     const decoded = decodePng(snapshot.pixels!.data);
     const at = (x: number, y: number) => [...decoded.pixels.subarray((y * 1170 + x) * 4, (y * 1170 + x) * 4 + 3)];
-    expect(at(600, 290 * 3)).toEqual([0, 0, 0]);
+    expect(at(600, 290 * 3)).toEqual([255, 255, 255]);
     expect(at(600, 240 * 3)).toEqual([255, 255, 255]);
 
-    // A secure node without bounds cannot be masked: the tree ships, the image does not.
+    h.fake.respond('capture.snapshot', () => SETTINGS_SNAPSHOT);
+    expect((await h.engine.observe!(operation(), { pixels: true })).pixels).toBeUndefined();
+    expect(h.fake.methods().filter((method) => method === 'capture.screenshot')).toHaveLength(1);
+
+    // Missing secure geometry is refused by the same conservative policy.
     h.fake.respond('capture.snapshot', () => ({
       nodes: [{ ref: 'e1', type: 'SecureTextField', label: 'PIN', value: '1234' }],
     }));
@@ -574,13 +579,56 @@ describe('observation', () => {
     // A snapshot without geometry keeps the viewport the session last learned.
     expect(unmaskable.viewport).toEqual({ width: 390, height: 844 });
 
-    h.fake.respond('capture.snapshot', () => SETTINGS_SNAPSHOT);
+    h.fake.respond('capture.snapshot', () => NONSECURE_SNAPSHOT);
     h.fake.respond('capture.screenshot', () => {
       throw new AppError('COMMAND_FAILED', 'screenshot failed');
     });
     const treeOnly = await h.engine.observe!(operation(), { pixels: true });
     expect(treeOnly.pixels).toBeUndefined();
     expect(treeOnly.root.children).toHaveLength(1);
+  });
+
+  it('checks the full tree before pixels even when the observation is interactive-only', async () => {
+    const h = harness({ snapshot: 'interactive' });
+    h.fake.respond('capture.snapshot', (args) => (args as { interactiveOnly: boolean }).interactiveOnly ? NONSECURE_SNAPSHOT : SETTINGS_SNAPSHOT);
+    await openAttempt(h);
+    expect((await h.engine.observe!(operation(), { pixels: true })).pixels).toBeUndefined();
+    expect(h.fake.methods()).not.toContain('capture.screenshot');
+  });
+
+  it('withholds Android password screenshots before capture despite valid rectangles', async () => {
+    const h = harness({ platform: 'android' });
+    const secret = 'ANDROID_PRIVATE_PASSWORD_48291';
+    h.fake.respond('capture.snapshot', () => ({ nodes: [
+      { ref: '@e1', type: 'android.widget.EditText', password: true, label: secret, value: secret, identifier: 'password-input', rect: { x: 0, y: 0, width: 390, height: 844 } },
+    ] }));
+    await openAttempt(h);
+    const captured = await h.engine.observe!(operation(), { pixels: true });
+    expect(JSON.stringify(captured)).not.toContain(secret);
+    expect(captured.pixels).toBeUndefined();
+    await expect(h.engine.artifacts!.screenshot('password', operation())).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+    expect(h.fake.methods()).not.toContain('capture.screenshot');
+    expect(existsSync(path.join(artifactsDir, 'screenshots'))).toBe(false);
+  });
+
+  it('discards pixels if a secure control appears during screenshot acquisition', async () => {
+    const h = harness();
+    let captured = false;
+    let temporary: string | undefined;
+    h.fake.respond('capture.snapshot', () => captured ? SETTINGS_SNAPSHOT : NONSECURE_SNAPSHOT);
+    h.fake.respond('capture.screenshot', (args) => {
+      temporary = (args as { path: string }).path;
+      writeFileSync(temporary, encodePng({ width: 390, height: 844, channels: 3, pixels: new Uint8Array(390 * 844 * 3).fill(255) }));
+      captured = true;
+      return { path: temporary };
+    });
+    await openAttempt(h);
+    expect((await h.engine.observe!(operation(), { pixels: true })).pixels).toBeUndefined();
+    expect(existsSync(temporary!)).toBe(false);
+    captured = false;
+    await expect(h.engine.artifacts!.screenshot('changed', operation())).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+    expect(existsSync(path.join(artifactsDir, 'screenshots'))).toBe(false);
+    expect(existsSync(temporary!)).toBe(false);
   });
 
   it('cancels a snapshot when the operation aborts', async () => {
@@ -781,8 +829,9 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
     expect(await location(cold)).toBeUndefined();
   });
 
-  it('numbers screenshots per attempt, masks secure fields in them, and refuses an unmaskable one', async () => {
+  it('numbers nonsecure screenshots per attempt and refuses a secure screen', async () => {
     const h = harness();
+    h.fake.respond('capture.snapshot', () => NONSECURE_SNAPSHOT);
     const image = { width: 390, height: 844, channels: 3 as const, pixels: new Uint8Array(390 * 844 * 3).fill(200) };
     const temporaryFiles: string[] = [];
     h.fake.respond('capture.screenshot', (args) => {
@@ -796,7 +845,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
     expect(await h.engine.artifacts!.screenshot(undefined, operation())).toBe('screenshots/002-screenshot.png');
     const written = decodePng(new Uint8Array(readFileSync(path.join(artifactsDir, 'screenshots', '002-screenshot.png'))));
     const at = (x: number, y: number) => [...written.pixels.subarray((y * written.width + x) * written.channels, (y * written.width + x) * written.channels + 3)];
-    expect(at(100, 290)).toEqual([0, 0, 0]);
+    expect(at(100, 290)).toEqual([200, 200, 200]);
     expect(at(100, 240)).toEqual([200, 200, 200]);
 
     await h.engine.endAttempt!(cleanup());
@@ -817,6 +866,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
 
   it.each(['capture', 'read'])('removes temporary screenshots after a %s failure', async (failure) => {
     const h = harness();
+    h.fake.respond('capture.snapshot', () => NONSECURE_SNAPSHOT);
     let file: string | undefined;
     h.fake.respond('capture.screenshot', (args) => {
       file = (args as { path: string }).path;
@@ -837,6 +887,7 @@ describe('session hooks, viewport swipe, location, artifacts', () => {
 
   it.each(['success', 'failure'])('cleans up a screenshot that finishes with %s after cancellation', async (outcome) => {
     const h = harness();
+    h.fake.respond('capture.snapshot', () => NONSECURE_SNAPSHOT);
     let finishCapture: (() => void) | undefined;
     const started = new Promise<string>((captureStarted) => {
       h.fake.respond('capture.screenshot', (args) => new Promise((resolve, reject) => {

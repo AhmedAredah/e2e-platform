@@ -1,10 +1,11 @@
 # @e2e-platform/playwright
 
 > Fork installation: these package names are local release identities. Use the
-> checksummed kit in [INSTALL.md](../../INSTALL.md), or pack the needed
-> workspace module locally. Registry availability is not established.
+> core kit in [INSTALL.md](../../INSTALL.md), then build and pack this optional
+> module locally. The six-package kit excludes this engine. Registry availability
+> is not established.
 
-The browser engine for [`@e2e-platform/core`](https://www.npmjs.com/package/e2e), built on
+The browser engine for [`@e2e-platform/core`](../e2e/README.md), built on
 [Playwright](https://playwright.dev).
 
 `@e2e-platform/core` ships no engine of its own: every target names the engine that drives
@@ -14,12 +15,15 @@ seam with no privilege either way.
 
 ## Install
 
-After building the source repository, pack this optional module with
+From the Git checkout, run `pnpm install --frozen-lockfile` and `pnpm build`, then
+pack this optional module with
 `pnpm --filter @e2e-platform/playwright pack --pack-destination /absolute/path/to/tarballs`.
-Replace the paths below with your local tarballs; the core comes from the release kit.
+Install the core kit into your test project first. From that project's directory,
+replace the tarball path below with the actual filename emitted by `pack`:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.1.tgz /path/to/e2e-platform-playwright-0.2.0-rc.1.tgz playwright@1.63.0
+npm install --save-dev /path/to/e2e-platform-playwright-0.2.0-rc.2.tgz playwright@1.63.0
+npx --no-install playwright install chromium
 ```
 
 Bring your own Playwright: `playwright` is a peer dependency (`>=1.63.0 <2`),
@@ -33,9 +37,13 @@ import type { E2EConfig } from '@e2e-platform/core';
 import { playwright } from '@e2e-platform/playwright';
 
 export default {
+  modelPolicy: 'forbid',
   targets: [{ name: 'web', engine: playwright({ url: 'http://localhost:3000' }) }],
 } satisfies E2EConfig;
 ```
+
+The example expects your application to be serving `http://localhost:3000`.
+Run deterministic tests with `npx --no-install e2e-platform run --no-model`.
 
 The engine declares the app it drives. App options: `url` (the base URL
 `app.open()` opens; required once a test navigates), `command` (a process the
@@ -119,11 +127,17 @@ In CI, install browsers as their own step instead, so the cost is visible and
 cacheable:
 
 ```bash
-npx playwright install chromium --with-deps
+npx --no-install playwright install chromium --with-deps
 ```
 
 `--with-deps` also installs the system libraries a slim container image lacks.
 
 ## Documentation
 
-Full documentation lives at [e2e.tester.army/docs](https://e2e.tester.army/docs).
+Oversized model-facing names, document titles and text are omitted whole before
+runner redaction; locator reads retain complete fields. This prevents a clipped
+secret prefix from escaping full-value redaction.
+
+Use this fork's [Playwright reference](../../docs/reference/playwright.mdx) and
+[installation guide](../../INSTALL.md#browser-and-mobile-applications). The
+upstream website describes a different distribution.

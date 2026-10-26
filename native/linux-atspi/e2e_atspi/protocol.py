@@ -33,6 +33,10 @@ def _shape(value: Any, keys: set[str], required: set[str]) -> dict[str, Any]:
 def _text(value: Any, limit: int = MAX_TEXT) -> str:
     if not isinstance(value, str) or len(value) > limit or "\0" in value:
         raise DriverError("ENGINE_FAILURE", "invalid text field")
+    try:
+        value.encode("utf-8", errors="strict")
+    except UnicodeEncodeError:
+        raise DriverError("ENGINE_FAILURE", "invalid text field") from None
     return value
 
 
@@ -48,6 +52,8 @@ class ProtocolSession:
 
     def dispatch(self, raw: bytes) -> dict[str, Any]:
         """Validate a complete LF-free frame before dispatching a backend method."""
+        if self.stopped:
+            raise ValueError("session is closed")
         message = json.loads(raw.decode("utf-8", errors="strict"), object_pairs_hook=_object,
                              parse_constant=_constant)
         message = _shape(message, {"jsonrpc", "id", "method", "params"},
@@ -70,6 +76,8 @@ class ProtocolSession:
             try:
                 result = self._invoke(method, params)
             except DriverError as error:
+                if error.code == "ACTION_MAY_HAVE_COMMITTED":
+                    self.stopped = True
                 return {"jsonrpc": "2.0", "id": request_id, "error": {
                     "code": -32000, "message": str(error), "data": {"code": error.code}}}
             except Exception:
@@ -111,7 +119,14 @@ class ProtocolSession:
                         raise DriverError("ENGINE_FAILURE", "invalid option index")
                 else:
                     raise DriverError("UNSUPPORTED_CAPABILITY", "only one option can be selected")
-            self._provider.perform(node_id, action)
+            try:
+                self._provider.perform(node_id, action)
+            except DriverError:
+                raise
+            except Exception:
+                # Providers must distinguish preflight errors from native mutation
+                # errors. An unclassified exception cannot prove no mutation occurred.
+                raise DriverError("ACTION_MAY_HAVE_COMMITTED", "accessibility mutation outcome is unknown; restart the attempt") from None
             return None
         if method == "shutdown":
             _shape(params, set(), set())

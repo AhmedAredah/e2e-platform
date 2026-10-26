@@ -1,10 +1,11 @@
 # @e2e-platform/agent-device
 
 > Fork installation: these package names are local release identities. Use the
-> checksummed kit in [INSTALL.md](../../INSTALL.md), or pack the needed
-> workspace module locally. Registry availability is not established.
+> core kit in [INSTALL.md](../../INSTALL.md), then build and pack this optional
+> module locally. The six-package kit excludes this engine. Registry availability
+> is not established.
 
-The mobile engine for [`@e2e-platform/core`](https://www.npmjs.com/package/e2e), built on
+The mobile engine for [`@e2e-platform/core`](../e2e/README.md), built on
 [agent-device](https://github.com/callstack/agent-device): iOS simulators and
 Android emulators through the same `@e2e-platform/core/engine` contract the browser engine
 implements. A test written against `screen`, `expect`, `app`, and `agent` runs
@@ -12,41 +13,45 @@ on a device target unchanged; nothing in `@e2e-platform/core` core knows this pa
 
 ## Install
 
-Run `npx --no-install e2e-platform init` and choose **agent-device** for a Settings
-example with optional AI testing. Init defaults to iOS on macOS and Android
-elsewhere; change the platform in `e2e.config.ts` when needed.
-Or add the packages to an existing project:
-
-After building the source repository, pack this optional module with
+From the Git checkout, run `pnpm install --frozen-lockfile` and `pnpm build`, then
+pack this optional module with
 `pnpm --filter @e2e-platform/agent-device pack --pack-destination /absolute/path/to/tarballs`.
-Replace the paths below with your local tarballs; the core comes from the release kit.
+Install the core kit into your test project first. From that project's directory,
+replace the tarball path below with the actual filename emitted by `pack`:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.1.tgz /path/to/e2e-platform-agent-device-0.2.0-rc.1.tgz
+npm install --save-dev /path/to/e2e-platform-agent-device-0.2.0-rc.2.tgz
 ```
 
 `agent-device` needs Xcode with an iOS simulator runtime, or the Android SDK
-with an emulator. Run `npx agent-device doctor` once before handing the target
-to the runner.
+with a booted emulator. Run `npx --no-install agent-device doctor` once before
+handing the target to the runner. The npm dependency supplies `agent-device`, not
+Xcode, Android SDK tools or device images.
+
+After installing the local tarball, you can run `npx --no-install e2e-platform init`
+and choose **Mobile (iOS/Android)** with no model. Init preserves the installed
+file dependency; running it before installing this engine would offer to resolve
+an unpublished fork package from the registry. Alternatively create this
+deterministic Android configuration yourself:
 
 ```ts title="e2e.config.ts"
 import type { E2EConfig } from '@e2e-platform/core';
-import { createAgent } from '@e2e-platform/core/agent';
 import { agentDevice } from '@e2e-platform/agent-device';
-import { agentDeviceTools } from '@e2e-platform/agent-device/tools';
 
-const iphone = agentDevice({ platform: 'ios', app: 'Settings' });
-const pixel = agentDevice({ platform: 'android', app: 'com.android.settings' });
+const settings = agentDevice({ platform: 'android', app: 'com.android.settings' });
 
 export default {
-  targets: [
-    { name: 'iphone', engine: iphone },
-    { name: 'pixel', engine: pixel },
-  ],
+  modelPolicy: 'forbid',
+  targets: [{ name: 'android', engine: settings }],
   workers: 1,
-  agents: { default: { executor: createAgent({ tools: agentDeviceTools(iphone, pixel) }) } },
 } satisfies E2EConfig;
 ```
+
+On macOS with a booted iOS simulator, use
+`agentDevice({ platform: 'ios', app: 'Settings' })` instead and adjust the target
+name and test labels. Configure only platforms available on the host. To use
+`agent.act`, choose an explicit model/provider and remove `modelPolicy: 'forbid'`;
+see the [model-backed configuration](../../docs/reference/agent-device.mdx#engine).
 
 A test written against `agent`, `app`, `screen`, and `device` runs on both
 targets unchanged. Only a check that names a platform label (`General` on iOS,
@@ -76,7 +81,9 @@ straight through, with no conditional spread.
   (iOS `Button` becomes `button`, `TextField` becomes `textbox`, `Cell` becomes
   `listitem`; Android `android.widget.TextView` becomes `text`, `EditText`
   becomes `textbox`, `Switch` becomes `switch`), with rects, a viewport, and
-  pixels on request with every secure field painted over. Element identifiers
+  pixels on request only when full accessibility captures contain no secure
+  controls. Android's native `password` flag marks a secure textbox; its
+  ambiguous rendered label, value and descendants are omitted. Element identifiers
   (`ABOUT`, `android:id/title`) surface as the configured test id attribute.
 - **Actions**: tap, double tap, long press, fill, clear, check/uncheck (when
   the tree exposes the checked state; Android switches do not), focus on
@@ -86,9 +93,13 @@ straight through, with no conditional spread.
 - **Location**: every `screen` query, plus agent-device selectors through
   `device.locator('role=NavigationBar id=General')`.
 - **Viewport swipe**, `app.back()`, `app.restart()`, `app.clearState()`, and
-  redacted screenshots under the attempt artifact directory: the bounds of
-  every secure field are painted black before the file is kept, and a
-  screenshot that cannot be redacted is not written. No `state` capability: a
+  screenshots under the attempt artifact directory. Secure screens are withheld:
+  separate tree and pixel captures cannot establish atomic masking, even when
+  secure rectangles appear stable. Observation remains tree-only; an explicit
+  screenshot fails without writing an artifact. Full-tree checks run before
+  and after capture even in interactive observation mode. These checks cannot
+  detect secrets the application's accessibility implementation does not mark.
+  No `state` capability: a
   simulator has no portable session snapshot.
 
 ## Trace cache
@@ -113,14 +124,17 @@ Deterministic device management, recorded as `device.<method>` steps. Import
 import { test } from '@e2e-platform/agent-device';
 import { expect } from '@e2e-platform/core';
 
-test('shows the version offline in dark mode', async ({ agent, device, screen }) => {
+test('shows Android network settings in dark mode', async ({ device, screen }) => {
   await device.setAppearance('dark');
-  await device.setNetwork('offline');
-  await agent.act('go to General, then About');
-  await expect(screen.getByRole('button', { name: /^iOS Version/ })).toBeVisible();
-  await expect(device.locator('role=NavigationBar id=About')).toBeVisible();
+  await expect(screen.getByText('Network & internet')).toBeVisible();
 });
 ```
+
+Save the test as `tests/settings.e2e.ts` and run
+`npx --no-install e2e-platform run --no-model`. This starter expects an English
+Android Settings home screen; change the locator for your OS image or application.
+For the iOS Settings home screen, the corresponding example can assert
+`screen.getByText('General', { exact: true })`.
 
 Methods: `setNetwork`, `setAirplaneMode`, `setPermission`, `setLocation`,
 `clearLocation`, `setAppearance`, `setOrientation`, `setBiometrics`,

@@ -170,6 +170,23 @@ private slots:
         QVERIFY(!node.contains("value"));
         QVERIFY(blackRegion(result.value("screenshot").toObject(), QRectF(field->geometry())));
     }
+    void revealingPasswordCannotRemoveRedaction() {
+        QWidget window;
+        window.resize(600, 220);
+        QLineEdit field(&window);
+        field.setObjectName("secret"); field.setGeometry(20, 70, 500, 40);
+        field.setText("synthetic-revealed-secret"); field.setEchoMode(QLineEdit::Password);
+        window.show(); QApplication::processEvents();
+        Surface surface;
+        QVERIFY(find(surface.snapshot(false).value("root").toObject(), "secret").value("states").toObject().value("secure").toBool());
+        field.setEchoMode(QLineEdit::Normal);
+        const auto result = surface.snapshot(true);
+        const auto node = find(result.value("root").toObject(), "secret");
+        QVERIFY(node.value("states").toObject().value("secure").toBool());
+        QVERIFY(!node.contains("value"));
+        QVERIFY(!QJsonDocument(node).toJson().contains("synthetic-revealed-secret"));
+        QVERIFY(blackRegion(result.value("screenshot").toObject(), QRectF(field.geometry())));
+    }
     void repeatedSecurityChangesFailClosed() {
         PaintWindow window;
         window.resize(600, 220);

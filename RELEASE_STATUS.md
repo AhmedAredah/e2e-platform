@@ -1,94 +1,112 @@
-# e2e-platform release candidate
+# e2e-platform 0.2.0-rc.2
 
-The coordinated JavaScript packages are **0.2.0-rc.1**, renamed from the unpublished
-`@e2e-cpp/*` identities to `@e2e-platform/*`. The executable is `e2e-platform`.
-The repository folder is `e2e-platform`. This is a local prerelease, not a stable
-or published package; registry namespace ownership has not been established.
+This is a reviewed **prerelease**, not a fully qualified stable release. The ten
+public JavaScript packages use `0.2.0-rc.2` and `@e2e-platform/*`; the executable
+and repository folder are `e2e-platform`. Tests are written in TypeScript or
+JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
+another language; GUI support depends on accessible controls and the driver.
 
-The MIT upstream base remains `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`.
-No later Apache-only upstream source was imported. Retained web/mobile source
-and optional dependencies keep their own license notices; new OS drivers are MIT.
-See [licensing](docs/development/LICENSING.md) and
-[third-party notices](THIRD_PARTY_NOTICES.md).
+## Publication state
 
-## Current implementation
+[AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform) was created
+as a real GitHub fork of TesterArmy e2e. Issues and private vulnerability reporting
+are enabled. The reviewed local branch is `mit-main`; uploading it is blocked
+by the GitHub connection's missing write access. The hosted `main` branch remains
+the original upstream Apache-licensed snapshot. **It is not this candidate.**
+No GitHub release, npm publication, remote CI pass or registry namespace ownership
+is claimed. Use the reviewed full-repository archive until publication completes.
+[Publishing instructions](docs/development/PUBLISHING.md) preserve upstream `main`
+and publish `mit-main` without a force push.
 
-- Shared TypeScript runner, locators, assertions, process/HTTP/terminal boundaries,
-  reports and authenticated native transport.
-- `desktop()` and extensible `DesktopEngine` for separately installed Python
-  Linux AT-SPI, C# Windows UIA and Rust macOS AX drivers.
-- OS-specific accessible controls with explicit unsupported-action errors,
-  bounded trees, password redaction and owned application lifecycle.
-- C++ Qt Widgets/Quick bridge, now including real Quick ComboBox selection for
-  supported non-editable controls with a closed popup.
-- Deterministic CLI default initializer, Qt/desktop presets, corrected source
-  locations for paths with spaces, and bundled help guidance.
+The selected MIT base remains
+`e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. The review retained upstream and Pi
+attribution, identified the Code of Conduct's separate CC BY 4.0 terms, removed
+an optional skill with uncertain external licensing, and replaced upstream
+branding. MIT applies to the reviewed covered source, subject to original-work
+rights and separately identified materials. See [licensing](docs/development/LICENSING.md)
+and [third-party notices](THIRD_PARTY_NOTICES.md); the fork network and dependencies
+are not declared MIT-only.
 
-Tests remain TypeScript. Native-language test-authoring SDKs, global OS input,
-OS-driver screenshots, generic custom-painted controls and hybrid DOM/native
-context switching are not included.
+## Release review changes
 
-## Verification for this candidate
+- Clean up owned POSIX descendants even after their command leader exits.
+- Serialize MCP startup and teardown, clean up failed standalone startup, and
+  reject cancelled fixture requests before dispatching to an engine.
+- Treat unavailable semantic fields as unknown in positive and negated assertions.
+- Omit oversized browser and terminal fields whole to prevent partial-secret leaks;
+  reject malformed UTF-8 at native RPC and HTTP JSON boundaries.
+- Preserve detected password sensitivity in Qt and Windows UIA after reveal toggles.
+  Reject redirected Quick keyboard focus and ambiguous or disabled Widgets options.
+- Close AT-SPI sessions after uncertain mutations, revoke stale references after
+  failed snapshots, and account for JSON escaping in macOS response budgets.
+- Recognize Android password metadata and withhold mobile screenshots containing
+  secure controls; asynchronous accessibility rectangles cannot guarantee safe masks.
+- Sanitize GitHub error responses and OAuth credential parsing errors.
+- Correct repository metadata, CI action commits, supported hosted runner versions,
+  hidden report uploads, package notices, installer integrity and onboarding.
 
-Actual verification and remaining blockers are listed in the delivery's validation
-summary. The prior candidate's [historical results](docs/development/history/validation-rc0.md)
-are retained separately and are not substituted for current checks.
+The object-oriented driver, transport, process and control interfaces remain
+separate. OS sidecars are Python (Linux), C# (Windows), and Rust (macOS); the
+cooperative Qt bridge is C++. These are platform implementations, not four
+independent full test-runner SDKs.
 
-- Linux Qt 6.4.2 offscreen: fresh GCC build; 4 CTest suites/91 rows, selected
-  Widgets and Quick end-to-end tests, and planted wrong-result rejection passed.
-- Retained integrations: Playwright subset 241 passed (CDP attach/recovery files
-  excluded due to the previously established host restriction), agent-device 92
-  passed with five unavailable-simulator skips, GitHub 19 and OAuth 62 passed.
-  OAuth/provider behavior uses mocks.
-- Full core unit/integration suite: 1,879 passed across all 163 files, zero
-  failures, three existing environment-specific skips.
-- Shared desktop integration: 76 native package tests passed, including real
-  sidecar/target processes with a fake protocol provider and the real Python protocol host. This qualifies the
-  TypeScript integration and ownership behavior, not OS accessibility APIs.
-- Python AT-SPI: 53 portable tests passed; actual GI/GTK imports and API symbols
-  verified. Live D-Bus preflight failed due to host socket policy.
-- C# UIA: driver and WPF fixture cross-compiled with zero warnings/errors; 34
-  portable checks passed. No Windows GUI execution.
-- Rust AX: 21 portable tests passed, plus formatting and driver/AppKit FFI
-  typechecks. Apple frameworks were not linked and no macOS GUI ran.
-- Onboarding/source-path regressions: 129 focused tests passed; CLI/Qt/desktop
-  generated configs load against the installed package contracts.
-- Existing boundary regressions: process 36, checks 17, HTTP 16, terminal 38 passed.
-- Full workspace lint, dead-code, builds/typechecks, error reference and local
-  documentation checks passed after the final rename/integration.
+## Recorded verification
 
-- Exact six-tarball consumer: installation/reinstall, default initializer and first
-  CLI test, desktop API imports/types, correct failure verdict/source paths and
-  dependency audit passed (zero reported installed-kit vulnerabilities).
-- CLI/HTTP verification passed for Python/C#/Rust: nine positive and six intentional
-  assertion failures, with cleanup checked; C++ CLI three positive cases and its
-  planted defect also passed.
+Checks below ran against this candidate on the available Linux x64 environment.
+Detailed logs, command records, intentional failures and hashes accompany the
+validation bundle. Earlier unsuccessful runs are retained and clearly superseded
+by qualified reruns. Historical rc.0/rc.1 results do not qualify this candidate.
 
-Further final checks are recorded in the accompanying validation evidence. Native
-OS driver unit/compile checks and live accessibility checks must be distinguished.
+| Area | Result and limits |
+| --- | --- |
+| Core unit/integration | 1,891 passed; 163 test files; 3 unchanged filesystem/root-environment skips; 0 failures. |
+| Application boundaries | Native 80, process 36, checks 17, HTTP 17, terminal 39 passed. Native includes real Python protocol-host interoperability with a fake accessibility provider. |
+| Browser subset | 242 passed across 26 files; only CDP attach/recovery files excluded for the established host socket restriction. |
+| Retained integrations | Mobile 91 passed and 5 simulator skips; GitHub 20 passed; OAuth 64 passed using mocks. |
+| Linux AT-SPI | 63 portable tests, wheel integrity and clean offline wheel installation passed; live D-Bus unavailable. |
+| Windows UIA | 39 portable checks; driver and WPF fixture cross-compiled with zero warnings/errors. No Windows GUI run. |
+| macOS AX | 23 portable tests; Rust formatting and driver/AppKit FFI typechecks passed. No Apple framework link or macOS GUI run. |
+| Qt 6.4.2 | Fresh Linux GCC build: 5 CTest suites / 114 rows. Widgets-only build: 4 suites passed. Installed CMake consumer passed. |
+| Qt runner | Widgets 3/3 and Quick 1/1; both planted negatives failed with ASSERTION_FAILED; all 8 attempts completed cleanup. Offscreen/software backend only. |
+| Language applications | Python/C#/Rust: 9 CLI/HTTP positives passed; 6 planted defects rejected; cleanup complete. C++ CLI: 3 positives and its planted defect passed the verifier. |
+| Maintenance scripts | 55 tests passed. |
+| Exact installed six-package kit | Install and npm ci, default initializer/first test, plain Node imports, strict API types, notices, tamper checks and planted-failure verdict passed; zero reported installed-dependency vulnerabilities. |
+| Source quality | Lint, dead-code gate, all ten builds, workspace typechecks, 76 error-code references, 7 embedded examples and 47 documentation pages passed. Dead-code tooling retains 12 advisory class-member warnings. |
 
-## Platform gates
+The validation summary links the exact consumer-kit and browser reports. This source ZIP contains tracked source and Git history plus a checksummed
+six-package JavaScript install kit. A normal GitHub source ZIP contains neither
+Git history nor the generated kit. SDKs, Qt, browser binaries, OS libraries and
+package-manager caches remain external prerequisites.
 
-**The new OS drivers are experimental until their real platform checks pass.**
-The current Linux host denies AF_UNIX sockets required by D-Bus, so real AT-SPI
-GTK testing cannot complete here. Windows UIA and macOS AX require their respective
-native OS, interactive desktop and permissions. No mock or cross-compilation result
-is reported as a pass for these environments.
+## Dependency findings
 
-`desktop-contracts.yml` builds/tests the language backends and exercises GTK on
-an eligible Linux CI host. `desktop-live.yml` runs native acceptance scripts on
-prepared interactive self-hosted Windows/macOS/Linux desktops. Workflow source is
-not evidence those jobs have run. Retain successful results before promoting each
-profile to supported. The same rule applies to every toolkit/version combination.
+Compatible dependency updates reduced the full workspace audit from **57 to 11**
+findings: 8 high, 2 moderate, 1 low. Every remaining path is in optional Mintlify
+preview/online-validation tooling or the private Expo benchmark. The production-only
+workspace audit includes private apps and has 3 findings, all Expo: node-forge,
+Zod 3 and decode-uri-component. No public package/engine production path appears
+in that workspace report; the exact installed consumer kit has its own audit.
+See the [dated advisory inventory](docs/development/dependency-audit-rc2.json).
 
-Full browser CDP, mobile hardware/simulators and live model-provider qualification
-remain separate gates. Optional web/mobile engines are preserved from the MIT base;
-exclude any distribution whose provenance or license obligations cannot be met.
-Previous private Expo-demo dependency advisories are recorded in the historical
-report and have not been represented as cleared by this desktop update.
+Some findings have no published fix; others require incompatible dependency-line
+updates that have not been functionally qualified. Four optional docs/Expo peer
+conflicts also remain. Local documentation checks do not run Mintlify. Do not
+represent the whole workspace, docs host or Expo demo as vulnerability-free or
+fully qualified. They require separate remediation and runtime verification.
 
-The source ZIP contains repository files and a checksummed six-package JavaScript
-install kit. Compilers, runtimes, OS libraries, browsers, build caches and a populated
-package-manager cache are external prerequisites; it is not a cold offline SDK bundle.
+## Remaining release gates
 
-Machine-readable declared profiles: [support-profiles.json](docs/development/support-profiles.json).
+The new OS drivers remain experimental. This host denies AF_UNIX sockets needed
+for D-Bus/AT-SPI. Windows UIA and macOS AX need native interactive desktops and
+permissions; portable tests and cross-compilation are not live qualification.
+Each additional framework and toolkit version requires its own real-control test.
+
+Full browser CDP attach/recovery, mobile simulators/hardware and live model-provider
+qualification remain open. The corresponding workflows are source, not successful
+remote runs. Native-language full runner SDKs, generic custom-painted controls,
+global OS input, OS-driver screenshots and hybrid DOM/native switching are absent.
+
+Before a stable release, complete the real platform gates, assess or resolve the
+remaining dependency findings for each shipped distribution, and verify publication
+and install paths on the hosted repository. Declared platform profiles are in
+[support-profiles.json](docs/development/support-profiles.json).

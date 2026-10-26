@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import json
 import unittest
+from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from e2e_atspi.contracts import DriverError
 from e2e_atspi.provider import AtspiProvider
@@ -187,6 +188,45 @@ class ProviderTests(unittest.TestCase):
     def test_action_rejection_propagates(self):
         self.entry.rejected = True
         with self.assertRaises(DriverError): self.perform(self.entry, kind="fill", value="hello")
+
+    def test_mutation_applies_then_raises_is_not_retryable(self):
+        def mutate(value):
+            self.entry.value = value
+            raise RuntimeError("app supplied secret error")
+        self.entry.set_text_contents = mutate
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="fill", value="secret", sensitive=True)
+        self.assertEqual(result.exception.code, "ACTION_MAY_HAVE_COMMITTED")
+        self.assertNotIn("secret", str(result.exception))
+        self.assertEqual(self.entry.value, "secret")
+        snapshot = self.provider.snapshot()
+        self.assertNotIn('"secret"', json.dumps(snapshot))
+
+    def test_unconfirmed_toggle_is_not_retried(self):
+        def delayed_toggle(index):
+            self.check.actions += 1
+            return True
+        self.check.do_action = delayed_toggle
+        with patch("e2e_atspi.provider.time.sleep"), self.assertRaises(DriverError) as result:
+            self.perform(self.check, kind="check")
+        self.assertEqual(result.exception.code, "ACTION_MAY_HAVE_COMMITTED")
+        self.assertEqual(self.check.actions, 1)
+
+    def test_snapshot_failure_invalidates_previous_action_authorization(self):
+        self.app.pid = 99
+        with self.assertRaises(DriverError):
+            self.provider.snapshot()
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="fill", value="must not be written")
+        self.assertEqual(result.exception.code, "NODE_STALE")
+        self.assertEqual(self.entry.edits, 0)
+
+    def test_individual_field_omissions_mark_incomplete(self):
+        for field in ("name", "value"):
+            with self.subTest(field=field):
+                setattr(self.entry, field, "x" * 65537)
+                self.assertTrue(self.provider.snapshot()["truncated"])
+                setattr(self.entry, field, "Name" if field == "name" else "")
 
     def test_aggregate_unicode_text_budget_stops_retaining_nodes(self):
         self.app.children = [FakeObject(f"Text {index}", "entry") for index in range(100)]

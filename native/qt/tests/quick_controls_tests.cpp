@@ -51,6 +51,31 @@ public:
 class QuickControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void redirectedFocusCannotReceiveSensitiveInput_data() {
+        QTest::addColumn<bool>("duringInput");
+        QTest::newRow("during-focus") << false;
+        QTest::newRow("during-typing") << true;
+    }
+    void redirectedFocusCannotReceiveSensitiveInput() {
+        QFETCH(bool, duringInput);
+        QQmlEngine engine;
+        QQuickWindow window;
+        window.resize(480, 240);
+        QQmlComponent component(&engine);
+        const QByteArray redirect = duringInput
+            ? "onTextChanged: if (text.length === 1) other.forceActiveFocus()"
+            : "onActiveFocusChanged: if (activeFocus) other.forceActiveFocus()";
+        component.setData("import QtQuick\nimport QtQuick.Controls\nItem { width: 480; height: 240; TextField { objectName: 'target'; width: 200; height: 40; " + redirect + " } TextField { id: other; objectName: 'other'; y: 60; width: 200; height: 40 } }", QUrl());
+        auto* root = qobject_cast<QQuickItem*>(component.create());
+        QVERIFY2(root, qPrintable(component.errorString()));
+        root->setParent(window.contentItem()); root->setParentItem(window.contentItem());
+        window.show(); window.requestActivate(); QApplication::processEvents();
+        Surface surface;
+        const auto ref = find(surface.snapshot(false).value("root").toObject(), "target").value("ref").toObject();
+        try { surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "fill"}, {"value", "synthetic-secret"}, {"sensitive", true}}}}); QFAIL("redirected focus accepted sensitive input"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("ACTION_MAY_HAVE_COMMITTED")); }
+        QCOMPARE(root->findChild<QObject*>("other")->property("text").toString(), QString());
+    }
     void selectsPublicModelOptions_data() {
         QTest::addColumn<QJsonValue>("option");
         QTest::newRow("label-string") << QJsonValue("Three");

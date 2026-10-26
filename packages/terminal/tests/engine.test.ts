@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import type { EngineAttemptContext, EngineSnapshot, OperationContext } from '@e2e-platform/core/engine';
+import { OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, type EngineAttemptContext, type EngineSnapshot, type OperationContext } from '@e2e-platform/core/engine';
 import { TerminalEngine, terminal } from '../src/engine/terminal.ts';
 import type { TerminalSnapshot } from '../src/model/types.ts';
 import { MemoryTransport } from './helpers.ts';
@@ -176,4 +176,24 @@ test('natural exits remain observable data, including intentionally nonzero exit
   await expect(engine.settleAttempt()).resolves.toBeUndefined();
   await engine.endAttempt();
   await expect(engine.settleAttempt()).resolves.toBeUndefined();
+});
+
+test('observation limits never disclose partial secrets and locators retain full fields', async () => {
+  class SnapshotEngine extends TerminalEngine {
+    map(snapshot: TerminalSnapshot, observed: boolean): EngineSnapshot { return this.semanticSnapshot(snapshot, observed); }
+  }
+  const engine = new SnapshotEngine();
+  const secret = 'TERMINAL_PRIVATE_BOUNDARY_82493';
+  const title = 't'.repeat(OBSERVED_NAME_LIMIT - 12) + secret;
+  const text = 'x'.repeat(OBSERVED_TEXT_LIMIT - 12) + secret;
+  const snapshot: TerminalSnapshot = { columns: 512, rows: 1, title, text, lines: [text], cursor: { column: 0, row: 0 }, alternate: false };
+  const observed = engine.map(snapshot, true);
+  expect(observed.root.name).toBe('[omitted: text exceeds limit]');
+  expect(observed.root.text).toBe('[omitted: text exceeds limit]');
+  expect(observed.root.children?.[0]?.text).toBe('[omitted: text exceeds limit]');
+  expect(JSON.stringify(observed.root)).not.toContain(secret.slice(0, 12));
+  const located = engine.map(snapshot, false);
+  expect(located.root.name).toBe(title);
+  expect(located.root.text).toBe(text);
+  expect(located.root.children?.[0]?.text).toBe(text);
 });

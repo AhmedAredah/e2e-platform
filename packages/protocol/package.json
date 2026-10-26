@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/protocol",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "description": "Bounded HTTP protocol fixtures for e2e tests",
   "license": "MIT",
   "type": "module",
@@ -25,7 +25,7 @@
   "devDependencies": {
     "@types/node": "26.6.2",
     "typescript": "7.0.2",
-    "vitest": "5.0.1"
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": "^22.22.3 || >=24.8.0"
@@ -34,5 +34,14 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "tag": "rc"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedAredah/e2e-platform.git",
+    "directory": "packages/protocol"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedAredah/e2e-platform/issues"
+  },
+  "homepage": "https://github.com/AhmedAredah/e2e-platform/tree/mit-main/packages/protocol#readme"
 }

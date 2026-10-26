@@ -247,6 +247,11 @@ within that budget; a stale reference never counts as confirmed absence.
 
 `textContent`, `inputValue`, and `getAttribute` throw `POLICY_DENIED` on a
 secure field. `isEnabled`, `isChecked`, and `boundingBox` are allowed there.
+`inputValue()` throws `UNSUPPORTED_CAPABILITY` when the engine does not report
+a value; a reported empty string is returned as `''`. Similarly, the shared
+semantic locator resolver requires a reported name when `getByRole` includes
+`name`, including an explicit empty name. Omitting `name` keeps a role-only
+query available for controls whose names are unknown.
 
 ```ts
 if (await screen.getByRole('alert').isVisible()) {

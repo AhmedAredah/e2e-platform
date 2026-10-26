@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { inspect } from 'node:util';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CREDENTIALS_ENV, EnvCredentialStore, FileCredentialStore, defaultCredentialStore, defaultCredentialsPath } from '../../src/index.ts';
 
@@ -89,6 +90,19 @@ describe('FileCredentialStore', () => {
     expect(await store.get('broken')).toBeUndefined();
   });
 
+  it('never retains a credential-bearing native JSON parser error', async () => {
+    const marker = 'PRIVATE_OAUTH_CREDENTIAL_95183';
+    const file = tempFile();
+    const store = new FileCredentialStore(file);
+    await store.set('x', creds);
+    writeFileSync(file, marker);
+    let failure: unknown;
+    try { await store.get('x'); } catch (cause) { failure = cause; }
+    expect(failure).toMatchObject({ message: `${file} is not valid JSON` });
+    expect(inspect(failure, { depth: 10 })).not.toContain(marker);
+    expect((failure as Error).cause).toBeUndefined();
+  });
+
   it('defaults to the XDG config directory', () => {
     expect(defaultCredentialsPath({ XDG_CONFIG_HOME: '/tmp/xdg' })).toBe('/tmp/xdg/e2e-platform/oauth.json');
     expect(defaultCredentialsPath({})).toMatch(/\.config\/e2e-platform\/oauth\.json$/);
@@ -108,5 +122,14 @@ describe('EnvCredentialStore', () => {
 
   it('rejects malformed JSON naming the variable', () => {
     expect(() => new EnvCredentialStore('nope')).toThrow(new RegExp(`${CREDENTIALS_ENV} is not valid JSON`));
+  });
+
+  it('keeps malformed environment credentials out of errors and causes', () => {
+    const marker = 'PRIVATE_OAUTH_ENVIRONMENT_95183';
+    let failure: unknown;
+    try { const invalidStore = new EnvCredentialStore(marker); void invalidStore; } catch (cause) { failure = cause; }
+    expect(failure).toMatchObject({ message: `${CREDENTIALS_ENV} is not valid JSON` });
+    expect(inspect(failure, { depth: 10 })).not.toContain(marker);
+    expect((failure as Error).cause).toBeUndefined();
   });
 });

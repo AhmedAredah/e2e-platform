@@ -88,6 +88,19 @@ describe('bounded HTTP client', () => {
     const response = await client.post('/echo', { json: {} });
     await expect(response.validate({ '~standard': { validate: async () => ({ issues: [{ message: 'sensitive contents' }] }) } })).rejects.toMatchObject({ code: 'SCHEMA_MISMATCH', message: 'HTTP JSON failed schema validation (1 issues)' });
   });
+  test('rejects malformed UTF-8 JSON without retaining private payloads', async () => {
+    const marker = 'PRIVATE_INVALID_UTF8_82493';
+    const bytes = Buffer.concat([Buffer.from(`{"value":"${marker}`), Buffer.from([0xc3, 0x28]), Buffer.from('"}')]);
+    const response = new HttpResponse(new Response(), bytes);
+    expect(response.text()).toContain('\uFFFD(');
+    let failure: unknown;
+    try { response.json(); } catch (cause) { failure = cause; }
+    expect(failure).toMatchObject({ code: 'INVALID_JSON', message: 'HTTP response is not valid JSON' });
+    expect(inspect(failure, { depth: 10 })).not.toContain(marker);
+    let validated = false;
+    await expect(response.validate({ '~standard': { validate(value) { validated = true; return { value }; } } })).rejects.toMatchObject({ code: 'INVALID_JSON' });
+    expect(validated).toBe(false);
+  });
   test.each(['/declared-large', '/stream-large'])('caps %s before unbounded buffering', async (path) => {
     await expect(createHttpClient({ baseUrl, maxResponseBytes: 100 }).get(path)).rejects.toMatchObject({ code: 'RESPONSE_LIMIT' });
   });

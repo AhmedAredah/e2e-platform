@@ -1,6 +1,7 @@
 """Real GNOME AT-SPI implementation; imported only on supported Linux hosts."""
 import time
 import json
+from collections.abc import Callable
 from typing import Any
 from .contracts import AccessibilityProvider, DriverError
 
@@ -67,6 +68,7 @@ class AtspiProvider(AccessibilityProvider):
 
     def snapshot(self) -> dict[str, Any]:
         """Build a bounded tree; unavailable or incomplete sources never prove absence."""
+        self._last_seen.clear()
         deadline = time.monotonic() + 8
         seen: set[str] = set()
         truncated = False
@@ -101,6 +103,8 @@ class AtspiProvider(AccessibilityProvider):
             else:
                 name = obj.get_name() or ""
                 accessible_id = obj.get_accessible_id()
+            if len(name) > MAX_TEXT or accessible_id and len(accessible_id) > 1024:
+                truncated = True
             node: dict[str, Any] = {"ref": {"id": identity, "revision": ""},
                                     "role": ROLES.get(role_name, "group"),
                                     "name": name if len(name) <= 65536 else "[omitted: name exceeds limit]", "states": states}
@@ -119,6 +123,8 @@ class AtspiProvider(AccessibilityProvider):
                 text = obj.get_text_iface()
                 if text is not None:
                     count = text.get_character_count()
+                    if not 0 <= count <= MAX_TEXT:
+                        truncated = True
                     content = text.get_text(0, count) if 0 <= count <= MAX_TEXT else "[omitted: text exceeds limit]"
                     node["value" if node["role"] == "textbox" else "text"] = content or ""
             # Charge each node before retention, including worst-case escaped Unicode.
@@ -135,6 +141,8 @@ class AtspiProvider(AccessibilityProvider):
             self._last_metadata[identity] = (node["name"], node.get("testId"))
             children = []
             child_count = obj.get_child_count()
+            if child_count < 0:
+                raise DriverError("ENGINE_FAILURE", "invalid accessible child count")
             for index in range(min(child_count, MAX_NODES)):
                 if remaining_bytes < 256 or time.monotonic() >= deadline or len(seen) >= MAX_NODES:
                     truncated = True
@@ -157,6 +165,8 @@ class AtspiProvider(AccessibilityProvider):
             raise DriverError("ENGINE_FAILURE", "AT-SPI desktop is unavailable")
         matched = False
         desktop_count = desktop.get_child_count()
+        if desktop_count < 0:
+            raise DriverError("ENGINE_FAILURE", "invalid accessible child count")
         if desktop_count > MAX_NODES:
             truncated = True
         for index in range(min(desktop_count, MAX_NODES)):
@@ -181,14 +191,23 @@ class AtspiProvider(AccessibilityProvider):
                 self._last_metadata.pop(identity, None)
         return {"root": root, "viewport": viewport, "truncated": truncated}
 
+    @staticmethod
+    def _mutate(operation: Callable[[], bool]) -> None:
+        """Dispatch once; failures after dispatch cannot authorize a retry."""
+        try:
+            if operation():
+                return
+        except Exception:
+            pass
+        raise DriverError("ACTION_MAY_HAVE_COMMITTED", "accessibility mutation outcome is unknown; restart the attempt")
+
     def _invoke_action(self, obj: Any) -> None:
         interface = obj.get_action_iface()
         if interface is None:
             raise DriverError("UNSUPPORTED_CAPABILITY", "control has no accessible action")
         for index in range(min(interface.get_n_actions(), 32)):
             if interface.get_action_name(index).lower() in ("click", "press", "activate", "toggle", "jump", "select"):
-                if not interface.do_action(index):
-                    raise DriverError("NOT_ACTIONABLE", "accessible action was rejected")
+                self._mutate(lambda: interface.do_action(index))
                 return
         raise DriverError("UNSUPPORTED_CAPABILITY", "control has no supported semantic action")
 
@@ -210,27 +229,29 @@ class AtspiProvider(AccessibilityProvider):
             if action.get("sensitive"):
                 self._safe_metadata[node_id] = self._last_metadata.get(node_id, ("Secure control", None))
                 self._secure_ids.add(node_id)
-            if not editable.set_text_contents(action["value"] if kind == "fill" else ""):
-                raise DriverError("NOT_ACTIONABLE", "control rejected text replacement")
+            self._mutate(lambda: editable.set_text_contents(action["value"] if kind == "fill" else ""))
         elif kind == "focus":
             component = obj.get_component_iface()
-            if component is None or not component.grab_focus():
-                raise DriverError("NOT_ACTIONABLE", "control rejected focus")
+            if component is None:
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control has no focus interface")
+            self._mutate(component.grab_focus)
         elif kind in ("check", "uncheck"):
             if obj.get_role_name() not in ("check box", "check menu item", "radio button", "radio menu item", "toggle button"):
                 raise DriverError("UNSUPPORTED_CAPABILITY", "control has no checked state")
             desired = kind == "check"
             if self._state(obj, "CHECKED") != desired:
                 self._invoke_action(obj)
-                obj.clear_cache()
-                # State updates may be asynchronous. Never toggle a second time.
-                for _ in range(20):
-                    if self._state(obj, "CHECKED") == desired:
-                        break
-                    time.sleep(0.01)
+                try:
                     obj.clear_cache()
-                else:
-                    raise DriverError("NOT_ACTIONABLE", "control did not reach the requested checked state")
+                    # State updates may be asynchronous. Never toggle a second time.
+                    for _ in range(20):
+                        if self._state(obj, "CHECKED") == desired:
+                            return
+                        time.sleep(0.01)
+                        obj.clear_cache()
+                except Exception:
+                    pass
+                raise DriverError("ACTION_MAY_HAVE_COMMITTED", "checked state could not be confirmed after mutation; restart the attempt")
         elif kind == "selectOption":
             self._select(obj, action["value"])
         else:
@@ -243,7 +264,7 @@ class AtspiProvider(AccessibilityProvider):
         if isinstance(choice, dict) and "value" in choice:
             raise DriverError("UNSUPPORTED_CAPABILITY", "AT-SPI options support label or index, not HTML values")
         count = obj.get_child_count()
-        if count > 10000:
+        if not 0 <= count <= 10000:
             raise DriverError("UNSUPPORTED_CAPABILITY", "selection list exceeds bounds")
         if isinstance(choice, dict) and "index" in choice:
             indices = [choice["index"]] if choice["index"] < count else []
@@ -256,8 +277,7 @@ class AtspiProvider(AccessibilityProvider):
         self._alive(candidate)
         if not self._state(candidate, "ENABLED"):
             raise DriverError("NOT_ACTIONABLE", "option is disabled")
-        if not interface.select_child(indices[0]):
-            raise DriverError("NOT_ACTIONABLE", "control rejected selection")
+        self._mutate(lambda: interface.select_child(indices[0]))
 
     def close(self) -> None:
         """Drop owned proxy references and release the client connection."""

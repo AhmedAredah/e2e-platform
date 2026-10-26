@@ -10,7 +10,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
     private sealed record Entry(string Id, AutomationElement Element, string TestId);
     private readonly Dictionary<string, Entry> byRuntime = [];
     private readonly Dictionary<string, Entry> byId = [];
-    private readonly HashSet<string> sensitive = [];
+    private readonly ControlSensitivity sensitive = new();
     private long sequence;
     private HashSet<string> lastObserved = [];
     private readonly ControlAdapter[] controls = [new FocusControlAdapter(), new InvokeControlAdapter(), new ValueControlAdapter(), new ToggleControlAdapter(), new SelectionControlAdapter()];
@@ -32,13 +32,13 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             if (!observed.Add(runtime)) { truncated = true; return null; }
             if (!byRuntime.TryGetValue(runtime, out var entry) || !IsAlive(entry.Element))
             {
-                if (entry != null) { byId.Remove(entry.Id); sensitive.Remove(entry.Id); }
+                if (entry != null) { byId.Remove(entry.Id); sensitive.Forget(entry.Id); }
                 if (byId.Count >= 20000) throw new DriverException("ENGINE_FAILURE");
                 entry = new Entry("uia-" + ++sequence, element, Bounded(current.AutomationId, 1024));
                 byRuntime[runtime] = entry;
                 byId[entry.Id] = entry;
             }
-            var secure = current.IsPassword || sensitive.Contains(entry.Id);
+            var secure = sensitive.Observe(entry.Id, current.IsPassword);
             var states = new Dictionary<string, bool> {
                 ["disabled"] = !current.IsEnabled, ["hidden"] = current.IsOffscreen,
                 ["focused"] = current.HasKeyboardFocus, ["secure"] = secure
@@ -87,7 +87,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             lastObserved = observed.Select(key => byRuntime[key].Id).ToHashSet(StringComparer.Ordinal);
             foreach (var key in byRuntime.Keys.Where(key => !observed.Contains(key) && !IsAlive(byRuntime[key].Element)).ToArray())
             {
-                byId.Remove(byRuntime[key].Id); sensitive.Remove(byRuntime[key].Id); byRuntime.Remove(key);
+                byId.Remove(byRuntime[key].Id); sensitive.Forget(byRuntime[key].Id); byRuntime.Remove(key);
             }
             // Geometry is deliberately absent: this backend promises semantic control only.
             return new { root = new { @ref = new { id = "desktop-root", revision = "" }, role = "application", name = "Owned application", children = windows }, viewport = new { width = 1, height = 1 }, truncated = truncated || budget.Truncated };
@@ -105,7 +105,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             if (current.ProcessId != processId) throw new DriverException("NODE_STALE");
             if (!current.IsEnabled || current.IsOffscreen) throw new DriverException("NOT_ACTIONABLE");
             var kind = RequestValidator.String(action, "kind");
-            if (kind == "fill" && action.TryGetProperty("sensitive", out var secret) && secret.GetBoolean()) sensitive.Add(id);
+            if (kind == "fill" && action.TryGetProperty("sensitive", out var secret) && secret.GetBoolean()) sensitive.Observe(id, true);
             var adapter = controls.SingleOrDefault(control => control.Supports(kind)) ?? throw new DriverException("UNSUPPORTED_CAPABILITY");
             entered = true;
             adapter.Perform(entry.Element, kind, action);

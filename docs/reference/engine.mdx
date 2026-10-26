@@ -1037,6 +1037,12 @@ dispatch.
 platform-native selector string; `frame` scopes a query into a nested
 document.
 
+Observation names and text are bounded by `OBSERVED_NAME_LIMIT` and
+`OBSERVED_TEXT_LIMIT`. A value at its limit may be truncated. A producer may
+omit an oversized field for privacy, so absence does not prove an empty or
+complete value. Single-node reads remain subject to the engine's capabilities,
+privacy policy, and backend limits.
+
 ```ts
 /** One node of an observation tree. */
 export interface SemanticNode {
@@ -1044,9 +1050,9 @@ export interface SemanticNode {
   readonly ref: NodeRef;
   /** Semantic role. */
   readonly role?: string;
-  /** Accessible name, cut at `OBSERVED_NAME_LIMIT`. */
+  /** Accessible name, bounded by `OBSERVED_NAME_LIMIT` in observations; may be omitted. */
   readonly name?: string;
-  /** Visible text, cut at `OBSERVED_TEXT_LIMIT`. */
+  /** Visible text, bounded by `OBSERVED_TEXT_LIMIT` in observations; may be omitted. */
   readonly text?: string;
   /** Current input value; never reported for a secure field. */
   readonly value?: string;

@@ -2,8 +2,9 @@
 
 import { chromium, type Browser, type ElementHandle, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { SemanticNode } from '@e2e-platform/core/engine';
+import { OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, type SemanticNode } from '@e2e-platform/core/engine';
 import { captureDocument } from '../../src/observation.ts';
+import { readManySemanticsFunction, SECURE_FIELD_SELECTOR } from '../../src/read-node.ts';
 
 let browser: Browser;
 let page: Page;
@@ -42,6 +43,23 @@ function flatten(node: SemanticNode, out: SemanticNode[] = []): SemanticNode[] {
 }
 
 describe('placeholder names', () => {
+  it('omits oversized observed fields whole while locator reads retain complete text', async () => {
+    const secret = 'BROWSER_PRIVATE_BOUNDARY_48291';
+    const name = 'n'.repeat(OBSERVED_NAME_LIMIT - 12) + secret;
+    const text = 't'.repeat(OBSERVED_TEXT_LIMIT - 12) + secret;
+    await page.setContent(`<title>${name}</title><button data-testid="named" aria-label="${name}">Go</button><p data-testid="text">${text}</p>`);
+    const { tree } = await capture();
+    const byTestId = new Map(flatten(tree).map((node) => [node.testId, node]));
+    expect(tree.name).toBe('[omitted: text exceeds limit]');
+    expect(byTestId.get('named')?.name).toBe('[omitted: text exceeds limit]');
+    expect(byTestId.get('text')?.text).toBe('[omitted: text exceeds limit]');
+    const options = { testIdAttribute: 'data-testid', secureFieldSelector: SECURE_FIELD_SELECTOR, mode: { kind: 'node' as const } };
+    const [named] = await page.getByTestId('named').evaluateAll(readManySemanticsFunction, options);
+    const [paragraph] = await page.getByTestId('text').evaluateAll(readManySemanticsFunction, options);
+    expect(named?.name).toBe(name);
+    expect(paragraph?.text).toBe(text);
+  });
+
   it('names text controls by placeholder in HTML-AAM order and carries the attribute', async () => {
     await page.setContent(`
       <input type="search" placeholder="Search products" data-testid="search">

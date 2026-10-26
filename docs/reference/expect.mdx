@@ -92,6 +92,11 @@ and regexps see the unmodified value. For example, `'a  b'` differs from
 `'a b'`. This also applies to `toHaveAttribute('class', value)`; use the
 engine's `toHaveClass` matcher when you want a normalized class list.
 
+Text, value, and accessible-name assertions require the engine to report the
+corresponding field. An omitted field is unknown, so neither a positive nor a
+negated assertion passes from that omission. An explicitly reported empty
+string can satisfy an empty-string assertion.
+
 ```ts
 await expect(screen.getByRole('status')).toHaveText('Saved');
 await expect(screen.getByTestId('todo')).toHaveCount(3);

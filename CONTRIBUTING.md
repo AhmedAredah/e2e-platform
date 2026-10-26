@@ -1,7 +1,7 @@
 # Contributing
 
-This fork extends an MIT upstream snapshot with reusable C++ application testing
-modules. Start with [README.md](README.md), [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) and
+This fork extends an MIT upstream snapshot with reusable CLI, HTTP, terminal and
+desktop testing modules. Start with [README.md](README.md), [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) and
 [AGENTS.md](AGENTS.md) for the architecture and conventions.
 
 ## License and contribution terms
@@ -14,8 +14,8 @@ separate license obligations. Runtime dependencies and Qt retain their own terms
 
 Read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before participating. Consult
 [SECURITY.md](SECURITY.md) before reporting a potential vulnerability. Fork-owned
-community and security channels must be configured before a public launch; the
-original project's contacts are not designated contacts for this fork.
+issues belong in [AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform/issues);
+the original project's contacts are not designated contacts for this fork.
 
 ## Development
 

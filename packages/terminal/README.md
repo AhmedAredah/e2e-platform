@@ -40,6 +40,9 @@ and `waitFor` are recorded fixture operations; write arguments are omitted from
 step labels. `waitFor` checks the reconstructed visible screen, has a deadline,
 and stops its polling on cancellation/timeout. The raw bounded `transcript()` is
 available explicitly for diagnostics and may contain application secrets.
+Model-facing title and text fields that exceed observation limits are omitted
+whole, so clipping cannot expose a secret prefix before runner redaction. Locator
+reads and explicit snapshots retain the complete visible field.
 
 `TerminalSession`, `TerminalEngine`, abstract `TerminalTransport`, and concrete
 `NodePtyTransport` are exported. `TerminalEngine` subclasses can specialize

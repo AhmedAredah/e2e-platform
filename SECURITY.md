@@ -5,15 +5,15 @@ Upstream documentation describes a different distribution and may differ.
 
 ## Reporting a vulnerability
 
-This local fork has no published security contact or hosted advisory endpoint.
-Contact the maintainer who supplied your copy through your established private
-channel. Do not post credentials or exploit details in a public issue. The
-maintainer must configure a private disclosure channel before publishing a
-hosted release. The original project's contact is not this fork's support team.
+Use [GitHub private vulnerability reporting](https://github.com/AhmedAredah/e2e-platform/security/advisories/new)
+for security issues in this fork. Reporting is enabled on this repository.
+Do not post credentials or exploit details in a public issue. The original
+project's contact is not this fork's support team.
 
 ## Supported versions
 
-The current candidate is 0.2.0-rc.0. No registry release, response-time commitment or
+The reviewed candidate is 0.2.0-rc.2 on `mit-main`; the preserved upstream `main`
+branch is not this candidate. No registry release, response-time commitment or
 long-term maintenance window is established. Check [RELEASE_STATUS.md](RELEASE_STATUS.md)
 for tested environments and unresolved dependency findings.
 
@@ -61,10 +61,20 @@ invented locations: confidential references are omitted and the artifact is
 marked `incomplete`, retaining its ID, size and hash. Test and serial artifact
 directory names use full-input digests so clipped titles cannot escape filtering.
 
-Diagnostics redact complete values before shortening them. Native observation
-producers and drivers that do not know the runner's secrets omit an oversized
+Diagnostics redact complete values before shortening them. Browser, terminal
+and native observation producers that do not know the runner's secrets omit an oversized
 field whole instead of exposing a potentially confidential prefix. The Qt
 producer also omits fields containing NUL rather than normalizing their content.
+
+Mobile observation pixels and screenshot artifacts are withheld whenever a
+full accessibility capture detects secure controls. The mobile dependency does
+not provide atomic tree/pixel masking, so painting old rectangles cannot prove
+a moving password field is covered. Full-tree checks run before and after
+capture, including in interactive-only observation mode. A refused observation
+keeps its semantic tree; an explicit screenshot fails without writing an artifact.
+Android native password flags are recognized, and ambiguous password labels,
+values and descendants are omitted. This policy cannot identify secrets that
+the application's accessibility implementation does not mark.
 
 A secret fill is authorized from the runner's own observation. Once an opaque
 secret, or a literal matching a registered secret, is filled, that live session

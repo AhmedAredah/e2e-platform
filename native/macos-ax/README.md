@@ -61,7 +61,8 @@ in the most recent successful snapshot and revalidate its PID and role.
 Destroyed/unavailable elements fail as stale. Accessible provider identity is
 still an OS/provider contract; arbitrary defective providers cannot be certified.
 The registry is bounded to 100,000 identities; restart the attempt if exhausted.
-Snapshots cap nodes/depth and aggregate text to 4 MiB, flag partial traversal or
+Snapshots cap nodes/depth and aggregate escaped JSON text to 4 MiB (including
+duplicated value/text fields), flag partial traversal, individual field omissions or
 text-budget exhaustion, and have a five-second budget. Fields are never partially
 clipped to fit the text budget.
 Every AX element has a 500 ms IPC timeout; individual blocked calls may finish
@@ -103,6 +104,8 @@ check. Run the commands in
 on macOS. Until that job passes, this backend is implemented but experimental and
 unqualified for release claims. Permission-denied and unsupported-platform runs
 must remain failures, not skipped successes.
+The verifier runs the fixture twice, including its deliberately broken `--wrong`
+mode, and requires the same expected-output assertion to reject that defect.
 
 ## Extension structure
 

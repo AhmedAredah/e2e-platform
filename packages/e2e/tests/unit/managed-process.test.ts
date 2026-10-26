@@ -30,6 +30,75 @@ describe('ManagedProcess', () => {
     expect(Date.now() - startedAt).toBeLessThan(5_000);
     await app.stop();
   }, 20_000);
+
+  it.skipIf(process.platform === 'win32')('stops descendants after a successful command leader has already exited', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-exited-leader-'));
+    const pidFile = path.join(dir, 'child.pid');
+    const stoppedFile = path.join(dir, 'stopped');
+    const descendant = `
+      const fs = require('node:fs');
+      fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+      process.on('SIGTERM', () => { fs.writeFileSync(${JSON.stringify(stoppedFile)}, 'stopped'); process.exit(0); });
+      setInterval(() => {}, 1000);
+      process.send('ready');
+    `;
+    const leader = `
+      const child = require('node:child_process').fork('-e', [${JSON.stringify(descendant)}], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+      child.once('message', () => { child.disconnect(); child.unref(); });
+    `;
+    const app = new ManagedProcess('service leader', {
+      executable: process.execPath, args: ['-e', leader], startupTimeout: 5_000, shutdownTimeout: 100,
+    }, dir, { waitForExit: true });
+    try {
+      await app.start();
+      await app.stop();
+      expect(fs.existsSync(stoppedFile)).toBe(true);
+    } finally {
+      await app.stop();
+      if (fs.existsSync(pidFile)) {
+        try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already stopped. */ }
+      }
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it.skipIf(process.platform === 'win32')('force-kills resistant descendants when the command leader exits during shutdown', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-resistant-descendant-'));
+    const pidFile = path.join(dir, 'child.pid');
+    const aliveFile = path.join(dir, 'still-alive');
+    const descendant = `
+      const fs = require('node:fs');
+      process.on('SIGTERM', () => {});
+      process.on('SIGUSR2', () => { fs.writeFileSync(${JSON.stringify(aliveFile)}, 'alive'); process.exit(0); });
+      fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+      setInterval(() => {}, 1000);
+    `;
+    const leader = `
+      require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(descendant)}], { stdio: 'ignore' });
+      setInterval(() => {}, 1000);
+    `;
+    const app = new ManagedProcess('service leader', {
+      executable: process.execPath, args: ['-e', leader], startupTimeout: 5_000, shutdownTimeout: 100,
+    }, dir, { waitForExit: true });
+    const controller = new AbortController();
+    const starting = app.start(controller.signal);
+    try {
+      await vi.waitFor(() => expect(fs.existsSync(pidFile)).toBe(true));
+      controller.abort();
+      await starting;
+      try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGUSR2'); } catch { /* Already stopped. */ }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(fs.existsSync(aliveFile)).toBe(false);
+    } finally {
+      controller.abort();
+      await starting;
+      await app.stop();
+      if (fs.existsSync(pidFile)) {
+        try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already stopped. */ }
+      }
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 /** Prints one line to stdout and one to stderr, then exits with `exitCode`. */

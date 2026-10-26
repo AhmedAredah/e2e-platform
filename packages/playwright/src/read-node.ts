@@ -705,14 +705,16 @@ const readSemanticsFunction = <Mode extends SemanticMode>(
     if (secure) text = '';
     else if (projection.directTextOnly) text = directTextOf(el);
     else text = textOf(el);
-    if (projection.textLimit !== null) text = text.slice(0, projection.textLimit);
+    // Without the runner's secret ledger, partial text can disclose a prefix
+    // that no longer matches its registered secret. Omit oversized fields whole.
+    if (projection.textLimit !== null && text.length > projection.textLimit) text = '[omitted: text exceeds limit]';
 
     let name = accessibleName(el);
-    if (projection.nameLimit !== null && name !== null) name = name.slice(0, projection.nameLimit);
     // A secure field withholds its value, never its labels: a password field is still found by its label.
     const labels = labelsOf(el);
     const isDocumentRoot = projection.documentRoot && tag === 'html';
     if (isDocumentRoot) name = el.ownerDocument.title;
+    if (projection.nameLimit !== null && name !== null && name.length > projection.nameLimit) name = '[omitted: text exceeds limit]';
 
     const rect = el.getBoundingClientRect();
     const role = isDocumentRoot ? 'document' : roleOf(el, tag);

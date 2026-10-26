@@ -332,6 +332,11 @@ differently are `INVALID_CONFIG`.
 On every exit path the runner stops the app commands, then the services in
 reverse order, then their `teardown` commands. A failing teardown is a
 `cleanup` run error and never skips the ones after it.
+On POSIX systems cleanup signals the owned process group, including children
+that outlive the original command, and force-kills remaining members after
+`shutdownTimeout`. A child that deliberately starts a separate process group
+is outside this ownership boundary. On Windows this command manager stops
+the direct child; use a service's explicit `teardown` for additional processes.
 [Starting your app](/starting-your-app) shows a full example.
 
 ## artifacts

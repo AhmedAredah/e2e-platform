@@ -52,6 +52,27 @@ for (const [file, text] of [['dist/obsolete.js', 'removed source'], ['dist/index
   }));
 }
 
+for (const sibling of ['process', 'native']) test(`core init cannot ship a stale ${sibling} package version`, () => {
+  const directory = mkdtempSync(join(tmpdir(), 'e2e-core-build-integrity-'));
+  const cwd = join(directory, 'packages/e2e');
+  mkdirSync(join(cwd, 'dist'), { recursive: true });
+  mkdirSync(join(directory, 'skills/e2e'), { recursive: true });
+  writeFileSync(join(cwd, 'package.json'), JSON.stringify({ name: '@e2e-platform/core', version: '0.2.0-rc.1', exports: './dist/index.js' }));
+  writeFileSync(join(cwd, 'dist/index.js'), 'export {};');
+  for (const name of ['playwright', 'agent-device', 'oauth', 'process', 'native']) {
+    mkdirSync(join(directory, 'packages', name));
+    writeFileSync(join(directory, 'packages', name, 'package.json'), JSON.stringify({ version: '0.2.0-rc.1' }));
+  }
+  try {
+    assert.equal(spawnSync(process.execPath, [stamp], { cwd }).status, 0);
+    assert.equal(spawnSync(process.execPath, [check], { cwd }).status, 0);
+    writeFileSync(join(directory, 'packages', sibling, 'package.json'), JSON.stringify({ version: '0.2.0-rc.2' }));
+    const result = spawnSync(process.execPath, [check], { cwd, encoding: 'utf8' });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /build inventory differs/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
 test('the real checks build removes obsolete compiler output before stamping', () => {
   const root = fileURLToPath(new URL('../', import.meta.url));
   const temp = mkdtempSync(join(tmpdir(), 'e2e-clean-build-'));

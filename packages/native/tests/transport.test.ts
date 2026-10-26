@@ -79,6 +79,34 @@ describe('authenticated-bridge transport mechanics', () => {
     await expect(transport.request('perform', {}, context(), true)).rejects.toMatchObject({ code: 'NODE_STALE', retryable: true, message: 'native bridge NODE_STALE' });
   });
 
+  it('rejects malformed UTF-8 without accepting a replacement character as source data', async () => {
+    const transport = await bridge(({ id }, socket) => socket.write(Buffer.concat([
+      Buffer.from(`{"jsonrpc":"2.0","id":${id},"result":"private-`),
+      Buffer.from([0xc3, 0x28]),
+      Buffer.from('"}\n'),
+    ])));
+    const disconnected = vi.fn();
+    transport.onDisconnect(disconnected);
+    await expect(transport.request('snapshot', {}, context())).rejects.toMatchObject({ code: 'ENGINE_FAILURE', message: 'malformed or unexpected native response' });
+    expect(disconnected).toHaveBeenCalledOnce();
+    await expect(transport.request('snapshot', {}, context())).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+  });
+
+  it.each(['-32000.5', '1e309'])('rejects invalid numeric error code %s before accepting retryable errors', async (code) => {
+    const transport = await bridge(({ id }, socket) => socket.write(`{"jsonrpc":"2.0","id":${id},"error":{"code":${code},"message":"private","data":{"code":"NODE_STALE"}}}\n`));
+    await expect(transport.request('perform', {}, context(), true)).rejects.toMatchObject({ code: 'ACTION_MAY_HAVE_COMMITTED', retryable: false });
+  });
+
+  it('decodes a valid Unicode scalar split across TCP chunks without data loss', async () => {
+    const transport = await bridge(({ id }, socket) => {
+      const prefix = Buffer.from(`{"jsonrpc":"2.0","id":${id},"result":"`);
+      const value = Buffer.from('😀');
+      socket.write(Buffer.concat([prefix, value.subarray(0, 2)]));
+      setTimeout(() => socket.write(Buffer.concat([value.subarray(2), Buffer.from('"}\n')])), 10);
+    });
+    await expect(transport.request('snapshot', {}, context())).resolves.toBe('😀');
+  });
+
   it('reports a protocol fault after a successful reply without repeating disconnect notifications', async () => {
     const transport = await bridge(({ id }, socket) => socket.write(
       JSON.stringify({ jsonrpc: '2.0', id, result: null }) + '\n'

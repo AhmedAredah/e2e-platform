@@ -106,3 +106,5 @@ Embedders using `createOAuthFetch` can set `refreshTimeoutMs`.
 Error responses are bounded to 64 KiB. Diagnostic messages remove submitted
 grant values and control characters and are capped at 512 characters. Unknown
 or transformed secrets in arbitrary output cannot be inferred.
+Malformed saved or environment credential JSON is reported without retaining
+native parser errors that might quote token contents.

@@ -41,7 +41,7 @@ export function buildInventory(root = process.cwd()) {
   const outputs = ['dist'];
   if (metadata.files?.includes('skills')) outputs.push('skills');
   const inputs = ['package.json', 'src', 'tsconfig.json', 'tsconfig.build.json', '../../tsconfig.base.json'].filter((path) => existsSync(resolve(root, path)));
-  if (metadata.name === '@e2e-platform/core') inputs.push('../../skills/e2e', '../playwright/package.json', '../agent-device/package.json', '../oauth/package.json');
+  if (metadata.name === '@e2e-platform/core') inputs.push('../../skills/e2e', '../playwright/package.json', '../agent-device/package.json', '../oauth/package.json', '../process/package.json', '../native/package.json');
   return {
     schemaVersion: 1,
     name: metadata.name,

@@ -10,7 +10,6 @@ import { processSecrets, redactJson } from '../internal/redact.ts';
  * content types, request IDs, numeric results or base64 screenshots.
  */
 export class RedactingStdioTransport extends StdioServerTransport {
-  // fallow-ignore-next-line unused-class-member -- MCP SDK invokes this transport override through its Transport interface.
   override send(message: JSONRPCMessage): Promise<void> {
     const visit = (value: unknown, parent = ''): unknown => {
       if (Array.isArray(value)) return value.map((entry) => visit(entry, parent));

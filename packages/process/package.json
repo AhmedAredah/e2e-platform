@@ -1,7 +1,7 @@
 {
   "name": "@e2e-platform/process",
-  "version": "0.2.0-rc.1",
-  "description": "Bounded subprocess fixtures for native and C++ end-to-end tests",
+  "version": "0.2.0-rc.2",
+  "description": "Bounded subprocess fixtures and application launch profiles for end-to-end tests",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -38,9 +38,18 @@
     "@types/node": "26.6.2",
     "@e2e-platform/core": "workspace:*",
     "typescript": "7.0.2",
-    "vitest": "5.0.1"
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": "^22.22.3 || >=24.8.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedAredah/e2e-platform.git",
+    "directory": "packages/process"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedAredah/e2e-platform/issues"
+  },
+  "homepage": "https://github.com/AhmedAredah/e2e-platform/tree/mit-main/packages/process#readme"
 }

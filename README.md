@@ -7,23 +7,44 @@ Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
 
-The current local prerelease is **0.2.0-rc.1**. The new OS accessibility drivers are
+The current prerelease is **0.2.0-rc.2**, delivered in the reviewed full-repository archive.
+The GitHub fork exists, but publishing its `mit-main` branch is pending repository
+write access; the hosted `main` branch is still the upstream Apache snapshot. The new OS accessibility drivers are
 experimental; portable tests do not replace their pending live platform qualification. Read
 [RELEASE_STATUS.md](RELEASE_STATUS.md) for tested scope and remaining release gates.
 
 The fork starts from upstream commit
-`e9c2914c6d8f8d664d820b13a1fa454e9247e94b`, whose committed license is MIT.
+[`e9c2914`](https://github.com/tester-army/e2e/tree/e9c2914c6d8f8d664d820b13a1fa454e9247e94b), whose committed license is MIT.
 It retains that revision's browser/mobile engines and tests. C++ extensions and
 selected compatibility/security changes were applied to this MIT source; the
 later Apache-licensed upstream tree was not relabeled. See the
 [licensing record](docs/development/LICENSING.md) and
 [third-party notices](THIRD_PARTY_NOTICES.md).
 
+Maintained independently by [Ahmed Aredah](https://github.com/AhmedAredah).
+The GitHub fork relationship records source ancestry; it does not imply endorsement
+by TesterArmy. The reviewed branch is `mit-main`; the separately retained
+`main` branch is an upstream Apache snapshot and is not this release. The MIT declaration applies to this fork's selected source, with
+the separately licensed materials identified in the notices. It does not relicense
+later upstream revisions or third-party dependencies.
+
 ## Install and run
 
 Use Node.js **22.22.3+ in the 22.x line, or 24.8.0+**. These fork package names
-are local release identities; registry publication and namespace ownership are
-not established. Use the checksummed local installation kit in the download:
+are candidate package identities; registry publication and namespace ownership are
+not established. Install the pinned package manager, then build the checksummed
+installation kit from this checkout:
+
+```sh
+npm install --global pnpm@12.3.4
+git clone --branch mit-main https://github.com/AhmedAredah/e2e-platform.git
+cd e2e-platform
+pnpm install --frozen-lockfile
+pnpm pack:native
+```
+
+Use the pinned pnpm version in `package.json`. If you already have a complete
+repository archive with `release-packages/`, use its included kit directly:
 
 ```sh
 # Your project must already have a package.json.
@@ -35,6 +56,12 @@ JavaScript dependencies require network access or a populated npm cache. CMake,
 compilers, Qt and optional terminal native dependencies are separate prerequisites.
 Follow [INSTALL.md](INSTALL.md) for a complete first test, Qt integration
 and consumer installation instructions.
+
+Browser and mobile engines are separate optional packages. A Git clone includes
+their source; the six-package kit does not include their tarballs. Follow
+[the optional-engine installation steps](INSTALL.md#browser-and-mobile-applications)
+to build and pack them locally, install them beside the kit, and prepare browsers
+or simulators before running tests.
 
 ```ts
 import { test, expect } from '@e2e-platform/process/test';

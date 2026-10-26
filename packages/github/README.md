@@ -32,6 +32,9 @@ The job needs `permissions: pull-requests: write` and the step that runs
 of one job pass a `key` so their comments stay apart. When the reporter cannot
 post (another CI, a push, a fork's read-only token) it says why in one summary
 row and never changes the run's exit code.
+API error diagnostics contain status and route only. Response bodies are
+discarded so a server or proxy cannot echo credentials or private report data
+into the runner's diagnostics.
 
 Full documentation lives at [e2e.tester.army/docs/github](https://e2e.tester.army/docs/github).
 

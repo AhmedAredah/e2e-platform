@@ -20,3 +20,32 @@ updates:
       day: monday
     commit-message:
       prefix: 'chore(ci)'
+  - package-ecosystem: pip
+    directory: /native/linux-atspi
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(deps)'
+  - package-ecosystem: cargo
+    directories:
+      - /native/macos-ax
+      - /examples/with-desktop/rust
+      - /examples/with-languages/apps/rust
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(deps)'
+  - package-ecosystem: nuget
+    directories:
+      - /native/windows-uia/src/Driver
+      - /native/windows-uia/src/Protocol
+      - /native/windows-uia/tests/ProtocolTests
+      - /examples/with-desktop/dotnet
+      - /examples/with-languages/apps/dotnet
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'chore(deps)'

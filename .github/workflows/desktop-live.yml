@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - run: python3 -m unittest discover -s native/linux-atspi/tests -v
       - run: python3 native/linux-atspi/tests/live_smoke.py
 
@@ -29,6 +31,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - run: dotnet build native/windows-uia/src/Driver/E2E.Platform.WindowsUia.csproj -c Release
       - run: dotnet build examples/with-desktop/dotnet/AccessibleDemo.csproj -c Release
       - run: python native/windows-uia/tests/live_smoke.py --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe
@@ -39,6 +43,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - run: cargo build --locked --manifest-path native/macos-ax/Cargo.toml
       - run: cargo build --locked --manifest-path examples/with-desktop/rust/Cargo.toml
       - run: python3 native/macos-ax/scripts/verify-macos.py --driver native/macos-ax/target/debug/e2e-platform-macos-ax --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo

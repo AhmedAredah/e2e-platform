@@ -69,11 +69,14 @@ ordinary deterministic pass.
 See [helper scope and limits](../../native/qt/README.md) and
 [the native protocol](../../packages/native/PROTOCOL.md).
 
-Native component checks were rerun for this MIT fork on October 24, 2026, with
-GCC 13.3, Qt 6.4.2 and the Linux offscreen platform: a fresh build passed four
-CTest suites (91 Qt Test rows), including actual Quick ComboBox label/value/index,
+Native component checks were rerun for this MIT fork on October 25, 2026, with
+GCC 13.3, Qt 6.4.2 and the Linux offscreen platform: a fresh build passed five
+CTest suites (114 Qt Test rows), including actual Quick ComboBox label/value/index,
 activation, invalid/ambiguous selection, disabled/hidden/stale controls, secure
-redaction and changed-model regressions. The built MIT runner passed all three
+redaction and changed-model regressions. The review also covers Widgets option
+ambiguity/disabled rows, password-reveal redaction, and Quick focus redirection
+before and during sensitive input. An independently installed CMake consumer
+builds and passes its smoke test. The built MIT runner passed all three
 Widgets tests and the Quick test with currency selection. The Quick planted
 wrong calculation exited 1 with `ASSERTION_FAILED`;
 every attempt completed cleanup. The runner verifier writes exact workflow results to

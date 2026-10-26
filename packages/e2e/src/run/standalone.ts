@@ -19,7 +19,7 @@ import { classifyError, serializeError, type SerializedError } from '../internal
 import { uuidv7 } from '../internal/ids.ts';
 import { Deadline } from '../internal/time.ts';
 import type { TestFixtures } from '../types.ts';
-import { createAttemptArtifacts } from './artifacts.ts';
+import { createAttemptArtifacts, type AttemptArtifacts } from './artifacts.ts';
 import { AttemptBudget } from './budget.ts';
 import { TargetExecutor, type ClosingRecord } from './execute.ts';
 import { createFixtures } from './fixtures.ts';
@@ -86,121 +86,120 @@ export async function openStandaloneAttempt(options: StandaloneAttemptOptions): 
   // The secret registry is process-wide, as in a run: `credentials.user()` and `secrets.get()`
   // resolve while the attempt is open.
   setSecretRegistry(config);
-  let processes: AppProcesses;
-  let prepared: EnginePrepareResult | void;
-  try {
-    // One worker on one target: one slot to provision.
-    prepared = await prepareEngine(target, 1, { runId, env: options.env, signal }, (line) => notice(target.name, line));
-    const hooks = { ci: config.ci, notice: (message: string) => notice('app', message) };
-    processes = await startDeclaredProcesses([target], config.projectRoot, () => hooks, signal, debug);
-  } catch (cause) {
-    releaseSecretRegistry(config);
-    throw cause;
-  }
-
-  const sessionStore = SessionStore.create(runId, path.join(config.projectRoot, '.e2e', 'sessions'));
-  const executor = new TargetExecutor({
-    config,
-    target,
-    runId,
-    artifactsRoot: options.artifactsRoot,
-    sessionStore,
-    headed: options.headed,
-    workerSlot: 0,
-    env: { ...prepared?.env, ...options.env },
-    isolated: false,
-    interruptSignal: signal,
-    debug,
-    ...(options.onProgress === undefined ? {} : { events: { onProgress: (_testId, progress) => options.onProgress?.(progress) } }),
-  });
-  const steps = new StepRecorder(attemptId, {
-    maxEventsPerStep: config.limits.maxEventsPerStep,
-    projectRoot: config.projectRoot,
-    ...(options.onProgress === undefined ? {} : { onProgress: options.onProgress }),
-  });
-  const artifacts = createAttemptArtifacts({
-    artifactsRoot: options.artifactsRoot,
-    segments: [target.name, 'sessions', attemptId],
-    attemptId,
-    currentStepId: () => steps.currentStepId,
-    ...(config.artifactStore === undefined ? {} : { store: config.artifactStore }),
-    identity: { runId, testId: `session:${target.name}`, attemptId },
-  });
-
   const cleanupErrors: SerializedError[] = [];
   const recordCleanupFailure = (cause: unknown): void => {
     cleanupErrors.push(serializeError(classifyError(cause), { phase: 'cleanup' }));
   };
-  const teardownProcesses = async (): Promise<void> => {
-    await processes.stop(recordCleanupFailure);
+  let processes: AppProcesses | undefined;
+  let sessionStore: SessionStore | undefined;
+  let executor: TargetExecutor | undefined;
+  let artifacts: AttemptArtifacts | undefined;
+  let session: TargetSession | undefined;
+
+  // Every resource joins this cleanup scope as soon as it exists, including
+  // the app processes started before an artifact directory can be created.
+  const teardown = async (): Promise<void> => {
+    if (session !== undefined && executor !== undefined && artifacts !== undefined) {
+      const record: ClosingRecord = { status: 'passed', cleanup: 'complete' };
+      await executor.closeSession(session, attemptId, record, artifacts.sink, cleanupErrors).catch(recordCleanupFailure);
+    }
+    await executor?.dispose().catch(recordCleanupFailure);
+    cleanupErrors.push(...(executor?.collectedRunErrors().map((runError) => runError.error) ?? []));
+    await artifacts?.settle().catch(recordCleanupFailure);
+    await processes?.stop(recordCleanupFailure).catch(recordCleanupFailure);
     try {
-      sessionStore.cleanup();
+      sessionStore?.cleanup();
     } catch (cause) {
       recordCleanupFailure(cause);
     }
     releaseSecretRegistry(config);
   };
 
-  let session: TargetSession;
   try {
+    // One worker on one target: one slot to provision.
+    const prepared: EnginePrepareResult | void = await prepareEngine(target, 1, { runId, env: options.env, signal }, (line) => notice(target.name, line));
+    const hooks = { ci: config.ci, notice: (message: string) => notice('app', message) };
+    processes = await startDeclaredProcesses([target], config.projectRoot, () => hooks, signal, debug);
+    sessionStore = SessionStore.create(runId, path.join(config.projectRoot, '.e2e', 'sessions'));
+    executor = new TargetExecutor({
+      config,
+      target,
+      runId,
+      artifactsRoot: options.artifactsRoot,
+      sessionStore,
+      headed: options.headed,
+      workerSlot: 0,
+      env: { ...prepared?.env, ...options.env },
+      isolated: false,
+      interruptSignal: signal,
+      debug,
+      ...(options.onProgress === undefined ? {} : { events: { onProgress: (_testId, progress) => options.onProgress?.(progress) } }),
+    });
+    const steps = new StepRecorder(attemptId, {
+      maxEventsPerStep: config.limits.maxEventsPerStep,
+      projectRoot: config.projectRoot,
+      ...(options.onProgress === undefined ? {} : { onProgress: options.onProgress }),
+    });
+    artifacts = createAttemptArtifacts({
+      artifactsRoot: options.artifactsRoot,
+      segments: [target.name, 'sessions', attemptId],
+      attemptId,
+      currentStepId: () => steps.currentStepId,
+      ...(config.artifactStore === undefined ? {} : { store: config.artifactStore }),
+      identity: { runId, testId: `session:${target.name}`, attemptId },
+    });
     session = await executor.launchSession(undefined, attemptId, artifacts.dir, signal, artifacts.sink);
+
+    const attemptEnd = new AbortController();
+    const attempt: ExecutorAttempt = {
+      testId: `session:${target.name}`,
+      attemptId,
+      index: 0,
+      signal: attemptEnd.signal,
+      memory: new Map<string, unknown>(),
+    };
+    const budget = new AttemptBudget(AbortSignal.any([signal, attemptEnd.signal]), new Deadline(options.timeoutMs));
+    const { fixtures, agentRuntime } = createFixtures({
+      config,
+      target,
+      session,
+      steps,
+      budget,
+      runId,
+      attemptId,
+      attempt,
+      artifacts: artifacts.sink,
+      priorSteps: () => steps.completed(),
+      agent: options.agent,
+      agentContext: undefined,
+      saveSession: undefined,
+      // A model preflight failure is a run abort in a test; here it is one more
+      // reason the attempt reports at close.
+      models: new WorkerModels((error) => cleanupErrors.push(serializeError(error))),
+      debug,
+    });
+
+    let closing: Promise<readonly SerializedError[]> | undefined;
+    return {
+      runId,
+      attemptId,
+      fixtures,
+      agentRuntime,
+      session,
+      steps,
+      budget,
+      artifactsDir: artifacts.dir,
+      close: () => {
+        closing ??= (async () => {
+          attemptEnd.abort();
+          await teardown();
+          return cleanupErrors;
+        })();
+        return closing;
+      },
+    };
   } catch (cause) {
-    await executor.dispose();
-    await teardownProcesses();
+    await teardown();
     throw cause;
   }
-
-  const attemptEnd = new AbortController();
-  const attempt: ExecutorAttempt = {
-    testId: `session:${target.name}`,
-    attemptId,
-    index: 0,
-    signal: attemptEnd.signal,
-    memory: new Map<string, unknown>(),
-  };
-  const budget = new AttemptBudget(signal, new Deadline(options.timeoutMs));
-  const { fixtures, agentRuntime } = createFixtures({
-    config,
-    target,
-    session,
-    steps,
-    budget,
-    runId,
-    attemptId,
-    attempt,
-    artifacts: artifacts.sink,
-    priorSteps: () => steps.completed(),
-    agent: options.agent,
-    agentContext: undefined,
-    saveSession: undefined,
-    // A model preflight failure is a run abort in a test; here it is one more
-    // reason the attempt reports at close.
-    models: new WorkerModels((error) => cleanupErrors.push(serializeError(error))),
-    debug,
-  });
-
-  let closing: Promise<readonly SerializedError[]> | undefined;
-  return {
-    runId,
-    attemptId,
-    fixtures,
-    agentRuntime,
-    session,
-    steps,
-    budget,
-    artifactsDir: artifacts.dir,
-    close: () => {
-      closing ??= (async () => {
-        attemptEnd.abort();
-        const record: ClosingRecord = { status: 'passed', cleanup: 'complete' };
-        await executor.closeSession(session, attemptId, record, artifacts.sink, cleanupErrors);
-        await executor.dispose();
-        cleanupErrors.push(...executor.collectedRunErrors().map((runError) => runError.error));
-        await artifacts.settle();
-        await teardownProcesses();
-        return cleanupErrors;
-      })();
-      return closing;
-    },
-  };
 }

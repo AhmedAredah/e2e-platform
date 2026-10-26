@@ -41,7 +41,11 @@ try {
     const installed = join(project, 'node_modules', name);
     const metadata = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'));
     if (metadata.name !== name || metadata.version !== version || metadata.license !== 'MIT') throw new Error(`Invalid installed metadata for ${name}`);
+    if (metadata.repository?.url !== 'git+https://github.com/AhmedAredah/e2e-platform.git'
+      && metadata.repository?.url !== 'https://github.com/AhmedAredah/e2e-platform.git') throw new Error(`Invalid installed repository attribution for ${name}`);
+    if (metadata.bugs?.url !== 'https://github.com/AhmedAredah/e2e-platform/issues') throw new Error(`Invalid installed support URL for ${name}`);
     if (!existsSync(join(installed, 'LICENSE')) || !readFileSync(join(installed, 'LICENSE'), 'utf8').includes('Permission is hereby granted')) throw new Error(`Missing MIT license for ${name}`);
+    if (!existsSync(join(installed, 'NOTICE')) || readFileSync(join(installed, 'NOTICE'), 'utf8').trim().length === 0) throw new Error(`Missing third-party notice for ${name}`);
   }
   const nativeSchemaDirectory = join(project, 'node_modules/@e2e-platform/native/schema');
   for (const file of ['README.md', 'native-bridge-1.schema.json', 'fixtures/native-bridge-1.conformance.json']) {

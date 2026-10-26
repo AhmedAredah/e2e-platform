@@ -1,4 +1,4 @@
-/** Packs the built C++ modules and their runner for installation without publishing. */
+/** Packs the built application-boundary modules and their runner for installation without publishing. */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';

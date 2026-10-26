@@ -39,3 +39,5 @@ optional signal in `refresh(credentials, signal)` and should honor it.
 Provider error bodies are limited to 64 KiB. Diagnostics redact submitted grant
 values, remove control characters and are limited to 512 characters. This does
 not discover unknown or transformed secrets in arbitrary provider output.
+Malformed file or environment credential JSON is reported without retaining
+the native parser error, which could quote access or refresh tokens.

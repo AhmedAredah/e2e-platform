@@ -48,5 +48,13 @@
   },
   "ignoreUnresolvedImports": [
     "**/dist/**"
+  ],
+  "ignoreExports": [
+    {
+      "file": "packages/e2e/src/types.ts",
+      "exports": [
+        "StandardSchemaV1"
+      ]
+    }
   ]
 }

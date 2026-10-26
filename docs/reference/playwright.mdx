@@ -432,6 +432,10 @@ export type JsonValue =
 
 ## Semantic capture recovery
 
+Observed names, titles and text that exceed their field limits are omitted in
+full. Truncating them before runner redaction could disclose a partial secret.
+Locator reads retain complete fields for deterministic matching.
+
 When the semantic reader times out, agent observations can recover using a
 fresh viewport screenshot. Playwright runs a new secure-field mask sweep
 across every reachable frame, including open and closed shadow roots. Every

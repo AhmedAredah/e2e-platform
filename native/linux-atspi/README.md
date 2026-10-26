@@ -37,6 +37,26 @@ are required. Do not run the GUI app as root in a different user's session.
 an `e2e-platform-atspi` console command. GI and AT-SPI remain system dependencies;
 a pip installation does not install a Linux desktop, bus or toolkit.
 
+For a normal-user installation on Debian/Ubuntu, use a virtual environment that
+can see the distribution's GI modules. A default isolated environment cannot
+import system `python3-gi`; installing this wheel alone does not resolve that:
+
+```sh
+sudo apt-get install python3-venv python3-gi gir1.2-atspi-2.0 at-spi2-core
+/usr/bin/python3 -m venv --system-site-packages "$HOME/.venvs/e2e-platform-atspi"
+"$HOME/.venvs/e2e-platform-atspi/bin/python" -m pip install ./native/linux-atspi
+"$HOME/.venvs/e2e-platform-atspi/bin/python" -c "import gi; gi.require_version('Atspi', '2.0'); from gi.repository import Atspi"
+```
+
+Run these commands from the repository root. A source install also needs the
+build dependency declared in `pyproject.toml` (`setuptools>=68`); prepare it or a
+prebuilt wheel before disconnecting. You can replace `./native/linux-atspi` with
+the path to a prepared wheel. Point the desktop profile's `executable` at the
+absolute path to `.venvs/e2e-platform-atspi/bin/e2e-platform-atspi` under your home
+directory and omit the source `driver.py` argument. The profile appends `--` and
+the application argv. The source `/usr/bin/python3 driver.py` route above remains
+available without pip or a virtual environment.
+
 ## Controls and boundaries
 
 | Operation | Real backend operation | Boundary |
@@ -62,6 +82,10 @@ retained for live proxies, and stale/defunct objects cannot receive new actions.
 A 900,000-byte aggregate metadata budget counts escaped Unicode before retaining
 nodes, in addition to depth, node and per-field limits. Exhaustion marks the
 snapshot truncated; it cannot establish a control's absence.
+Per-field omissions also mark the snapshot incomplete. A failed snapshot revokes
+the previous observation's action references. Native mutation failures and
+unconfirmed toggle results return `ACTION_MAY_HAVE_COMMITTED` and close the
+session; the driver never retries them.
 
 The sidecar waits for the owned application to expose an accessible tree before
 announcing protocol readiness. The application is launched with an argv list and no shell. Its environment

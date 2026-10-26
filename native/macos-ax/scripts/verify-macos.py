@@ -32,19 +32,19 @@ def flatten(node):
         yield from flatten(child)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--driver', required=True)
-    parser.add_argument('--app', required=True)
-    parser.add_argument('--output')
-    args = parser.parse_args()
-    if sys.platform != 'darwin':
-        parser.error('real macOS GUI verification requires macOS; no simulated pass is produced')
+def assert_echo(nodes, expected):
+    matches = [node for node in nodes if node.get('testId') == 'echo']
+    assert len(matches) == 1, 'expected one accessible echo control'
+    assert matches[0].get('value') == expected, 'application output differs from the expected value'
+
+
+def scenario(args, wrong=False):
     token = secrets.token_hex(32)
     env = dict(os.environ, E2E_NATIVE_TOKEN=token, E2E_NATIVE_PORT='0')
-    process = subprocess.Popen([str(Path(args.driver).resolve()), '--', str(Path(args.app).resolve())], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen([str(Path(args.driver).resolve()), '--', str(Path(args.app).resolve()), *(['--wrong'] if wrong else [])], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     checks = []
     client = None
+    stream = None
     children = set()
     try:
         ready, _, _ = select.select([process.stdout], [], [], 15)
@@ -111,9 +111,19 @@ def main():
         perform('input', dict(kind='focus'))
         perform('input', dict(kind='fill', value='Rust AX verified', sensitive=False))
         perform('apply', dict(kind='tap'))
-        nodes = wait_for(lambda nodes: find(nodes, 'echo').get('value') == 'Rust AX verified')
-        assert find(nodes, 'echo').get('value') != 'planted wrong result'
-        checks.append('focus, fill and invoke with positive and negative result assertions')
+        nodes = wait_for(lambda nodes: find(nodes, 'echo').get('value') != 'waiting')
+        if wrong:
+            # The same positive oracle must reject a genuinely faulty application.
+            assert find(nodes, 'echo').get('value') == 'planted wrong result'
+            try:
+                assert_echo(nodes, 'Rust AX verified')
+            except AssertionError:
+                checks.append('planted application defect detected by the positive output oracle')
+            else:
+                raise AssertionError('planted wrong-output defect escaped detection')
+        else:
+            assert_echo(nodes, 'Rust AX verified')
+            checks.append('focus, fill and invoke with expected output')
         for kind, expected in [('check', True), ('check', True), ('uncheck', False), ('uncheck', False)]:
             perform('option', dict(kind=kind))
             wait_for(lambda nodes: find(nodes, 'option').get('states', {}).get('checked') is expected)
@@ -138,11 +148,10 @@ def main():
             time.sleep(0.1)
         assert not survivors, 'owned application survived shutdown'
         checks.append('owned application shutdown')
-        result = dict(status='passed', platform='macos', backend='macos-ax', runtimeVerified=True, checks=checks)
-        if args.output:
-            Path(args.output).write_text(json.dumps(result, indent=2) + '\n')
-        print(json.dumps(result, indent=2))
+        return checks
     finally:
+        if stream is not None:
+            stream.close()
         if client is not None:
             client.close()
         if process.poll() is None:
@@ -152,6 +161,24 @@ def main():
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
+        for pipe in (process.stdout, process.stderr):
+            if pipe is not None:
+                pipe.close()
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--driver', required=True)
+    parser.add_argument('--app', required=True)
+    parser.add_argument('--output')
+    args = parser.parse_args()
+    if sys.platform != 'darwin':
+        parser.error('real macOS GUI verification requires macOS; no simulated pass is produced')
+    result = dict(status='passed', platform='macos', backend='macos-ax', runtimeVerified=True,
+                  checks=scenario(args), plantedDefectChecks=scenario(args, wrong=True))
+    if args.output:
+        Path(args.output).write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == '__main__':

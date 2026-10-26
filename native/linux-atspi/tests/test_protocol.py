@@ -3,12 +3,16 @@ import json
 import os
 from pathlib import Path
 import socket
+import signal
+import select
 import subprocess
 import sys
 import tempfile
 import time
 import threading
 import unittest
+from unittest.mock import patch
+import live_smoke
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from e2e_atspi.application import OwnedApplication
@@ -126,6 +130,11 @@ class ProtocolTests(unittest.TestCase):
         self.authenticate()
         self.assertIn("error", self.perform({"kind": "fill", "value": "x\0y"}))
 
+    def test_fill_rejects_unpaired_unicode_surrogate_before_dispatch(self):
+        self.authenticate()
+        self.assertIn("error", self.perform({"kind": "fill", "value": "\ud800"}))
+        self.assertFalse(self.provider.actions)
+
     def test_fill_rejects_missing_value(self):
         self.authenticate()
         self.assertIn("error", self.perform({"kind": "fill"}))
@@ -155,6 +164,23 @@ class ProtocolTests(unittest.TestCase):
         self.authenticate()
         self.provider.error = RuntimeError("SENSITIVE PASSWORD")
         self.assertNotIn("SENSITIVE", json.dumps(self.request("snapshot", {})))
+
+    def test_unknown_mutation_failure_poisoning_prevents_second_dispatch(self):
+        self.authenticate()
+        self.provider.error = RuntimeError("SENSITIVE PASSWORD")
+        response = self.perform({"kind": "tap"})
+        self.assertEqual(response["error"]["data"]["code"], "ACTION_MAY_HAVE_COMMITTED")
+        self.assertNotIn("SENSITIVE", json.dumps(response))
+        self.assertTrue(self.session.stopped)
+        with self.assertRaises(ValueError):
+            self.perform({"kind": "tap"})
+        self.assertEqual(len(self.provider.actions), 1)
+
+    def test_classified_uncertain_mutation_closes_session(self):
+        self.authenticate()
+        self.provider.error = DriverError("ACTION_MAY_HAVE_COMMITTED", "mutation result unknown")
+        self.assertEqual(self.perform({"kind": "tap"})["error"]["data"]["code"], "ACTION_MAY_HAVE_COMMITTED")
+        self.assertTrue(self.session.stopped)
 
     def test_shutdown_stops(self):
         self.authenticate()
@@ -244,6 +270,64 @@ class ProtocolTests(unittest.TestCase):
         app = OwnedApplication([sys.executable, "-c", "import time;time.sleep(60)"])
         app.close()
         self.assertIsNotNone(app.process.poll())
+
+    def test_live_client_failed_connection_reaps_started_driver(self):
+        children = []
+        popen = subprocess.Popen
+        def launch(*args, **kwargs):
+            child = popen(*args, **kwargs)
+            children.append(child)
+            return child
+        with tempfile.TemporaryDirectory() as temporary:
+            driver = Path(temporary) / "ready_driver.py"
+            driver.write_text('import time\nprint(\'E2E_NATIVE_READY {"port":1}\', flush=True)\ntime.sleep(60)\n')
+            with patch.object(live_smoke, "DRIVER", driver), patch.object(live_smoke.subprocess, "Popen", side_effect=launch), patch.object(live_smoke.socket, "create_connection", side_effect=OSError("connect failed")):
+                with self.assertRaisesRegex(OSError, "connect failed"):
+                    live_smoke.Client()
+            self.assertEqual(len(children), 1)
+            self.assertIsNotNone(children[0].poll())
+
+    def test_parent_death_setup_rejects_already_reparented_child(self):
+        package = str(Path(__file__).resolve().parents[1])
+        code = "import sys;sys.path.insert(0,sys.argv[1]);from e2e_atspi.application import _parent_death_signal;_parent_death_signal(0)"
+        result = subprocess.run([sys.executable, "-c", code, package], timeout=5, capture_output=True)
+        self.assertEqual(result.returncode, 127)
+
+    def test_hangup_reaps_owned_process_group(self):
+        package = str(Path(__file__).resolve().parents[1])
+        host = """
+import sys
+sys.path.insert(0, sys.argv[1])
+from e2e_atspi.application import DriverApplication
+from e2e_atspi.contracts import AccessibilityProvider
+class Provider(AccessibilityProvider):
+    def snapshot(self): return {"root": {"children": [{"children": [{}]}]}}
+    def perform(self, node_id, action): pass
+class Host(DriverApplication):
+    def create_provider(self, process_id): return Provider()
+raise SystemExit(Host().run(sys.argv[2:]))
+"""
+        child = "import os,sys,time;open(sys.argv[1],'w').write(str(os.getpid()));time.sleep(60)"
+        with tempfile.TemporaryDirectory() as temporary:
+            marker = Path(temporary) / "target.pid"
+            driver = subprocess.Popen([sys.executable, "-c", host, package, sys.executable, "-c", child, str(marker)], env={**os.environ, "E2E_NATIVE_TOKEN": TOKEN}, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            try:
+                self.assertTrue(select.select([driver.stdout], [], [], 5)[0])
+                self.assertTrue(driver.stdout.readline().startswith("E2E_NATIVE_READY "))
+                deadline = time.monotonic() + 3
+                while not marker.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                target_pid = int(marker.read_text())
+                driver.send_signal(signal.SIGHUP)
+                self.assertEqual(driver.wait(timeout=5), 0)
+                with self.assertRaises(ProcessLookupError):
+                    os.kill(target_pid, 0)
+            finally:
+                if driver.poll() is None:
+                    driver.terminate()
+                    driver.wait(timeout=5)
+                driver.stdout.close()
+                driver.stderr.close()
 
 
 if __name__ == "__main__":

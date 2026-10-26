@@ -204,17 +204,19 @@ export class TerminalEngine implements Engine {
 
   /** Terminal rows are text, never inferred buttons or editable fields. */
   protected semanticSnapshot(snapshot: TerminalSnapshot, observed: boolean): EngineSnapshot {
-    const clipped = (text: string): string => observed ? text.slice(0, OBSERVED_TEXT_LIMIT) : text;
+    // The engine has no secret ledger: truncation can expose a partial secret
+    // that the runner can no longer recognize and redact.
+    const bounded = (text: string, limit: number): string => observed && text.length > limit ? '[omitted: text exceeds limit]' : text;
     return {
       location: snapshot.title === '' ? 'terminal' : snapshot.title,
       viewport: { width: snapshot.columns, height: snapshot.rows },
       root: {
         ref: { id: 'terminal', revision: '' }, role: 'terminal',
-        name: (snapshot.title || 'Terminal').slice(0, OBSERVED_NAME_LIMIT), text: clipped(snapshot.text), testId: 'terminal',
+        name: bounded(snapshot.title || 'Terminal', OBSERVED_NAME_LIMIT), text: bounded(snapshot.text, OBSERVED_TEXT_LIMIT), testId: 'terminal',
         states: { hidden: false, focused: snapshot.exit === undefined },
         attributes: { columns: String(snapshot.columns), rows: String(snapshot.rows), alternate: String(snapshot.alternate), ...(snapshot.exit === undefined ? {} : { exitCode: String(snapshot.exit.exitCode) }) },
         children: snapshot.lines.map((text, row): SemanticNode => ({
-          ref: { id: `terminal-row-${row}`, revision: '' }, role: 'text', text: clipped(text),
+          ref: { id: `terminal-row-${row}`, revision: '' }, role: 'text', text: bounded(text, OBSERVED_TEXT_LIMIT),
           testId: `terminal-row-${row}`, states: { hidden: false },
           attributes: { row: String(row) },
         })),

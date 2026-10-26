@@ -390,7 +390,7 @@ export interface Locator extends Screen {
   swipe(options: SwipeOptions & ActionOptions): Promise<void>;
   /** Reads normalized text without retrying for a particular value. */
   textContent(): Promise<string | null>;
-  /** Reads the current input value. */
+  /** Reads the current input value; throws UNSUPPORTED_CAPABILITY when the engine omits it. */
   inputValue(): Promise<string>;
   /** Reads one attribute. */
   getAttribute(name: string): Promise<string | null>;

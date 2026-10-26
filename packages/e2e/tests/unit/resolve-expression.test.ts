@@ -29,6 +29,14 @@ describe('semantic tree locator resolution', () => {
     expect(ids({ kind: 'query', query: { kind: 'testId', value: literal('hidden'), visible: true } }, roots)).toEqual([]);
   });
 
+  it('distinguishes an unavailable name from an explicitly empty name', () => {
+    const roots = [node('unknown', { role: 'button' }), node('empty', { role: 'button', name: '' })];
+    const query = { kind: 'role' as const, value: literal('button') };
+    expect(ids({ kind: 'query', query }, roots)).toEqual(['unknown', 'empty']);
+    expect(ids({ kind: 'query', query: { ...query, name: literal('') } }, roots)).toEqual(['empty']);
+    expect(ids({ kind: 'query', query: { ...query, name: { kind: 'regexp', source: '^$', flags: '' } } }, roots)).toEqual(['empty']);
+  });
+
   it('refuses unsupported selectors and malformed forests', () => {
     expect(() => resolveExpression({ kind: 'selector', selector: '.button' }, [])).toThrow(/native selector/);
     expect(() => resolveExpression({ kind: 'frame', selector: 'iframe', source: byId('x') }, [])).toThrow(/nested documents/);

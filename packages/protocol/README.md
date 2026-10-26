@@ -22,6 +22,8 @@ including Node Buffers, and `bytes()` returns a defensive copy.
 HTTP error statuses remain responses until checked. JSON parse and Standard
 Schema validation failures have explicit error codes. Error summaries omit
 response contents and validation issue details, which may contain credentials.
+JSON decoding rejects malformed UTF-8 instead of replacing invalid bytes and
+accepting a corrupted value; `text()` retains ordinary text-decoding behavior.
 JSON parse errors do not retain the native parser error as a cause because its
 message can quote response data in a test report.
 Thrown schema errors, URL/header validation, JSON serialization, and unknown transport failures likewise

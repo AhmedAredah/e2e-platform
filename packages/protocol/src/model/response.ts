@@ -21,7 +21,7 @@ export class HttpResponse {
   bytes(): Uint8Array { return new Uint8Array(this.#body); }
   text(): string { return new TextDecoder().decode(this.#body); }
   json(): unknown {
-    try { return JSON.parse(this.text()) as unknown; }
+    try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(this.#body)) as unknown; }
     // Native parser errors quote response data, including credentials, in their message.
     catch { throw new ProtocolError('INVALID_JSON', 'HTTP response is not valid JSON'); }
   }

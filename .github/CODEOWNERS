@@ -1,3 +1,3 @@
-# Configure fork-maintainer GitHub accounts before enabling required code-owner
-# review. Upstream contributors are credited in LICENSE and source history;
-# they are not automatically responsible for reviewing this independent fork.
+# Fork maintenance belongs to AhmedAredah; upstream contributors are credited
+# in LICENSE and source history and are not responsible for fork reviews.
+* @AhmedAredah

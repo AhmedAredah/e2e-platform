@@ -45,6 +45,23 @@ function createAttributeFixture(node: SemanticNode) {
 }
 
 describe('attribute and focus expectations', () => {
+  it('does not mistake withheld input data for an empty value', async () => {
+    const unavailable = createAttributeFixture({ ref: { id: 'node-1', revision: '' }, role: 'textbox' }).getByRole('textbox');
+    await expect(unavailable.inputValue()).rejects.toMatchObject({ code: 'UNSUPPORTED_CAPABILITY' });
+    const empty = createAttributeFixture({ ref: { id: 'node-1', revision: '' }, role: 'textbox', value: '' }).getByRole('textbox');
+    await expect(empty.inputValue()).resolves.toBe('');
+  });
+
+  it.each(['toHaveText', 'toContainText', 'toHaveValue', 'toHaveAccessibleName'] as const)('%s requires reported data for positive and negated assertions', async (matcher) => {
+    const unavailable = createAttributeFixture({ ref: { id: 'node-1', revision: '' }, role: 'textbox' }).getByRole('textbox');
+    await expect(expectFixture(unavailable)[matcher]('', { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(unavailable)[matcher](/^$/, { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(unavailable).not[matcher]('present', { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    const empty = createAttributeFixture({ ref: { id: 'node-1', revision: '' }, role: 'textbox', value: '', text: '', name: '' }).getByRole('textbox');
+    await expectFixture(empty)[matcher]('', { timeout: 0 });
+    await expectFixture(empty).not[matcher]('present', { timeout: 0 });
+  });
+
   it('preserves whitespace in input values and attributes for strings and regexps', async () => {
     const raw = ' a  b\n';
     const screen = createAttributeFixture({

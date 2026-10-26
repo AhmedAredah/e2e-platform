@@ -121,16 +121,21 @@ bool secureMarker(QObject* object) {
 void markSensitiveObject(QObject* object) { sensitiveObjects().mark(object); }
 
 bool secureObject(QObject* object) {
+    bool detected = false;
     for (QObject* ancestor = object; ancestor; ancestor = ancestor->parent())
-        if (secureMarker(ancestor)) return true;
-    if (auto* edit = qobject_cast<QLineEdit*>(object)) return edit->echoMode() != QLineEdit::Normal;
+        if (secureMarker(ancestor)) { detected = true; break; }
+    if (auto* edit = qobject_cast<QLineEdit*>(object)) detected |= edit->echoMode() != QLineEdit::Normal;
 #ifdef E2E_QT_HAS_QUICK
     for (auto* item = qobject_cast<QQuickItem*>(object); item; item = item->parentItem()) {
-        if (secureMarker(item)) return true;
-        if (item->property("echoMode").isValid() && item->property("echoMode").toInt() != 0) return true;
+        if (secureMarker(item) || (item->property("echoMode").isValid() && item->property("echoMode").toInt() != 0)) {
+            detected = true;
+            break;
+        }
     }
 #endif
-    return false;
+    // Revealing a password or clearing a marker must not declassify old data.
+    if (detected) sensitiveObjects().mark(object);
+    return detected;
 }
 
 ParsedKey parseKey(QString value) {

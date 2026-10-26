@@ -26,6 +26,8 @@ E2E_NATIVE_READY {"port":12345}
 ```
 
 Each TCP frame is one UTF-8 JSON-RPC 2.0 request or response followed by LF.
+Invalid UTF-8 is rejected rather than replaced during JSON decoding. Numeric
+error codes must be integers, matching the canonical error-envelope schema.
 Requests have positive integer IDs. One request is active per connection.
 Notifications, unsolicited responses, unknown IDs and malformed frames are
 protocol errors. They close the connection and fail the attempt even when no request

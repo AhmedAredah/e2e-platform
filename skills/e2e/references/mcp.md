@@ -85,3 +85,6 @@ Resources: `e2e://guide` and `e2e://guide/<topic>` hold this skill.
   `NO_SESSION`: call `open_session` first. `SESSION_OPEN`: one is already
   open; use it or `close_session`. `UNKNOWN_TOOL`: the name is not in this
   session's catalog; the message lists what is.
+
+`close_session` waits for an in-flight session startup and its cleanup. A new
+`open_session` waits until the previous session has finished disposing its engine.

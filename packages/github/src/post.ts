@@ -50,14 +50,16 @@ async function request(params: PostParams, method: Method, route: string, body?:
     signal: params.signal,
   });
   if (response.ok) return response.json().catch(() => undefined);
-  const detail = (await response.text().catch(() => '')).slice(0, 200);
+  // API/proxy error bodies can echo private report data or credentials.
+  // Cancel the body without waiting for an unbounded error stream.
+  void response.body?.cancel().catch(() => undefined);
   if (response.status === 401) throw new Error('GitHub rejected the token (GITHUB_TOKEN or GH_TOKEN)');
   if (response.status === 403 || response.status === 404) {
     throw new Error(
       `the token cannot comment on ${params.repository}#${params.pullRequest}: a pull request from a fork runs with a read-only token, and the job needs \`permissions: pull-requests: write\``,
     );
   }
-  throw new Error(`GitHub responded ${response.status} to ${method} ${route}${detail === '' ? '' : `: ${detail}`}`);
+  throw new Error(`GitHub responded ${response.status} to ${method} ${route}`);
 }
 
 /** The id of the comment carrying the marker, or undefined when no page has one. */

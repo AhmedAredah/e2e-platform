@@ -18,5 +18,6 @@ Run on an interactive macOS desktop and grant the driver Accessibility
 permission first. This fixture has been typechecked on Linux with
 `--features check-macos`; that does not establish macOS linking or GUI behavior.
 The live verifier intentionally refuses to pass on Linux or without permission.
-It checks actual control mutations, a rejected wrong-result oracle, secure value
-omission and owned application cleanup.
+It checks actual control mutations, secure value omission and owned application
+cleanup. It then launches the fixture with `--wrong`, which deliberately changes
+the button's output, and requires the same positive output assertion to reject it.

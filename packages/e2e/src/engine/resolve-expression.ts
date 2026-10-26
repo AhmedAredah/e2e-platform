@@ -82,7 +82,7 @@ function matchesQuery(node: SemanticNode, query: SemanticQuery): boolean {
     case 'role': {
       if (query.value.kind !== 'string') throw malformed('role queries require a literal role');
       if (node.role !== query.value.value || node.states?.hidden === true) return false;
-      if (query.name !== undefined && !matchesText(node.name ?? '', query.name)) return false;
+      if (query.name !== undefined && (node.name === undefined || !matchesText(node.name, query.name))) return false;
       for (const key of ['checked', 'disabled', 'selected', 'expanded', 'pressed'] as const) {
         const wanted = query.states?.[key];
         if (wanted !== undefined && (node.states?.[key] ?? false) !== wanted) return false;

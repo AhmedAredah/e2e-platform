@@ -25,11 +25,17 @@ describe('support helpers', () => {
   it('reads PNG dimensions and refuses other bytes', () => {
     const png = new Uint8Array(24);
     png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    png.set([0x49, 0x48, 0x44, 0x52], 12);
     new DataView(png.buffer).setUint32(16, 390);
     new DataView(png.buffer).setUint32(20, 844);
     expect(readPngSize(png)).toEqual({ width: 390, height: 844 });
     expect(readPngSize(new Uint8Array([1, 2, 3]))).toBeUndefined();
     expect(readPngSize(new Uint8Array(24))).toBeUndefined();
+    new DataView(png.buffer).setUint32(16, 0);
+    expect(readPngSize(png)).toBeUndefined();
+    new DataView(png.buffer).setUint32(16, 390);
+    png[12] = 0;
+    expect(readPngSize(png)).toBeUndefined();
   });
 
   it('constrains labels to safe filenames', () => {

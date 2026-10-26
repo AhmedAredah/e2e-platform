@@ -83,7 +83,7 @@ above still hold: no test logs, no intermediate history.
 
 ## Voice
 
-Run the [unslop](../unslop/SKILL.md) pass on the final text before posting.
+Review the final text for accuracy, repetition, vague claims, and unnecessary wording before posting.
 PR-specific tells to catch:
 
 - "This PR introduces...", "comprehensive", "robust", "seamless", "ensures",

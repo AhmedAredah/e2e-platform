@@ -22,9 +22,10 @@ class OwnedApplication:
         environment.setdefault("GTK_MODULES", "gail:atk-bridge")
         environment.setdefault("NO_AT_BRIDGE", "0")
         self._closed = False
+        parent_pid = os.getpid()
         self.process = subprocess.Popen(command, env=environment, stdin=subprocess.DEVNULL,
                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                        start_new_session=True, preexec_fn=_parent_death_signal)
+                                        start_new_session=True, preexec_fn=lambda: _parent_death_signal(parent_pid))
 
     def close(self) -> None:
         """Stop the whole owned group; reap the primary child without waiting forever."""
@@ -46,11 +47,10 @@ class OwnedApplication:
         self.process.wait(timeout=2)
 
 
-def _parent_death_signal() -> None:
+def _parent_death_signal(expected_parent: int) -> None:
     """Make the direct app exit if the driver is abruptly killed on Linux."""
-    parent = os.getppid()
     libc = ctypes.CDLL(None, use_errno=True)
-    if libc.prctl(1, signal.SIGKILL, 0, 0, 0) != 0 or os.getppid() != parent:
+    if libc.prctl(1, signal.SIGKILL, 0, 0, 0) != 0 or os.getppid() != expected_parent:
         os._exit(127)
 
 
@@ -72,7 +72,7 @@ class DriverApplication:
         provider = None
         previous = {}
         try:
-            for signum in (signal.SIGINT, signal.SIGTERM):
+            for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
                 previous[signum] = signal.signal(signum, _interrupted)
             application = OwnedApplication(command)
             provider = self.create_provider(application.process.pid)

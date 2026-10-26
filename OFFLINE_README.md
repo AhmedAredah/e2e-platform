@@ -1,10 +1,13 @@
 # Working with the complete checkout
 
-This archive contains the MIT upstream source snapshot and its fetched ancestry,
-the reviewed extension port, desktop drivers, tests, examples and documentation. The current
-development branch is `feat/desktop-platforms`. The base is commit
+This repository contains the MIT upstream source snapshot, the reviewed extension
+port, desktop drivers, tests, examples and documentation. The reviewed release branch is
+`mit-main`; its GitHub publication is pending repository write access. Use the
+reviewed full-repository archive for this candidate. Once published, select the
+branch explicitly when cloning. The base is commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`; later Apache-licensed upstream
-commits are not this fork's base. Nothing has been published or pushed upstream.
+commits are not this fork's base. The canonical repository is
+[AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform).
 
 Start with [SUPPORT_MATRIX.md](SUPPORT_MATRIX.md) for the support matrix and extension
 architecture, [native/README.md](native/README.md) for adding native helpers, and
@@ -12,8 +15,10 @@ architecture, [native/README.md](native/README.md) for adding native helpers, an
 [RELEASE_STATUS.md](RELEASE_STATUS.md) records the current candidate's results and
 qualification limits. Detailed release evidence is provided separately from the
 source archive; older evidence remains in Git history and previous archives.
-The archive also includes a generated, checksummed `release-packages/` install kit.
-See [INSTALL.md](INSTALL.md) for using it in another project.
+Prepared full-repository bundles can also include a generated, checksummed
+`release-packages/` install kit. A Git clone or GitHub source ZIP does not include
+generated packages; run `pnpm pack:native` after installing dependencies.
+See [INSTALL.md](INSTALL.md) for using the kit in another project.
 The new packages are workspace source packages; their inclusion does not mean
 that these package versions have been published to a registry.
 
@@ -29,17 +34,24 @@ that these package versions have been published to a registry.
 | `scripts/` | Build, validation and release tooling; C++ verification and installation tooling is under `scripts/native/`; language build and verification scripts are under `scripts/languages/`. |
 | `skills/` | Consumer integration guidance bundled with the core package. |
 | `verification/` | Stable instructions for reproducing checks; generated run evidence is kept outside tracked source. |
-| `release-packages/` | Generated, checksummed local installation kit included with the downloadable archive. |
+| `release-packages/` | Generated, checksummed local installation kit; built from source or included in a prepared bundle. |
 
 Upstream web/mobile modules, benchmark fixtures and documentation assets remain
 part of this repository because the shared runner and its regression tests use
 them. Source archives exclude local dependencies, compiled build trees, caches
-and run output. The installation kit is the deliberate generated-file exception.
+and run output. Prepared bundles may additionally contain the installation kit.
 
 ## Open and inspect
 
-Extract the entire archive, including its `.git` directory. Open the extracted
-`e2e-platform` folder in your editor. Git needs no network connection for these steps:
+A GitHub source ZIP contains no Git history. For an offline checkout with history,
+clone while online, then keep the entire folder, including its `.git` directory:
+
+```sh
+git clone --branch mit-main https://github.com/AhmedAredah/e2e-platform.git
+```
+
+Open `e2e-platform` in your editor. Git needs no network connection for these steps
+when using a clone or a prepared bundle that includes Git history:
 
 ```sh
 git status
@@ -48,8 +60,9 @@ git branch -a
 git fsck --full
 ```
 
-No writable upstream remote is configured for this fork. Adding a remote and
-fetching or pushing are separate maintainer actions that require connectivity. If Git reports a safe-directory warning
+A normal clone sets `origin` to AhmedAredah/e2e-platform. Prepared full-history
+bundles can omit remotes; see [publishing](docs/development/PUBLISHING.md). Fetching or pushing
+requires connectivity and appropriate repository access. If Git reports a safe-directory warning
 because extraction changed ownership, apply your normal local Git ownership
 policy to this checkout.
 
@@ -69,7 +82,8 @@ your OS and architecture. Provision them on the machine where tests will run:
    PTY support uses the `node-pty` peer dependency and may need Node headers and
    native compilation. Provision native build prerequisites before disconnecting.
 4. Install any browser/mobile engines and platform dependencies required by
-   the existing upstream examples you intend to run. The C++ CLI and cooperative
+   the retained upstream examples you intend to run; follow
+   [optional engine installation](INSTALL.md#browser-and-mobile-applications). The C++ CLI and cooperative
    Qt examples do not require a browser download.
 5. For the language examples, provision Python 3.12+, the .NET 10 SDK and a
    compatible Rust/Cargo toolchain before disconnecting. See [LANGUAGES.md](LANGUAGES.md)

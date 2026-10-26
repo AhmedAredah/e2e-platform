@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/terminal",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "description": "PTY-backed terminal engine with real VT screen reconstruction for e2e",
   "license": "MIT",
   "type": "module",
@@ -42,7 +42,7 @@
     "node-pty": "1.1.0",
     "@types/node": "26.6.2",
     "typescript": "7.0.2",
-    "vitest": "5.0.1"
+    "vitest": "5.0.3"
   },
   "engines": {
     "node": "^22.22.3 || >=24.8.0"
@@ -51,5 +51,14 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "tag": "rc"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedAredah/e2e-platform.git",
+    "directory": "packages/terminal"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedAredah/e2e-platform/issues"
+  },
+  "homepage": "https://github.com/AhmedAredah/e2e-platform/tree/mit-main/packages/terminal#readme"
 }

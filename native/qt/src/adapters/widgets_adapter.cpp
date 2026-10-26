@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "widgets_adapter.h"
 #include <QAbstractButton>
+#include <QAbstractItemView>
+#include <QPersistentModelIndex>
 #include <QApplication>
 #include <QComboBox>
 #include <QJsonArray>
@@ -117,27 +119,59 @@ QObject* WidgetsAdapter::focused(QObject*) const { return QApplication::focusWid
 void WidgetsAdapter::selectOption(QObject* object, const QJsonValue& option) {
     auto* combo = qobject_cast<QComboBox*>(object);
     if (!combo) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires QComboBox");
+    const int count = combo->count();
+    if (count < 1 || count > 10000) throw Failure("NOT_ACTIONABLE", "combobox model is empty or exceeds action bound");
     int index = -1;
-    if (option.isString()) index = combo->findText(option.toString(), Qt::MatchExactly);
+    QString label, value;
+    bool byLabel = option.isString(), byValue = false;
+    if (byLabel) label = option.toString();
     else if (option.isObject()) {
-        const QJsonObject value = option.toObject();
-        if (value.contains("index") && value.value("index").isDouble()) {
-            const double candidate = value.value("index").toDouble(-1);
-            if (std::isfinite(candidate) && candidate >= 0 && candidate < combo->count() && candidate <= 10000 && std::floor(candidate) == candidate) index = int(candidate);
-        } else if (value.value("label").isString()) index = combo->findText(value.value("label").toString(), Qt::MatchExactly);
-        else if (value.value("value").isString()) index = combo->findData(value.value("value").toString());
+        const QJsonObject selector = option.toObject();
+        if (selector.size() == 1 && selector.value("label").isString()) { byLabel = true; label = selector.value("label").toString(); }
+        else if (selector.size() == 1 && selector.value("value").isString()) { byValue = true; value = selector.value("value").toString(); }
+        else if (selector.size() == 1 && selector.value("index").isDouble()) {
+            const double candidate = selector.value("index").toDouble(-1);
+            if (std::isfinite(candidate) && candidate >= 0 && candidate < count && std::floor(candidate) == candidate) index = int(candidate);
+        }
     }
-    if (index < 0 || index >= combo->count() || index > 10000) throw Failure("NOT_ACTIONABLE", "combobox option is absent or exceeds action bound");
+    if (byLabel || byValue) {
+        for (int candidate = 0; candidate < count; ++candidate) {
+            const QVariant data = combo->itemData(candidate);
+            const bool match = byLabel ? combo->itemText(candidate) == label
+                : data.metaType().id() == QMetaType::QString && data.toString() == value;
+            if (!match) continue;
+            if (index >= 0) throw Failure("NOT_ACTIONABLE", "combobox option is ambiguous; select by index");
+            index = candidate;
+        }
+    }
+    if (index < 0) throw Failure("NOT_ACTIONABLE", "combobox option is absent or selector is invalid");
+    if (combo->isEditable()) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires a non-editable QComboBox");
+    if (combo->view()->isVisible()) throw Failure("NOT_ACTIONABLE", "close the combobox popup before selecting an option");
+    const QPersistentModelIndex selected(combo->model()->index(index, combo->modelColumn(), combo->rootModelIndex()));
+    const auto allowed = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    if (!selected.isValid() || (selected.flags() & allowed) != allowed) throw Failure("NOT_ACTIONABLE", "combobox option is disabled or not selectable");
+    if (combo->currentIndex() == index) return;
+    const QString expectedText = combo->itemText(index);
+    const QVariant expectedValue = combo->itemData(index);
+    QList<int> path;
+    for (int row = 0; row <= index; ++row) {
+        const auto item = combo->model()->index(row, combo->modelColumn(), combo->rootModelIndex());
+        if ((item.flags() & allowed) == allowed) path.append(row);
+    }
     QPointer<QComboBox> target(combo);
+    const auto unchanged = [&] {
+        return target && selected.isValid() && target->model() == selected.model() && target->count() == count
+            && selected.row() == index && target->itemText(index) == expectedText && target->itemData(index) == expectedValue;
+    };
     focus(target);
-    if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox was destroyed during focus");
-    key(target, Qt::Key_Home, Qt::NoModifier);
-    for (int i = 0; i < index; ++i) {
-        if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox was destroyed during selection");
-        key(target, Qt::Key_Down, Qt::NoModifier);
+    if (!unchanged()) throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox changed during focus");
+    for (int step = 0; step < path.size(); ++step) {
+        key(target, step == 0 ? Qt::Key_Home : Qt::Key_Down, Qt::NoModifier);
+        if (!unchanged() || target->currentIndex() != path.at(step))
+            throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox selection changed or did not reach the requested option");
     }
-    if (!target || target->currentIndex() != index) throw Failure("ACTION_MAY_HAVE_COMMITTED", "combobox selection did not reach requested option");
 }
+
 QImage WidgetsAdapter::capture(QObject* root) {
     auto* widget = static_cast<QWidget*>(root);
     if (qint64(widget->width()) * widget->height() * widget->devicePixelRatioF() * widget->devicePixelRatioF() > MaxPixels) throw Failure("ENGINE_FAILURE", "screenshot exceeds pixel limit");

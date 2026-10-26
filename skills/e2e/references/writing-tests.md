@@ -317,3 +317,7 @@ expect(response.status).toBe(201);
 - `test.only` left in a file: CI fails with `ONLY_IN_CI`.
 - Asserting an exact sentence a model produced; assert the fact with
   `toContain`.
+
+A missing observed text, accessible name or value is unknown, not an empty string.
+Positive and negated text/value/name assertions do not pass on unavailable fields;
+`inputValue()` fails when the engine cannot supply a value. Known empty values use `''`.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "candidate": "0.2.0-rc.1",
+  "candidate": "0.2.0-rc.2",
   "testLanguage": "TypeScript/JavaScript",
   "applicationLanguages": [
     "Python",
@@ -55,7 +55,7 @@
       "screenshots": false,
       "qualification": {
         "status": "experimental",
-        "portableTests": 53,
+        "portableTests": 63,
         "liveStatus": "blocked",
         "reason": "Host denies AF_UNIX required by D-Bus"
       }
@@ -77,7 +77,7 @@
       "screenshots": false,
       "qualification": {
         "status": "experimental",
-        "portableTests": 34,
+        "portableTests": 39,
         "compileStatus": "Cross-compiled driver and WPF fixture on Linux",
         "liveStatus": "not-run",
         "reason": "Requires interactive Windows host"
@@ -99,7 +99,7 @@
       "screenshots": false,
       "qualification": {
         "status": "experimental",
-        "portableTests": 21,
+        "portableTests": 23,
         "compileStatus": "Platform source typechecked; Apple frameworks not linked on Linux",
         "liveStatus": "not-run",
         "reason": "Requires macOS, SDK and Accessibility permission"

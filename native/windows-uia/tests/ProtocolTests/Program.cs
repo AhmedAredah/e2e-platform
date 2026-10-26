@@ -76,6 +76,13 @@ using (var server = new BridgeServer(backend, token))
     await work.WaitAsync(timeout.Token);
     Assert(true, "EOF ends session");
 }
+var sensitivity = new ControlSensitivity();
+Assert(!sensitivity.Observe("control-1", false), "ordinary control retains public semantics");
+Assert(sensitivity.Observe("control-1", true), "provider password classification is recorded");
+Assert(sensitivity.Observe("control-1", false), "password reveal cannot clear retained sensitivity");
+Assert(!sensitivity.Observe("control-2", false), "replacement control identity does not inherit sensitivity");
+sensitivity.Forget("control-1");
+Assert(!sensitivity.Observe("control-1", false), "retired identity releases sensitivity");
 var budget = new SnapshotBudget(1024);
 Assert(budget.TryNode(), "node budget available");
 Assert(budget.Text(new string('x', 60000)).StartsWith("[omitted:"), "oversized aggregate text omitted before serialization");

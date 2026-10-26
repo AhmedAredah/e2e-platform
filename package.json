@@ -1,7 +1,7 @@
 {
   "name": "e2e-platform-monorepo",
   "private": true,
-  "description": "MIT-based E2E framework with extensible CLI, terminal, HTTP and native Qt engines",
+  "description": "Extensible end-to-end testing for CLI, HTTP, desktop, web and mobile applications",
   "keywords": [
     "@e2e-platform/core",
     "testing",
@@ -40,16 +40,24 @@
   },
   "contributors": [
     "Oskar Kwa\u015bniewski <oskar@tester.army>",
-    "Szymon Rybczak <szymon@tester.army>"
+    "Szymon Rybczak <szymon@tester.army>",
+    "Ahmed Aredah (e2e-platform fork maintainer)"
   ],
   "devDependencies": {
     "@changesets/cli": "3.0.2",
     "@types/node": "26.4.1",
-    "fallow": "3.24.1",
+    "fallow": "3.34.0",
     "oxlint": "1.82.0",
-    "typescript": "7.0.2",
-    "zod": "4.6.6"
+    "typescript": "7.0.2"
   },
   "packageManager": "pnpm@12.3.4",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedAredah/e2e-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedAredah/e2e-platform/issues"
+  },
+  "homepage": "https://github.com/AhmedAredah/e2e-platform#readme"
 }
