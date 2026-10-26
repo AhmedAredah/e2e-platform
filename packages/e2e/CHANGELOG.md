@@ -1,10 +1,14 @@
+> Historical upstream changelog, preserved from the MIT base. Package names and
+> versions below refer to TesterArmy releases. This independent fork starts at
+> 0.1.0; see the repository RELEASE_STATUS.md and its Changesets for fork changes.
+
 # e2e
 
 ## 0.15.0-canary-20260917213813
 
 ### Minor Changes
 
-- [#335](https://github.com/tester-army/e2e/pull/335) [`15081f3`](https://github.com/tester-army/e2e/commit/15081f306837ebe1040fbcb2e63bd2efe283faaa) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Sign in with a personal subscription instead of an API key. The new `@e2e-cpp/oauth` package runs the OAuth flows for ChatGPT Plus/Pro (the Codex sign-in, browser or device code), GitHub Copilot (the GitHub CLI's login or a device flow for your OAuth App), and SuperGrok / X Premium+ (device code), stores the tokens in `~/.config/e2e/oauth.json`, refreshes them ahead of expiry, and exposes each plan as an AI SDK model: `chatgpt('gpt-5.5')`, `copilot('claude-sonnet-5')`, `grok('grok-4')`. The e2e CLI gains `e2e login <provider>` and `e2e logout`, and `e2e init` offers the three subscriptions next to the gateways.
+- [#335](https://github.com/tester-army/e2e/pull/335) [`15081f3`](https://github.com/tester-army/e2e/commit/15081f306837ebe1040fbcb2e63bd2efe283faaa) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Sign in with a personal subscription instead of an API key. The new `@e2edev/oauth` package runs the OAuth flows for ChatGPT Plus/Pro (the Codex sign-in, browser or device code), GitHub Copilot (the GitHub CLI's login or a device flow for your OAuth App), and SuperGrok / X Premium+ (device code), stores the tokens in `~/.config/e2e/oauth.json`, refreshes them ahead of expiry, and exposes each plan as an AI SDK model: `chatgpt('gpt-5.5')`, `copilot('claude-sonnet-5')`, `grok('grok-4')`. The e2e CLI gains `e2e login <provider>` and `e2e logout`, and `e2e init` offers the three subscriptions next to the gateways.
 
 - [#325](https://github.com/tester-army/e2e/pull/325) [`d3afa6b`](https://github.com/tester-army/e2e/commit/d3afa6bacb9a407d0bd85c9f8abb2135b1d8a2ac) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Four fixes from a real suite's first day:
   
@@ -46,11 +50,11 @@
 
 - [#324](https://github.com/tester-army/e2e/pull/324) [`7fcb925`](https://github.com/tester-army/e2e/commit/7fcb925d76f41f1a8558abaa57a60de4ff365868) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: the engine contract's pointer side is a vocabulary, not one verb, and the vocabulary is finished before the contract locks.
   
-  - `Engine.tapAt(point)` is `Engine.performAt(point, action)` with a required `pointerActions` list, mirroring `perform` and `actions`. `PointerAction` is the pointer subset of the action kinds: `tap`, `doubleTap`, `secondaryTap`, `longPress`, `hover`, `dragTo` (to a second point), and `swipe` (from the point). The harness routes a point action only for a declared kind; the agent's `tap_at` verb needs the `tap` kind in `actions` or `pointerActions`. `POINTER_ACTION_KINDS`, `PointerAction`, and `PointerActionKind` are exported from `@e2e-cpp/core/engine`.
+  - `Engine.tapAt(point)` is `Engine.performAt(point, action)` with a required `pointerActions` list, mirroring `perform` and `actions`. `PointerAction` is the pointer subset of the action kinds: `tap`, `doubleTap`, `secondaryTap`, `longPress`, `hover`, `dragTo` (to a second point), and `swipe` (from the point). The harness routes a point action only for a declared kind; the agent's `tap_at` verb needs the `tap` kind in `actions` or `pointerActions`. `POINTER_ACTION_KINDS`, `PointerAction`, and `PointerActionKind` are exported from `e2e/engine`.
   - `secondaryTap` joins the action kinds and `Locator.secondaryTap()` performs it: a right click, a two-finger tap.
   - `SemanticNode.states` gains `pressed` and `SemanticNode` gains `level`; `getByRole` takes `pressed` and `level`, so a toggle button and a heading level are queries on every engine.
   - `EngineSnapshot.viewport` is `{ width, height }`: the `scale` it carried meant nothing (every engine reported 1 and nothing read it); `ObservationPixels.scale` remains the image-to-CSS ratio.
-  - `ScrollDirection`, `Momentum`, and `SelectOption` are defined by the contract (`@e2e-cpp/core/engine`) and re-exported by `@e2e-cpp/core`, so the SPI owns its own vocabulary.
+  - `ScrollDirection`, `Momentum`, and `SelectOption` are defined by the contract (`e2e/engine`) and re-exported by `e2e`, so the SPI owns its own vocabulary.
   - The `Platform` type is gone: a platform is a `string` label (`web`, `ios`, `android`, or an engine's own) on `Engine.platform`, `Target.platform`, the `platform` fixture, and `platforms`. Nothing in the harness branched on the three names, so the type only pretended to.
   
   `spiVersion` stays `1`.
@@ -135,15 +139,15 @@
 
 ### Patch Changes
 
-- [#296](https://github.com/tester-army/e2e/pull/296) [`f2f2e6f`](https://github.com/tester-army/e2e/commit/f2f2e6fb1024ffb4cd481f7ea571c2d29be6d6d8) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The CLI starts without the optional `ai` peer dependency. The MCP bridge imported `asSchema` from `ai` statically and every command loads that module, so `npx --no-install e2e-cpp --help`, and `e2e init` in a project that has not installed `ai` yet, crashed with `ERR_MODULE_NOT_FOUND` before reading a flag. The bridge now reaches the SDK through the same lazy loader as the agent, and an MCP session opened in a project without `ai` reports `MODEL_UNAVAILABLE` instead.
+- [#296](https://github.com/tester-army/e2e/pull/296) [`f2f2e6f`](https://github.com/tester-army/e2e/commit/f2f2e6fb1024ffb4cd481f7ea571c2d29be6d6d8) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The CLI starts without the optional `ai` peer dependency. The MCP bridge imported `asSchema` from `ai` statically and every command loads that module, so `npx e2e --help`, and `e2e init` in a project that has not installed `ai` yet, crashed with `ERR_MODULE_NOT_FOUND` before reading a flag. The bridge now reaches the SDK through the same lazy loader as the agent, and an MCP session opened in a project without `ai` reports `MODEL_UNAVAILABLE` instead.
 
-- [#298](https://github.com/tester-army/e2e/pull/298) [`ec3b6a1`](https://github.com/tester-army/e2e/commit/ec3b6a145a9e1a58bc70227ba4e868d7c9e3c3e5) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` no longer writes `agent-device` next to `@e2e-cpp/agent-device`, since the engine installs it. A project that already declares `agent-device` keeps it.
+- [#298](https://github.com/tester-army/e2e/pull/298) [`ec3b6a1`](https://github.com/tester-army/e2e/commit/ec3b6a145a9e1a58bc70227ba4e868d7c9e3c3e5) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` no longer writes `agent-device` next to `@e2edev/agent-device`, since the engine installs it. A project that already declares `agent-device` keeps it.
 
 ## 0.15.0-canary-20260914081513
 
 ### Minor Changes
 
-- [#291](https://github.com/tester-army/e2e/pull/291) [`abf1958`](https://github.com/tester-army/e2e/commit/abf19588677070fb86234f735614c40b7677e755) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: the engine contract (`@e2e-cpp/core/engine`) is reshaped as the locked, UI-only, cross-platform SPI for 1.0. What breaks and what replaces it:
+- [#291](https://github.com/tester-army/e2e/pull/291) [`abf1958`](https://github.com/tester-army/e2e/commit/abf19588677070fb86234f735614c40b7677e755) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: the engine contract (`e2e/engine`) is reshaped as the locked, UI-only, cross-platform SPI for 1.0. What breaks and what replaces it:
   
   - `EngineSnapshot.nodes` is `root`, one engine-minted node with an id that stays stable across observations; `url` is `location`, an opaque address (a URL on the web, the foreground screen on a device) the harness treats as a URL only when it parses as one; `viewport` is required.
   - `Engine.url()` is gone; read `location` off an observation. `Engine.swipe` is gone; the viewport swipe is `perform(root, { kind: 'swipe' })`.
@@ -194,9 +198,9 @@
   step events as `reasoning` (report-1 schema), and custom executors report
   their own through `recordModelCall({ reasoning })`.
 
-- [#290](https://github.com/tester-army/e2e/pull/290) [`799b29f`](https://github.com/tester-army/e2e/commit/799b29fbfa0444589b66bc0e59ab0b83ededf50c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Origin allowlists are gone, everywhere. `playwright({ allowedOrigins })` gated typed navigation only; a click, a redirect, or a popup reached any origin regardless, so the list guarded nothing and had to be spelled out for every subdomain a sign-in flow touched. `allowedOrigins` on a credential or a secret gated where a password could be typed; a secret is only ever typed into a field the step was handed, a password only into a password field, so that gate guarded against a model mistake at the cost of configuring every flow that leaves the app's domain, a third-party sign-in included. `app.open()`, the agent's `navigate`, and `web.goto` open any http(s) URL, `file:`, `data:`, and `javascript:` stay `POLICY_DENIED`, and a secret fills wherever the test or the step directs it. `credentials` entries are `{ username, password }`; `secrets` entries are a string or a provider, the `{ value }` object form is gone. `type_secret` now works on a device target too. What still keys on the site of `url` (its registrable domain) is invisible to config: the browser engine's `headers` reach the site and no other host, and child frames off the site stay out of observations. `basicAuth` answers a challenge from any origin, as Playwright's own `httpCredentials` does. Engine contract: `EngineAppInfo.allowedOrigins` became `site?: string`, `EngineAppDeclaration` lost `allowedOrigins`, and `sameSite`/`siteOf` are exported from `@e2e-cpp/core/engine`. `playwright({ allowedOrigins })` fails at config load. If a threat model ever calls for an allowlist again, it comes back as an opt-in.
+- [#290](https://github.com/tester-army/e2e/pull/290) [`799b29f`](https://github.com/tester-army/e2e/commit/799b29fbfa0444589b66bc0e59ab0b83ededf50c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Origin allowlists are gone, everywhere. `playwright({ allowedOrigins })` gated typed navigation only; a click, a redirect, or a popup reached any origin regardless, so the list guarded nothing and had to be spelled out for every subdomain a sign-in flow touched. `allowedOrigins` on a credential or a secret gated where a password could be typed; a secret is only ever typed into a field the step was handed, a password only into a password field, so that gate guarded against a model mistake at the cost of configuring every flow that leaves the app's domain, a third-party sign-in included. `app.open()`, the agent's `navigate`, and `web.goto` open any http(s) URL, `file:`, `data:`, and `javascript:` stay `POLICY_DENIED`, and a secret fills wherever the test or the step directs it. `credentials` entries are `{ username, password }`; `secrets` entries are a string or a provider, the `{ value }` object form is gone. `type_secret` now works on a device target too. What still keys on the site of `url` (its registrable domain) is invisible to config: the browser engine's `headers` reach the site and no other host, and child frames off the site stay out of observations. `basicAuth` answers a challenge from any origin, as Playwright's own `httpCredentials` does. Engine contract: `EngineAppInfo.allowedOrigins` became `site?: string`, `EngineAppDeclaration` lost `allowedOrigins`, and `sameSite`/`siteOf` are exported from `e2e/engine`. `playwright({ allowedOrigins })` fails at config load. If a threat model ever calls for an allowlist again, it comes back as an opt-in.
 
-- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `@e2e-cpp/core`. `@e2e-cpp/e2e` is retired and deprecated on npm; every import, config, and peer range now names `@e2e-cpp/core` (`@e2e-cpp/core`, `@e2e-cpp/core/agent`, `@e2e-cpp/core/engine`). The engines and the GitHub reporter declare their peer dependency on `@e2e-cpp/core`, so a project on `@e2e-cpp/e2e` must switch the runner to `@e2e-cpp/core` when it takes these versions. The CLI keeps its `@e2e-cpp/core` bin name.
+- [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `e2e`. `@e2edev/e2e` is retired and deprecated on npm; every import, config, and peer range now names `e2e` (`e2e`, `e2e/agent`, `e2e/engine`). The engines and the GitHub reporter declare their peer dependency on `e2e`, so a project on `@e2edev/e2e` must switch the runner to `e2e` when it takes these versions. The CLI keeps its `e2e` bin name.
 
 ### Patch Changes
 
@@ -206,7 +210,7 @@
 
 ### Minor Changes
 
-- [#280](https://github.com/tester-army/e2e/pull/280) [`f03006d`](https://github.com/tester-army/e2e/commit/f03006d47f1627d35d4777245bc24df83ff0db86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Secrets are no longer passwords only. A new `secrets` config block declares any value the model must never see (an API key, a token, anything from the environment), as a string, a provider function, or `{ value, allowedOrigins }`, overridable per run with `E2E_SECRET_<NAME>`. `secrets.get(name)` from `@e2e-cpp/e2e` returns the same opaque `Secret` handle a credential's password is, accepted by `locator.fill`, `agent.act` params, and the `type_secret` tool; the runner fills it, masks it in every observation, and redacts it from logs, traces, and the report. A password still fills only a password field; a generic secret fills any editable input. An unconfigured name fails with the new `SECRET_UNAVAILABLE` code. `Secret.purpose` narrows to `'password' | 'generic-secret'`; `'one-time-code'` was never produced. A deterministic `locator.fill` of a secret now checks the current origin against the target's and the secret's `allowedOrigins` before resolving the value, as `type_secret` always has; `allowedOrigins` entries and the keys of a `secrets` object are validated at config load.
+- [#280](https://github.com/tester-army/e2e/pull/280) [`f03006d`](https://github.com/tester-army/e2e/commit/f03006d47f1627d35d4777245bc24df83ff0db86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Secrets are no longer passwords only. A new `secrets` config block declares any value the model must never see (an API key, a token, anything from the environment), as a string, a provider function, or `{ value, allowedOrigins }`, overridable per run with `E2E_SECRET_<NAME>`. `secrets.get(name)` from `@e2edev/e2e` returns the same opaque `Secret` handle a credential's password is, accepted by `locator.fill`, `agent.act` params, and the `type_secret` tool; the runner fills it, masks it in every observation, and redacts it from logs, traces, and the report. A password still fills only a password field; a generic secret fills any editable input. An unconfigured name fails with the new `SECRET_UNAVAILABLE` code. `Secret.purpose` narrows to `'password' | 'generic-secret'`; `'one-time-code'` was never produced. A deterministic `locator.fill` of a secret now checks the current origin against the target's and the secret's `allowedOrigins` before resolving the value, as `type_secret` always has; `allowedOrigins` entries and the keys of a `secrets` object are validated at config load.
 
 - [#284](https://github.com/tester-army/e2e/pull/284) [`8811ba7`](https://github.com/tester-army/e2e/commit/8811ba7de97b239f8d1a32fb0785ff00d7f0011e) Thanks [@okwasniewski](https://github.com/okwasniewski)! - A built-in `markdown` reporter writes the run as one markdown page,
   `.e2e/summary.md` beside `report.json`, laid out for a pull request: a
@@ -222,10 +226,10 @@
   pull request or a handoff instead of retelling the result.
   `renderMarkdownReport(report, { artifactsUrl, artifactsDir, sourceUrl })` is
   exported from the main entrypoint for a reporter that posts the page
-  elsewhere. `@e2e-cpp/github` posts this page as the pull request comment in
+  elsewhere. `@e2edev/github` posts this page as the pull request comment in
   place of its one table of tests that did not pass; its `renderComment`,
   `CommentOptions`, `MAX_MARKER_CHARS`, and `MAX_URL_CHARS` exports are gone
-  (nothing consumed them), and the package now needs `@e2e-cpp/e2e` 0.13 or
+  (nothing consumed them), and the package now needs `@e2edev/e2e` 0.13 or
   later. `e2e init` ignores `.e2e/summary.md`.
 
 - [#283](https://github.com/tester-army/e2e/pull/283) [`4480e8b`](https://github.com/tester-army/e2e/commit/4480e8b0e589ef06c116c59eddbef82e1bb65dfb) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `OperationContext.origin` tells an engine who is acting: `'test'` for a test's own deterministic step, `'agent'` for the agent. A step verifies its outcome with `expect`, so an engine may act as soon as the target holds still; the agent reads the screen right after acting, so an engine may wait for the transition to end first. The locator engine marks its calls `test`, the agent loop marks its calls `agent`; an absent origin is treated as the agent's.
@@ -234,7 +238,7 @@
 
 - [#282](https://github.com/tester-army/e2e/pull/282) [`ff33218`](https://github.com/tester-army/e2e/commit/ff33218345d96098d6c2b665b23ece67e46b8eec) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The bundled skill and the `init` scaffold now describe e2e as agentic testing first. The skill's workflow tells a coding agent to drive a flow with `agent.act` and pin each outcome with `expect`, to use `screen` for exact values, to commit the trace cache so CI replays passing steps, and to specialise the agent for the app (goal wording, `context`, `system`, tools, model options) before rewriting a goal as clicks. The CI guidance runs agent steps in the same job as everything else instead of a separate config on a schedule. The scaffold's config and example test carry one comment each instead of five, and say "natural language" where they said "plain language".
 
-- [#278](https://github.com/tester-army/e2e/pull/278) [`7a45609`](https://github.com/tester-army/e2e/commit/7a456094a8d8ebb930c073f2cfe5ffa83315bd77) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` adds `agent-device` to `devDependencies` next to `@e2e-cpp/agent-device`, which now peers on it instead of installing it. The range pins the minor the engine was built and tested against, recorded at build time like the engine ranges; a project that already declares `agent-device` keeps its version untouched.
+- [#278](https://github.com/tester-army/e2e/pull/278) [`7a45609`](https://github.com/tester-army/e2e/commit/7a456094a8d8ebb930c073f2cfe5ffa83315bd77) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` adds `agent-device` to `devDependencies` next to `@e2edev/agent-device`, which now peers on it instead of installing it. The range pins the minor the engine was built and tested against, recorded at build time like the engine ranges; a project that already declares `agent-device` keeps its version untouched.
 
 - [#286](https://github.com/tester-army/e2e/pull/286) [`fce4aaf`](https://github.com/tester-army/e2e/commit/fce4aafeea8e6154e42ea0f2e6574b0b13285401) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Replayed trace actions carry the test origin. A replay executes recorded actions with no model reading the screen after them, only its own relocation, which polls; so an engine treats them as deterministic steps. On the device engine that removes the settle wait from every replayed action.
 
@@ -323,9 +327,9 @@
 
 - [#266](https://github.com/tester-army/e2e/pull/266) [`fcf4fe6`](https://github.com/tester-army/e2e/commit/fcf4fe6ff7f4ba1b0d6a61af53ce0bde953ad26c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Reject `app.screenshot()` with `POLICY_DENIED` after a secret fill. The runner now stops before engine capture or artifact registration so secrets echoed outside secure fields cannot enter explicit screenshot artifacts.
 
-- [#275](https://github.com/tester-army/e2e/pull/275) [`07cae87`](https://github.com/tester-army/e2e/commit/07cae8787ca1d530ac4f85729a9d7793bf3100fa) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The CLI is documented and registered as `npx --no-install e2e-cpp`. The `--no-install` flag is gone from the help text, the `e2e init` hints, the MCP server prompt, the `.mcp.json` and `.cursor/mcp.json` entries `init` writes, the skill, and the docs. npx runs the locally installed bin first, so the flag added nothing once the package was a dependency, and the unscoped `@e2e-cpp/core` name on npm is the team's own placeholder.
+- [#275](https://github.com/tester-army/e2e/pull/275) [`07cae87`](https://github.com/tester-army/e2e/commit/07cae8787ca1d530ac4f85729a9d7793bf3100fa) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The CLI is documented and registered as `npx e2e`. The `--no-install` flag is gone from the help text, the `e2e init` hints, the MCP server prompt, the `.mcp.json` and `.cursor/mcp.json` entries `init` writes, the skill, and the docs. npx runs the locally installed bin first, so the flag added nothing once the package was a dependency, and the unscoped `e2e` name on npm is the team's own placeholder.
 
-- [#272](https://github.com/tester-army/e2e/pull/272) [`dfc4feb`](https://github.com/tester-army/e2e/commit/dfc4febe46da37420643b51bb969f423800d22fe) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` adds `playwright` to `devDependencies` next to `@e2e-cpp/playwright`, which now peers on it instead of installing it. The range is the minor the engine was built and tested against, recorded at build time like the engine ranges; a project that already declares `playwright` keeps its version untouched.
+- [#272](https://github.com/tester-army/e2e/pull/272) [`dfc4feb`](https://github.com/tester-army/e2e/commit/dfc4febe46da37420643b51bb969f423800d22fe) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` adds `playwright` to `devDependencies` next to `@e2edev/playwright`, which now peers on it instead of installing it. The range is the minor the engine was built and tested against, recorded at build time like the engine ranges; a project that already declares `playwright` keeps its version untouched.
 
 - [#263](https://github.com/tester-army/e2e/pull/263) [`c76f152`](https://github.com/tester-army/e2e/commit/c76f152ef5668b1c2cc50b6e756af8f4d273a361) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The notice `e2e init` prints when it adds `.e2e/cache/` to `.gitignore` now
   links to the caching guide (`/cache#commit-your-traces`) instead of an anchor
@@ -345,7 +349,7 @@
   -- --headed` reaches the CLI as `run -- --headed`, so `--headed` used to be
   swallowed and the run went on headless; the message now names the direct
   command for the detected package manager with the whole forwarded tail
-  (`pnpm exec e2e-cpp run --tag smoke`). A file that really starts with a dash still
+  (`pnpm exec e2e run --tag smoke`). A file that really starts with a dash still
   selects as before.
 
 - [#270](https://github.com/tester-army/e2e/pull/270) [`38b3f1e`](https://github.com/tester-army/e2e/commit/38b3f1e7546f379201cf043166c9da3c727c9b39) Thanks [@okwasniewski](https://github.com/okwasniewski)! - A `command` or service that fails to start now says what it was doing. When
@@ -403,8 +407,8 @@
 ### Patch Changes
 
 - [#257](https://github.com/tester-army/e2e/pull/257) [`6526dc6`](https://github.com/tester-army/e2e/commit/6526dc6daa0d3c646c650800560447674af93ae0) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Runtime dependencies move to their current releases: `zod` 4.6.1 in both
-  packages, `@clack/prompts` 1.8.0 in `@e2e-cpp/e2e`, and `agent-device` 0.21.0
-  in `@e2e-cpp/agent-device`. No behavior changes on our side.
+  packages, `@clack/prompts` 1.8.0 in `@e2edev/e2e`, and `agent-device` 0.21.0
+  in `@e2edev/agent-device`. No behavior changes on our side.
 
 - [#264](https://github.com/tester-army/e2e/pull/264) [`3e66c42`](https://github.com/tester-army/e2e/commit/3e66c4280b18985266dabf892d5a2c5ebd3e23b7) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e explore --help` and the `explore` skill topic no longer say the model can
   come from `E2E_MODEL`. Nothing reads that variable: the model is the selected
@@ -419,7 +423,7 @@
   the step: the reply stays in the history and the model is told to act, until
   the turn budget runs out as before.
 
-- [#256](https://github.com/tester-army/e2e/pull/256) [`4cc86dc`](https://github.com/tester-army/e2e/commit/4cc86dcfafab5ef9ab12e37aac18d0d3c3d4f3de) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` lists the engines as Web (Playwright), Mobile (iOS/Android) with agent-device, and None last. Its closing `next:` line and the skipped-skill hint run the CLI through the project's package manager (`npm run test:e2e`, `pnpm exec e2e-cpp guide`) instead of `npx --no-install`. The CLI, README, and skill link to the docs at https://e2e.mintlify.app; the Vercel-hosted address returns 404.
+- [#256](https://github.com/tester-army/e2e/pull/256) [`4cc86dc`](https://github.com/tester-army/e2e/commit/4cc86dcfafab5ef9ab12e37aac18d0d3c3d4f3de) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e init` lists the engines as Web (Playwright), Mobile (iOS/Android) with agent-device, and None last. Its closing `next:` line and the skipped-skill hint run the CLI through the project's package manager (`npm run test:e2e`, `pnpm exec e2e guide`) instead of `npx --no-install`. The CLI, README, and skill link to the docs at https://e2e.mintlify.app; the Vercel-hosted address returns 404.
 
 ## 0.11.0
 
@@ -550,7 +554,7 @@
 
 - [#250](https://github.com/tester-army/e2e/pull/250) [`d4a1953`](https://github.com/tester-army/e2e/commit/d4a1953a85df1e88d83de9f3cc1c3f18705296f4) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e run` loads `.ts` config, tests, and helpers as ES modules whatever the nearest `package.json` says. A Next.js app, or any other package without `"type": "module"`, no longer has to change its module type (which also changes how its `.js` files run), and `init` stops asking for it. `.cts` files and dependencies keep their own format.
 
-  `init` writes the engine version released alongside the CLI (`^0.7.0` for `@e2e-cpp/playwright`) instead of `0.x`. Package managers resolve a range to the registry's `latest` tag whenever it satisfies, and `latest` trails the tag the runner installs from, so `0.x` fetched an old engine whose peer range rejected the runner.
+  `init` writes the engine version released alongside the CLI (`^0.7.0` for `@e2edev/playwright`) instead of `0.x`. Package managers resolve a range to the registry's `latest` tag whenever it satisfies, and `latest` trails the tag the runner installs from, so `0.x` fetched an old engine whose peer range rejected the runner.
 
 - [#245](https://github.com/tester-army/e2e/pull/245) [`38d4424`](https://github.com/tester-army/e2e/commit/38d4424eb1fd2e16ab5fd2fb1fc6b64862ced3a7) Thanks [@okwasniewski](https://github.com/okwasniewski)! - A filled credential no longer leaves the runner inside a Playwright trace. The trace recorded the value as typed: in the `fill` action's parameters, in every DOM snapshot of the field, and in the request body that carried it, while the report marked the artifact `redaction: "complete"`. Once a secret was filled in an attempt, the runner now rewrites every text entry of that attempt's trace archives before any is registered, hashed, or handed to an artifact store: JSON records value by value, other text as text, replacing each credential value (as typed, JSON-quoted, HTML-escaped, and URL-encoded) with `<secret:name>`; a binary entry holding a credential's bytes is dropped, and the rest is carried as stored. A trace from an attempt that filled no secret is labelled `not-required`; one the runner could not rewrite is deleted (a path the engine returned outside the attempt's artifact directory is refused and left untouched), the attempt's `secondaryErrors` carry a `TRACE_WITHHELD` entry, and a required trace marks cleanup failed. The engine contract's `stopTrace` may now return every trace segment instead of one path, and each is registered. The secret redactor that guards observations, logs, and the cache now covers those encodings as well.
 
@@ -630,8 +634,8 @@
   timings, transcripts, and the agent step table, and `e2e run --ai-trace` for
   every model call.
 
-- [#236](https://github.com/tester-army/e2e/pull/236) [`571883e`](https://github.com/tester-army/e2e/commit/571883e61fcf64907ab39dd5a59009935837288c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The `@e2e-cpp/e2e/run` subpath is gone: `run()`, `RunOptions`, `RunOutcome`,
-  and the event and record types it re-exported. The `@e2e-cpp/core` CLI is the one way
+- [#236](https://github.com/tester-army/e2e/pull/236) [`571883e`](https://github.com/tester-army/e2e/commit/571883e61fcf64907ab39dd5a59009935837288c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The `@e2edev/e2e/run` subpath is gone: `run()`, `RunOptions`, `RunOutcome`,
+  and the event and record types it re-exported. The `e2e` CLI is the one way
   to drive the runner. A program that needs a run's outcome runs the CLI and
   reads `.e2e/report.json` (report-1), the canonical record of a run. The
   config seams stay where they were, in `e2e.config.ts`: `artifacts.store`,
@@ -731,13 +735,13 @@
   names, file paths, URLs, instructions, messages, and credentials are never
   sent. Opt out with `e2e telemetry disable`, `E2E_TELEMETRY_DISABLED=1`, or
   `DO_NOT_TRACK=1`; `E2E_TELEMETRY_DEBUG=1` prints every event instead of
-  sending it. Hosts embedding `@e2e-cpp/e2e/run` send nothing.
+  sending it. Hosts embedding `@e2edev/e2e/run` send nothing.
 
-- [#193](https://github.com/tester-army/e2e/pull/193) [`ee84c58`](https://github.com/tester-army/e2e/commit/ee84c582982628a23c3b9fb003d46d60d50ac076) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `isAgentError` is exported from `@e2e-cpp/e2e`, next to `AgentError`. Test
+- [#193](https://github.com/tester-army/e2e/pull/193) [`ee84c58`](https://github.com/tester-army/e2e/commit/ee84c582982628a23c3b9fb003d46d60d50ac076) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `isAgentError` is exported from `@e2edev/e2e`, next to `AgentError`. Test
   files load in their own module realm, so `instanceof AgentError` can be false
   for an error the runner threw; `isAgentError` checks a cross-realm marker and
   narrows to `AgentError`, so a test can branch on `error.code` without
-  importing `@e2e-cpp/e2e/agent`.
+  importing `@e2edev/e2e/agent`.
 
 - [#170](https://github.com/tester-army/e2e/pull/170) [`22d3474`](https://github.com/tester-army/e2e/commit/22d347425d3c8ef4268690626c00aead9dd40e43) Thanks [@devin-ai-integration](https://github.com/apps/devin-ai-integration)! - One model, checked once. The model passed to `createAgent({ model })` now
   serves the judgment calls (`assert`, `waitFor`, `extract`) as well as `act`,
@@ -752,11 +756,11 @@
   `report.run.status`, `blocked` included. A run whose every non-passing
   result was blocked (credentials, environment, or the agent's own budget) used
   to report `failed` to the host and `blocked` in `report.json`; the
-  `RunStatus` type on `@e2e-cpp/e2e/run` names the union.
+  `RunStatus` type on `@e2edev/e2e/run` names the union.
 
 ### Patch Changes
 
-- [#195](https://github.com/tester-army/e2e/pull/195) [`ce0b1a4`](https://github.com/tester-army/e2e/commit/ce0b1a437a65e9d58b1c6e4341de791ef8d5eac0) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `ArtifactRecord.redaction` on `@e2e-cpp/e2e/run` mirrors the report-1 schema:
+- [#195](https://github.com/tester-army/e2e/pull/195) [`ce0b1a4`](https://github.com/tester-army/e2e/commit/ce0b1a437a65e9d58b1c6e4341de791ef8d5eac0) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `ArtifactRecord.redaction` on `@e2edev/e2e/run` mirrors the report-1 schema:
   `'complete' | 'not-required' | 'incomplete'`. The type used to admit `'none'`,
   a value the schema rejects and the runner never wrote, and lacked the two the
   schema allows.
@@ -884,15 +888,15 @@ starting service "postgres": tearing down`). `Start at` and `Duration`, and
 
 - [#160](https://github.com/tester-army/e2e/pull/160) [`25a5838`](https://github.com/tester-army/e2e/commit/25a5838512ebb0942d9c248cb2befc226c305e28) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `defineConfig` is gone. An `e2e.config.ts` default-exports the object literal
   and ends it with `satisfies E2EConfig`, which gives the same completion and
-  unknown-key checks without a runtime import from `@e2e-cpp/e2e`.
+  unknown-key checks without a runtime import from `@e2edev/e2e`.
 
   ```ts
   // before
-  import { defineConfig } from '@e2e-cpp/e2e';
+  import { defineConfig } from '@e2edev/e2e';
   export default defineConfig({ targets: [...] });
 
   // after
-  import type { E2EConfig } from '@e2e-cpp/e2e';
+  import type { E2EConfig } from '@e2edev/e2e';
   export default { targets: [...] } satisfies E2EConfig;
   ```
 
@@ -974,8 +978,8 @@ failed`. `app.open()` against an address where nothing listens is
 
 - [#161](https://github.com/tester-army/e2e/pull/161) [`41612dc`](https://github.com/tester-army/e2e/commit/41612dcf44e6e395d578a23c09cf1dd451231095) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Package and CLI descriptions no longer call e2e a "standard".
 
-- [#168](https://github.com/tester-army/e2e/pull/168) [`1ef5b00`](https://github.com/tester-army/e2e/commit/1ef5b003b62a588f554ad567f9d1f4540ffd8b35) Thanks [@devin-ai-integration](https://github.com/apps/devin-ai-integration)! - READMEs and CLI help use the scoped package names (`@e2e-cpp/e2e`,
-  `@e2e-cpp/playwright`, `@e2e-cpp/agent-device`) on every install line, point at
+- [#168](https://github.com/tester-army/e2e/pull/168) [`1ef5b00`](https://github.com/tester-army/e2e/commit/1ef5b003b62a588f554ad567f9d1f4540ffd8b35) Thanks [@devin-ai-integration](https://github.com/apps/devin-ai-integration)! - READMEs and CLI help use the scoped package names (`@e2edev/e2e`,
+  `@e2edev/playwright`, `@e2edev/agent-device`) on every install line, point at
   the Fern docs instead of e2e.dev, and describe e2e as an open framework for
   agentic end-to-end testing.
 
@@ -1012,7 +1016,7 @@ failed`. `app.open()` against an address where nothing listens is
   resolves it per target: navigation policy, cache and session identity, the
   report's target record (`baseOrigin` is now absent for a surface without a
   URL), and the app process all read from there. A device target can finally
-  declare a stable identity without inventing a URL. `@e2e-cpp/e2e/engine` also
+  declare a stable identity without inventing a URL. `@e2edev/e2e/engine` also
   exports `obj`, the one-call replacement for the conditional-spread
   idiom when a declaration is built from optional inputs.
 
@@ -1032,11 +1036,11 @@ failed`. `app.open()` against an address where nothing listens is
   - `ToolAnnotations.replay` and `ToolAnnotations.secrets` (deprecated, never read): `defineTool` takes `{ mutates, platforms? }`.
   - `StepExecutorContext.priorSteps` and `ExecutorPriorStep`: the ledger string is the executor's prior-step context.
   - `createToolLoopExecutor` options `onConclude`, `loopGuards`, and `windDown` (and the `WindDownPolicy` / `LoopGuardThresholds` types): the chassis keeps its own loop guards and wind-down policy.
-  - The `@e2e-cpp/e2e/agent` primitives `createGrammarTools`, `createVerdictTool`, `trackModelCalls`, `conversationMemory`, `VERDICT_RULES`, `serializeLedger`, `compactSnapshotHistory`, and `formatReplayedPrefix`: `createAgent` and `createToolLoopExecutor` are the two supported layers.
+  - The `@e2edev/e2e/agent` primitives `createGrammarTools`, `createVerdictTool`, `trackModelCalls`, `conversationMemory`, `VERDICT_RULES`, `serializeLedger`, `compactSnapshotHistory`, and `formatReplayedPrefix`: `createAgent` and `createToolLoopExecutor` are the two supported layers.
   - `blockedCategoryOf` and `BlockedCategory` from the main entrypoint.
   - The legacy fixture adapter: an engine fixture factory must return the surface it declared through `context.fixture`; a plain surface is rejected with `INVALID_CONFIG`.
 
-- [#154](https://github.com/tester-army/e2e/pull/154) [`1d352b3`](https://github.com/tester-army/e2e/commit/1d352b3ee98a02d239c95e4055b4bb5219d7edfc) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Rename the "backend" concept to "engine" everywhere. The authoring import is now `@e2e-cpp/e2e/engine` (`defineEngine`, `EngineHandle`, `EngineError`, `EngineFixtureContext`, ...), a target names its engine as `engine: playwright()` in `e2e.config.ts`, the error code `BACKEND_FAILURE` is now `ENGINE_FAILURE`, and the `backend` provenance field in the report and session schemas is now `engine`. `@e2e-cpp/e2e/backend`, `defineBackend`, `backend:` and `BACKEND_FAILURE` are gone; update the import path, the config key, and any code matching on the error code or reading provenance.
+- [#154](https://github.com/tester-army/e2e/pull/154) [`1d352b3`](https://github.com/tester-army/e2e/commit/1d352b3ee98a02d239c95e4055b4bb5219d7edfc) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Rename the "backend" concept to "engine" everywhere. The authoring import is now `@e2edev/e2e/engine` (`defineEngine`, `EngineHandle`, `EngineError`, `EngineFixtureContext`, ...), a target names its engine as `engine: playwright()` in `e2e.config.ts`, the error code `BACKEND_FAILURE` is now `ENGINE_FAILURE`, and the `backend` provenance field in the report and session schemas is now `engine`. `@e2edev/e2e/backend`, `defineBackend`, `backend:` and `BACKEND_FAILURE` are gone; update the import path, the config key, and any code matching on the error code or reading provenance.
 
 - [#156](https://github.com/tester-army/e2e/pull/156) [`0e5e1ef`](https://github.com/tester-army/e2e/commit/0e5e1ef1a245674a198e3708f1c06db4c290bd39) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The `list` reporter is laid out like vitest's default reporter. Results print
   one block per test file and target - a colored target badge, the file, its
@@ -1096,7 +1100,7 @@ failed`. `app.open()` against an address where nothing listens is
   the golden path, five options. `createToolLoopExecutor` is where the model's
   reading is shaped: `buildPrompt` may return a message history, and it gains
   `onConclude(ctx, { messages, verdict })` plus `loopGuards` / `windDown`
-  policy. New primitives from `@e2e-cpp/e2e/agent` compose with the chassis or a
+  policy. New primitives from `@e2edev/e2e/agent` compose with the chassis or a
   raw `ToolLoopAgent` and load no `ai` themselves: `createGrammarTools`,
   `createVerdictTool`, `trackModelCalls`, `conversationMemory`, plus the
   exported `serializeLedger`, `compactSnapshotHistory`, and
@@ -1164,8 +1168,8 @@ failed`. `app.open()` against an address where nothing listens is
   conclusion when the executor has evidence the loop guards cannot see.
   `providerOptions` are passed to every model call. `createAgent` accepts
   `providerOptions` too. `isDefinedTool`, `toolAppliesTo`, `PreparedTurn` and
-  `PreparedMessages` are exported from `@e2e-cpp/e2e/agent`; `RUNTIME_CODES` from
-  `@e2e-cpp/e2e`. `ExecutorObservation` carries the current `path` when the
+  `PreparedMessages` are exported from `@e2edev/e2e/agent`; `RUNTIME_CODES` from
+  `@e2edev/e2e`. `ExecutorObservation` carries the current `path` when the
   backend reports one.
 
   Trace cache: a typed value that appears in neither the step's instruction
@@ -1197,7 +1201,7 @@ failed`. `app.open()` against an address where nothing listens is
 
 - [#118](https://github.com/tester-army/e2e/pull/118) [`749988f`](https://github.com/tester-army/e2e/commit/749988f923e7905a36c4898e0037b8af06eff23c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Ctrl-C now ends the run and tears the backend down. The first signal interrupts the running test immediately (it no longer waits for the test timeout when the body is not calling the harness), runs its bounded cleanup, disposes every worker's backend, and writes the report. A second signal forces every worker to dispose at once and kills it after the cleanup budget; a third exits on the spot. A worker whose runner disappears disposes its backend and exits instead of running on. The event stream gains `run-interrupted`.
 
-  The signal ladder is the CLI's. `run()` from `@e2e-cpp/e2e/run` no longer installs `SIGINT`/`SIGTERM` handlers and never exits the process; a host passes `interruptSignal` and the new `forceSignal` instead.
+  The signal ladder is the CLI's. `run()` from `@e2edev/e2e/run` no longer installs `SIGINT`/`SIGTERM` handlers and never exits the process; a host passes `interruptSignal` and the new `forceSignal` instead.
 
 - [#119](https://github.com/tester-army/e2e/pull/119) [`00cfc52`](https://github.com/tester-army/e2e/commit/00cfc52bd5a9ab56f7fb2dad357ce325c9ce4817) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Hooks now run in the order the lifecycle spec defines. `beforeEach` runs outer
   scope to inner and `afterEach` inner to outer regardless of where in the file
@@ -1264,7 +1268,7 @@ failed`. `app.open()` against an address where nothing listens is
   `navigate`), budgets, deadlines, origin policy, and recording — and delegates
   only the thinking to a pluggable `StepExecutor`, configured as the `agent`
   value itself: `agent: createAgent({...})` or any hand-rolled executor (there
-  is no `executor` key). The `@e2e-cpp/e2e/agent` entrypoint exports `createAgent` (the
+  is no `executor` key). The `@e2edev/e2e/agent` entrypoint exports `createAgent` (the
   built-in AI SDK tool-loop executor), `createToolLoopExecutor` (the chassis:
   verdict tool, hard stops, loop guards, wind-down, `--debug` transcripts), and
   `defineTool` for annotated project tools. Verdicts are ternary: `blocked` is first-class
@@ -1288,7 +1292,7 @@ failed`. `app.open()` against an address where nothing listens is
     `maxActionStepsPerStep`, `maxEstimatedCostUsd`) are rejected.
   - `report-1` documents changed (limits/usage blocks, `blocked` statuses, new
     error codes); the conformance `suiteVersion` is now 0.2.0.
-  - `verifyDriver` and its conformance types are removed from `@e2e-cpp/e2e/driver`
+  - `verifyDriver` and its conformance types are removed from `@e2edev/e2e/driver`
     until the harness can actually run vectors.
 
 - [#104](https://github.com/tester-army/e2e/pull/104) [`ced765a`](https://github.com/tester-army/e2e/commit/ced765a3d3fa787910180ea3c52f5d410ed4c11f) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `e2e run --ai-trace` records every model call of a run to `.e2e/ai-trace.json`
@@ -1317,7 +1321,7 @@ failed`. `app.open()` against an address where nothing listens is
   the record simply carries no `ref`. Without a store nothing changes. The
   report schema gains the optional `artifact.ref` (`suiteVersion` 0.8.0 → 0.9.0).
 
-- [#98](https://github.com/tester-army/e2e/pull/98) [`0ae44ef`](https://github.com/tester-army/e2e/commit/0ae44ef9137e3a78b6164f4f9a6fa7114290b9ba) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The backend contract (RFC0002): `@e2e-cpp/e2e/backend` ships `defineBackend`, and
+- [#98](https://github.com/tester-army/e2e/pull/98) [`0ae44ef`](https://github.com/tester-army/e2e/commit/0ae44ef9137e3a78b6164f4f9a6fa7114290b9ba) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The backend contract (RFC0002): `@e2edev/e2e/backend` ships `defineBackend`, and
   targets accept `{ name, platform, backend }` with no driver — no browser is
   resolved or launched, and `app.url` becomes optional when every target is a
   backend target. A backend declares its capabilities: `observe()`
@@ -1339,7 +1343,7 @@ failed`. `app.open()` against an address where nothing listens is
   web-shaped enters the contract. Artifacts land with the playwright backend,
   where the real evidence-writing story lives.
 
-- [#114](https://github.com/tester-army/e2e/pull/114) [`e19b826`](https://github.com/tester-army/e2e/commit/e19b826a7f2a944122099851803f6961f107cf86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Publish under the `@e2edev` npm scope as restricted (private) packages: the core package `@e2e-cpp/core` is now `@e2e-cpp/e2e`, beside `@e2e-cpp/playwright` and `@e2e-cpp/agent-device`. Entry points move with the name (`@e2e-cpp/e2e/agent`, `@e2e-cpp/e2e/backend`, `@e2e-cpp/e2e/run`); the `@e2e-cpp/core` CLI binary keeps its name. Provenance is off while the packages are private, since npm only attests public packages.
+- [#114](https://github.com/tester-army/e2e/pull/114) [`e19b826`](https://github.com/tester-army/e2e/commit/e19b826a7f2a944122099851803f6961f107cf86) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Publish under the `@e2edev` npm scope as restricted (private) packages: the core package `e2e` is now `@e2edev/e2e`, beside `@e2edev/playwright` and `@e2edev/agent-device`. Entry points move with the name (`@e2edev/e2e/agent`, `@e2edev/e2e/backend`, `@e2edev/e2e/run`); the `e2e` CLI binary keeps its name. Provenance is off while the packages are private, since npm only attests public packages.
 
 - [#97](https://github.com/tester-army/e2e/pull/97) [`1f98654`](https://github.com/tester-army/e2e/commit/1f9865476924a93bfc70cdebe144a3e8e7c92f74) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Driver action events carry `detail`: bounded, redacted prose for what the
   action did — `tap button "Approve"`, `fill secret "password" into textbox
@@ -1349,7 +1353,7 @@ failed`. `app.open()` against an address where nothing listens is
   `report-v1.schema.json` gains the optional `event.detail` field
   (`suiteVersion` 0.6.0 → 0.7.0).
 
-- [#97](https://github.com/tester-army/e2e/pull/97) [`1f98654`](https://github.com/tester-army/e2e/commit/1f9865476924a93bfc70cdebe144a3e8e7c92f74) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The programmatic host surface lands as `@e2e-cpp/e2e/run`. `run()` executes one
+- [#97](https://github.com/tester-army/e2e/pull/97) [`1f98654`](https://github.com/tester-army/e2e/commit/1f9865476924a93bfc70cdebe144a3e8e7c92f74) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The programmatic host surface lands as `@e2edev/e2e/run`. `run()` executes one
   complete run in-process — no `process.exit`, external `AbortSignal`
   cancellation, the full report-1 document returned in memory — and the new
   `onEvent` option streams every lifecycle fact (`run-started`, `plan`,
@@ -1375,7 +1379,7 @@ failed`. `app.open()` against an address where nothing listens is
 
   Removed:
 
-  - `@e2e-cpp/e2e/driver`, `defineDriver`, and every driver-SPI type; the `driver:` and
+  - `@e2edev/e2e/driver`, `defineDriver`, and every driver-SPI type; the `driver:` and
     `browser:` target keys; the top-level `browser` config key; the implicit
     zero-config web target. `targets` is required and a target is
     `{ name, platform, backend? }`.
@@ -1406,7 +1410,7 @@ select, scroll, navigate, back }`). Every node action is now
   - `BackendInitInfo.app.baseUrl` and `BackendFixtureContext.app.baseUrl` are
     optional; absent when no app URL is configured.
   - `Web`, `WebRoute`, `WebResponse`, `RouteFulfillResponse`, `Cookie`,
-    `Dialog`, and `WebExpectation` moved out of `@e2e-cpp/core` into `@e2e-cpp/playwright`.
+    `Dialog`, and `WebExpectation` moved out of `e2e` into `@e2edev/playwright`.
     `expect(fixture)` routes to whatever expectation surface a backend attaches
     through `BackendFixtureContext.expectable`. Every `web` method call,
     including `url()`, `title()`, and `cookies()`, is now a recorded step.
@@ -1416,17 +1420,17 @@ select, scroll, navigate, back }`). Every node action is now
 
   Added:
 
-  - `@e2e-cpp/playwright` exports `playwright(options)`: a `defineBackend` handle
+  - `@e2edev/playwright` exports `playwright(options)`: a `defineBackend` handle
     with observation, actions, location, state, artifacts, and the contributed
     `web` fixture. `browser` and `viewport` are its options. It also exports
-    `test` typed with `web`; `expect` and `credentials` still come from `@e2e-cpp/core`.
-  - `@e2e-cpp/e2e/backend` exports `BACKEND_ERROR_CODES` and
+    `test` typed with `web`; `expect` and `credentials` still come from `e2e`.
+  - `@e2edev/e2e/backend` exports `BACKEND_ERROR_CODES` and
     `RETRYABLE_BACKEND_ERROR_CODES` (`NODE_STALE`, `FRAME_NOT_FOUND`).
-  - `@e2e-cpp/e2e/backend` exports the semantics the spec requires every backend to
+  - `@e2edev/e2e/backend` exports the semantics the spec requires every backend to
     reproduce exactly: `TestError`, `ConfigurationError`, `InfrastructureError`,
     `matchesText`, `toTextPattern`, `describePattern`, `urlMatches`,
-    `pollCondition`, `Deadline`, and `validateJsonValue`. The `@e2e-cpp/e2e/internal`
-    subpath is removed; a backend package depends on `@e2e-cpp/e2e/backend` only.
+    `pollCondition`, `Deadline`, and `validateJsonValue`. The `@e2edev/e2e/internal`
+    subpath is removed; a backend package depends on `@e2edev/e2e/backend` only.
   - `defineTool` accepts `platforms` to scope a tool pack to targets by
     platform, and `StepExecutorContext.target` names the target a step runs on.
 
@@ -1440,7 +1444,7 @@ select, scroll, navigate, back }`). Every node action is now
   });
 
   // after
-  import { playwright } from "@e2e-cpp/playwright";
+  import { playwright } from "@e2edev/playwright";
 
   export default defineConfig({
     targets: [
@@ -1453,22 +1457,22 @@ select, scroll, navigate, back }`). Every node action is now
   });
   ```
 
-  A backend written against the earlier `@e2e-cpp/e2e/backend` draft moves its `actions`
+  A backend written against the earlier `@e2edev/e2e/backend` draft moves its `actions`
   verbs onto `perform` (switch on `action.kind`), its viewport `scroll` onto
   `swipe`, its `navigate`/`back` under `app`, declares `version`, and accepts
   the cleanup context on `endAttempt`/`dispose`.
 
-- [#20](https://github.com/tester-army/e2e/pull/20) [`1e21658`](https://github.com/tester-army/e2e/commit/1e21658c949900be0191221a468647e43b6ddf2a) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Move the Playwright driver into its own `@e2e-cpp/playwright` package.
+- [#20](https://github.com/tester-army/e2e/pull/20) [`1e21658`](https://github.com/tester-army/e2e/commit/1e21658c949900be0191221a468647e43b6ddf2a) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Move the Playwright driver into its own `@e2edev/playwright` package.
 
-  `@e2e-cpp/core` no longer depends on `playwright`, so installs that drive another backend
+  `e2e` no longer depends on `playwright`, so installs that drive another backend
   no longer download a browser. `driver: 'playwright'` still works and is still
   the default for web targets; the runner now loads the driver from
-  `@e2e-cpp/playwright`, which it declares as an optional peer dependency.
+  `@e2edev/playwright`, which it declares as an optional peer dependency.
 
   **Upgrading:** install the driver alongside the runner.
 
   ```bash
-  npm install --save-dev @e2e-cpp/e2e @e2e-cpp/playwright
+  npm install --save-dev @e2edev/e2e @e2edev/playwright
   ```
 
   A target that names the driver without the package installed now fails config
@@ -1485,8 +1489,8 @@ select, scroll, navigate, back }`). Every node action is now
   - The list reporter now prints run-level errors. Previously a run that failed
     during config, collection, or provisioning exited non-zero with the reason
     only in `report.json`.
-  - The `@e2e-cpp/core/playwright` subpath export is removed; import from
-    `@e2e-cpp/playwright` instead.
+  - The `e2e/playwright` subpath export is removed; import from
+    `@e2edev/playwright` instead.
 
 - [#97](https://github.com/tester-army/e2e/pull/97) [`1f98654`](https://github.com/tester-army/e2e/commit/1f9865476924a93bfc70cdebe144a3e8e7c92f74) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Fill-time secret providers. A credential's `password` may now be a
   `SecretProvider` function instead of a string: it is called on every
@@ -1575,7 +1579,7 @@ select, scroll, navigate, back }`). Every node action is now
   exactly as replay does, so a stale selection is still a miss rather than a blind
   dispatch. `poll: false` callers keep their early exit for escalation.
 
-  One observation gap closes alongside it in `@e2e-cpp/playwright`: **open shadow
+  One observation gap closes alongside it in `@e2edev/playwright`: **open shadow
   roots are walked**, so a control that exists only in a shadow tree is now
   selectable. Slotted content is not double-counted — slotted elements are
   light-DOM children, and the shadow tree holds `<slot>` placeholders rather than
@@ -1642,12 +1646,12 @@ select, scroll, navigate, back }`). Every node action is now
   and `instanceof` misses. Every typed driver failure then lost its taxonomy: a
   retryable `NODE_STALE` stopped being retried and surfaced as a generic failure
   instead of a recoverable race. This affects any driver package, including
-  `@e2e-cpp/playwright` whenever a project ends up with more than one copy of
-  `@e2e-cpp/core` resolved.
+  `@e2edev/playwright` whenever a project ends up with more than one copy of
+  `e2e` resolved.
 
   Builds now clear `dist` before compiling. `tsc` only writes files, so output
   whose source has since moved or been deleted survived every later build and was
-  published: after the Playwright driver moved out of `@e2e-cpp/core`, the `@e2e-cpp/core` tarball
+  published: after the Playwright driver moved out of `e2e`, the `e2e` tarball
   still carried a full copy of the old `dist/playwright` tree.
 
 - [#107](https://github.com/tester-army/e2e/pull/107) [`e0ac8af`](https://github.com/tester-army/e2e/commit/e0ac8af5ca2247eef0962945b7500efede1bbb8d) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Correctness and speed fixes across the runner's support layers:
