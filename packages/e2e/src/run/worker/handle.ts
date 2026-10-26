@@ -5,6 +5,8 @@ import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { InfrastructureError } from '../../internal/errors.ts';
+import { processSecrets } from '../../internal/redact.ts';
+import { validateWorkerEnvelope } from './protocol.ts';
 import type { SpawnUnitRunner, UnitRunner, UnitRunnerEvents } from '../unit-runner.ts';
 import type {
   ChildProcessInbound,
@@ -60,7 +62,14 @@ class ChildProcessRunner implements UnitRunner {
       stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
       env: spawn.env,
     });
-    this.child.on('message', (message) => events.onMessage(message as WorkerToMain));
+    this.child.on('message', (envelope) => {
+      if (!validateWorkerEnvelope(envelope)) {
+        events.onMessage({ type: 'invalid-worker-envelope' } as unknown as WorkerToMain);
+        return;
+      }
+      for (const [name, value] of envelope.secrets) processSecrets.register(name, value);
+      events.onMessage(envelope.message);
+    });
     this.exit = new Promise<void>((resolve) => {
       // 'close', not 'exit': it fires once the IPC channel has drained, so
       // every message the worker sent (its shutdown-done included) has been

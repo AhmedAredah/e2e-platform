@@ -888,15 +888,18 @@ test('fails on purpose', async ({ app }) => {
       );
       expect(outcome.status).toBe('failed');
       expect(videosOf(outcome, 'taps a node')).toEqual([]);
-      const passedDir = path.join(project.dir, '.e2e', 'artifacts', 'fake');
-      expect(readdirSync(passedDir).some((entry) => entry.includes('pass'))).toBe(true);
+      const passedAttemptId = resultByTitle(outcome, 'taps a node').attempts[0]!.id;
+      const passedContext = fake.attempts.find((attempt) => attempt.attemptId === passedAttemptId);
+      expect(passedContext).toBeDefined();
+      const passedDir = passedContext!.artifactsDir;
+      expect(existsSync(passedDir)).toBe(true);
       const kept = videosOf(outcome, 'fails on purpose');
       expect(kept).toHaveLength(1);
       expect(existsSync(path.join(project.dir, '.e2e', 'artifacts', kept[0]!.path!))).toBe(true);
       // The passing attempt's recording was written, then removed with its verdict.
       const passedVideos = readdirSync(passedDir, { recursive: true })
         .map(String)
-        .filter((entry) => entry.endsWith('fake.webm') && entry.includes('pass'));
+        .filter((entry) => entry.endsWith('fake.webm'));
       expect(passedVideos).toEqual([]);
       project.cleanup();
     },

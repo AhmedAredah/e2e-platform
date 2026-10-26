@@ -2,7 +2,7 @@
  * The explorer: the built-in agent (`createAgent`) with exploration guidance
  * appended to the project's and one tool added to the project's vocabulary,
  * `report_finding`. Nothing else changes: budgets, loop guards, wind-down,
- * secrets, origin policy, and the transcript are the harness's, and each
+ * secrets, navigation-scheme policy, and the transcript are the harness's, and each
  * exploration step runs as one ordinary `agent.act` step.
  */
 

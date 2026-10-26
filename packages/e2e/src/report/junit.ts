@@ -162,6 +162,53 @@ function renderRunError(error: ReportError): RenderedCase {
   };
 }
 
+/** A lifecycle failure is independent of the product verdict and gets its own CI case. */
+function renderLifecycleCase(name: string, file: string, kind: 'cleanup' | 'serial-group', errors: readonly ReportError[]): RenderedCase {
+  const messages = [...new Set(errors.map(errorBody))];
+  const message = messages.join('\n') || `${kind} did not complete successfully`;
+  return {
+    lines: [
+      `<testcase ${attributes({ name, classname: file, time: '0.000' })}>`,
+      `  <error ${attributes({ message, type: kind })}>${text(message)}</error>`,
+      '</testcase>',
+    ],
+    outcome: 'error',
+    durationMs: 0,
+  };
+}
+
+/** Includes failed cleanup from every attempt and group-only failures with no failed member. */
+function lifecycleCases(report: Report1Document): RenderedCase[] {
+  const cases: RenderedCase[] = [];
+  const label = (entry: { titlePath: readonly string[]; targetId: string; agent: string }): string =>
+    `${entry.titlePath.join(' > ')} [${entry.targetId}] [${entry.agent}]`;
+  for (const result of report.run.results) {
+    for (const attempt of result.attempts) {
+      if (attempt.cleanup === 'complete') continue;
+      cases.push(renderLifecycleCase(`${label(result)} cleanup attempt ${attempt.index + 1}`, result.file, 'cleanup', [
+        ...attempt.secondaryErrors,
+        ...(attempt.error?.phase === 'cleanup' ? [attempt.error] : []),
+      ]));
+    }
+  }
+  for (const group of report.run.serialGroups) {
+    for (const attempt of group.attempts) {
+      if (attempt.cleanup !== 'complete') {
+        cases.push(renderLifecycleCase(`${label(group)} cleanup attempt ${attempt.index + 1}`, group.file, 'cleanup', [
+          ...attempt.secondaryErrors,
+          ...(attempt.error?.phase === 'cleanup' ? [attempt.error] : []),
+        ]));
+      } else if (attempt === group.attempts.at(-1) &&
+        (group.status === 'failed' || group.status === 'timed-out' || group.status === 'interrupted') &&
+        !attempt.members.some((member) => member.status !== 'passed' && member.status !== 'skipped') &&
+        !report.run.errors.some((error) => attempt.error !== undefined && errorBody(error) === errorBody(attempt.error))) {
+        cases.push(renderLifecycleCase(`${label(group)} shared session`, group.file, 'serial-group', attempt.error === undefined ? [] : [attempt.error]));
+      }
+    }
+  }
+  return cases;
+}
+
 function renderSuite(name: string, cases: readonly RenderedCase[]): { lines: string[]; counts: SuiteCounts } {
   const counts = emptyCounts();
   for (const rendered of cases) addCase(counts, rendered);
@@ -192,6 +239,8 @@ export function renderJunitReport(report: Report1Document): string {
   if (report.run.errors.length > 0) {
     suites.push(renderSuite('run', report.run.errors.map(renderRunError)));
   }
+  const lifecycle = lifecycleCases(report);
+  if (lifecycle.length > 0) suites.push(renderSuite('lifecycle', lifecycle));
 
   const total = emptyCounts();
   for (const suite of suites) addCounts(total, suite.counts);

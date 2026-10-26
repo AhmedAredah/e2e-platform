@@ -120,6 +120,10 @@ interface FakeBehaviour {
   readonly hangOn?: readonly string[];
   /** Workers ignore `terminate` and have to be killed. */
   readonly ignoreTerminate?: boolean;
+  /** Simulates a disposer that never completes. */
+  readonly ignoreShutdown?: boolean;
+  /** Simulates a worker disappearing before its disposal acknowledgement. */
+  readonly unacknowledgedShutdown?: boolean;
 }
 
 class FakeFleet {
@@ -184,7 +188,11 @@ class FakeRunner implements UnitRunner {
     if (this.exited) return;
     if (message.type !== 'run-unit') this.fleet.controlMessages.push(message.type);
     if (message.type === 'shutdown') {
-      setTimeout(() => this.end('shut down'), 0);
+      if (this.behaviour.ignoreShutdown === true) return;
+      setTimeout(() => {
+        if (this.behaviour.unacknowledgedShutdown !== true) this.events.onMessage({ type: 'shutdown-done', runErrors: [] });
+        this.end('shut down');
+      }, 0);
       return;
     }
     if (message.type === 'terminate') {
@@ -253,6 +261,7 @@ async function run(
     forceSignal?: AbortSignal;
     interruptGraceMs?: number;
     forceGraceMs?: number;
+    shutdownGraceMs?: number;
   } = {},
 ): Promise<Collected> {
   const collected: Collected = { results: [], serialGroups: [], runErrors: [] };
@@ -266,6 +275,7 @@ async function run(
     interruptSignal: overrides.interruptSignal ?? new AbortController().signal,
     forceSignal: overrides.forceSignal ?? new AbortController().signal,
     forceGraceMs: overrides.forceGraceMs ?? 1_000,
+    shutdownGraceMs: overrides.shutdownGraceMs ?? 1_000,
     spawn: fleet.spawn,
     events: {
       onResult: (result) => collected.results.push(result),
@@ -278,6 +288,27 @@ async function run(
 }
 
 describe('scheduler capacity', () => {
+  it.each(['unacknowledgedShutdown', 'ignoreShutdown'] as const)('records %s after a passing final unit', async (failure) => {
+    const target = makeTarget('web', 0);
+    const pair = makePair(makeTest('tests/a.e2e.ts', 'passes'), target);
+    const fleet = new FakeFleet({ [failure]: true });
+    const collected = await run(makeSelection([{ target, pairs: [pair] }]),
+      makeCollection([pair.test.file], [pair]), fleet, { shutdownGraceMs: 20 });
+    expect(collected.results[0]?.status).toBe('passed');
+    expect(collected.runErrors).toHaveLength(1);
+    expect(collected.runErrors[0]?.error).toMatchObject({ code: 'WORKER_EXIT', category: 'infrastructure', phase: 'cleanup' });
+    expect(fleet.live).toBe(0);
+  });
+
+  it('records missing disposal acknowledgement while replacing a failed worker', async () => {
+    const target = makeTarget('web', 0);
+    const pairs = ['a', 'b'].map((name) => makePair(makeTest(`tests/${name}.e2e.ts`, name), target));
+    const fleet = new FakeFleet({ status: { [pairs[0]!.test.id]: 'failed' }, unacknowledgedShutdown: true });
+    const collected = await run(makeSelection([{ target, pairs }]),
+      makeCollection(pairs.map((pair) => pair.test.file), pairs), fleet, { workers: 1 });
+    expect(fleet.spawned).toHaveLength(2);
+    expect(collected.runErrors.map(({ error }) => error.code)).toEqual(['WORKER_EXIT', 'WORKER_EXIT']);
+  });
   it('never exceeds the worker cap, counting discarded workers until they exit', async () => {
     const target = makeTarget('web', 0);
     // Every unit fails, so every worker is discarded right after its unit.

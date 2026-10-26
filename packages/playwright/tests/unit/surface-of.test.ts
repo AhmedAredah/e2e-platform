@@ -4,11 +4,21 @@
  * attempt there is nothing live, so both accessors refuse with INVALID_STATE.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EngineError, defineEngine } from '@e2e-cpp/core/engine';
 import { playwright, surfaceOf } from '../../src/index.ts';
+import { PlaywrightSurface } from '../../src/surface.ts';
 
 describe('surfaceOf', () => {
+  it('exposes the surface settlement hook through the public engine', async () => {
+    const settling = vi.spyOn(PlaywrightSurface.prototype, 'settleAttempt').mockResolvedValue(undefined);
+    try {
+      const handle = playwright();
+      const context = { timeoutMs: 50, signal: new AbortController().signal };
+      await handle.settleAttempt!(context);
+      expect(settling).toHaveBeenCalledExactlyOnceWith(context);
+    } finally { settling.mockRestore(); }
+  });
   it('returns a live surface for a playwright handle and undefined for a foreign one', () => {
     const handle = playwright();
     expect(surfaceOf(handle)).toBeDefined();

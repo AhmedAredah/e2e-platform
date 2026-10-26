@@ -7,6 +7,7 @@
 import { stripVTControlCharacters } from 'node:util';
 import picocolors from 'picocolors';
 import { sanitizeText, truncateUtf8 } from '../internal/errors.ts';
+import { processSecrets } from '../internal/redact.ts';
 import type { ResultStatus } from '../run/records.ts';
 import type { StepRecord } from '../run/steps.ts';
 
@@ -30,11 +31,12 @@ const TITLE_WIDTH = 11;
  * and would break the live window's row accounting.
  */
 export function bounded(text: string): string {
-  return truncateUtf8(sanitizeText(text), MAX_FIELD_BYTES).replaceAll('\t', ' ');
+  return truncateUtf8(sanitizeText(processSecrets.redact(text)), MAX_FIELD_BYTES).replaceAll('\t', ' ');
 }
 
 /** Clips to `max` characters with an ellipsis; untouched when it fits. */
 export function ellipsize(text: string, max: number): string {
+  text = processSecrets.redact(text);
   const chars = [...text];
   return chars.length <= max ? text : `${chars.slice(0, Math.max(0, max - 1)).join('')}…`;
 }

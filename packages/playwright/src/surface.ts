@@ -180,7 +180,7 @@ const DEFAULT_TEST_ID_ATTRIBUTE = 'data-testid';
 export class PlaywrightSurface {
   /**
    * Errors raised where nobody awaits them (dialog routing, route handlers)
-   * wait here and fail the next step that enters the surface.
+   * wait here and fail the next step or the attempt's final settlement.
    */
   latch = new ErrorLatch();
   dialogs = new DialogRouter(this.latch);
@@ -332,6 +332,11 @@ export class PlaywrightSurface {
     const session = this.session;
     this.session = undefined;
     if (session !== undefined) await session.close(context);
+  }
+
+  /** Checks the attempt's callbacks before verdict and after its context has closed. */
+  settleAttempt(context: EngineCleanupContext): Promise<void> {
+    return this.latch.settle(context);
   }
 
   /** Releases attempt resources and the worker's shared browser process. */

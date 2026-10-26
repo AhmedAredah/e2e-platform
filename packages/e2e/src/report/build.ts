@@ -1,4 +1,5 @@
-import { processSecrets, redactJson } from '../internal/redact.ts';
+import { processSecrets } from '../internal/redact.ts';
+import { redactPublishedRecord } from '../internal/published-redaction.ts';
 import { registerStaticSecrets } from '../run/secrecy.ts';
 /** report-1 document construction. */
 
@@ -668,7 +669,7 @@ export function buildReport(options: BuildReportOptions): Report1Document {
 
   const summary = computeSummary(options.results);
 
-  return redactJson({
+  return redactPublishedRecord({
     schemaVersion: 'report-1',
     run: {
       id: options.runId,

@@ -179,21 +179,28 @@ export class LocatorEngine {
     }
   }
 
-  /** Reads one node for polling surfaces; returns null while zero matches. */
+  /**
+   * Reads one current node, retrying a superseded reference within the caller's
+   * deadline. Only a successful zero-match query establishes absence: a stale
+   * read must never satisfy an assertion that a visible node has disappeared.
+   */
   async tryRead(
     expression: LocatorExpression,
     deadline: Deadline,
   ): Promise<{ node: SemanticNode | null; count: number }> {
-    const ref = assertSingle(await this.resolveOnce(expression, deadline), expression);
-    if (ref === null) return { node: null, count: 0 };
-    try {
-      const node = await this.session.read(ref, this.operationWithin(deadline));
-      return { node, count: 1 };
-    } catch (cause) {
-      if (asEngineError(cause)?.code === 'NODE_STALE') {
-        return { node: null, count: 0 };
+    for (;;) {
+      const ref = assertSingle(await this.resolveOnce(expression, deadline), expression);
+      if (ref === null) return { node: null, count: 0 };
+      try {
+        const node = await this.session.read(ref, this.operationWithin(deadline));
+        return { node, count: 1 };
+      } catch (cause) {
+        const error = asEngineError(cause);
+        if (error?.code === 'NODE_STALE' && error.retryable && !deadline.expired()) {
+          continue;
+        }
+        throw translateLocatorError(cause, expression);
       }
-      throw translateLocatorError(cause, expression);
     }
   }
 

@@ -71,9 +71,13 @@ Qt implementation seam, not a claim of existing support for those toolkits.
 - Widget pointer input goes through the top-level QWindow's Qt event path
   after visibility, enabled-state, clipping and widget-overlap checks. It does
   not reproduce physical OS input, window-manager focus or native compositor
-  occlusion. Quick events use scene coordinates and actual Quick hit testing;
-  the helper checks viewport/clipping but does not implement a general
-  scenegraph visibility oracle.
+  occlusion. Quick pointer actions check viewport/clipping and the topmost
+  visual hit path before dispatch: the hit must belong to the requested item
+  or its descendants, with no unrelated item holding the mouse grab. Covered
+  targets fail without sending pointer input. This conservative check also
+  rejects visual overlays that might forward input. Arbitrary event filters,
+  pointer handlers and custom input routing still need dedicated adapters;
+  the helper does not claim a general scenegraph visibility oracle.
 - Printable ASCII text emits Qt key press/release events. Other text uses
   Qt input-method commits. This tests Qt text handling, not a particular OS
   keyboard layout, physical key location or IME composition sequence.
@@ -96,8 +100,11 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   additional adapters; this helper does not manufacture their semantics.
 - Password/no-echo editors and objects marked `e2eSecure=true` are redacted
   before serialization; their descendants are omitted and screenshot regions
-  are painted black. Sensitive fills mark their target secure for its remaining
-  lifetime. Mark custom secret controls explicitly. The runner also applies its
+  are painted black. Sensitive fills mark their target secure in helper-owned
+  state for its remaining lifetime, including when an application declares a
+  constant/read-only marker, rejects property writes, or later clears its own
+  marker. Destroying the object releases that state; replacement objects do
+  not inherit it. Mark custom secret controls explicitly. The runner also applies its
   own secret policy. App-owned logs/files and arbitrary rendering of secrets
   elsewhere are not discovered automatically.
   Captures monitor declared security properties and Quick transforms, then
@@ -113,6 +120,9 @@ Qt implementation seam, not a claim of existing support for those toolkits.
 - Traversal is capped at 20,000 nodes, 64 levels and 4 MiB of node data, requests at 1 MiB, replies
   at 12 MiB, text input at 65,536 UTF-16 units and images at 16 megapixels.
   A truncated observation is marked. One authenticated connection is served.
+  Oversized individual text fields and fields containing NUL are replaced
+  entirely with a fixed omission marker. Prefix clipping or character removal
+  could make a registered secret unrecognizable to the runner's later redaction.
 - `snapshot({pixels:true})` captures tree and masked image in the same
   GUI-thread operation. Offscreen captures test Qt rendering; use real desktop
   sessions for platform integration and GPU/native behavior.

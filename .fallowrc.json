@@ -23,7 +23,12 @@
     "examples/with-qt/e2e/tests*/**/*.ts",
     "scripts/**/*.test.mjs",
     "packages/process/tests/types/api.ts",
-    "scripts/cpp/install-packed.mjs"
+    "scripts/cpp/install-packed.mjs",
+    "examples/with-languages/e2e*.config.ts",
+    "examples/with-languages/tests/**/*.ts",
+    "scripts/languages/verify.mjs",
+    "scripts/languages/build.mjs",
+    "packages/process/tests/types/launch-profiles.ts"
   ],
   "ignorePatterns": [
     "docs/**",

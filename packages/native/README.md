@@ -54,9 +54,48 @@ const engine = new ProjectEngine({ screenshots: false }).handle();
 `JsonRpcTcpTransport` implements loopback JSON-RPC. `NativeDriver` defines
 typed application operations; `RpcNativeDriver` validates protocol responses.
 `NativeEngine` owns the e2e lifecycle, process supervision, and capabilities.
-Override `createTransport` or `createDriver` rather than duplicating lifecycle
+Override `createTransport`, `createDriver` or `createProcess` rather than duplicating lifecycle
 code. Custom drivers are trusted application code and must preserve masking,
 actionability, cancellation, and uncertain-mutation rules.
+
+An application without an embedded helper can use a project-owned sidecar that
+implements the same authenticated native protocol and owns the application's
+lifecycle. The engine still handles fresh tokens, readiness, driver negotiation,
+restart, fault reporting and process-tree cleanup:
+
+```ts
+import { NativeEngine, type NativeProcessLaunch } from '@e2e-cpp/native';
+
+class SidecarEngine extends NativeEngine {
+  constructor(private readonly sidecarPath: string) { super(); }
+
+  protected override createProcess(launch: NativeProcessLaunch) {
+    return super.createProcess({
+      ...launch,
+      options: {
+        ...launch.options,
+        executable: this.sidecarPath,
+        args: ['--application', launch.options.executable, ...(launch.options.args ?? [])],
+      },
+    });
+  }
+}
+```
+
+The example argument format belongs to the custom sidecar. Its process must
+honor `E2E_NATIVE_TOKEN`/`E2E_NATIVE_PORT`, announce readiness, and stop every
+application/resource it owns. A UIA or Appium implementation would need this
+protocol translation and its own validated semantics; neither backend is
+provided. Direct attachment to an arbitrary external endpoint or an unowned
+application is unsupported.
+
+`NativeProcessLaunch.options` contains the resolved application command, cwd,
+environment and bounded process settings. `options.signal` owns the full
+attempt. `context.signal` and `context.timeoutMs` govern factory acquisition;
+an asynchronous override must honor those limits, clean up before throwing,
+and return its owned `ProcessSession`. If it returns after cancellation or its
+deadline, the engine stops and drains that session before cleanup completes.
+Trusted overrides that never settle cannot receive a bounded-cleanup guarantee.
 
 Qt event injection tests application event handling. The included Widgets and
 Quick adapters cover selected controls; the reference Quick workflow has Linux
@@ -76,6 +115,11 @@ cancelled restart leaves the current application running. Protocol faults are re
 as attempt failures even after the last successful reply. Bridge disconnects are
 reported separately from confirmed process exits.
 Unterminated final stdout/stderr lines use the same bounded decoding and redaction path.
+Observed names longer than 256 characters and text longer than 512 characters
+are omitted whole rather than clipped: the driver does not know registered
+secret values, and a prefix could evade the runner's later redaction. Locator
+text within the protocol bounds remains complete. The Qt producer similarly
+omits oversized or NUL-containing fields before transmission.
 
 Qt selects the global modal or focused window before its toolkit adapter. It discards
 screenshots captured across tree or geometry changes and retries a fresh capture at most

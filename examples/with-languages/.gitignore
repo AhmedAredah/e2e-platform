@@ -1,0 +1,5 @@
+apps/dotnet/obj/
+apps/dotnet/bin/
+apps/rust/target/
+__pycache__/
+*.pyc

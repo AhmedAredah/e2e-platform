@@ -89,7 +89,7 @@ export interface AgentContext {
   readonly config: ResolvedConfig;
   /** The target this attempt runs on. */
   readonly target: StepExecutorContext['target'];
-  /** The app the target drives: base URL and origin policy for navigation and secret fills. */
+  /** The app the target drives: base URL and navigation-scheme checks. */
   readonly app: ResolvedApp;
   /** The attempt's identity, end signal, and executor scratch memory. */
   readonly attempt: ExecutorAttempt;

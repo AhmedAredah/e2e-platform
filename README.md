@@ -2,8 +2,12 @@
 
 An extensible MIT-based fork of [TesterArmy e2e](https://github.com/tester-army/e2e)
 for testing compiled commands, terminal applications, HTTP services and cooperative
-Qt desktop applications with TypeScript tests. Independent output checks catch
+Qt desktop applications with TypeScript tests. Python, C# and Rust CLI/HTTP
+examples use the same runner and language-independent process and protocol modules. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
+
+The current local prerelease is **0.2.0-rc.0**. Read
+[RELEASE_STATUS.md](RELEASE_STATUS.md) for tested scope and remaining release gates.
 
 The fork starts from upstream commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`, whose committed license is MIT.
@@ -61,7 +65,10 @@ provider. The fork disables the inherited upstream telemetry transport.
 | `@e2e-cpp/playwright`, `agent-device`, `github`, `oauth` | Retained MIT-baseline browser/mobile, reporter and provider integrations |
 
 Abstract classes and injected collaborators separate platform behavior, process
-supervision, transport, observation and validation. Extend the relevant contract
+supervision, transport, observation and validation. Extensible launch profiles
+distinguish an application from a shared Python or .NET runtime; an owned native
+sidecar can use the authenticated native protocol through a protected process
+factory. See [LANGUAGES.md](LANGUAGES.md) for the implemented scope and next GUI milestones. Extend the relevant contract
 instead of introducing toolkit-specific branches into the runner. The
 [support matrix](CPP_SUPPORT.md) identifies implemented capabilities and the work
 required for GTK, wxWidgets, JUCE, FLTK, ImGui and other frameworks. They do not
@@ -87,6 +94,7 @@ need the matching Playwright browser installation. Qt checks require CMake 3.21+
 a C++17 compiler and the selected Qt kit. Agent suites need provider credentials
 and are manual CI jobs; ordinary C++ checks need no model.
 
+- [Python, C# and Rust integration](LANGUAGES.md)
 - [Repository layout and offline setup](OFFLINE_README.md)
 - [Verification commands and evidence](verification/README.md)
 - [Release status and qualification limits](RELEASE_STATUS.md)

@@ -64,6 +64,11 @@ export class TerminalSession {
   get pid(): number | undefined { return this.#transport.pid; }
   get exit(): TerminalExit | undefined { return this.#exit; }
 
+  /** Surfaces a latched session fault, including after the session closes. */
+  assertHealthy(): void {
+    if (this.#failure !== undefined) throw this.#failure;
+  }
+
   #fail(error: TerminalError): void {
     this.#failure ??= error;
     void this.close().catch(() => undefined);
@@ -86,7 +91,7 @@ export class TerminalSession {
   }
 
   async #bounded<T>(operation: (signal: AbortSignal) => Promise<T>, options: TerminalOperation): Promise<T> {
-    if (this.#failure !== undefined) throw this.#failure;
+    this.assertHealthy();
     if (this.#closed) throw new TerminalError('CLOSED', 'Terminal session is closed');
     if (options.signal?.aborted === true) throw new TerminalError('ABORTED', 'Terminal operation was aborted');
     const timeoutMs = boundedInteger(options.timeoutMs ?? this.#timeout, 'timeoutMs', 2_147_483_647);
@@ -103,7 +108,7 @@ export class TerminalSession {
     });
     try {
       const result = await Promise.race([operation(controller.signal), interrupted]);
-      if (this.#failure !== undefined) throw this.#failure;
+      this.assertHealthy();
       return result;
     } catch (cause) {
       if (controller.signal.reason instanceof TerminalError) throw controller.signal.reason;

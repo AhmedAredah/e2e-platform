@@ -1,8 +1,54 @@
-> Historical upstream changelog, preserved from the MIT base. Package names and
-> versions below refer to TesterArmy releases. This independent fork starts at
-> 0.1.0; see the repository RELEASE_STATUS.md and its Changesets for fork changes.
+# @e2e-cpp/agent-device
 
-# @e2edev/agent-device
+## 0.2.0-rc.0
+
+### Minor Changes
+
+- 3e0285c: Breaking: `agentDeviceTools()` no longer offers `type_text`. The agent's own `type` verb reaches the focused field without a target since the engine declared the `keyboard` capability, and a typed value goes through the grammar there, so the trace cache records and replays it; the project tool bypassed the grammar and ended every replay at a gap. A prompt that named `type_text` should say `type` instead. `alert` says to prefer a listed button, whose tap replays.
+- Coordinate the locally installable hardening candidate across all public modules.
+  Correct confidentiality, lifecycle, assertion and packaging regressions; add
+  Python, C# and Rust CLI/HTTP examples and extension contracts. Align security,
+  support and offline setup documentation with the implemented fork behavior.
+
+  This is a prerelease candidate. Registry publication, namespace ownership,
+  Windows/macOS runtime qualification and additional GUI framework adapters are
+  separate release requirements.
+
+### Patch Changes
+
+- c79d60c: Establish the MIT-based fork and local installation kit under independent package
+  names. Add extensible process supervision, output validators, authenticated native
+  transport, cooperative Qt integration, terminal sessions and bounded HTTP checks.
+
+  Integrate native launch configuration and lifecycle diagnostics with the MIT
+  runner, explicitly forbid model access when configured, and fail attempts on late
+  native faults. Protect known secrets in runner-controlled output, restored
+  sessions and artifacts. Omit untrusted HTTP error causes that could disclose
+  request contents. Include positive, planted-failure and installed-consumer checks.
+  Remove the upstream telemetry destination: the fork CLI collects and sends no
+  usage events, including when a compatibility preference is enabled.
+- Updated dependencies [45c08b1]
+- Updated dependencies [d438348]
+- Updated dependencies [b9abd60]
+- Updated dependencies [c1d23b2]
+- Updated dependencies [ea27708]
+- Updated dependencies [195bd0d]
+- Updated dependencies
+- Updated dependencies [da6b939]
+- Updated dependencies [fb6e336]
+- Updated dependencies
+- Updated dependencies [c79d60c]
+- Updated dependencies
+- Updated dependencies [f09b69e]
+- Updated dependencies [fb6e336]
+- Updated dependencies [e9c2914]
+- Updated dependencies
+  - @e2e-cpp/core@0.2.0-rc.0
+
+---
+
+> Historical upstream changelog, preserved from the MIT base. Package names and
+> versions in this section refer to TesterArmy releases. They are not fork releases.
 
 ## 0.8.0-canary-20260917213813
 
@@ -29,12 +75,12 @@
   affected steps. Playwright supports
   the fallback; device captures still fail closed when accessibility data
   cannot establish screenshot masks.
-  
+
   Playwright bounds the complete semantic capture and reserves node IDs before
   the reader starts. An abandoned capture cannot reuse IDs or publish late
   references. Pixel-only evidence resets the agent's semantic screen comparison
   and stops cache probes without discarding the recovered screenshot.
-  
+
   Reports accept judgment steps that fail before a model call without inventing
   an observation revision or verdict explanation.
 
@@ -82,11 +128,11 @@
 ### Minor Changes
 
 - [#278](https://github.com/tester-army/e2e/pull/278) [`7a45609`](https://github.com/tester-army/e2e/commit/7a456094a8d8ebb930c073f2cfe5ffa83315bd77) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: `agent-device` is no longer installed by this package. It is a peer dependency, `0.21.x`, replacing the pinned `agent-device` dependency the engine carried. Add it to your project:
-  
+
   ```bash
   npm install --save-dev agent-device
   ```
-  
+
   A project that already drives devices with the agent-device CLI keeps its version and one copy in `node_modules`; before, the engine pulled in a second copy pinned to another revision. agent-device is 0.x and its minors break, so the range pins the minor the engine was built and tested against, and each agent-device minor moves it with an engine release. A version outside the range may be rejected by the package manager as an unmet peer (npm's `ERESOLVE`). Projects scaffolded with `e2e init` need no change: init now adds `agent-device` alongside the engine.
 
 - [#283](https://github.com/tester-army/e2e/pull/283) [`4480e8b`](https://github.com/tester-army/e2e/commit/4480e8b0e589ef06c116c59eddbef82e1bb65dfb) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Deterministic steps no longer settle. A test's tap, fill, check, or back acts at once and leaves verification to `expect`; only agent actions keep the `settle` window. The one wait that remains is the new `transition` budget (default 500 ms): a control that appeared or moved with the previous action is given that long, counted from the action, to finish arriving, because accessibility frames report a control's final position from the first frame of a transition and a tap at a point it has not reached lands on whatever is behind it. Controls that were already in place are acted on immediately. react-native-pager-view's 11-test suite: 190 s with a 500 ms settle on every action, 142 s with 150 ms, about 125 s with this, all 11 passing.

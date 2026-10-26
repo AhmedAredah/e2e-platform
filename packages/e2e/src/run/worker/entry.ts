@@ -16,7 +16,6 @@ import { AiTraceRecorder, registerAiTraceRecorder } from '../../internal/ai-trac
 import { DebugTrace } from '../../internal/debug.ts';
 import { classifyError, ConfigurationError, serializeError } from '../../internal/errors.ts';
 import { StreamingRedactor } from '../../internal/output-redaction.ts';
-import { redactJson } from '../../internal/redact.ts';
 import { processSecrets, registerStaticSecrets } from '../secrecy.ts';
 import { SessionStore } from '../sessions.ts';
 import type {
@@ -26,6 +25,7 @@ import type {
   WirePair,
   WorkerBootstrap,
   WorkerToMain,
+  WorkerIpcEnvelope,
 } from './protocol.ts';
 import { TargetWorker, type ResolvedUnitPairs, type TargetWorkerDeps } from './session.ts';
 
@@ -35,6 +35,7 @@ import { TargetWorker, type ResolvedUnitPairs, type TargetWorkerDeps } from './s
  * the queue to flush: the runner must see the worker's last word.
  */
 let outbox: Promise<void> = Promise.resolve();
+let transferredSecrets = 0;
 
 /** How long an exit waits for the outbox: a channel whose runner is gone may never acknowledge. */
 const FLUSH_GRACE_MS = 2_000;
@@ -46,7 +47,15 @@ function send(message: WorkerToMain): Promise<void> {
       new Promise<void>((resolve) => {
         try {
           if (process.send === undefined || !process.connected) resolve();
-          else process.send(redactJson(message, processSecrets.redact), undefined, undefined, () => resolve());
+          // This private control channel also carries session encryption keys.
+          // Keep identities and verdicts intact; public events/reports sanitize
+          // their data after scheduling and aggregation have consumed them.
+          else {
+            const protection = processSecrets.snapshot();
+            const envelope: WorkerIpcEnvelope = { message, secrets: protection.slice(transferredSecrets) };
+            transferredSecrets = protection.length;
+            process.send(envelope, undefined, undefined, () => resolve());
+          }
         } catch {
           // channel already closed; nothing left to deliver
           resolve();
@@ -76,8 +85,8 @@ function exitAfterFlush(code: 0 | 1): void {
  * Routes everything the process writes to stdout or stderr into `output`
  * messages: the streams are inherited from the runner, whose terminal shows
  * the live window, so a test's `console.log` written straight through would
- * land inside it and be painted over. Each write becomes one message,
- * attributed to the pair in flight, with every secret value this process
+ * land inside it and be painted over. Buffered text retains its producing
+ * pair, with every secret value this process
  * has seen redacted. The stream's contract holds: the callback fires once
  * the channel took the message, `write` answers false past the high-water
  * mark, and `drain` follows when the backlog has cleared.
@@ -89,17 +98,22 @@ function captureOutput(pairInFlight: () => OutputMessage['pair']): void {
   ] as const) {
     type Done = (error?: Error | null) => void;
     const redactor = new StreamingRedactor(processSecrets);
-    flushOutput.push(() => {
-      const text = redactor.flush();
-      if (text !== '') void send({ type: 'output', pair: pairInFlight(), stream: name, text });
-    });
+    let owner: OutputMessage['pair'];
+    const flush = (): void => {
+      const text = redactor.flush(true);
+      if (text !== '') void send({ type: 'output', pair: owner, stream: name, text });
+    };
+    flushOutput.push(flush);
     let pending = 0;
     let needsDrain = false;
     const write = (chunk: string | Uint8Array, encoding?: BufferEncoding | Done, callback?: Done): boolean => {
       const done = typeof encoding === 'function' ? encoding : callback;
+      const pair = pairInFlight();
+      if (pair?.testId !== owner?.testId || pair?.agent !== owner?.agent) flush();
+      owner = pair;
       const text = redactor.write(typeof chunk === 'string' && typeof encoding === 'string' ? Buffer.from(chunk, encoding) : chunk);
       pending += 1;
-      void (text === '' ? Promise.resolve() : send({ type: 'output', pair: pairInFlight(), stream: name, text })).then(() => {
+      void (text === '' ? Promise.resolve() : send({ type: 'output', pair: owner, stream: name, text })).then(() => {
         pending -= 1;
         if (done !== undefined) done();
         if (needsDrain && pending < OUTPUT_HIGH_WATER) {
@@ -225,7 +239,9 @@ function main(): void {
       const debug = new DebugTrace(message.bootstrap.debug);
       const aiTrace = message.bootstrap.aiTrace ? new AiTraceRecorder() : undefined;
       const emit = (outbound: WorkerToMain): void => {
-        if (outbound.type === 'unit-done' || outbound.type === 'shutdown-done') for (const flush of flushOutput) flush();
+        if (['pair-start', 'result', 'serial-group', 'unit-done', 'shutdown-done'].includes(outbound.type)) {
+          for (const flush of flushOutput) flush();
+        }
         if (outbound.type !== 'unit-done' && outbound.type !== 'shutdown-done') {
           send(outbound);
           return;

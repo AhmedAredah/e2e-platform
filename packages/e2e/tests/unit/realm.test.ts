@@ -3,6 +3,7 @@ import { collectModule, test } from '../../src/collect/registry.ts';
 import type { TestTargetPair } from '../../src/collect/select.ts';
 import { RealmManager, findRegistered, type Realm } from '../../src/run/realm.ts';
 import type { RunError } from '../../src/run/records.ts';
+import { opaqueIdentity } from '../../src/internal/published-redaction.ts';
 
 /**
  * The hook lifecycle contract, checked on the realm
@@ -149,7 +150,7 @@ describe('realm hook lifecycle', () => {
     );
 
     const failure = await realms.enterScopes(realm, registered(realm, 'broken', 'one'));
-    expect(failure).toMatchObject({ code: 'HOOK_FAILED', phase: 'beforeAll', scopeId: 'broken' });
+    expect(failure).toMatchObject({ code: 'HOOK_FAILED', phase: 'beforeAll', scopeId: opaqueIdentity('broken') });
     expect(failure?.message).toContain('suite setup exploded');
     // The scope stays entered as failed: the next test in it is skipped by the same failure.
     expect(await realms.enterScopes(realm, registered(realm, 'broken', 'two'))).toBe(failure);
@@ -157,7 +158,10 @@ describe('realm hook lifecycle', () => {
     expect(await realms.enterScopes(realm, registered(realm, 'independent'))).toBeUndefined();
     await realms.leave(realm);
     expect(log).toEqual(['afterAll:broken']);
-    expect(runErrors.map((entry) => entry.error.scopeId)).toEqual(['broken']);
+    // Public scope references remain stable across the direct hook error and
+    // the run error, without exposing a suite title as an identifier.
+    expect(runErrors.map((entry) => entry.error.scopeId)).toEqual([failure!.scopeId]);
+    expect(failure!.scopeId).not.toBe('broken');
   });
 
   it('reports the first afterAll failure after still running every remaining teardown hook', async () => {
@@ -178,7 +182,7 @@ describe('realm hook lifecycle', () => {
     );
     await realms.enterScopes(realm, registered(realm, 'group', 't'));
     const failure = await realms.leaveFinished(realm, []);
-    expect(failure).toMatchObject({ code: 'HOOK_FAILED', phase: 'afterAll', scopeId: 'group' });
+    expect(failure).toMatchObject({ code: 'HOOK_FAILED', phase: 'afterAll', scopeId: opaqueIdentity('group') });
     expect(failure?.message).toContain('teardown exploded');
     expect(log).toEqual(['afterAll:group-first', 'afterAll:file']);
     expect(runErrors.map((entry) => entry.error)).toEqual([failure]);
@@ -199,8 +203,8 @@ describe('realm hook lifecycle', () => {
     expect(failure?.message).toContain('beforeAll hook timed out');
     await realms.leave(realm);
     expect(runErrors.map((entry) => [entry.error.phase, entry.error.scopeId])).toEqual([
-      ['beforeAll', 'file'],
-      ['afterAll', 'file'],
+      ['beforeAll', opaqueIdentity('file')],
+      ['afterAll', opaqueIdentity('file')],
     ]);
     expect(runErrors[1]!.error.message).toContain('afterAll hook timed out');
   });

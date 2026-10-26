@@ -34,7 +34,9 @@
     "verify:qt:exports": "node scripts/cpp/qt-export-proof.mjs",
     "verify:qt:install": "node scripts/cpp/verify-qt-install.mjs",
     "pack:cpp": "pnpm run build:cpp && node scripts/cpp/pack.mjs",
-    "check:local": "pnpm run lint && pnpm run check:dead-code && pnpm run typecheck && pnpm run docs:check-errors && pnpm run docs:check"
+    "check:local": "pnpm run lint && pnpm run check:dead-code && pnpm run typecheck && pnpm run docs:check-errors && pnpm run docs:check",
+    "verify:languages": "node scripts/languages/verify.mjs",
+    "build:languages": "node scripts/languages/build.mjs"
   },
   "contributors": [
     "Oskar Kwa\u015bniewski <oskar@tester.army>",

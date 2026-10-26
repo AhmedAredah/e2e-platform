@@ -35,12 +35,6 @@
     },
     "eyebrows": "breadcrumbs"
   },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/tester-army/e2e"
-    }
-  },
   "navigation": {
     "tabs": [
       {
@@ -164,11 +158,6 @@
         ]
       }
     ]
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/tester-army/e2e"
-    }
   },
   "redirects": [
     {

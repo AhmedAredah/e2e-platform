@@ -15,6 +15,7 @@ import { NativeDriver } from '../driver/native-driver.ts';
 import { RpcNativeDriver } from '../driver/rpc-native-driver.ts';
 import { validateNativeOptions, type NativeOptions } from '../options.ts';
 import { OutputLineReader } from './output-lines.ts';
+import type { NativeProcessLaunch } from './native-process.ts';
 
 const DEFAULT_MESSAGE_LIMIT = 16 * 1024 * 1024;
 
@@ -47,6 +48,9 @@ export class NativeEngine {
     return JsonRpcTcpTransport.connect(port, context, this.options.maxMessageBytes ?? DEFAULT_MESSAGE_LIMIT);
   }
   protected createDriver(transport: NativeTransport): NativeDriver { return new RpcNativeDriver(transport); }
+
+  /** Override to launch an owned protocol sidecar while retaining engine supervision. */
+  protected createProcess(launch: NativeProcessLaunch): Promise<ProcessSession> { return startProcess(launch.options); }
 
   /** A validated standard e2e engine handle, including subclassed driver hooks. */
   handle(): EngineHandle {
@@ -117,7 +121,7 @@ export class NativeEngine {
     const token = randomBytes(32).toString('hex');
     this.stopping = false;
     try {
-      const child = await startProcess({
+      const child = await this.createProcess({ options: {
         executable: path.resolve(info.projectRoot, info.app.appPath),
         args: info.app.launchArguments ?? [],
         cwd: path.resolve(info.projectRoot, this.options.cwd ?? '.'),
@@ -127,8 +131,12 @@ export class NativeEngine {
         maxOutputBytes: 1024 * 1024,
         killGraceMs: 200,
         drainTimeoutMs: 1000,
-      });
+      }, context: remaining() });
       this.process = child;
+      // Own a late factory result before observing cancellation, so cleanup
+      // still drains it and stops its entire process tree.
+      if (context.signal.aborted) throw cancelled();
+      if (Date.now() >= deadline) throw new EngineError('OPERATION_TIMEOUT', 'native process acquisition exceeded its operation budget', { retryable: false });
       void child.result.then((result) => {
         // A crash may finish draining after restart has already requested stop.
         const crashed = (result.exitCode !== null && result.exitCode !== 0) || result.status === 'signaled';

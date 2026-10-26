@@ -1,4 +1,4 @@
-/** URL normalization and origin policy helpers. */
+/** URL normalization, navigation-scheme checks and hostname-based site helpers. */
 
 import { ConfigurationError } from './errors.ts';
 import { testPattern } from './regexp.ts';
@@ -160,8 +160,9 @@ export function siteOf(hostname: string): string {
 
 /**
  * True when a URL's host is on `site` as `siteOf` reads it. This is the one
- * rule for where the app's secrets, headers, and basic-auth credentials may
- * go and which child frames an observation reads; an unparseable URL is off
+ * rule for where configured browser headers may go and which child frames
+ * an observation reads. It does not gate secret fills or basic-auth credentials.
+ * An unparseable URL is off
  * every site.
  */
 export function sameSite(url: string | URL, site: string): boolean {

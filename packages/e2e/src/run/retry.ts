@@ -7,10 +7,12 @@ import type { AttemptStatus, ResultStatus } from './records.ts';
 export interface RetryAttempt {
   readonly status: AttemptStatus;
   readonly error?: SerializedError | undefined;
+  readonly cleanup?: 'complete' | 'failed' | 'forced';
 }
 
 /** Only test-category failures and timeouts consume retry budget. */
 export function isRetryEligible(attempt: RetryAttempt): boolean {
+  if (attempt.cleanup !== undefined && attempt.cleanup !== 'complete') return false;
   return (
     attempt.status === 'timed-out' ||
     (attempt.error !== undefined && attempt.error.category === 'test')

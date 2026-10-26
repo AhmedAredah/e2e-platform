@@ -29,7 +29,7 @@ export class DialogRouter {
 
   /**
    * `latch` is shared with the surface: a dialog failure and a route-handler
-   * failure surface through one check at the next step.
+   * failure surface through one check at the next step or attempt settlement.
    */
   constructor(private readonly latch: ErrorLatch = new ErrorLatch()) {}
 
@@ -52,7 +52,12 @@ export class DialogRouter {
   }
 
   /** Routes one native dialog to the newest registered handler. */
-  async dispatch(dialog: PwDialog): Promise<void> {
+  dispatch(dialog: PwDialog): Promise<void> {
+    return this.latch.track(this.route(dialog));
+  }
+
+  /** Applies one dialog decision while the attempt tracks the complete callback. */
+  private async route(dialog: PwDialog): Promise<void> {
     const handler = this.registrations.at(-1)?.handler;
     if (handler === undefined) {
       this.latch.latch(

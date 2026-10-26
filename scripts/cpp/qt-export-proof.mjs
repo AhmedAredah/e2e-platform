@@ -1,10 +1,11 @@
 /** Runs ordinary CLI tests and retains independently checked Qt exports and masked captures. */
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { runProcess } from '../../packages/process/dist/index.js';
 import { compareJson } from '../../packages/checks/dist/index.js';
 import { VerificationCompletionGuard } from './completion-guard.mjs';
+import { readStepScreenshot } from './verified-screenshot.mjs';
 import { configuredExecutables, requireExecutableTarget } from './cmake-targets.mjs';
 
 const completion = new VerificationCompletionGuard();
@@ -16,17 +17,6 @@ const core = pathToFileURL(join(root, 'packages/e2e/dist/index.js')).href;
 const native = pathToFileURL(join(root, 'packages/native/dist/index.js')).href;
 const results = [];
 
-/** Finds explicit screenshot evidence without relying on the runner's generated attempt names. */
-async function screenshots(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const found = [];
-  for (const entry of entries) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) found.push(...await screenshots(path));
-    else if (entry.name.endsWith('.png')) found.push(path);
-  }
-  return found;
-}
 
 for (const planted of [false, true]) {
   const name = planted ? 'qt-retained-planted-export' : 'qt-retained-export';
@@ -77,9 +67,8 @@ test('exports the current calculation and captures masked pixels', async ({ app,
   const exported = JSON.parse(await readFile(output, 'utf8'));
   const comparison = compareJson(exported, { total: 82.5, currency: 'EUR' });
   if (comparison.matches !== !planted) throw new Error('The independent export oracle did not distinguish correct and planted results');
-  const captures = await screenshots(join(project, '.e2e/artifacts'));
-  if (captures.length !== 1) throw new Error('Expected exactly one explicit Qt screenshot');
-  await copyFile(captures[0], join(directory, 'masked-window.png'));
+  const pixels = await readStepScreenshot(report.results[0].attempts[0], join(project, '.e2e/artifacts'));
+  await writeFile(join(directory, 'masked-window.png'), pixels);
   results.push({ name, planted, exported, independentOracleAccepted: comparison.matches, differences: comparison.differences, screenshot: `${name}/masked-window.png` });
 }
 await writeFile(join(evidence, 'qt-export-proof.json'), `${JSON.stringify({ platform: process.platform, inputFidelity: 'toolkit-events', displayPlatform: process.env.QT_QPA_PLATFORM ?? 'native-default', results }, null, 2)}\n`);

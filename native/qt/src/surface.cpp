@@ -113,7 +113,7 @@ void Surface::perform(const QJsonObject& params) {
     else if (kind == "focus") adapter.focus(object);
     else if (kind == "fill" || kind == "clear") {
         const QString text = kind == "clear" ? QString() : requiredText(action, "value");
-        if (kind == "fill" && action.value("sensitive").toBool()) object->setProperty("e2eSecure", true);
+        if (kind == "fill" && action.value("sensitive").toBool()) markSensitiveObject(object);
         type(object, text, true, adapter, root);
     } else if (kind == "press") {
         const QString text = requiredText(action, "key");

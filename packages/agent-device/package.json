@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/agent-device",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "agent-device mobile engine (iOS and Android) for e2e agentic end-to-end testing",
   "keywords": [
     "@e2e-cpp/core",
@@ -21,7 +21,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "provenance": false,
-    "tag": "beta"
+    "tag": "rc"
   },
   "type": "module",
   "exports": {
@@ -54,7 +54,7 @@
   },
   "peerDependencies": {
     "ai": "^7.0.0",
-    "@e2e-cpp/core": ">=0.1.0 <1.0.0"
+    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "peerDependenciesMeta": {
     "ai": {

@@ -57,6 +57,18 @@ Session cleanup attempts every subscription release, transport close and emulato
 disposal even when an earlier hook throws. It reports the collected failures after
 those attempts. Repeated close calls share the same result.
 
+The engine also settles latched output-budget and terminal-response transport failures
+before the test verdict and after cleanup. A fault after the last terminal operation
+still fails the attempt; restarting or closing that session does not erase it.
+Standalone `TerminalSession` users can call `assertHealthy()` to check a recorded fault,
+including after `close()` has released its resources.
+
+Process exits are observable data, including nonzero exits intentionally tested by a TUI
+suite. The engine does not impose an expected exit code. Assert `snapshot().exit` explicitly
+when the test's contract includes successful completion or a particular error exit. Writes
+after exit and waits for missing screen content fail with `EXITED`; a matching final screen
+can still be inspected after exit. Infrastructure faults are failures regardless of exit code.
+
 ## Capability limits
 
 The semantic tree contains the terminal and visible text rows. It does not invent

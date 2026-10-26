@@ -129,6 +129,17 @@ rendering need different mappings. A successful helper test does not establish
 native-input, accessibility or compositor fidelity. Locators reject truncated
 trees, so missing nodes cannot prove absence. Screenshots discard frames whose
 tree or mask geometry changes during capture; persistent changes fail closed.
+Sensitive Qt fills remain masked for the control's lifetime through helper-owned
+state, even when the application cannot write or later clears `e2eSecure`.
+Quick pointer actions reject a covering visual item or another item's mouse
+grab before dispatch. This conservative check can reject overlays that forward
+input; custom event routing still needs an adapter. Oversized or NUL-containing
+source text fields are omitted whole to preserve later secret redaction.
+`NativeEngine.createProcess` can launch an owned protocol sidecar instead of an
+embedded helper while preserving the engine's authentication and process
+supervision. The sidecar must implement the native bridge protocol and own its
+application lifecycle; direct attachment to an arbitrary Appium endpoint or an
+unowned application is not supported, and no UIA/Appium backend is bundled.
 
 With Qt installed and a desktop available:
 

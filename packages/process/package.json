@@ -1,13 +1,13 @@
 {
   "name": "@e2e-cpp/process",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Bounded subprocess fixtures for native and C++ end-to-end tests",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   },
   "exports": {
     ".": {
@@ -32,7 +32,7 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.1.0 <1.0.0"
+    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "devDependencies": {
     "@types/node": "26.6.2",

@@ -314,6 +314,27 @@ importers:
         specifier: workspace:*
         version: link:../../packages/process
 
+  examples/with-languages:
+    devDependencies:
+      '@e2e-cpp/checks':
+        specifier: workspace:*
+        version: link:../../packages/checks
+      '@e2e-cpp/core':
+        specifier: workspace:*
+        version: link:../../packages/e2e
+      '@e2e-cpp/process':
+        specifier: workspace:*
+        version: link:../../packages/process
+      '@e2e-cpp/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@types/node':
+        specifier: 26.6.2
+        version: 26.6.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
   examples/with-qt/e2e:
     devDependencies:
       '@e2e-cpp/core':
@@ -460,6 +481,9 @@ importers:
       '@types/node':
         specifier: 26.6.2
         version: 26.6.2
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
       typescript:
         specifier: 7.0.2
         version: 7.0.2

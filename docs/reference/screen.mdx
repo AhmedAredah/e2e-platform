@@ -237,6 +237,11 @@ await screen.getByRole('textbox', { name: 'Notes' }).press('ControlOrMeta+a');
 
 ## Locator reads
 
+Reads such as `isVisible()` query the current state once, using
+`config.actionTimeout` for the engine operation. They do not wait for a
+missing node to appear. Retryable stale references may be resolved again
+within that budget; a stale reference never counts as confirmed absence.
+
 `waitFor` defaults `state` to `'visible'` and `timeout` to
 `config.actionTimeout`, and throws `LOCATOR_NOT_FOUND` on timeout.
 

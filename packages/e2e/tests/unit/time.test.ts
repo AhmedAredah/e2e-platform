@@ -125,6 +125,57 @@ describe('pollCondition', () => {
     await assertion;
   });
 
+  it('does not replace a known mismatch with a backend error from an expired repeat poll', async () => {
+    vi.useFakeTimers();
+    const deadline = new Deadline(350);
+    const budgets: number[] = [];
+    const promise = pollCondition({
+      ...makeOptions({ evaluate: async () => false }),
+      deadline,
+      evaluate: async () => {
+        budgets.push(deadline.remaining());
+        if (deadline.expired()) throw new Error('backend received an expired budget');
+        return false;
+      },
+    });
+    const assertion = expect(promise).rejects.toThrow('poll timed out');
+    await vi.advanceTimersByTimeAsync(350);
+    await assertion;
+    expect(budgets).toEqual([350, 250, 150, 50]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('keeps the initial observation with a zero timeout', async () => {
+    vi.useFakeTimers();
+    const evaluate = vi.fn(async () => true);
+    await pollCondition(makeOptions({ timeoutMs: 0, evaluate }));
+    expect(evaluate).toHaveBeenCalledOnce();
+  });
+
+  it('propagates a real evaluation error after a known mismatch', async () => {
+    vi.useFakeTimers();
+    const backendError = new Error('connection closed');
+    let calls = 0;
+    const promise = pollCondition(makeOptions({
+      timeoutMs: 350,
+      evaluate: async () => {
+        if (++calls === 2) throw backendError;
+        return false;
+      },
+    }));
+    const assertion = expect(promise).rejects.toBe(backendError);
+    await vi.advanceTimersByTimeAsync(100);
+    await assertion;
+  });
+
+  it('never passes an indeterminate negation at the deadline', async () => {
+    vi.useFakeTimers();
+    const promise = pollCondition(makeOptions({ negated: true, timeoutMs: 350, evaluate: async () => undefined }));
+    const assertion = expect(promise).rejects.toThrow('poll timed out');
+    await vi.advanceTimersByTimeAsync(350);
+    await assertion;
+  });
+
   it('negated: a budget shorter than the grace window is still satisfiable', async () => {
     vi.useFakeTimers();
     let resolved = false;
@@ -137,6 +188,41 @@ describe('pollCondition', () => {
     await vi.advanceTimersByTimeAsync(400 + POLL_INTERVAL_MS);
     expect(resolved).toBe(true);
     await promise;
+  });
+
+  it('negated: a short budget accounts for initial read latency without another expired read', async () => {
+    vi.useFakeTimers();
+    const deadline = new Deadline(400);
+    const budgets: number[] = [];
+    const promise = pollCondition({
+      ...makeOptions({ negated: true, evaluate: async () => false }),
+      deadline,
+      evaluate: async () => {
+        budgets.push(deadline.remaining());
+        if (deadline.expired()) throw new Error('backend received an expired budget');
+        await sleep(20);
+        return false;
+      },
+    });
+    await vi.advanceTimersByTimeAsync(400);
+    await promise;
+    expect(budgets).toEqual([400, 280, 160, 40]);
+  });
+
+  it('negated: a reset does not shorten the established grace to force a deadline pass', async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const promise = pollCondition(makeOptions({
+      negated: true,
+      timeoutMs: 400,
+      evaluate: async () => {
+        await sleep(20);
+        return ++calls === 2;
+      },
+    }));
+    const assertion = expect(promise).rejects.toThrow('poll timed out');
+    await vi.advanceTimersByTimeAsync(400);
+    await assertion;
   });
 
   it('negated: passes only after the grace window holds continuously', async () => {

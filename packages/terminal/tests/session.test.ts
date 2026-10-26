@@ -82,6 +82,7 @@ describe('real VT screen reconstruction', () => {
     await terminal.close();
     await terminal.close();
     expect(transport.closed).toBe(1);
+    expect(() => terminal.assertHealthy()).toThrow(expect.objectContaining({ code: 'OUTPUT_LIMIT' }));
   });
   test('respects application-cursor mode when sending arrows', async () => {
     const { terminal, transport } = create();

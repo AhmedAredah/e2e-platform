@@ -72,12 +72,27 @@ export interface PollConditionOptions {
  * error at the deadline.
  */
 export async function pollCondition(options: PollConditionOptions): Promise<void> {
-  // A budget shorter than the grace window still has to be satisfiable: the
-  // negation then only needs to hold for the budget itself.
-  const grace = Math.min(NEGATION_GRACE_MS, Math.max(0, options.deadline.remaining()));
+  // A budget shorter than the grace window still has to be satisfiable; its
+  // initial observation below accounts for the time spent reading the node.
+  let grace = Math.min(NEGATION_GRACE_MS, Math.max(0, options.deadline.remaining()));
   let negatedTrueSince: number | undefined;
+  let evaluated = false;
   for (;;) {
+    // Keep the initial immediate observation, including a zero timeout, but
+    // never start another backend request after the polling budget expires.
+    // Otherwise that request's near-zero timeout can replace a known mismatch.
+    if (evaluated && options.deadline.expired()) {
+      if (negatedTrueSince !== undefined && Date.now() - negatedTrueSince >= grace) return;
+      throw await options.onTimeout();
+    }
     const value = await options.evaluate();
+    if (!evaluated && options.negated && value === false && grace < NEGATION_GRACE_MS && !options.deadline.expired()) {
+      // A short negation budget includes the initial read. Its first valid
+      // observation can hold for the remaining budget; later resets must
+      // still establish this same grace window, rather than shortening it.
+      grace = Math.min(grace, options.deadline.remaining());
+    }
+    evaluated = true;
     if (!options.negated) {
       if (value === true) return;
     } else if (value === false) {
@@ -87,7 +102,7 @@ export async function pollCondition(options: PollConditionOptions): Promise<void
       negatedTrueSince = undefined;
     }
     if (options.deadline.expired()) throw await options.onTimeout();
-    await sleep(POLL_INTERVAL_MS, options.signal);
+    await sleep(Math.min(POLL_INTERVAL_MS, options.deadline.remaining()), options.signal);
   }
 }
 

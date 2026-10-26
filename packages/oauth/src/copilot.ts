@@ -3,7 +3,7 @@
  * model. Copilot serves OpenAI, Anthropic, Google, and SpaceXAI models over the
  * OpenAI chat protocol; the instance is `@ai-sdk/openai-compatible`'s chat
  * model at the Copilot API with a fetch that carries the stored login. An
- * enterprise login stored by `e2e login` routes to its own host.
+ * enterprise login stored by `e2e-cpp login` routes to its own host.
  */
 
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';

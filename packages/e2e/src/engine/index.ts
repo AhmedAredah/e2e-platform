@@ -118,7 +118,7 @@ export interface EngineKeyboard {
  * What an engine declares about the app it drives. The app
  * under test is the engine's to describe: a browser engine names a URL, a
  * device engine a bundle id. The harness resolves the declaration once per
- * target and owns everything built on it - navigation and origin policy,
+ * target and owns everything built on it - navigation and navigation-scheme policy,
  * cache and session identity, the report's target record, and the app
  * process it starts before the run.
  */
@@ -186,8 +186,9 @@ export interface EngineAppInfo {
   readonly launchArguments?: readonly string[];
   /**
    * The site of the app's `url`, its registrable domain as `siteOf` reads it:
-   * where the app's secrets, headers, and basic-auth credentials may go, and
-   * whose child frames an observation reads; `sameSite` applies it. Absent
+   * where injected browser headers may go and whose child frames an
+   * observation reads; `sameSite` applies it. Secret fills and basic-auth
+   * credentials are not gated by this site check. Absent
    * for an app without a URL, which is no policy at all. The URL itself stays
    * with the harness: a surface never learns where the app is.
    */
@@ -365,7 +366,7 @@ export interface VideoSegment {
 export interface EngineSession {
   /**
    * Opens one URL the harness already resolved against the base URL and the
-   * origin policy. Absent on a surface without addressable locations.
+   * navigation-scheme policy. Absent on a surface without addressable locations.
    */
   open?(url: string, context: OperationContext): Promise<void>;
   /** Navigates back once in the surface's history. */

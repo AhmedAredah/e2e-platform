@@ -63,6 +63,11 @@ by result id. The built-in reporter also writes one page per failed or flaky
 test under `failures/`, with the screen at failure inline. [`@e2e-cpp/github`](/github) is that
 reporter for GitHub Actions.
 
+JUnit adds a `lifecycle` suite for each failed attempt cleanup and for a failed
+shared serial session with no failed member to represent it. These cases use
+`<error>` and contribute to the XML totals independently of the product test
+verdict. A passing body therefore cannot hide an unsuccessful cleanup from CI.
+
 A name and at least one handler are required; anything else is
 `INVALID_CONFIG`.
 

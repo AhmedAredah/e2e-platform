@@ -162,11 +162,14 @@ Each action resolves one node, waits for it to be actionable within
 
 ### Reads
 
-Reads resolve once and do not retry: `textContent()`, `inputValue()`,
+Reads query the current state without waiting for a match: `textContent()`, `inputValue()`,
 `getAttribute(name)`, `isVisible()`, `isEnabled()`, `isChecked()`,
 `boundingBox()`, `count()`. `waitFor({ state?: 'visible' | 'hidden', timeout? })`
 waits for a state. When a value has to settle, use `expect` instead of a
-read. Reading a password field's value is `POLICY_DENIED`.
+read. Each engine operation receives `config.actionTimeout`; retryable stale
+references can be resolved again within that budget. A stale reference is not
+absence and cannot satisfy a hidden assertion. Reading a password field's
+value is `POLICY_DENIED`.
 
 ## expect
 
@@ -192,7 +195,13 @@ await expect.poll(() => db.orders.count(), { timeout: 15_000 }).toBe(1);   // re
 | `toBeVisible`, `toBeHidden`, `toBeEnabled`, `toBeDisabled`, `toBeChecked`, `toBeSelected`, `toBeExpanded`, `toHaveText`, `toContainText`, `toHaveValue`, `toHaveCount`, `toHaveAccessibleName` | `toHaveURL`, `toHaveTitle` | `toBe`, `toEqual`, `toBeTruthy`, `toBeFalsy`, `toBeNull`, `toBeUndefined`, `toBeDefined`, `toContain`, `toMatch`, `toBeGreaterThan`, `toBeGreaterThanOrEqual`, `toBeLessThan`, `toBeLessThanOrEqual`, `toBeCloseTo` |
 
 `toHaveText` compares the whole normalized text; `toContainText` a
-substring or a RegExp. A failed matcher is `ASSERTION_FAILED`, exit code 1.
+substring or a RegExp. `toHaveValue` and `toHaveAttribute(name, value)` preserve
+whitespace: strings match exactly and regexps read the raw value. Use
+`expect(web).toHaveClass` for a normalized class list. A failed matcher is
+`ASSERTION_FAILED`, exit code 1.
+Locator assertions do not start another observation after their deadline.
+Actual backend failures keep their own error codes, even after an earlier
+mismatch; they are not evidence that a hidden or negated assertion passed.
 
 ## Sign-in sessions
 
@@ -228,6 +237,8 @@ test('the dashboard opens directly', { session: 'admin' }, async ({ app, screen 
 - Setup tests are top-level (not inside `describe`); exactly one setup saves
   a given name; the body saves every declared name once (`SESSION_CONTRACT`
   otherwise).
+  A failed attempt cleanup prevents publication and skips consumers with
+  `setup-failed`, even when the setup body passed.
 - A session holds cookies, local storage, and IndexedDB, for one run only.
   The files are encrypted and deleted at cleanup. Server state is not part of
   it.

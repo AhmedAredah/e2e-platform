@@ -19,7 +19,7 @@ or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:cpp`. The fork begins at version 0.1.0; future coordinated releases can use Changesets.
+`pnpm install --frozen-lockfile`, then `pnpm pack:cpp`. The kit is version 0.2.0-rc.0. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -122,12 +122,18 @@ business results. gRPC and WebSocket clients are not included.
 
 ## Extend without changing the runner
 
-Subclass `ProcessRunner`, `NativeDriver`, `NativeTransport`, `TerminalTransport`,
+Subclass `ApplicationLaunchProfile`, `ProcessRunner`, `NativeDriver`, `NativeTransport`, `TerminalTransport`,
 `HttpTransport`, or `OutputValidator` for the behavior that differs. Keep each
 implementation in its own module. The engine factories inject those implementations.
 New backends must honor deadlines, cancellation, cleanup, declared capabilities
 and complete observation semantics. `native/README.md` describes the GUI helper
 extension path. Qt's internal adapters are not an installed binary plugin API.
+
+See [LANGUAGES.md](LANGUAGES.md) and `examples/with-languages/` for real Python,
+C# and Rust CLI/HTTP applications. `PythonLaunchProfile`, `DotnetLaunchProfile`
+and `ExecutableLaunchProfile` keep executable arguments separate from logical
+application identity. Tests continue to use TypeScript/JavaScript; language-native
+authoring SDKs and further GUI bindings are not included.
 
 ## Qualification and publication
 

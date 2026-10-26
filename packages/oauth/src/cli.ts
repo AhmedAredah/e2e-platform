@@ -1,13 +1,13 @@
 /**
  * The terminal side of a login. `runLogin`, `runLogout`, and `runStatus` are
  * what the e2e CLI calls; `runOAuthCli` parses argv for the package's own
- * `e2e-oauth` bin and dispatches to them.
+ * `e2e-cpp-oauth` bin and dispatches to them.
  */
 
 import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import * as clack from '@clack/prompts';
-import { OAuthError } from './errors.ts';
+import { OAuthError, sanitizeOAuthDiagnostic } from './errors.ts';
 import { login, logout } from './login.ts';
 import { PROVIDER_IDS, getProvider, isProviderId, type LoginOptionsById, type ProviderId } from './providers.ts';
 import { defaultCredentialStore } from './store.ts';
@@ -30,9 +30,9 @@ export interface LoginFlags {
 }
 
 const USAGE = `Usage:
-  e2e-oauth login [provider] [--device] [--client-id <id>] [--from-gh] [--enterprise-url <host>]
-  e2e-oauth logout [provider]
-  e2e-oauth status
+  e2e-cpp-oauth login [provider] [--device] [--client-id <id>] [--from-gh] [--enterprise-url <host>]
+  e2e-cpp-oauth logout [provider]
+  e2e-cpp-oauth status
 
 Without a provider, login and logout show a picker.
 
@@ -115,7 +115,7 @@ export async function runStatus(io: CliIo = defaultIo()): Promise<number> {
   return report(io, async () => {
     const stored = await signedIn();
     if (!io.isTTY) {
-      for (const id of PROVIDER_IDS) io.stdout.write(`${id.padEnd(16)} ${getProvider(id).name.padEnd(16)} ${stored.get(id) ?? `not signed in; e2e login ${id}`}\n`);
+      for (const id of PROVIDER_IDS) io.stdout.write(`${id.padEnd(16)} ${getProvider(id).name.padEnd(16)} ${stored.get(id) ?? `not signed in; e2e-cpp login ${id}`}\n`);
       return;
     }
     clack.intro('Subscriptions');
@@ -126,7 +126,7 @@ export async function runStatus(io: CliIo = defaultIo()): Promise<number> {
       else clack.log.success(line);
     }
     const missing = PROVIDER_IDS.filter((id) => !stored.has(id));
-    clack.outro(missing.length === 0 ? 'Every subscription is signed in.' : `Sign in with ${missing.map((id) => `e2e login ${id}`).join(' or ')}.`);
+    clack.outro(missing.length === 0 ? 'Every subscription is signed in.' : `Sign in with ${missing.map((id) => `e2e-cpp login ${id}`).join(' or ')}.`);
   });
 }
 
@@ -139,7 +139,7 @@ function say(io: CliIo, kind: 'success' | 'info' | 'error', message: string): vo
   clack.log[kind](message);
 }
 
-/** The `e2e-oauth` bin: argv in, exit code out. */
+/** The `e2e-cpp-oauth` bin: argv in, exit code out. */
 export async function runOAuthCli(argv: readonly string[], io: CliIo = defaultIo()): Promise<number> {
   return report(io, async () => {
     const { values, positionals } = parseArgs({
@@ -156,7 +156,7 @@ export async function runOAuthCli(argv: readonly string[], io: CliIo = defaultIo
     const [command, providerId, ...extra] = positionals;
     if (values.help === true || command === undefined) {
       io.stdout.write(USAGE);
-      return command === undefined ? 1 : 0;
+      return values.help === true ? 0 : 1;
     }
     if (extra.length > 0) throw new OAuthError('MISCONFIGURED', `unexpected argument ${extra[0]}.\n${USAGE}`);
     switch (command) {
@@ -186,7 +186,7 @@ async function report(io: CliIo, run: () => Promise<number | undefined>): Promis
   try {
     return (await run()) ?? 0;
   } catch (cause) {
-    const message = cause instanceof Error ? cause.message : String(cause);
+    const message = sanitizeOAuthDiagnostic(cause instanceof Error ? cause.message : String(cause));
     if (cause instanceof OAuthError && cause.code === 'CANCELLED') {
       if (io.isTTY) clack.cancel(message);
       else io.stderr.write(`${message}\n`);

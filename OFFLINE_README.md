@@ -1,8 +1,8 @@
 # Working with the complete checkout
 
 This archive contains the MIT upstream source snapshot and its fetched ancestry,
-the reviewed C++ extension port, tests, examples and documentation. The local
-development branch is `mit-cpp`. The base is commit
+the reviewed C++ extension port, tests, examples and documentation. The current
+development branch is `fix/release-hardening`. The base is commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`; later Apache-licensed upstream
 commits are not this fork's base. Nothing has been published or pushed upstream.
 
@@ -21,13 +21,13 @@ that these package versions have been published to a registry.
 
 | Location | Purpose |
 | --- | --- |
-| `packages/` | Published TypeScript modules, public contracts and their tests. The C++ additions are process, checks, native, terminal and protocol. |
+| `packages/` | Reusable TypeScript modules prepared for packaging, public contracts and their tests. The C++ additions are process, checks, native, terminal and protocol. |
 | `native/qt/` | C++ Qt helper, installed headers, internal adapters/protocol, CMake configuration and compiled tests. Future toolkit helpers belong beside it. |
-| `examples/` | Standalone consumer examples, including the C++ CLI and Qt applications. |
+| `examples/` | Standalone consumer examples, including C++ CLI/Qt and Python, C# and Rust CLI/HTTP applications. |
 | `apps/` | Upstream testbed and browser/mobile benchmark applications used to qualify the shared runner. |
 | `docs/` | Documentation pages, checked code examples and required site assets. |
-| `scripts/` | Build, validation and release tooling; C++ verification and installation tooling is under `scripts/cpp/`. |
-| `skills/` and `plugins/` | Consumer integration guidance and generated plugin packages. |
+| `scripts/` | Build, validation and release tooling; C++ verification and installation tooling is under `scripts/cpp/`; language build and verification scripts are under `scripts/languages/`. |
+| `skills/` | Consumer integration guidance bundled with the core package. |
 | `verification/` | Stable instructions for reproducing checks; generated run evidence is kept outside tracked source. |
 | `release-packages/` | Generated, checksummed local installation kit included with the downloadable archive. |
 
@@ -71,7 +71,11 @@ your OS and architecture. Provision them on the machine where tests will run:
 4. Install any browser/mobile engines and platform dependencies required by
    the existing upstream examples you intend to run. The C++ CLI and cooperative
    Qt examples do not require a browser download.
-5. Keep the resulting dependency store and SDK installations locally. A later
+5. For the language examples, provision Python 3.12+, the .NET 10 SDK and a
+   compatible Rust/Cargo toolchain before disconnecting. See [LANGUAGES.md](LANGUAGES.md)
+   for explicit tool paths and the versions actually qualified. The included demos
+   use no third-party Python, NuGet or Cargo packages.
+6. Keep the resulting dependency store and SDK installations locally. A later
    reinstall can use `pnpm install --offline --frozen-lockfile` only if the store
    already contains everything needed for that platform. Native install scripts
    can still need locally cached toolchains or headers.

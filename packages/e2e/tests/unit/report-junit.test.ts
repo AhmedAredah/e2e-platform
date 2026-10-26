@@ -55,6 +55,32 @@ function rootAttributes(xml: string): Record<string, string> {
 }
 
 describe('renderJunitReport', () => {
+  it('reports cleanup failure independently of a passing or failing body', () => {
+    for (const status of ['passed', 'failed'] as const) {
+      const xml = render(reportDocument({ results: [reportResult({ status, attempts: [reportAttempt({
+        status, cleanup: 'failed', secondaryErrors: [reportError({ category: 'infrastructure', code: 'ENGINE_FAILURE', phase: 'cleanup', message: 'cannot close <session>' })],
+        ...(status === 'failed' ? { error: reportError() } : {}),
+      })] })] }));
+      expect(rootAttributes(xml)).toMatchObject({ tests: '2', errors: '1', failures: status === 'failed' ? '1' : '0' });
+      expect(xml).toContain('cannot close &lt;session&gt;');
+      expect(xml).toContain('<testsuite name="lifecycle"');
+    }
+  });
+
+  it.each(['complete', 'failed'] as const)('reports a shared-session failure with %s cleanup after passing members', (cleanup) => {
+    const error = reportError({ category: 'infrastructure', code: 'ENGINE_FAILURE', phase: 'cleanup', message: 'late shared fault' });
+    const group: ReportSerialGroup = {
+      id: 'group', serialId: 'flow', declarationIndex: 0, file: 'tests/auth.e2e.ts', titlePath: ['flow'],
+      source: { file: 'tests/auth.e2e.ts', line: 1, column: 1 },
+      targetId: 'web', platform: 'web', agent: 'default', memberTestIds: ['test-1'], status: 'failed',
+      attempts: [{ ...reportAttempt({ status: 'failed', cleanup, error, secondaryErrors: cleanup === 'failed' ? [error] : [] }),
+        members: [{ id: 'member', index: 0, testId: 'test-1', status: 'passed', startedAt: AT, durationMs: 10, steps: [], secondaryErrors: [] }],
+      }],
+    };
+    const xml = render(reportDocument({ results: [reportResult({ serialGroupId: 'group', attempts: [] })], serialGroups: [group] }));
+    expect(rootAttributes(xml)).toMatchObject({ tests: '2', errors: '1', failures: '0' });
+    expect(xml).toContain('late shared fault');
+  });
   it('starts with the XML declaration and ends with a newline', () => {
     const xml = render(reportDocument());
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites ')).toBe(true);

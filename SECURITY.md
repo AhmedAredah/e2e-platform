@@ -13,7 +13,7 @@ hosted release. The original project's contact is not this fork's support team.
 
 ## Supported versions
 
-The current candidate is 0.1.0. No registry release, response-time commitment or
+The current candidate is 0.2.0-rc.0. No registry release, response-time commitment or
 long-term maintenance window is established. Check [RELEASE_STATUS.md](RELEASE_STATUS.md)
 for tested environments and unresolved dependency findings.
 
@@ -44,6 +44,27 @@ fields, executor prose, stdout/stderr, events, errors, reports, AI traces, and
 text evidence. The filter recognizes raw, JSON-escaped, HTML-escaped, and
 standard URL-encoded forms. A secret-bearing semantic node ID is refused
 because rewriting it would no longer identify the same control.
+
+Structured output preserves schema keys, control enums, generated IDs, hashes,
+timestamps and numeric values. These are protocol metadata, not captured prose.
+Public test, serial and scope identities use stable opaque aliases; configured
+target and agent names are also aliased when confidential or when providers can
+resolve new values. This keeps report, event and trace references consistent.
+Workers transfer resolved values through private IPC before the parent publishes
+their records. That channel is trusted, like the session-key transport; it is
+not a public diagnostic log. MCP redacts complete messages before serialization,
+so output buffering cannot retain part of a response frame.
+Buffered worker output retains the pair that produced it. At a pair boundary,
+an undecidable secret prefix is withheld rather than combined with another
+pair's output. Artifact paths and store references are never rewritten into
+invented locations: confidential references are omitted and the artifact is
+marked `incomplete`, retaining its ID, size and hash. Test and serial artifact
+directory names use full-input digests so clipped titles cannot escape filtering.
+
+Diagnostics redact complete values before shortening them. Native observation
+producers and drivers that do not know the runner's secrets omit an oversized
+field whole instead of exposing a potentially confidential prefix. The Qt
+producer also omits fields containing NUL rather than normalizing their content.
 
 A secret fill is authorized from the runner's own observation. Once an opaque
 secret, or a literal matching a registered secret, is filled, that live session
@@ -98,17 +119,23 @@ remain available, but `e2e-cpp telemetry enable` cannot activate a transport.
 `E2E_TELEMETRY_DISABLED` and `DO_NOT_TRACK` remain recognized opt-out flags.
 Transport tests use an explicitly injected mock destination.
 
-There is no crash reporting and no update check. The complete list of
-outbound connections a run can make:
+There is no crash reporting and no update check. Framework-managed connections
+can include:
 
 - the model endpoint owned by the AI SDK instance in your config (agent steps
   only; deterministic suites make no model calls, and cached steps replay
   without one)
 - `readyUrl` probes against the app the runner starts
 - Playwright browser downloads, once, when Chromium is missing
+- OAuth provider authorization, device-code and token-refresh endpoints when
+  subscription authentication is configured
+- configured artifact stores and optional GitHub reporting integrations
 - the app under test, and whatever that app itself loads
 
-`e2e run --ai-trace` writes every model call to a local file. Nothing uploads
+Trusted test/config code, custom tools, engines and configured commands can make
+additional connections under their own authority. This is not a network sandbox.
+
+`e2e-cpp run --ai-trace` writes every model call to a local file. Nothing uploads
 it.
 
 ## Known non-goals

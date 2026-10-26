@@ -19,14 +19,50 @@ export class OAuthError extends Error {
     message: string,
     options?: { cause?: unknown },
   ) {
-    super(message, options);
+    super(sanitizeOAuthDiagnostic(message), options);
   }
 }
 
-/** Reads an error body for a message without assuming JSON. */
-export async function describeResponse(response: Response): Promise<string> {
-  const text = await response.text().catch(() => '');
-  if (text === '') return `${response.status} ${response.statusText}`.trim();
+/** Removes known grant values before bounding and flattening untrusted diagnostic text. */
+export function sanitizeOAuthDiagnostic(value: string, secrets: readonly string[] = []): string {
+  let safe = value;
+  const variants = secrets.filter(Boolean).flatMap((secret) => [secret, encodeURIComponent(secret), new URLSearchParams({ value: secret }).toString().slice(6), JSON.stringify(secret).slice(1, -1)]);
+  for (const secret of [...new Set(variants)].toSorted((a, b) => b.length - a.length)) safe = safe.split(secret).join('<redacted>');
+  // oxlint-disable-next-line no-control-regex -- remove terminal and line controls at the diagnostic boundary
+  return safe.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 512);
+}
+
+/** Reads a small OAuth response without buffering an unbounded server body. */
+export async function readOAuthBody(response: Response, signal?: AbortSignal): Promise<string> {
+  if (response.body === null) return '';
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  const abort = () => { void reader.cancel().catch(() => {}); };
+  signal?.addEventListener('abort', abort, { once: true });
+  try {
+    if (signal?.aborted) throw new OAuthError('CANCELLED', 'the OAuth operation was cancelled');
+    for (;;) {
+      const part = await reader.read();
+      if (signal?.aborted) throw new OAuthError('CANCELLED', 'the OAuth operation was cancelled');
+      if (part.done) return Buffer.concat(chunks, length).toString('utf8');
+      length += part.value.byteLength;
+      if (length > 65_536) {
+        void reader.cancel().catch(() => {});
+        throw new OAuthError('FLOW_FAILED', 'OAuth response exceeded the 64 KiB limit');
+      }
+      chunks.push(part.value);
+    }
+  } finally {
+    signal?.removeEventListener('abort', abort);
+    reader.releaseLock();
+  }
+}
+
+/** Reads an error body without disclosing grant values or unlimited provider text. */
+export async function describeResponse(response: Response, secrets: readonly string[] = [], signal?: AbortSignal): Promise<string> {
+  const text = await readOAuthBody(response, signal).catch(() => '');
+  if (text === '') return sanitizeOAuthDiagnostic(`${response.status} ${response.statusText}`, secrets);
   try {
     const json = JSON.parse(text) as { error?: unknown; error_description?: unknown; message?: unknown };
     const error = json.error;
@@ -40,8 +76,8 @@ export async function describeResponse(response: Response): Promise<string> {
             : typeof error === 'string'
               ? error
               : undefined;
-    return detail === undefined ? `${response.status}: ${text.slice(0, 200)}` : `${response.status}: ${detail}`;
+    return sanitizeOAuthDiagnostic(`${response.status}: ${detail ?? text}`, secrets);
   } catch {
-    return `${response.status}: ${text.slice(0, 200)}`;
+    return sanitizeOAuthDiagnostic(`${response.status}: ${text}`, secrets);
   }
 }

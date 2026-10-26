@@ -312,7 +312,7 @@ export class ActionDispatcher {
    * Fills one declared secret. The name must come from the step's own params
    * — an executor can never fill a secret the test did not hand it — and
    * the fill itself runs the full secret authorization policy: configured
-   * secret, origin allowlists, an editable sink, and a password field for a password.
+   * secret, an enabled editable sink, and a password field for a password.
    * Pixel evidence is tainted from here on.
    */
   private async typeSecret(target: ExecutorTarget, name: string): Promise<void> {

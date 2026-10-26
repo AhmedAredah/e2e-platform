@@ -8,6 +8,7 @@
  */
 
 import { OAuthError } from './errors.ts';
+import { OAuthOperation, OAUTH_REQUEST_TIMEOUT_MS, waitForOAuth } from './operation.ts';
 import type { CredentialStore, FetchFunction, OAuthCredentials, OAuthProvider } from './types.ts';
 
 export interface OAuthFetchOptions {
@@ -17,6 +18,8 @@ export interface OAuthFetchOptions {
   readonly fetch?: FetchFunction;
   /** How a missing login is described; the CLI names its own command. */
   readonly loginHint?: string;
+  /** Shared refresh deadline; a caller's abort cancels only its own wait. Defaults to 30 seconds. */
+  readonly refreshTimeoutMs?: number;
 }
 
 /** Refresh this long before `expires`, so a call never starts on a token about to lapse. */
@@ -90,12 +93,13 @@ export function createOAuthFetch<Credentials extends OAuthCredentials>(
   function refresh(stale: Credentials): Promise<Credentials> {
     let pending = shared.refreshing.get(provider.id) as Promise<Credentials> | undefined;
     if (pending === undefined) {
-      pending = (async () => {
+      pending = new OAuthOperation(undefined, options.refreshTimeoutMs ?? OAUTH_REQUEST_TIMEOUT_MS).run(async (signal) => {
         // Another process may have refreshed already: prefer what the store holds now.
         const latest = await current();
         if (latest.access !== stale.access && !expiring(latest)) return latest;
         try {
-          const renewed = await provider.refresh(latest);
+          const renewed = await waitForOAuth(provider.refresh(latest, signal), signal);
+          if (signal.aborted) throw signal.reason;
           await persist(renewed);
           return renewed;
         } catch (cause) {
@@ -105,7 +109,7 @@ export function createOAuthFetch<Credentials extends OAuthCredentials>(
           }
           throw cause;
         }
-      })().finally(() => shared.refreshing.delete(provider.id));
+      }).finally(() => shared.refreshing.delete(provider.id));
       shared.refreshing.set(provider.id, pending);
     }
     return pending;
@@ -114,7 +118,8 @@ export function createOAuthFetch<Credentials extends OAuthCredentials>(
   return async (input, init) => {
     // Captured once so the request can be sent again after a refresh; a body stream is read here.
     const base = new Request(input, init);
-    const body = base.method === 'GET' || base.method === 'HEAD' ? undefined : await base.arrayBuffer();
+    if (base.signal.aborted) throw new OAuthError('CANCELLED', 'the OAuth operation was cancelled');
+    const body = base.method === 'GET' || base.method === 'HEAD' ? undefined : await waitForOAuth(base.arrayBuffer(), base.signal);
     const attempt = (credentials: Credentials) => {
       const headers = new Headers(base.headers);
       headers.delete('x-api-key');
@@ -124,12 +129,12 @@ export function createOAuthFetch<Credentials extends OAuthCredentials>(
       return provider.send === undefined ? upstream(request) : provider.send(request, credentials, upstream);
     };
 
-    let credentials = await current();
-    if (expiring(credentials)) credentials = await refresh(credentials);
-    const response = await attempt(credentials);
+    let credentials = await waitForOAuth(current(), base.signal);
+    if (expiring(credentials)) credentials = await waitForOAuth(refresh(credentials), base.signal);
+    const response = await waitForOAuth(attempt(credentials), base.signal);
     if (response.status !== 401 || credentials.refresh === '') return response;
     await response.body?.cancel();
-    return attempt(await refresh(credentials));
+    return waitForOAuth(attempt(await waitForOAuth(refresh(credentials), base.signal)), base.signal);
   };
 }
 

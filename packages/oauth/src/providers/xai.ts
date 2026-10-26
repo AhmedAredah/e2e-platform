@@ -39,12 +39,13 @@ export function createXaiProvider(options: XaiProviderOptions = {}): OAuthProvid
       });
       return toCredentials(tokens, '');
     },
-    async refresh(credentials) {
+    async refresh(credentials, signal) {
       const tokens = await requestTokens(
         'SpaceXAI',
         `${issuer}/oauth2/token`,
         { grant_type: 'refresh_token', refresh_token: credentials.refresh, client_id: CLIENT_ID },
         'LOGIN_REQUIRED',
+        signal,
       );
       return toCredentials(tokens, credentials.refresh);
     },

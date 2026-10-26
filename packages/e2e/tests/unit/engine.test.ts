@@ -216,6 +216,52 @@ describe('defineEngine', () => {
     expect(toy.observed).toBe(11);
     expect(boundToSession).toBe(true);
   });
+
+  it('binds inherited nested hooks to stateful class instances and exposes only declared hooks', async () => {
+    class StatefulHooks {
+      calls: string[] = [];
+      async restart() { this.calls.push('restart'); }
+      async type() { this.calls.push('type'); }
+      async press() { this.calls.push('press'); }
+      async capture() { this.calls.push('capture'); return { format: 'test', version: 1, data: {} }; }
+      async restore() { this.calls.push('restore'); }
+      async screenshot() { this.calls.push('screenshot'); return 'image.png'; }
+    }
+    class SessionHooks extends StatefulHooks {}
+    class KeyboardHooks extends StatefulHooks {}
+    class StateHooks extends StatefulHooks {}
+    class ArtifactHooks extends StatefulHooks {}
+    const session = new SessionHooks();
+    const keyboard = new KeyboardHooks();
+    const state = new StateHooks();
+    const artifacts = new ArtifactHooks();
+    const handle = defineEngine(observingEngine({ session, keyboard, state, artifacts }));
+    await handle.session!.restart!(OP);
+    await handle.keyboard!.type('hello', { replace: false }, OP);
+    await handle.keyboard!.press('Enter', OP);
+    const captured = await handle.state!.capture(OP);
+    await handle.state!.restore(captured, OP);
+    await handle.artifacts!.screenshot(undefined, OP);
+    expect(session.calls).toEqual(['restart']);
+    expect(keyboard.calls).toEqual(['type', 'press']);
+    expect(state.calls).toEqual(['capture', 'restore']);
+    expect(artifacts.calls).toEqual(['screenshot']);
+    expect(Object.keys(handle.session!)).toEqual(['restart']);
+    expect(Object.keys(handle.keyboard!)).toEqual(['type', 'press']);
+    expect(Object.keys(handle.state!)).toEqual(['capture', 'restore']);
+    expect(Object.keys(handle.artifacts!)).toEqual(['screenshot']);
+  });
+
+  it('still validates nested class hook types and closes ordinary and null-prototype manifests', () => {
+    class BadSession { restart = 42; }
+    expect(() => defineEngine(observingEngine({ session: new BadSession() as never })))
+      .toThrow(/session.restart must be a function/);
+    for (const prototype of [Object.prototype, null]) {
+      const session = Object.assign(Object.create(prototype) as object, { restart: async () => {}, count: 0 });
+      expect(() => defineEngine(observingEngine({ session })))
+        .toThrow(/session has unknown key "count"/);
+    }
+  });
 });
 
 describe('parseKey', () => {

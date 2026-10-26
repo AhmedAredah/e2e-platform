@@ -288,6 +288,13 @@ The handler must decide exactly once with `fulfill`, `continue`, or `abort`;
 deciding twice or not at all is `ACTION_FAILED`, as is a `waitForResponse`
 that nothing matches inside the deadline.
 
+The attempt owns every handler that has started, including work after its route
+decision. Before the verdict and after browser cleanup, settlement waits for that
+work within one `cleanupTimeout` budget and reports any unobserved handler error.
+A failure after the final browser call still fails the attempt. Cancellation
+ends the wait; an unfinished handler reaches `CLEANUP_TIMEOUT`. This tracks
+started handlers, not future network requests or arbitrary application activity.
+
 ```ts
 await web.route('**/api/quote', async (route) => {
   await route.fulfill({ json: { cents: 4200 } });
@@ -376,8 +383,10 @@ await web.setCookies([{ url: 'http://localhost:3000', name: 'tz', value: 'UTC' }
 ### Dialogs and downloads
 
 A function handler must call `accept` or `dismiss`; one that does neither
-has the dialog dismissed and fails the next step with `APP_NOT_OPEN`, as an
-unhandled dialog does. `waitForDownload` registers the file as a `download`
+has the dialog dismissed and fails the next step or final attempt settlement with
+`APP_NOT_OPEN`, as an unhandled dialog does. A started dialog handler is settled
+under the same bounded callback policy as a route handler, even after it accepts
+or dismisses its dialog. `waitForDownload` registers the file as a `download`
 artifact and throws `ACTION_FAILED` when it does not complete in time.
 
 ```ts

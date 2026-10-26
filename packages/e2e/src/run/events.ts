@@ -1,4 +1,5 @@
-import { processSecrets, redactJson } from '../internal/redact.ts';
+import { processSecrets } from '../internal/redact.ts';
+import { redactPublishedRecord } from '../internal/published-redaction.ts';
 /**
  * Structured run events: the run's single event spine.
  *
@@ -254,7 +255,7 @@ export function createRunEventEmitter(
   const quarantined = new Set<RunEventSink>();
   return (fact) => {
     seq += 1;
-    const event: RunEvent = redactJson({ seq, at: timestamp(), ...fact }, processSecrets.redact);
+    const event: RunEvent = redactPublishedRecord({ seq, at: timestamp(), ...fact }, processSecrets.redact);
     for (const sink of active) {
       if (quarantined.has(sink)) continue;
       try {

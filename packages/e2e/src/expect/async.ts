@@ -3,6 +3,7 @@
 import type { SemanticNode } from '../engine/surface.ts';
 import { TestError } from '../internal/errors.ts';
 import { normalizeText, containsText, matchesText, toTextPattern, describePattern } from '../internal/text.ts';
+import { testPattern } from '../internal/regexp.ts';
 import { Deadline, pollCondition } from '../internal/time.ts';
 import { isNodeVisible } from '../locator/engine.ts';
 import { describeExpression } from '../locator/expression.ts';
@@ -64,7 +65,7 @@ const TEXT_MATCHERS = {
   },
   toHaveValue: {
     field: 'value',
-    match: matchesText,
+    match: matchesRawValue,
     describeExpected: (pattern) => `value ${pattern}`,
     normalize: false,
   },
@@ -75,6 +76,13 @@ const TEXT_MATCHERS = {
     normalize: false,
   },
 } as const satisfies Record<string, TextMatcherDef>;
+
+/** Matches raw values exactly, preserving whitespace in strings and regexp input. */
+function matchesRawValue(actual: string, pattern: ReturnType<typeof toTextPattern>): boolean {
+  return pattern.kind === 'string'
+    ? actual === pattern.value
+    : testPattern(pattern.source, pattern.flags, actual);
+}
 
 class AsyncExpectationImpl implements AsyncExpectation {
   constructor(
@@ -263,7 +271,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
         predicate: (sample) => {
           if (sample.node === null) return false;
           const attribute = sample.node.attributes?.[name];
-          return attribute !== undefined && (pattern === undefined || matchesText(attribute, pattern));
+          return attribute !== undefined && (pattern === undefined || matchesRawValue(attribute, pattern));
         },
         describeExpected:
           pattern === undefined

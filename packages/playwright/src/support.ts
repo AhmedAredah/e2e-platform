@@ -1,7 +1,7 @@
 /** Shared error translation, filename, and swipe helpers for the Playwright engine. */
 
 import type { ElementHandle, Locator as PwLocator, Mouse, Page } from 'playwright';
-import { EngineError, type Momentum, type ScrollDirection, type ViewportPoint } from '@e2e-cpp/core/engine';
+import { EngineError, raceAbort, withTimeout, type EngineCleanupContext, type Momentum, type ScrollDirection, type ViewportPoint } from '@e2e-cpp/core/engine';
 import { ConfigurationError, InfrastructureError, TestError } from '@e2e-cpp/core/engine';
 
 export const DEFAULT_VIEWPORT = { width: 1280, height: 720 } as const;
@@ -192,11 +192,39 @@ export function cancelled(text: string): EngineError {
 /**
  * Holds one error raised on a path nobody awaits - a native dialog nobody
  * handled, a route handler that broke its contract - until the next step
- * enters the surface, which then fails with the real cause. Rethrows once:
+ * or attempt settlement, which then fails with the real cause. Rethrows once:
  * the failure belongs to the step that observes it, not to every later one.
  */
 export class ErrorLatch {
   private pending: Error | null = null;
+  private readonly callbacks = new Set<Promise<void>>();
+
+  /** Owns a callback that has already started, without leaving a rejected event promise. */
+  track(work: Promise<void>): Promise<void> {
+    const tracked = work.catch((cause: unknown) => {
+      this.latch(cause instanceof Error ? cause : new Error(message(cause)));
+    }).finally(() => { this.callbacks.delete(tracked); });
+    this.callbacks.add(tracked);
+    return tracked;
+  }
+
+  /** Drains started callbacks within one budget, then reports their first unobserved fault. */
+  async settle(context: EngineCleanupContext): Promise<void> {
+    const controller = new AbortController();
+    const signal = AbortSignal.any([context.signal, controller.signal]);
+    try {
+      await withTimeout(raceAbort(async () => {
+        while (this.callbacks.size > 0) {
+          await Promise.all(this.callbacks);
+          if (signal.aborted) return;
+        }
+        this.throwPending();
+      }, signal, 'Playwright callback settlement'), context.timeoutMs, () =>
+        new InfrastructureError('CLEANUP_TIMEOUT', `Playwright callbacks did not settle within ${context.timeoutMs} ms`));
+    } finally {
+      controller.abort();
+    }
+  }
 
   /** Latches an error; the first one wins until it is thrown. */
   latch(error: Error): void {

@@ -4,6 +4,7 @@ packages:
   - docs
   - examples/with-cpp-cli
   - examples/with-qt/e2e
+  - examples/with-languages
 
 # pnpm 12 refuses versions published less than a day ago by default. Exact pins
 # already decide what we install, so the delay only blocks deliberate bumps.

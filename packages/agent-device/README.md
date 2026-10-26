@@ -147,11 +147,15 @@ targets can hand the pack to one `createAgent`.
 
 ## Secrets
 
-Secret fills need an origin the runner can check, and a device location is
-not a URL, so it has no origin an allowlist can name: `type_secret` is denied
-on a device target before any plaintext reaches the device. Fill credentials
-through a deterministic `screen` action in a setup step instead.
+Model-directed secret fills require a secret declared in the step and an
+enabled editable target; passwords require a password field. There is no
+origin allowlist for device or browser fills. Deterministic `fill(secret)`
+uses the field chosen by trusted test code. Both paths register the value
+for redaction and withhold pixels for the rest of the attempt. Verify the
+device exposes the intended control semantics before supplying credentials.
 
 ## Documentation
 
-Full documentation lives at [e2e.tester.army/docs](https://e2e.tester.army/docs).
+The complete fork includes [device documentation](../../docs/reference/agent-device.mdx)
+and its [security model](../../docs/security.mdx). The upstream website describes
+a different distribution.

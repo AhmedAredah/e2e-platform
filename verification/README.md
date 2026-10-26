@@ -39,7 +39,9 @@ node scripts/cpp/verify.mjs --qt --require-quick
 pnpm verify:qt:install
 pnpm verify:qt:exports
 pnpm pack:cpp
-node scripts/cpp/install-kit-smoke.mjs
+node scripts/cpp/install-kit-smoke.mjs --kit release-packages
+# Requires Python, .NET and Rust installed; no skipped language counts as a pass.
+pnpm verify:languages
 ```
 
 The application verifier builds the real examples, runs CTest and the built e2e
@@ -60,6 +62,8 @@ project to check the consumer path as well as the source checkout.
 | Qt CTest result | `examples/with-qt/build/ctest-results.xml` |
 | Widgets and Quick runner reports | `examples/with-qt/e2e/.e2e/` |
 | Qt export and masked screenshot proof | `.e2e/cpp/qt-exports/` |
+| Three-language scenario and cleanup summary | `.e2e/languages/verification.json` |
+| Language runtime/build fingerprints | `examples/with-languages/build/runtime-manifest.json` |
 | Generated consumer installation kit | `release-packages/` |
 
 ## Record the tested environment

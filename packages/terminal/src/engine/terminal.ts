@@ -48,6 +48,8 @@ export class TerminalEngine implements Engine {
   #closing: Promise<void> | undefined;
   readonly #cleanupFailures: unknown[] = [];
   readonly #releases = new Set<Promise<void>>();
+  #fault: unknown;
+  #faultedSessions = new WeakSet<TerminalSession>();
 
   constructor(options: TerminalOptions = {}) {
     boundedInteger(options.columns ?? 80, 'columns', 512);
@@ -92,6 +94,22 @@ export class TerminalEngine implements Engine {
     return release;
   }
 
+  /** Retains an attempt fault even when restart or teardown discards its session. */
+  #captureFault(session: TerminalSession): void {
+    if (this.#faultedSessions.has(session)) return;
+    try { session.assertHealthy(); }
+    catch (cause) {
+      this.#faultedSessions.add(session);
+      this.#fault ??= cause;
+    }
+  }
+
+  /** Cleanup and health are separate: closing resources must not erase a fault. */
+  #releaseSession(session: TerminalSession): Promise<void> {
+    this.#captureFault(session);
+    return this.#release(session).finally(() => { this.#captureFault(session); });
+  }
+
   /** A launch owns its captured attempt even when a custom factory finishes late. */
   #replace(attempt: EngineAttemptContext, signal: AbortSignal, timeoutMs: number): Promise<void> {
     if (signal.aborted) return Promise.reject(new TerminalError('ABORTED', 'Terminal launch was aborted'));
@@ -109,7 +127,7 @@ export class TerminalEngine implements Engine {
     const acquisition = (async () => {
       const current = this.#current;
       this.#current = undefined;
-      if (current !== undefined) await this.#release(current);
+      if (current !== undefined) await this.#releaseSession(current);
       if (combined.aborted || this.#attempt !== attempt) throw new TerminalError('ABORTED', 'Terminal launch was aborted');
       const dimensions = { columns: this.#options.columns ?? 80, rows: this.#options.rows ?? 24 };
       const transport = await this.createTransport(this.#command, dimensions, { signal: combined, timeoutMs });
@@ -140,11 +158,24 @@ export class TerminalEngine implements Engine {
 
   async startAttempt(context: EngineAttemptContext): Promise<void> {
     if (this.#attempt !== undefined || this.#transition !== undefined || this.#closing !== undefined) throw new EngineError('INVALID_STATE', 'Terminal attempt is already open or closing', { retryable: false });
+    this.#fault = undefined;
+    this.#faultedSessions = new WeakSet<TerminalSession>();
     this.#attempt = context;
     this.#lifetime = new AbortController();
     await this.#replace(context, context.signal, this.#options.timeoutMs ?? 30_000);
     context.environment({ terminal: '@xterm/headless 6.0.0', transport: this.#options.transportFactory === undefined ? 'node-pty' : 'custom' });
   }
+
+  /** Reports each failed session once before verdict or after owned cleanup. */
+  async settleAttempt(): Promise<void> {
+    if (this.#current !== undefined) this.#captureFault(this.#current);
+    if (this.#fault !== undefined) {
+      const fault = this.#fault;
+      this.#fault = undefined;
+      translateError(fault);
+    }
+  }
+
   endAttempt(): Promise<void> {
     if (this.#closing !== undefined) return this.#closing;
     this.#lifetime.abort();
@@ -153,7 +184,7 @@ export class TerminalEngine implements Engine {
       await this.#transition?.catch(() => undefined);
       const current = this.#current;
       this.#current = undefined;
-      if (current !== undefined) await this.#release(current).catch(() => undefined);
+      if (current !== undefined) await this.#releaseSession(current).catch(() => undefined);
       await Promise.allSettled(this.#releases);
       if (this.#cleanupFailures.length > 0) throw new AggregateError(this.#cleanupFailures.splice(0), 'Terminal cleanup failed');
     })().finally(() => { if (this.#closing === closing) this.#closing = undefined; });

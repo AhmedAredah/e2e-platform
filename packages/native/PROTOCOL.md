@@ -1,5 +1,10 @@
 # Native bridge protocol, version 1
 
+Canonical [JSON schemas and golden conformance fixtures](schema/README.md)
+ship with the native package. They document serialization; authentication,
+bounded execution, masking and stateful protocol rules still require the
+runtime checks below. Schemas do not imply support for every listed action.
+
 This bridge controls one cooperating application. It is not an OS-wide desktop
 automation service. The application must opt in to the bridge; the Qt reference
 helper uses the application's Qt event path rather than global OS input.

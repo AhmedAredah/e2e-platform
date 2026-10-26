@@ -17,6 +17,38 @@ describe('numerical error budgets', () => {
     expect(compareNumbers(1e308, -1e308, { relative: 1.5, unsafeIntegers: 'allow' }).matches).toBe(false);
     expect(compareNumbers(1e308, -1e308, { relative: 2, unsafeIntegers: 'allow' }).matches).toBe(true);
   });
+  test('does not round a subnormal relative budget into a false pass', () => {
+    for (const sign of [-1, 1]) {
+      const actual = sign * 2 * Number.MIN_VALUE;
+      const expected = sign * Number.MIN_VALUE;
+      expect(compareNumbers(actual, expected, { relative: 0.4 })).toMatchObject({ matches: false, reason: expect.stringContaining('Relative difference 0.5') });
+      expect(compareNumbers(expected, actual, { relative: 0.4 }).matches).toBe(false);
+      expect(compareNumbers(actual, expected, { relative: 0.5 }).matches).toBe(true);
+      expect(compareNumbers(actual, expected, { relative: 0.4, absolute: Number.MIN_VALUE }).matches).toBe(true);
+      expect(compareNumbers(actual, expected).matches).toBe(false);
+    }
+    expect(compareNumbers(Number.MIN_VALUE, 0, { relative: 0.9 }).matches).toBe(false);
+    expect(compareNumbers(Number.MIN_VALUE, 0, { relative: 1 }).matches).toBe(true);
+    expect(compareNumbers(Number.MIN_VALUE, -Number.MIN_VALUE, { relative: 1.5 }).matches).toBe(false);
+    expect(compareNumbers(Number.MIN_VALUE, -Number.MIN_VALUE, { relative: 2 }).matches).toBe(true);
+    expect(compareNumbers(0, -0).matches).toBe(true);
+  });
+  test('keeps relative accuracy at the normal/subnormal boundary and finite extremes', () => {
+    const normal = 2 ** -1022;
+    const adjacent = normal - Number.MIN_VALUE;
+    expect(compareNumbers(normal, adjacent, { relative: Number.EPSILON / 2 }).matches).toBe(false);
+    expect(compareNumbers(normal, adjacent, { relative: Number.EPSILON }).matches).toBe(true);
+    expect(compareNumbers(Number.MAX_VALUE, -Number.MAX_VALUE, { absolute: Number.MAX_VALUE, relative: 1.99, unsafeIntegers: 'allow' }).matches).toBe(false);
+    expect(compareNumbers(Number.MAX_VALUE, -Number.MAX_VALUE, { relative: 2, unsafeIntegers: 'allow' }).matches).toBe(true);
+    expect(compareNumbers(Number.MAX_VALUE, Number.MAX_VALUE / 2, { relative: 0.5, unsafeIntegers: 'allow' }).matches).toBe(true);
+    expect(compareNumbers(Number.MAX_VALUE, Number.MAX_VALUE / 2, { relative: 0.49, unsafeIntegers: 'allow' }).matches).toBe(false);
+  });
+  test('uses the same stable relative predicate for JSON and numeric CSV', () => {
+    const numbers = { relative: 0.4 };
+    expect(compareJson({ value: 2 * Number.MIN_VALUE }, { value: Number.MIN_VALUE }, { numbers }).matches).toBe(false);
+    expect(compareCsv('value\n1e-323', 'value\n5e-324', { numbers }).matches).toBe(false);
+    expect(compareCsv('value\n1e-323', 'value\n5e-324', { numbers: { relative: 0.5 } }).matches).toBe(true);
+  });
   test('requires explicit nonfinite policies', () => {
     expect(compareNumbers(NaN, NaN).matches).toBe(false);
     expect(compareNumbers(NaN, NaN, { nan: 'equal' }).matches).toBe(true);

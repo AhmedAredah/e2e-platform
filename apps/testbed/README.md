@@ -1,6 +1,6 @@
 # @e2e-cpp/testbed
 
-Dogfood workspace for the [`@e2e-cpp/core`](../e2e) runner: a real project consuming the
+Dogfood workspace for the [`@e2e-cpp/core`](../../packages/e2e) runner: a real project consuming the
 built `@e2e-cpp/core` package exactly like a user would, against playground apps we
 control. This is where every runner feature has a deterministic test. Hard UI
 surfaces live in the benchmarks (`web-benchmark`, `mobile-benchmark`), not
@@ -54,8 +54,8 @@ artifacts under `.e2e/artifacts/`.
 ## Agentic suites
 
 `test:agent` and `test:dogfood` spend real model calls, so they never gate a
-PR: they run on the weekly `.github/workflows/agent.yml` schedule, by manual
-dispatch, or by hand. Each config builds its model with the AI SDK's
+PR: they run through manual `.github/workflows/agent.yml` dispatch or by hand.
+There is no scheduled provider-backed run. Each config builds its model with the AI SDK's
 `gateway()`, pins `openai/gpt-5.6-luna-fast`, and honours the testbed's own
 `E2E_MODEL` variable so the same suite can be replayed across providers:
 

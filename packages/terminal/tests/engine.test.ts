@@ -133,3 +133,47 @@ test('teardown waits for a close already owned by restart', async () => {
   expect(acquisitions).toBe(1);
   expect(transport.closed).toBe(1);
 });
+
+test.each(['settle', 'restart', 'close'] as const)('settlement retains output faults through %s and reports them once', async (transition) => {
+  const engine = new InspectableTerminalEngine({ maxOutputBytes: 8 });
+  engines.push(engine);
+  await engine.startAttempt(attempt());
+  const transport = engine.transports[0]!;
+  transport.emit('READY');
+  await engine.observe(operation());
+  transport.emit('overflow');
+  if (transition === 'restart') await engine.session.restart(operation());
+  if (transition === 'close') await engine.endAttempt();
+  await expect(engine.settleAttempt()).rejects.toMatchObject({ code: 'ENGINE_FAILURE', cause: { code: 'OUTPUT_LIMIT' } });
+  await expect(engine.settleAttempt()).resolves.toBeUndefined();
+  expect(transport.closed).toBe(1);
+  await engine.endAttempt();
+  await engine.startAttempt(attempt());
+  await expect(engine.settleAttempt()).resolves.toBeUndefined();
+});
+
+test('settlement reports an asynchronous device-query reply failure without another screen operation', async () => {
+  class FailedReplyTransport extends MemoryTransport {
+    override write(): never { throw new Error('reply channel failed'); }
+  }
+  const transport = new FailedReplyTransport();
+  const engine = new TerminalEngine({ transportFactory: () => transport });
+  engines.push(engine);
+  await engine.startAttempt(attempt());
+  transport.emit('\x1b[6n');
+  await vi.waitFor(() => expect(transport.closed).toBe(1));
+  await expect(engine.settleAttempt()).rejects.toMatchObject({ code: 'ENGINE_FAILURE', cause: { code: 'TRANSPORT_FAILED' } });
+});
+
+test('natural exits remain observable data, including intentionally nonzero exits', async () => {
+  const engine = new InspectableTerminalEngine();
+  engines.push(engine);
+  await engine.startAttempt(attempt());
+  const transport = engine.transports[0]!;
+  transport.emit('Expected input error');
+  transport.finish({ exitCode: 9 });
+  expect((await engine.observe(operation())).root.attributes?.exitCode).toBe('9');
+  await expect(engine.settleAttempt()).resolves.toBeUndefined();
+  await engine.endAttempt();
+  await expect(engine.settleAttempt()).resolves.toBeUndefined();
+});

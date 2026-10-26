@@ -27,7 +27,7 @@ import type { CollectedFile } from '../collect/collect.ts';
 import type { ModuleRegistration, RegisteredTest } from '../collect/registry.ts';
 import type { TestTargetPair } from '../collect/select.ts';
 import type { ArtifactStore } from '../types.ts';
-import { createAttemptArtifacts, sanitizePathSegment } from './artifacts.ts';
+import { createAttemptArtifacts, artifactIdentitySegment } from './artifacts.ts';
 import { AttemptBudget } from './budget.ts';
 import { ENGINE_SPI_VERSION } from '../engine/contract.ts';
 import { createEngineSession } from '../engine/session.ts';
@@ -138,6 +138,8 @@ export class TargetExecutor implements SerialHost {
   private readonly sessionIdentity: SessionIdentity;
   /** Resolves once the engine's init hook completed for this worker. */
   private engineReady: Promise<void> | undefined;
+  /** No further attempt may reuse a surface whose cleanup did not complete. */
+  private engineQuarantined = false;
 
   constructor(private readonly options: TargetExecutorOptions) {
     this.target = options.target;
@@ -303,8 +305,15 @@ export class TargetExecutor implements SerialHost {
     let realm: Realm | null =
       freshRegistration === undefined ? null : this.realms.adopt(freshRegistration);
     for (const [index, pair] of ordered.entries()) {
+      if (pair.test.serialId !== undefined && executedSerialUnits.has(pairKey(pair.test.serialId, pair.agent))) continue;
       if (this.interruptSignal.aborted) {
         this.emit(unstartedResult(pair, INTERRUPTED_BEFORE_START));
+        continue;
+      }
+      if (this.engineQuarantined) {
+        this.emit(unstartedResult(pair, {
+          cause: 'infrastructure-unavailable', reason: 'engine cleanup failed; remaining work in this file cannot reuse its surface',
+        }));
         continue;
       }
       if (pair.test.serialId !== undefined) {
@@ -381,7 +390,7 @@ export class TargetExecutor implements SerialHost {
           kind: 'ordinary',
         });
         attempts.push(attempt);
-        if (isFailedStatus(attempt.status)) {
+        if (isFailedStatus(attempt.status) || attempt.cleanup !== 'complete') {
           // A failed realm is never reused, but afterAll still runs for every
           // scope whose beforeAll started in it. A body that skipped itself
           // left the suite instance as it found it, so the next test keeps it.
@@ -467,7 +476,7 @@ export class TargetExecutor implements SerialHost {
         attempts.push(attempt);
         await this.realms.leave(realm);
 
-        if (attempt.status === 'passed') {
+        if (attempt.status === 'passed' && attempt.cleanup === 'complete') {
           const missing = staging.missing();
           if (missing.length > 0) {
             attempt.status = 'failed';
@@ -560,11 +569,21 @@ export class TargetExecutor implements SerialHost {
       // The attempt's isolation is open, or a timed-out startAttempt may still
       // open it: end it within the cleanup budget, or the retry opens a second
       // one. An engine without startAttempt makes this a no-op.
-      await this.endAttempt(session, attemptId).catch(() => undefined);
+      let cleanupFailed = false;
+      try {
+        await this.endAttempt(session, attemptId);
+      } catch (cleanupCause) {
+        cleanupFailed = true;
+        this.engineQuarantined = true;
+        this.runErrors.push({ error: serializeError(classifyError(cleanupCause), { phase: 'cleanup' }) });
+      }
       if (artifactSink !== undefined) {
         await diagnostics.publish(artifactSink, sessionSecrecy(session, this.config.secrets).ledger.redact).catch(() => undefined);
       }
       this.diagnostics.delete(attemptId);
+      if (cleanupFailed) {
+        throw new InfrastructureError('ENGINE_FAILURE', 'attempt launch failed and its isolation could not be cleaned up', { cause });
+      }
       throw cause;
     }
     return session;
@@ -676,6 +695,7 @@ export class TargetExecutor implements SerialHost {
       secondaryErrors.push(serializeError(classifyError(cause), { phase: 'cleanup' }));
     } finally {
       this.diagnostics.delete(attemptId);
+      if (record.cleanup !== 'complete') this.engineQuarantined = true;
     }
   }
 
@@ -792,7 +812,7 @@ export class TargetExecutor implements SerialHost {
       // agent segment keeps a test run as several agents from overwriting itself.
       segments:
         shared?.artifactSegments ??
-        [this.target.name, sanitizePathSegment(pair.test.id), pair.agent, `attempt-${attemptIndex}`],
+        [this.target.name, artifactIdentitySegment(pair.test.id), pair.agent, `attempt-${attemptIndex}`],
       attemptId,
       currentStepId: () => steps.currentStepId,
       ...(this.config.artifactStore === undefined ? {} : { store: this.config.artifactStore }),

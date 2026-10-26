@@ -17,6 +17,7 @@
  */
 
 import { processSecrets, redactJson } from './redact.ts';
+import { opaqueIdentity, redactPublishedRecord } from './published-redaction.ts';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { Telemetry } from 'ai';
@@ -271,7 +272,7 @@ export class AiTraceRecorder {
       }
       this.calls.clear();
     }
-    return redactJson(snapshot, processSecrets.redact);
+    return redactTrace(snapshot);
   }
 
   /** True while any step has started and not yet ended; useful in tests. */
@@ -470,15 +471,46 @@ export class AiTraceCollector {
   document(): AiTraceDocument {
     const byStart = (a: { started_at: string }, b: { started_at: string }) =>
       a.started_at < b.started_at ? -1 : a.started_at > b.started_at ? 1 : 0;
-    return redactJson({
+    return redactTrace({
       runs: this.runs.toSorted(byStart),
       steps: this.steps.toSorted(byStart),
-    }, processSecrets.redact);
+    });
   }
 
   get size(): number {
     return this.steps.length;
   }
+}
+
+/** Preserves trace joins and parses nested JSON before sanitizing its data. */
+function redactTrace(document: AiTraceDocument): AiTraceDocument {
+  const redact = processSecrets.redact;
+  const json = (text: string | null): string | null => {
+    if (text === null) return null;
+    try { return JSON.stringify(redactJson(JSON.parse(text), redact)); }
+    catch { return JSON.stringify(redact(text)); }
+  };
+  return {
+    runs: document.runs.map((run) => {
+      const scope = redactPublishedRecord(run.e2e, redact);
+      return {
+      ...run,
+      // Rebuild from the complete label: a provider may have registered a
+      // value after this trace run started but before it was published.
+      function_id: runName(scope, run.function_id === null ? undefined : redact(run.function_id)),
+      e2e: scope,
+      };
+    }),
+    steps: document.steps.map((step) => ({
+      ...step,
+      model_id: redact(step.model_id),
+      provider: step.provider === null ? null : redact(step.provider),
+      input: json(step.input)!,
+      output: json(step.output),
+      usage: json(step.usage),
+      error: step.error === null ? null : redact(step.error),
+    })),
+  };
 }
 
 /**
@@ -502,11 +534,11 @@ function runName(scope: AiTraceScope | undefined, functionId: string | undefined
   if (scope === undefined) return functionId ?? null;
   const parts = [scope.test];
   // A test run as several agents is several runs; the name tells them apart.
-  if (scope.agent !== 'default') parts.push(`as ${scope.agent}`);
+  if (scope.agent !== 'default' && scope.agent !== opaqueIdentity('default')) parts.push(`as ${scope.agent}`);
   if (scope.attempt > 0) parts.push(`attempt ${scope.attempt + 1}`);
   if (scope.api !== undefined) {
     const label =
-      scope.label === undefined || scope.label === '' ? '' : ` ${JSON.stringify(truncate(scope.label))}`;
+      scope.label === undefined || scope.label === '' ? '' : ` ${JSON.stringify(truncate(processSecrets.redact(scope.label)))}`;
     parts.push(`${scope.api}${label}`);
   }
   return parts.join(' · ');

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFixtureApp, type FixtureApp } from '../helpers/fixture-app.ts';
 import { assertValidReport } from '../helpers/report-schema.ts';
 import { listProject, resultByTitle, runProject, type RunOutcome } from '../helpers/run-project.ts';
+import { opaqueIdentity } from '../../src/internal/published-redaction.ts';
 
 describe('runner lifecycle', () => {
   let app: FixtureApp;
@@ -843,7 +844,7 @@ test('later', async () => { log('body:later'); });
         'afterAll:file',
       ]);
       expect(outcome.report.run.errors.map((error) => [error.code, error.phase, error.scopeId])).toEqual([
-        ['HOOK_FAILED', 'afterAll', 'leaky'],
+        ['HOOK_FAILED', 'afterAll', opaqueIdentity('leaky')],
       ]);
       expect(outcome.exitCode).toBe(1);
       project.cleanup();
@@ -1076,9 +1077,11 @@ test.describe('slow scope', () => {
       expect(skipped.status).toBe('skipped');
       expect(skipped.skip?.cause).toBe('hook-failed');
       expect(outcome.report.run.errors.map((error) => [error.phase, error.scopeId, error.code])).toEqual([
-        ['beforeAll', 'slow scope', 'HOOK_FAILED'],
-        ['afterAll', 'file', 'HOOK_FAILED'],
+        ['beforeAll', opaqueIdentity('slow scope'), 'HOOK_FAILED'],
+        ['afterAll', opaqueIdentity('file'), 'HOOK_FAILED'],
       ]);
+      // Distinct suite and file scopes remain distinguishable after publication.
+      expect(new Set(outcome.report.run.errors.map((error) => error.scopeId)).size).toBe(2);
       assertValidReport(outcome.report);
       expect(outcome.exitCode).toBe(1);
       project.cleanup();

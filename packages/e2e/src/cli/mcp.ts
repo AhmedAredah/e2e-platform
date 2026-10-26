@@ -10,6 +10,7 @@ import { Writable } from 'node:stream';
 import { isCiMode } from '../config/resolve.ts';
 import { errorMessage, exitCodeForCategory, classifyError } from '../internal/errors.ts';
 import { serveMcp } from '../mcp/server.ts';
+import { writeStructuredOutput } from '../internal/output-redaction.ts';
 
 export interface McpCommandOptions {
   config?: string | undefined;
@@ -29,7 +30,7 @@ export interface McpCommandOptions {
 function claimStdout(): Writable {
   const stdout = process.stdout;
   const stderr = process.stderr;
-  const write = stdout.write.bind(stdout) as (chunk: Buffer, callback: (error?: Error | null) => void) => boolean;
+  const write = (chunk: Buffer, callback: (error?: Error | null) => void): boolean => writeStructuredOutput(stdout, chunk, callback);
   stdout.write = ((chunk: unknown, encoding?: unknown, callback?: unknown) =>
     (stderr.write as (...args: unknown[]) => boolean)(chunk, encoding, callback)) as typeof process.stdout.write;
   return new Writable({
@@ -56,12 +57,12 @@ export async function mcp(version: string, options: McpCommandOptions): Promise<
       version,
       stdin: process.stdin,
       stdout,
-      log: (line) => process.stderr.write(`e2e mcp: ${line}\n`),
+      log: (line) => process.stderr.write(`e2e-cpp mcp: ${line}\n`),
       signal: stop.signal,
     });
   } catch (cause) {
     const error = classifyError(cause);
-    process.stderr.write(`e2e mcp: ${error.code}: ${errorMessage(cause)}\n`);
+    process.stderr.write(`e2e-cpp mcp: ${error.code}: ${errorMessage(cause)}\n`);
     return exitCodeForCategory(error.category);
   } finally {
     process.off('SIGINT', onSignal);

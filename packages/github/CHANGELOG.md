@@ -1,8 +1,53 @@
-> Historical upstream changelog, preserved from the MIT base. Package names and
-> versions below refer to TesterArmy releases. This independent fork starts at
-> 0.1.0; see the repository RELEASE_STATUS.md and its Changesets for fork changes.
+# @e2e-cpp/github
 
-# @e2edev/github
+## 0.2.0-rc.0
+
+### Minor Changes
+
+- Coordinate the locally installable hardening candidate across all public modules.
+  Correct confidentiality, lifecycle, assertion and packaging regressions; add
+  Python, C# and Rust CLI/HTTP examples and extension contracts. Align security,
+  support and offline setup documentation with the implemented fork behavior.
+
+  This is a prerelease candidate. Registry publication, namespace ownership,
+  Windows/macOS runtime qualification and additional GUI framework adapters are
+  separate release requirements.
+
+### Patch Changes
+
+- c79d60c: Establish the MIT-based fork and local installation kit under independent package
+  names. Add extensible process supervision, output validators, authenticated native
+  transport, cooperative Qt integration, terminal sessions and bounded HTTP checks.
+
+  Integrate native launch configuration and lifecycle diagnostics with the MIT
+  runner, explicitly forbid model access when configured, and fail attempts on late
+  native faults. Protect known secrets in runner-controlled output, restored
+  sessions and artifacts. Omit untrusted HTTP error causes that could disclose
+  request contents. Include positive, planted-failure and installed-consumer checks.
+  Remove the upstream telemetry destination: the fork CLI collects and sends no
+  usage events, including when a compatibility preference is enabled.
+- Updated dependencies [45c08b1]
+- Updated dependencies [d438348]
+- Updated dependencies [b9abd60]
+- Updated dependencies [c1d23b2]
+- Updated dependencies [ea27708]
+- Updated dependencies [195bd0d]
+- Updated dependencies
+- Updated dependencies [da6b939]
+- Updated dependencies [fb6e336]
+- Updated dependencies
+- Updated dependencies [c79d60c]
+- Updated dependencies
+- Updated dependencies [f09b69e]
+- Updated dependencies [fb6e336]
+- Updated dependencies [e9c2914]
+- Updated dependencies
+  - @e2e-cpp/core@0.2.0-rc.0
+
+---
+
+> Historical upstream changelog, preserved from the MIT base. Package names and
+> versions in this section refer to TesterArmy releases. They are not fork releases.
 
 ## 0.3.0-canary-20260917213813
 

@@ -293,8 +293,8 @@ export function createWebFixture(surface: PlaywrightSurface, context: EngineFixt
       const predicate = (url: URL) => routePatternMatches(wirePattern, url.href);
       // Playwright never surfaces a throwing route handler to the test, so a
       // contract violation (no decision, two decisions) or a failing handler
-      // is latched on the surface and fails the next step with its real cause.
-      const pwHandler = async (route: Route): Promise<void> => {
+      // is latched on the surface and fails a step or final attempt settlement.
+      const handleRoute = async (route: Route): Promise<void> => {
         let decided = false;
         const decide = (name: string) => {
           if (decided) {
@@ -348,6 +348,7 @@ export function createWebFixture(surface: PlaywrightSurface, context: EngineFixt
           if (!decided) await route.abort().catch(() => undefined);
         }
       };
+      const pwHandler = (route: Route): Promise<void> => latch.track(handleRoute(route));
       return surface.guard(context.operation(), 'route', async () => {
         routes.push({ pattern: wirePattern, pwHandler, predicate });
         await surface.route(predicate, pwHandler);

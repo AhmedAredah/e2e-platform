@@ -1,7 +1,8 @@
 /** Runner-owned error taxonomy and exit-code mapping. */
 
 import { stripVTControlCharacters } from 'node:util';
-import { processSecrets, redactJson } from './redact.ts';
+import { processSecrets } from './redact.ts';
+import { opaqueIdentity } from './published-redaction.ts';
 import { sourceLocation, type SourceLocation } from './source.ts';
 import {
   ENGINE_ERROR_CODES,
@@ -362,12 +363,12 @@ export function serializeError(
   const redact = extras.redact ?? processSecrets.redact;
   const serialized: SerializedError = {
     category: error.category,
-    code: truncateUtf8(sanitizeText(redact(error.code)), MAX_DETAIL_BYTES),
+    code: truncateUtf8(sanitizeText(error.code), MAX_DETAIL_BYTES),
     message: truncateUtf8(sanitizeText(redact(error.message)), MAX_MESSAGE_BYTES),
     retryable: error.retryable,
   };
   if (extras.phase !== undefined) serialized.phase = extras.phase;
-  if (extras.scopeId !== undefined) serialized.scopeId = redact(extras.scopeId);
+  if (extras.scopeId !== undefined) serialized.scopeId = opaqueIdentity(extras.scopeId);
   if (error.details !== undefined) {
     const details = boundedDetails(error.details, redact);
     if (details !== undefined) serialized.details = details;
@@ -375,7 +376,7 @@ export function serializeError(
   const stack = (error.cause instanceof Error ? error.cause.stack : undefined) ?? error.stack;
   if (stack !== undefined) serialized.stack = truncateUtf8(sanitizeText(redact(stack)), 65536);
   const source = sourceLocation(stack, extras.projectRoot);
-  if (source !== undefined) serialized.source = redactJson(source, redact);
+  if (source !== undefined) serialized.source = { ...source, file: redact(source.file) };
   return serialized;
 }
 

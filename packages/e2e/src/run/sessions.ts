@@ -7,7 +7,7 @@ import path from 'node:path';
 import type { EngineSpiVersion, EngineState } from '../engine/surface.ts';
 import { writeFileAtomic } from '../internal/atomic-write.ts';
 import { ConfigurationError, E2EError } from '../internal/errors.ts';
-import { canonicalJson, timestamp } from '../internal/ids.ts';
+import { canonicalDigest, canonicalJson, timestamp } from '../internal/ids.ts';
 import type { SessionProtection } from './secrecy.ts';
 
 const MAX_SESSION_AGE_MS = 24 * 60 * 60 * 1000;
@@ -117,7 +117,7 @@ export class SessionStore {
     if (![targetId, name].every((part) => /^[A-Za-z0-9._-]+$/.test(part) && part !== '.' && part !== '..')) {
       throw new ConfigurationError('SESSION_INVALID', 'session and target names must be safe path segments');
     }
-    return path.join(this.directory, `${targetId}--${name}.json`);
+    return path.join(this.directory, `${canonicalDigest([targetId, name])}.json`);
   }
 
   /** Encrypts and atomically persists one captured engine state. */

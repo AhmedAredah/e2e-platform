@@ -50,7 +50,7 @@ only in the later upstream tree. This is a similarity screen with a stated
 threshold, not proof of authorship or legal independence. The machine-readable
 scope and results are in [licensing-audit.json](licensing-audit.json).
 
-The final candidate screen covered 496 changed or new text source files.
+The original 0.1.0 candidate screen covered 496 changed or new text source files.
 Thirteen matching windows in five files were reviewed against the MIT diff.
 They combine existing MIT text with directory renaming, a dependency-version
 correction, or small interface edits; the review did not identify a later
@@ -66,6 +66,11 @@ vendored `unbox-ai` developer skill also includes its source project's MIT
 license and copyright notice. The provenance of the inherited `unslop` skill
 is recorded in [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md); this
 record does not claim that its current external source repository is MIT.
+
+The 0.2.0-rc.0 hardening work is recorded in subsequent fork commits. It was
+implemented against this MIT checkout without importing later upstream source.
+The original similarity-screen counts above describe the initial rebuild, not
+a repeated screen of every later edit.
 
 ## Maintaining the boundary
 

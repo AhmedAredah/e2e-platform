@@ -141,7 +141,10 @@ export function createAttemptArtifacts(options: {
               ...(stepId === undefined ? {} : { stepId }),
               ...(startedAt === undefined ? {} : { startedAt }),
             });
-            if (typeof ref === 'string' && ref !== '') record.ref = processSecrets.redact(ref);
+            if (typeof ref === 'string' && ref !== '') {
+              if (processSecrets.redact(ref) === ref) record.ref = ref;
+              else record.redaction = 'incomplete';
+            }
           } catch {
             // best-effort by contract
           }
@@ -171,9 +174,14 @@ async function measure(absolute: string): Promise<{ size: number; sha256: string
   }
 }
 
-/** Restricts a report path segment to a safe filename alphabet. */
+/** Restricts a report filename to a safe alphabet. Input is already published prose. */
 export function sanitizePathSegment(value: string): string {
   return value.replaceAll(/[^A-Za-z0-9._-]/g, '_').slice(0, 120);
+}
+
+/** A stable, bounded directory name that cannot expose a clipped test title. */
+export function artifactIdentitySegment(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function mediaTypeFor(relativePath: string): string {

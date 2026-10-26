@@ -1,0 +1,1058 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:e2e-cpp:native-bridge:1",
+  "title": "E2E native bridge protocol v1 canonical frames",
+  "description": "Structural conformance only. Runtime enforces stateful request correlation, authentication, capability subsets, tree limits, secure pixel coverage and PNG consistency. JSON Schema counts Unicode code points; runtime text bounds count UTF-16 units.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/readiness"
+    },
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/response"
+    }
+  ],
+  "$defs": {
+    "readiness": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "additionalProperties": false
+    },
+    "nodeRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "revision": {
+          "type": "string",
+          "maxLength": 65536
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "tap"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "doubleTap"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "secondaryTap"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "clear"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "focus"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "check"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "uncheck"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "hover"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "scrollIntoView"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "longPress"
+            },
+            "durationMs": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "fill"
+            },
+            "value": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "sensitive": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "value",
+            "sensitive"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "press"
+            },
+            "key": {
+              "type": "string",
+              "maxLength": 65536
+            }
+          },
+          "required": [
+            "kind",
+            "key"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "selectOption"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "maxLength": 65536
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "maxLength": 65536
+                    }
+                  },
+                  "required": [
+                    "label"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string",
+                      "maxLength": 65536
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "index": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "index"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setInputFiles"
+            },
+            "paths": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 65536
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "paths"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "dragTo"
+            },
+            "target": {
+              "$ref": "#/$defs/nodeRef"
+            }
+          },
+          "required": [
+            "kind",
+            "target"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "swipe"
+            },
+            "direction": {
+              "enum": [
+                "up",
+                "down",
+                "left",
+                "right"
+              ]
+            },
+            "momentum": {
+              "enum": [
+                "none",
+                "slow",
+                "fast"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "direction"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "actionKind": {
+      "enum": [
+        "tap",
+        "doubleTap",
+        "secondaryTap",
+        "longPress",
+        "fill",
+        "clear",
+        "press",
+        "check",
+        "uncheck",
+        "focus",
+        "hover",
+        "scrollIntoView",
+        "selectOption",
+        "setInputFiles",
+        "dragTo",
+        "swipe"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/nodeRef"
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "testId": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "selector": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "inputPurpose": {
+          "enum": [
+            "username",
+            "password",
+            "one-time-code",
+            "generic-secret",
+            "none"
+          ]
+        },
+        "states": {
+          "type": "object",
+          "properties": {
+            "checked": {
+              "type": "boolean"
+            },
+            "disabled": {
+              "type": "boolean"
+            },
+            "selected": {
+              "type": "boolean"
+            },
+            "expanded": {
+              "type": "boolean"
+            },
+            "pressed": {
+              "type": "boolean"
+            },
+            "focused": {
+              "type": "boolean"
+            },
+            "hidden": {
+              "type": "boolean"
+            },
+            "secure": {
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "rect": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "y": {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "attributes": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "states": {
+                "properties": {
+                  "secure": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "secure"
+                ]
+              }
+            },
+            "required": [
+              "states"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "value"
+                  ]
+                },
+                {
+                  "required": [
+                    "text"
+                  ]
+                },
+                {
+                  "required": [
+                    "attributes"
+                  ]
+                },
+                {
+                  "required": [
+                    "selection"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "screenshot": {
+      "type": "object",
+      "properties": {
+        "base64": {
+          "type": "string",
+          "maxLength": 33554432,
+          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        },
+        "mimeType": {
+          "const": "image/png"
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 16
+        },
+        "masked": {
+          "const": true
+        },
+        "maskedRegionCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "base64",
+        "width",
+        "height",
+        "mimeType",
+        "masked",
+        "maskedRegionCount"
+      ],
+      "additionalProperties": false
+    },
+    "initialization": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "\\S"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "tap",
+              "doubleTap",
+              "secondaryTap",
+              "longPress",
+              "fill",
+              "clear",
+              "press",
+              "check",
+              "uncheck",
+              "focus",
+              "hover",
+              "scrollIntoView",
+              "selectOption",
+              "setInputFiles",
+              "dragTo",
+              "swipe"
+            ]
+          }
+        },
+        "keyboard": {
+          "type": "boolean"
+        },
+        "screenshots": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "name",
+        "version",
+        "actions",
+        "keyboard",
+        "screenshots"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "$ref": "#/$defs/node"
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 32768
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 32768
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "location": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "screenshot": {
+          "$ref": "#/$defs/screenshot"
+        }
+      },
+      "required": [
+        "root",
+        "viewport"
+      ],
+      "additionalProperties": false
+    },
+    "request": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "initialize"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "protocolVersion": {
+                  "const": 1
+                },
+                "token": {
+                  "type": "string",
+                  "minLength": 16,
+                  "maxLength": 256
+                }
+              },
+              "required": [
+                "protocolVersion",
+                "token"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "snapshot"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "pixels": {
+                  "type": "boolean"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "perform"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "$ref": "#/$defs/nodeRef"
+                },
+                "action": {
+                  "$ref": "#/$defs/action"
+                }
+              },
+              "required": [
+                "ref",
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "keyboard.type"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "maxLength": 65536
+                },
+                "replace": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "text",
+                "replace"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "keyboard.press"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "maxLength": 65536
+                }
+              },
+              "required": [
+                "key"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "screenshot"
+            },
+            "params": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "shutdown"
+            },
+            "params": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "result": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/initialization"
+                },
+                {
+                  "$ref": "#/$defs/snapshot"
+                },
+                {
+                  "$ref": "#/$defs/screenshot"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "integer"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "enum": [
+                        "NODE_STALE",
+                        "FRAME_NOT_FOUND",
+                        "FRAME_AMBIGUOUS",
+                        "NOT_ACTIONABLE",
+                        "ACTION_MAY_HAVE_COMMITTED",
+                        "OPERATION_TIMEOUT",
+                        "CANCELLED",
+                        "UNSUPPORTED_CAPABILITY",
+                        "INVALID_STATE",
+                        "ENGINE_FAILURE"
+                      ]
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "code"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "errorCode": {
+      "enum": [
+        "NODE_STALE",
+        "FRAME_NOT_FOUND",
+        "FRAME_AMBIGUOUS",
+        "NOT_ACTIONABLE",
+        "ACTION_MAY_HAVE_COMMITTED",
+        "OPERATION_TIMEOUT",
+        "CANCELLED",
+        "UNSUPPORTED_CAPABILITY",
+        "INVALID_STATE",
+        "ENGINE_FAILURE"
+      ]
+    }
+  }
+}

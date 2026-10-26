@@ -1,4 +1,4 @@
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { SemanticNode } from '../../src/engine/surface.ts';
 import { defineEngine, type EngineHandle } from '../../src/engine/index.ts';
 import { createEngineSession } from '../../src/engine/session.ts';
@@ -45,6 +45,29 @@ function createAttributeFixture(node: SemanticNode) {
 }
 
 describe('attribute and focus expectations', () => {
+  it('preserves whitespace in input values and attributes for strings and regexps', async () => {
+    const raw = ' a  b\n';
+    const screen = createAttributeFixture({
+      ref: { id: 'node-1', revision: '' },
+      role: 'textbox',
+      value: raw,
+      text: raw,
+      attributes: { 'data-value': raw, class: 'card  active' },
+    });
+    const locator = screen.getByRole('textbox');
+    await expectFixture(locator).toHaveValue(raw);
+    await expectFixture(locator).toHaveAttribute('data-value', raw);
+    const pattern = /^ a  b\n$/g;
+    await expectFixture(locator).toHaveValue(pattern);
+    await expectFixture(locator).toHaveValue(pattern);
+    await expectFixture(locator).toHaveAttribute('data-value', pattern);
+    await expect(expectFixture(locator).toHaveValue('a b', { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(locator).toHaveAttribute('data-value', 'a b', { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(locator).toHaveAttribute('class', 'card active', { timeout: 0 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expectFixture(locator).toHaveText('a b');
+    await expectFixture(locator).toContainText('a b');
+  });
+
   it('matches attribute presence and values without normalizing whitespace', async () => {
     const screen = createAttributeFixture({
       ref: { id: 'node-1', revision: '' },

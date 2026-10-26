@@ -7,6 +7,10 @@ function error(category: SerializedError['category']): SerializedError {
 }
 
 describe('isRetryEligible', () => {
+  it('does not retry a test failure or timeout after cleanup fails', () => {
+    expect(isRetryEligible({ status: 'timed-out', cleanup: 'failed' })).toBe(false);
+    expect(isRetryEligible({ status: 'failed', error: error('test'), cleanup: 'forced' })).toBe(false);
+  });
   it('accepts timeouts regardless of error category', () => {
     expect(isRetryEligible({ status: 'timed-out' })).toBe(true);
     expect(isRetryEligible({ status: 'timed-out', error: error('infrastructure') })).toBe(true);

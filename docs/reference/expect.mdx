@@ -26,7 +26,7 @@ before passing its result to `expect`.
 | --- | --- |
 | Default timeout | `config.assertionTimeout`, 5000 ms |
 | Override | `{ timeout }` in milliseconds, on every locator and `web` matcher |
-| Negation grace window | A negated matcher passes after 1000 ms of continuous truth, or after the whole budget when `{ timeout }` is shorter than that |
+| Negation grace window | A negated matcher passes after 1000 ms of continuous truth. A shorter timeout uses the budget remaining after its initial observation; subsequent resets must still satisfy that same grace window. |
 | Failure code | `ASSERTION_FAILED`, exit code 1 |
 
 Locator strictness: except for `toHaveCount`, a positive matcher requires
@@ -34,9 +34,18 @@ exactly one match; zero matches keep polling until the timeout, and multiple
 matches fail immediately with `LOCATOR_AMBIGUOUS`. `toBeHidden` and negated
 visibility accept zero matches.
 
-Text comparison is normalized: leading and trailing whitespace is trimmed and
-each run of whitespace collapses to one space. A `TextMatch` string matches
-exactly; a `RegExp` uses its own source and flags.
+A stale reference is not evidence that a node is absent. The runner resolves
+retryable stale reads again within the assertion's deadline; an unrecoverable
+or expired stale read fails instead of satisfying a hidden assertion.
+
+Polling stops before starting another observation after the deadline. A known
+mismatch remains `ASSERTION_FAILED`; a backend failure during an observation
+keeps its own error code and is not converted into an assertion mismatch.
+
+Screen-text and accessible-name comparisons normalize whitespace: leading and
+trailing whitespace is trimmed and each run collapses to one space. Input
+values and attributes preserve their exact whitespace. A `TextMatch` string
+matches exactly; a `RegExp` uses its own source and flags.
 
 ## Locator matchers
 
@@ -77,8 +86,11 @@ export interface AsyncExpectation {
 ```
 
 A missing `checked`, `selected`, or `expanded` state counts as `false`; a node
-is enabled unless it reports `disabled`. `toHaveAttribute(name, value)`
-compares like `toHaveText`, after normalization.
+is enabled unless it reports `disabled`. `toHaveValue` and
+`toHaveAttribute(name, value)` compare raw values: strings use exact equality
+and regexps see the unmodified value. For example, `'a  b'` differs from
+`'a b'`. This also applies to `toHaveAttribute('class', value)`; use the
+engine's `toHaveClass` matcher when you want a normalized class list.
 
 ```ts
 await expect(screen.getByRole('status')).toHaveText('Saved');

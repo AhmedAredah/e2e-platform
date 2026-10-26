@@ -93,3 +93,16 @@ instead of the local file, but refreshed tokens are not saved back to that
 variable. A value containing a rotating refresh token cannot be reused
 indefinitely. See [CLI reference](/reference/cli#e2e-login) for all sign-in
 options.
+
+## Cancellation and diagnostics
+
+OAuth token exchanges, refreshes and individual device requests have a
+30-second deadline that includes reading the response body. Device polls also
+stop at the code's expiry. A cancelled model call stops waiting immediately;
+other calls can still complete a shared refresh. A custom OAuth provider receives
+an optional signal in `refresh(credentials, signal)` and should honor it.
+Embedders using `createOAuthFetch` can set `refreshTimeoutMs`.
+
+Error responses are bounded to 64 KiB. Diagnostic messages remove submitted
+grant values and control characters and are capped at 512 characters. Unknown
+or transformed secrets in arbitrary output cannot be inferred.

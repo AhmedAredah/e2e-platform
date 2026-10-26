@@ -38,12 +38,12 @@ QJsonObject QuickAdapter::node(QObject* object, QObject* rootObject, int depth, 
         if (secure) { states["secure"] = true; node["inputPurpose"] = "password"; name.clear(); }
         else {
             const QString text = clean(item->property("text").toString());
-            if (!text.isEmpty()) { node["text"] = text; if (name.isEmpty()) name = text.left(256); }
+            if (!text.isEmpty()) { node["text"] = text; if (name.isEmpty()) name = clean(text, 256); }
             if (role == "textbox") node["value"] = text;
             if (role == "combobox") node["value"] = clean(item->property("currentText").toString());
             node["attributes"] = QJsonObject{{"class", clean(className, 256)}, {"editable", editable ? "true" : "false"}, {"placeholder", clean(item->property("placeholderText").toString())}};
         }
-        if (!name.isEmpty()) node["name"] = name.left(256);
+        if (!name.isEmpty()) node["name"] = clean(name, 256);
         node["states"] = states;
         node["rect"] = rectJson(item->mapRectToScene(item->boundingRect()));
         if (!registry.reserveNode(node)) return {};
@@ -88,6 +88,19 @@ void QuickAdapter::click(QObject* object, Qt::MouseButton button, bool twice, bo
     auto* item = static_cast<QQuickItem*>(object);
     QPointer<QQuickWindow> window(item->window());
     const QPoint point = item->mapToScene(item->boundingRect().center()).toPoint();
+    QQuickItem* hit = window->contentItem();
+    for (int depth = 0; ; ++depth) {
+        if (depth > MaxDepth) throw Failure("NOT_ACTIONABLE", "Qt Quick hit-test depth exceeds limit");
+        const QPointF local = hit->mapFromScene(point);
+        QQuickItem* child = hit->childAt(local.x(), local.y());
+        if (!child) break;
+        hit = child;
+    }
+    // A visual overlay is rejected even if it might forward input. Public Qt
+    // APIs cannot prove arbitrary event-filter or pointer-handler behavior.
+    if (hit != item && !item->isAncestorOf(hit)) throw Failure("NOT_ACTIONABLE", "Qt Quick target is covered by another item");
+    QQuickItem* grabber = window->mouseGrabberItem();
+    if (grabber && grabber != item && !item->isAncestorOf(grabber)) throw Failure("NOT_ACTIONABLE", "another Qt Quick item owns pointer input");
     if (hover) { QTest::mouseMove(window, point); return; }
     if (twice) { QTest::mouseDClick(window, button, Qt::NoModifier, point); return; }
     QTest::mousePress(window, button, Qt::NoModifier, point);

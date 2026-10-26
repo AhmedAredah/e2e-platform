@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { opaqueIdentity } from '../../src/internal/published-redaction.ts';
 import {
   AiTraceCollector,
   AiTraceRecorder,
@@ -74,7 +75,7 @@ describe('AiTraceRecorder', () => {
     const run = runs[0]!;
     expect(run.function_id).toBe('todos › adds one · agent.act "add a todo"');
     expect(run.parent_run_id).toBeNull();
-    expect(run.e2e).toEqual({ ...SCOPE, api: 'agent.act', label: 'add a todo' });
+    expect(run.e2e).toEqual({ ...SCOPE, testId: opaqueIdentity(SCOPE.testId), api: 'agent.act', label: 'add a todo' });
     const step = steps[0]!;
     expect(step.run_id).toBe(run.id);
     expect(step.step_number).toBe(1);

@@ -24,6 +24,8 @@ QString accessibleName(QObject* object);
 QString widgetRole(QWidget* widget);
 QPoint widgetPoint(QWidget* widget);
 bool secureObject(QObject* object);
+/** Retain helper-owned secrecy until destruction, independently of application properties. */
+void markSensitiveObject(QObject* object);
 struct ParsedKey { Qt::Key key; Qt::KeyboardModifiers modifiers; QString text; };
 struct KeyboardPlatform { bool macos; bool dontSwapControlAndMeta; };
 ParsedKey parseKey(QString value);

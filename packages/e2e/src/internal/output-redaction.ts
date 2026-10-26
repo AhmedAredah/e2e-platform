@@ -2,6 +2,13 @@
 import { StringDecoder } from 'node:string_decoder';
 import { processSecrets, type SecretLedger } from './redact.ts';
 
+const originalWriters = new WeakMap<NodeJS.WriteStream, NodeJS.WriteStream['write']>();
+
+/** Writes already-sanitized structured output without filtering its serialized protocol bytes. */
+export function writeStructuredOutput(stream: NodeJS.WriteStream, chunk: string | Uint8Array, done?: (error?: Error | null) => void): boolean {
+  return (originalWriters.get(stream) ?? stream.write).call(stream, chunk, 'utf8', done);
+}
+
 /** Keeps only an undecidable suffix so split writes never expose a known secret prefix. */
 export class StreamingRedactor {
   private pending = '';
@@ -33,12 +40,39 @@ export class StreamingRedactor {
     return this.ledger.redact(safe);
   }
 
-  /** Finalizes a logical stream at a unit boundary or process shutdown. */
-  flush(): string {
-    const safe = this.ledger.redact(this.pending + this.decoder.end());
+  /**
+   * Finalizes a logical stream. At an ownership boundary, omit a suffix that
+   * could begin a secret; a later owner's write must not complete exposed text.
+   */
+  flush(discardIncomplete = false): string {
+    let text = this.ledger.redact(this.pending + this.decoder.end());
+    if (discardIncomplete) {
+      let withheld = 0;
+      for (const form of this.ledger.forms()) {
+        if (form.length > 65_536) { text = ''; break; }
+        withheld = Math.max(withheld, incompleteSuffixLength(text, form));
+      }
+      if (withheld > 0) text = text.slice(0, -withheld);
+    }
     this.pending = '';
-    return safe;
+    return text;
   }
+}
+
+/** Longest suffix that is a strict prefix of a secret, in linear time. */
+function incompleteSuffixLength(text: string, form: string): number {
+  const prefix = new Uint32Array(form.length);
+  for (let index = 1, matched = 0; index < form.length; index += 1) {
+    while (matched > 0 && form[index] !== form[matched]) matched = prefix[matched - 1]!;
+    if (form[index] === form[matched]) matched += 1;
+    prefix[index] = matched;
+  }
+  let matched = 0;
+  for (let index = Math.max(0, text.length - form.length + 1); index < text.length; index += 1) {
+    while (matched > 0 && text[index] !== form[matched]) matched = prefix[matched - 1]!;
+    if (text[index] === form[matched]) matched += 1;
+  }
+  return matched;
 }
 
 /** Holds config-module console output until its static declarations have been registered. */
@@ -75,6 +109,8 @@ export async function protectProcessOutput<T>(work: () => Promise<T>): Promise<T
   const restore: (() => void)[] = [];
   for (const stream of [process.stdout, process.stderr]) {
     const original = stream.write;
+    const previous = originalWriters.get(stream);
+    originalWriters.set(stream, previous ?? original);
     const filter = new StreamingRedactor(processSecrets);
     stream.write = ((chunk: string | Uint8Array, encoding?: BufferEncoding | ((error?: Error | null) => void), callback?: (error?: Error | null) => void): boolean => {
       const done = typeof encoding === 'function' ? encoding : callback;
@@ -83,7 +119,13 @@ export async function protectProcessOutput<T>(work: () => Promise<T>): Promise<T
       if (done !== undefined) queueMicrotask(() => done());
       return true;
     }) as NodeJS.WriteStream['write'];
-    restore.push(() => { stream.write = original; const tail = filter.flush(); if (tail !== '') original.call(stream, tail); });
+    restore.push(() => {
+      stream.write = original;
+      if (previous === undefined) originalWriters.delete(stream);
+      else originalWriters.set(stream, previous);
+      const tail = filter.flush();
+      if (tail !== '') original.call(stream, tail);
+    });
   }
   try { return await work(); } finally { for (const finish of restore) finish(); }
 }

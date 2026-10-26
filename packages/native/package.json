@@ -1,13 +1,13 @@
 {
   "name": "@e2e-cpp/native",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Native desktop engine for e2e over an authenticated local bridge",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   },
   "exports": {
     ".": {
@@ -17,6 +17,7 @@
   },
   "files": [
     "dist",
+    "schema",
     "PROTOCOL.md",
     "NOTICE",
     "LICENSE"
@@ -32,9 +33,10 @@
     "@e2e-cpp/process": "workspace:*"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.1.0 <1.0.0"
+    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
     "@types/node": "26.6.2",
     "@e2e-cpp/core": "workspace:*",
     "typescript": "7.0.2",

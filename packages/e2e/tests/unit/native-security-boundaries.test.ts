@@ -1,5 +1,5 @@
 /** Independent regressions for the MIT fork's runner-owned secret boundaries. */
-import { mkdtemp, readFile, writeFile, access } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, access, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -59,6 +59,14 @@ describe('streaming output', () => {
     ledger.register(SENTINEL, SENTINEL);
     expect(stream.write(SENTINEL.slice(0, 8)) + stream.write(SENTINEL.slice(8)) + stream.flush()).not.toContain(SENTINEL);
   });
+  it('withholds undecidable prefixes at ownership boundaries while retaining complete redacted values', () => {
+    const stream = new StreamingRedactor(new SecretLedger([['token', SENTINEL], ['repeat', 'aaaa']]));
+    const first = stream.write(`first ${SENTINEL.slice(0, 12)}`) + stream.flush(true);
+    const second = stream.write(`${SENTINEL.slice(12)} second`) + stream.flush(true);
+    expect(first).toBe('first ');
+    expect(first + second).not.toContain(SENTINEL);
+    expect(stream.write('aaaa') + stream.flush(true)).toBe('<secret:repeat>');
+  });
 });
 
 it('encrypts protection with session state and restores both ledger history and pixel taint', async () => {
@@ -67,7 +75,9 @@ it('encrypts protection with session state and restores both ledger history and 
   try {
     const source = { ledger: new SecretLedger([['token', SENTINEL], ['token', `${SENTINEL}-rotated`]]), taint: { value: true } };
     await store.save('member', identity, { format: 'fake', version: 1, data: { token: SENTINEL } }, snapshotProtection(source));
-    expect(await readFile(path.join(root, 'run', 'native--member.json'), 'utf8')).not.toContain(SENTINEL);
+    const [saved] = await readdir(path.join(root, 'run'));
+    expect(saved).toBeDefined();
+    expect(await readFile(path.join(root, 'run', saved!), 'utf8')).not.toContain(SENTINEL);
     const restored = { ledger: new SecretLedger(), taint: { value: false } };
     restoreProtection(restored, await store.loadProtection('member', identity));
     expect(restored.taint.value).toBe(true);

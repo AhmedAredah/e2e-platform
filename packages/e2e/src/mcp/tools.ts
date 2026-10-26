@@ -18,6 +18,7 @@ import type { JSONSchema7, Tool, ToolExecutionOptions, ToolSet } from 'ai';
 import type { z } from 'zod';
 import { aiSdk, loadAiSdk } from '../agent/ai-sdk.ts';
 import { ConfigurationError, errorMessage, E2EError, isForeignE2EError } from '../internal/errors.ts';
+import { processSecrets } from '../internal/redact.ts';
 
 /** One MCP content part this server emits. */
 export type McpContent =
@@ -114,7 +115,7 @@ function toolDescription(name: string, tool: ToolSet[string]): string {
 const ABBREVIATIONS = /\b(?:e\.g|i\.e|etc|vs)\./gi;
 
 function firstSentence(text: string): string {
-  const flat = text.replaceAll(/\s+/g, ' ').trim();
+  const flat = processSecrets.redact(text).replaceAll(/\s+/g, ' ').trim();
   const guarded = flat.replaceAll(ABBREVIATIONS, (match) => match.replaceAll('.', '\u0000'));
   const end = guarded.search(/[.!?](?:\s|$)/);
   const sentence = (end === -1 ? guarded : guarded.slice(0, end + 1)).replaceAll('\u0000', '.');

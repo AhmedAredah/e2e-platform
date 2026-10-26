@@ -652,6 +652,7 @@ async function runProtected(options: RunOptions): Promise<RunOutcome> {
         interruptSignal: interrupted,
         forceSignal: forceController.signal,
         forceGraceMs: config.cleanupTimeout + FORCE_KILL_MARGIN_MS,
+        shutdownGraceMs: config.cleanupTimeout + FORCE_KILL_MARGIN_MS,
         events: {
           onResult: (result) => {
             results.push(result);

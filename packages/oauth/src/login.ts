@@ -2,6 +2,7 @@
 
 import { getProvider, type LoginOptionsById, type ProviderId } from './providers.ts';
 import { defaultCredentialStore } from './store.ts';
+import { OAuthError } from './errors.ts';
 import type { CredentialStore, OAuthCredentials, OAuthLoginCallbacks } from './types.ts';
 
 export interface LoginInput<Id extends ProviderId> {
@@ -13,6 +14,7 @@ export interface LoginInput<Id extends ProviderId> {
 export async function login<Id extends ProviderId>(providerId: Id, input: LoginInput<Id>): Promise<OAuthCredentials> {
   const store = input.store ?? defaultCredentialStore();
   const credentials = await getProvider(providerId).login(input.callbacks, input.options);
+  if (input.callbacks.signal?.aborted) throw new OAuthError('CANCELLED', 'the login was cancelled');
   await store.set(providerId, credentials);
   return credentials;
 }

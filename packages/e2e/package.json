@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/core",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "SDK, runner, and CLI for agentic end-to-end testing",
   "keywords": [
     "@e2e-cpp/core",
@@ -17,7 +17,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "provenance": false,
-    "tag": "beta"
+    "tag": "rc"
   },
   "type": "module",
   "exports": {

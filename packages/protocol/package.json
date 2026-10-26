@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/protocol",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Bounded HTTP protocol fixtures for e2e tests",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
     "prepublishOnly": "node ../../scripts/check-dist.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -33,6 +33,6 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   }
 }

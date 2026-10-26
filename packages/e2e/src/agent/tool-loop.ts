@@ -16,6 +16,7 @@ import type { LanguageModel, ModelMessage, StepResult, ToolSet } from 'ai';
 import { asSdkLanguageModel, type SdkLanguageModel } from '../config/agent.ts';
 import { loadAiSdk, type AiSdk } from './ai-sdk.ts';
 import { withHint } from '../internal/errors.ts';
+import { processSecrets } from '../internal/redact.ts';
 import type { ProviderOptions } from '../types.ts';
 import { credentialHint, isAbort, TRANSPORT_RETRIES } from './model/sdk.ts';
 import { isContextOverflow } from './model/overflow.ts';
@@ -642,6 +643,7 @@ function shrinkForOverflow(messages: ModelMessage[]): ModelMessage[] {
 }
 
 function clip(text: string): string {
+  text = processSecrets.redact(text);
   if (text.length <= OVERFLOW_TEXT_CLIP_CHARS) return text;
   const cut = text.length - OVERFLOW_TEXT_CLIP_CHARS;
   return `${text.slice(0, OVERFLOW_TEXT_CLIP_CHARS)}\n[${String(cut)} more characters cut: the request exceeded the model's context window; observe again for what is missing]`;
@@ -664,6 +666,7 @@ function textChars(messages: readonly ModelMessage[]): number {
 }
 
 function truncate(text: string, max: number): string {
+  text = processSecrets.redact(text);
   return text.length <= max ? text : `${text.slice(0, max)}…[truncated]`;
 }
 

@@ -64,6 +64,12 @@ Setup tests run before any ordinary test for the same target. If a setup
 fails, its dependents are skipped with cause `setup-failed` and unrelated
 tests keep going.
 
+A setup publishes its staged snapshots only after its attempt and cleanup
+complete successfully. Failed cleanup skips its dependents even if the setup
+body passed. Session filenames hash the target/name tuple, so names containing
+separators cannot overwrite another target's session. These files are private
+to one run and are removed at cleanup; they are not a persistent interchange API.
+
 <Note>
 `session.save()` saves the current state without checking whether sign-in
 succeeded. Assert the post-login URL or a signed-in element before saving.

@@ -195,10 +195,29 @@ describe('LocatorEngine perform contract', () => {
 });
 
 describe('LocatorEngine read contract', () => {
-  it('collapses stale reads to a zero-count sample so assertion polls re-resolve', async () => {
-    const { engine } = makeEngine({ read: ['stale'] });
+  it('re-resolves retryable stale reads without reporting absence', async () => {
+    const { engine, calls } = makeEngine({ read: ['stale-retryable'] });
     const sample = await engine.tryRead(EXPRESSION, new Deadline(5_000));
-    expect(sample).toEqual({ node: null, count: 0 });
+    expect(sample).toEqual({ node: NODE, count: 1 });
+    expect(calls.resolve).toBe(2);
+  });
+
+  it('reports non-retryable stale reads as errors, not absence', async () => {
+    const { engine, calls } = makeEngine({ read: ['stale'] });
+    await expect(engine.tryRead(EXPRESSION, new Deadline(5_000))).rejects.toMatchObject({ code: 'LOCATOR_NOT_FOUND' });
+    expect(calls.resolve).toBe(1);
+  });
+
+  it('does not accept a stale read after its deadline as absence', async () => {
+    const { engine, calls } = makeEngine({ read: ['stale-retryable'] });
+    await expect(engine.tryRead(EXPRESSION, new Deadline(0))).rejects.toMatchObject({ code: 'LOCATOR_NOT_FOUND' });
+    expect(calls.resolve).toBe(1);
+  });
+
+  it('returns absence after a successful zero-match query without polling', async () => {
+    const { engine, calls } = makeEngine({ resolve: [() => []] });
+    await expect(engine.tryRead(EXPRESSION, new Deadline(5_000))).resolves.toEqual({ node: null, count: 0 });
+    expect(calls).toEqual({ resolve: 1, read: 0, perform: 0 });
   });
 
   it('translates non-stale read failures', async () => {
@@ -366,12 +385,9 @@ describe('LocatorEngine retries a cross-realm driver failure', () => {
     expect(calls.resolve).toBe(2);
   });
 
-  it('treats a foreign stale read as zero matches while polling', async () => {
+  it('preserves a foreign stale read as an error rather than absence', async () => {
     const { engine } = makeEngine({ read: ['foreign-stale'] });
-    await expect(engine.tryRead(EXPRESSION, new Deadline(0))).resolves.toEqual({
-      node: null,
-      count: 0,
-    });
+    await expect(engine.tryRead(EXPRESSION, new Deadline(0))).rejects.toMatchObject({ code: 'LOCATOR_NOT_FOUND' });
   });
 
   it('re-resolves after a foreign stale perform', async () => {

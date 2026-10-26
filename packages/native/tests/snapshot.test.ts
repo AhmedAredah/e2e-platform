@@ -21,11 +21,20 @@ describe('native source-data validation', () => {
     expect(() => parseSnapshot({ ...base, treeUnavailable: true }, true)).toThrow(/unavailable semantic/);
   });
 
-  it('keeps locator reads complete while bounding observation text', () => {
+  it('keeps locator reads complete and omits oversized observation fields without exposing prefixes', () => {
     const snapshot = { ...base, root: { ...root, name: 'n'.repeat(500), text: 't'.repeat(1000) } };
-    expect(parseSnapshot(snapshot, true).snapshot.root.name).toHaveLength(256);
-    expect(parseSnapshot(snapshot, true).snapshot.root.text).toHaveLength(512);
+    expect(parseSnapshot(snapshot, true).snapshot.root.name).toBe('[omitted: text exceeds limit]');
+    expect(parseSnapshot(snapshot, true).snapshot.root.text).toBe('[omitted: text exceeds limit]');
     expect(parseSnapshot(snapshot, false).snapshot.root.text).toHaveLength(1000);
+  });
+
+  it.each([['name', 256], ['text', 512]] as const)('never forwards a secret prefix crossing the %s boundary', (field, limit) => {
+    const value = 'native-boundary-secret-Q29-123456';
+    const full = 'x'.repeat(limit - 12) + value;
+    const observed = parseSnapshot({ ...base, root: { ...root, [field]: full } }, true).snapshot.root;
+    expect(observed[field]).not.toContain(value.slice(0, 12));
+    expect(observed[field]).toBe('[omitted: text exceeds limit]');
+    expect(parseSnapshot({ ...base, root: { ...root, [field]: full } }, false).snapshot.root[field]).toBe(full);
   });
 
   it('refuses unmasked pixels and dishonest secure-region coverage', () => {

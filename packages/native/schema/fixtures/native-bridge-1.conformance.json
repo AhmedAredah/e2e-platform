@@ -1,0 +1,440 @@
+[
+  {
+    "name": "ephemeral readiness",
+    "definition": "readiness",
+    "valid": true,
+    "value": {
+      "port": 45678
+    }
+  },
+  {
+    "name": "initialize request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "initialize",
+      "params": {
+        "protocolVersion": 1,
+        "token": "fixture-token-never-production"
+      }
+    }
+  },
+  {
+    "name": "snapshot request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "snapshot",
+      "params": {
+        "pixels": true
+      }
+    }
+  },
+  {
+    "name": "perform request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "perform",
+      "params": {
+        "ref": {
+          "id": "input",
+          "revision": "r1"
+        },
+        "action": {
+          "kind": "fill",
+          "value": "fixture-only",
+          "sensitive": true
+        }
+      }
+    }
+  },
+  {
+    "name": "keyboard.type request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "keyboard.type",
+      "params": {
+        "text": "Ada",
+        "replace": false
+      }
+    }
+  },
+  {
+    "name": "keyboard.press request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 5,
+      "method": "keyboard.press",
+      "params": {
+        "key": "ControlOrMeta+A"
+      }
+    }
+  },
+  {
+    "name": "screenshot request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 6,
+      "method": "screenshot",
+      "params": {}
+    }
+  },
+  {
+    "name": "shutdown request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 7,
+      "method": "shutdown",
+      "params": {}
+    }
+  },
+  {
+    "name": "initialization response",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "protocolVersion": 1,
+        "name": "reference-fixture",
+        "version": "1.0.0",
+        "actions": [
+          "tap",
+          "fill",
+          "clear"
+        ],
+        "keyboard": true,
+        "screenshots": true
+      }
+    }
+  },
+  {
+    "name": "snapshot response",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "root": {
+          "ref": {
+            "id": "root",
+            "revision": ""
+          },
+          "role": "window",
+          "children": [
+            {
+              "ref": {
+                "id": "secret",
+                "revision": ""
+              },
+              "role": "textbox",
+              "name": "Password",
+              "states": {
+                "secure": true
+              },
+              "inputPurpose": "password"
+            }
+          ]
+        },
+        "viewport": {
+          "width": 1,
+          "height": 1
+        },
+        "screenshot": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==",
+          "width": 1,
+          "height": 1,
+          "mimeType": "image/png",
+          "scale": 1,
+          "masked": true,
+          "maskedRegionCount": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "screenshot response",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==",
+        "width": 1,
+        "height": 1,
+        "mimeType": "image/png",
+        "scale": 1,
+        "masked": true,
+        "maskedRegionCount": 1
+      }
+    }
+  },
+  {
+    "name": "mutation response",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": null
+    }
+  },
+  {
+    "name": "structured stale error",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "error": {
+        "code": -32000,
+        "message": "stale object",
+        "data": {
+          "code": "NODE_STALE"
+        }
+      }
+    }
+  },
+  {
+    "name": "secure snapshot",
+    "definition": "snapshot",
+    "valid": true,
+    "value": {
+      "root": {
+        "ref": {
+          "id": "root",
+          "revision": ""
+        },
+        "role": "window",
+        "children": [
+          {
+            "ref": {
+              "id": "secret",
+              "revision": ""
+            },
+            "role": "textbox",
+            "name": "Password",
+            "states": {
+              "secure": true
+            },
+            "inputPurpose": "password"
+          }
+        ]
+      },
+      "viewport": {
+        "width": 1,
+        "height": 1
+      },
+      "screenshot": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==",
+        "width": 1,
+        "height": 1,
+        "mimeType": "image/png",
+        "scale": 1,
+        "masked": true,
+        "maskedRegionCount": 1
+      }
+    }
+  },
+  {
+    "name": "secure node cannot expose value",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "secret",
+        "revision": ""
+      },
+      "states": {
+        "secure": true
+      },
+      "value": "must-not-escape"
+    }
+  },
+  {
+    "name": "secure node cannot expose attributes",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "secret",
+        "revision": ""
+      },
+      "states": {
+        "secure": true
+      },
+      "attributes": {
+        "contents": "must-not-escape"
+      }
+    }
+  },
+  {
+    "name": "secure node cannot expose descendants",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "secret",
+        "revision": ""
+      },
+      "states": {
+        "secure": true
+      },
+      "children": [
+        {
+          "ref": {
+            "id": "child",
+            "revision": ""
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "unmasked screenshot",
+    "definition": "screenshot",
+    "valid": false,
+    "value": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAX+XDSwAAAABJRU5ErkJggg==",
+      "width": 1,
+      "height": 1,
+      "mimeType": "image/png",
+      "scale": 1,
+      "masked": false,
+      "maskedRegionCount": 1
+    }
+  },
+  {
+    "name": "unsupported protocol version",
+    "definition": "initialization",
+    "valid": false,
+    "value": {
+      "protocolVersion": 2,
+      "name": "reference-fixture",
+      "version": "1.0.0",
+      "actions": [
+        "tap",
+        "fill",
+        "clear"
+      ],
+      "keyboard": true,
+      "screenshots": true
+    }
+  },
+  {
+    "name": "unknown negotiated action",
+    "definition": "initialization",
+    "valid": false,
+    "value": {
+      "protocolVersion": 1,
+      "name": "reference-fixture",
+      "version": "1.0.0",
+      "actions": [
+        "eval"
+      ],
+      "keyboard": true,
+      "screenshots": true
+    }
+  },
+  {
+    "name": "mutation acknowledgement shape",
+    "definition": "response",
+    "valid": false,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "success": false
+      }
+    }
+  },
+  {
+    "name": "response cannot mix result/error",
+    "definition": "response",
+    "valid": false,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": null,
+      "error": {
+        "code": -32000,
+        "message": "error",
+        "data": {
+          "code": "ENGINE_FAILURE"
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown method",
+    "definition": "request",
+    "valid": false,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "eval",
+      "params": {}
+    }
+  },
+  {
+    "name": "notification without id",
+    "definition": "request",
+    "valid": false,
+    "value": {
+      "jsonrpc": "2.0",
+      "method": "shutdown",
+      "params": {}
+    }
+  },
+  {
+    "name": "negative request id",
+    "definition": "request",
+    "valid": false,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": -1,
+      "method": "shutdown",
+      "params": {}
+    }
+  },
+  {
+    "name": "fill requires sensitive flag",
+    "definition": "action",
+    "valid": false,
+    "value": {
+      "kind": "fill",
+      "value": "x"
+    }
+  },
+  {
+    "name": "select option has one selector",
+    "definition": "action",
+    "valid": false,
+    "value": {
+      "kind": "selectOption",
+      "value": {
+        "label": "one",
+        "index": 0
+      }
+    }
+  }
+]

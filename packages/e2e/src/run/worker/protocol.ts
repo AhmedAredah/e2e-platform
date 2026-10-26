@@ -211,6 +211,103 @@ export type WorkerToMain =
   | FatalMessage
   | RunAbortMessage;
 
+/** Private process transport; plaintext protection state must never enter run events. */
+export interface WorkerIpcEnvelope {
+  readonly message: WorkerToMain;
+  readonly secrets: readonly (readonly [name: string, value: string])[];
+}
+
+/** Validates the private envelope before installing protection and dispatching its public-free message. */
+export function validateWorkerEnvelope(value: unknown): value is WorkerIpcEnvelope {
+  return isRecord(value) && validateWorkerMessage(value['message']) &&
+    arrayOf(value['secrets'], (entry) => Array.isArray(entry) && entry.length === 2 && entry.every((part) => typeof part === 'string'));
+}
+
+const RESULT_STATUSES = new Set(['passed', 'flaky', 'failed', 'timed-out', 'interrupted', 'skipped']);
+const ATTEMPT_STATUSES = new Set(['passed', 'failed', 'timed-out', 'interrupted', 'skipped']);
+const STEP_STATUSES = new Set(['passed', 'failed', 'blocked', 'timed-out', 'cancelled']);
+
+/** Checks the control and verdict fields before the scheduler trusts a worker message. */
+export function validateWorkerMessage(value: unknown): value is WorkerToMain {
+  if (!isRecord(value)) return false;
+  switch (value['type']) {
+    case 'ready': return true;
+    case 'pair-start': return strings(value, ['testId', 'agent', 'title', 'file']) &&
+      (value['serialId'] === undefined || typeof value['serialId'] === 'string');
+    case 'output': return typeof value['text'] === 'string' && oneOf(value['stream'], ['stdout', 'stderr']) &&
+      (value['pair'] === undefined || (isRecord(value['pair']) && strings(value['pair'], ['testId', 'agent'])));
+    case 'progress': return strings(value, ['testId', 'agent']) && validProgress(value['progress']);
+    case 'result': {
+      const result = value['result'];
+      return isRecord(result) && isRecord(result['test']) && strings(result['test'], ['id', 'file']) &&
+        oneOf(result['test']['kind'], ['test', 'setup']) && stringArray(result['test']['titlePath']) &&
+        typeof result['agent'] === 'string' && typeof result['selected'] === 'boolean' &&
+        oneOf(result['status'], RESULT_STATUSES) && arrayOf(result['attempts'], (item) => validAttempt(item, false));
+    }
+    case 'serial-group': {
+      const group = value['group'];
+      return isRecord(group) && strings(group, ['id', 'serialId', 'targetId', 'platform', 'agent', 'file']) &&
+        stringArray(group['titlePath']) && stringArray(group['memberTestIds']) &&
+        oneOf(group['status'], RESULT_STATUSES) && arrayOf(group['attempts'], (item) => validAttempt(item, true));
+    }
+    case 'unit-done': return typeof value['unitId'] === 'string' && validRunErrors(value['runErrors']);
+    case 'shutdown-done': return validRunErrors(value['runErrors']);
+    case 'fatal':
+    case 'run-abort': return validError(value['error']);
+    default: return false;
+  }
+}
+
+/** JSON record checks do not coerce damaged verdicts into a valid category. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+function strings(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.every((key) => typeof value[key] === 'string');
+}
+function oneOf(value: unknown, values: ReadonlySet<string> | readonly string[]): boolean {
+  return typeof value === 'string' && (Array.isArray(values) ? values.includes(value) : (values as ReadonlySet<string>).has(value));
+}
+function stringArray(value: unknown): boolean {
+  return arrayOf(value, (item) => typeof item === 'string');
+}
+function arrayOf(value: unknown, valid: (entry: unknown) => boolean): boolean {
+  return Array.isArray(value) && value.every(valid);
+}
+function validError(value: unknown): boolean {
+  return isRecord(value) && strings(value, ['code', 'message']) && typeof value['retryable'] === 'boolean' &&
+    oneOf(value['category'], ['test', 'configuration', 'infrastructure', 'internal', 'interrupted']);
+}
+function validRunErrors(value: unknown): boolean {
+  return arrayOf(value, (item) => isRecord(item) && validError(item['error']));
+}
+function validStep(value: unknown): boolean {
+  return isRecord(value) && strings(value, ['id', 'api', 'label', 'startedAt']) && oneOf(value['status'], STEP_STATUSES) &&
+    arrayOf(value['events'], (event) => isRecord(event) && oneOf(event['status'], ['passed', 'failed', 'cancelled'])) &&
+    (value['error'] === undefined || validError(value['error']));
+}
+function validAttempt(value: unknown, serial: boolean): boolean {
+  if (!isRecord(value) || !strings(value, ['id', 'startedAt']) || !oneOf(value['status'], ATTEMPT_STATUSES) ||
+      !oneOf(value['cleanup'], ['complete', 'failed', 'forced']) ||
+      !arrayOf(value['secondaryErrors'], validError) || (value['error'] !== undefined && !validError(value['error']))) return false;
+  return serial
+    ? arrayOf(value['members'], (member) => isRecord(member) && strings(member, ['id', 'testId', 'startedAt']) &&
+      oneOf(member['status'], ATTEMPT_STATUSES) && arrayOf(member['steps'], validStep) &&
+      arrayOf(member['secondaryErrors'], validError) && (member['error'] === undefined || validError(member['error'])))
+    : arrayOf(value['steps'], validStep);
+}
+function validProgress(value: unknown): boolean {
+  if (!isRecord(value) || typeof value['api'] !== 'string') return false;
+  switch (value['phase']) {
+    case 'start': return strings(value, ['kind', 'label']);
+    case 'end': return strings(value, ['kind', 'label']) && oneOf(value['status'], STEP_STATUSES);
+    case 'event': return isRecord(value['event']) && oneOf(value['event']['status'], ['passed', 'failed', 'cancelled']);
+    case 'activity': return oneOf(value['activity'], ['observe', 'model', 'action']);
+    case 'replay': return typeof value['active'] === 'boolean';
+    default: return false;
+  }
+}
+
 /** Strips the live target from a result for transport. */
 export function encodeResult(record: ResultRecord): WireResultRecord {
   const { target: _target, ...rest } = record;

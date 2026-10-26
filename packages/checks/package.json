@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/checks",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Deterministic numerical, JSON and CSV checks for native application outputs",
   "type": "module",
   "license": "MIT",
@@ -17,7 +17,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json && node ../../scripts/stamp-dist.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run",
@@ -34,6 +34,6 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   }
 }

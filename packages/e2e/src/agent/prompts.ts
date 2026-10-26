@@ -8,6 +8,7 @@
 
 import type { ExecutorPixels } from './executor.ts';
 import type { AgentObservation } from './observation.ts';
+import { processSecrets } from '../internal/redact.ts';
 
 /** Immutable agent policy version recorded in every model-backed step. */
 export const POLICY_VERSION = 'policy-0.3';
@@ -93,7 +94,7 @@ export function buildPrompt(input: PromptInput): string {
       'Your previous response was rejected. Do not repeat it.',
       ...(input.repair.rawText === undefined
         ? []
-        : [`previous response: ${input.repair.rawText.slice(0, 2000)}`]),
+        : [`previous response: ${processSecrets.redact(input.repair.rawText).slice(0, 2000)}`]),
       `validation errors: ${input.repair.issue}`,
       ...(input.repair.requiredFields === undefined || input.repair.requiredFields.length === 0
         ? ['Field paths in the errors describe the exact output shape that is required.']

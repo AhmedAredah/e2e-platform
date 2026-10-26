@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/terminal",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "PTY-backed terminal engine with real VT screen reconstruction for e2e",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
     "prepublishOnly": "node ../../scripts/check-dist.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -27,8 +27,8 @@
     "@xterm/addon-unicode11": "0.9.0"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.1.0 <1.0.0",
-    "@e2e-cpp/process": ">=0.1.0 <1.0.0",
+    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0",
+    "@e2e-cpp/process": ">=0.2.0-rc.0 <1.0.0",
     "node-pty": "^1.1.0"
   },
   "peerDependenciesMeta": {
@@ -50,6 +50,6 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public",
-    "tag": "latest"
+    "tag": "rc"
   }
 }

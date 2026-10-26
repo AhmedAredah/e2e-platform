@@ -141,7 +141,7 @@ export interface ExecutorTarget {
 
 /**
  * The action grammar. Every executor action bottoms out here, where the
- * harness enforces the deadline, the action budget, origin policy, and
+ * harness enforces the deadline, the action budget, navigation scheme policy, and
  * recording. Node ids are only valid against the newest observation; a stale
  * id fails the action rather than acting on the wrong node. Actions and
  * observations are serialized in call order: a call issued while another is
@@ -158,7 +158,7 @@ export interface ExecutorActions {
   type(target: ExecutorTarget, value: string): Promise<void>;
   /**
    * Fills one secret declared in the step's params into an input. The
-   * harness authorizes the fill (configured secret, origin policy, an
+   * harness authorizes the fill (configured and step-declared secret, an
    * editable sink; a password field for a password) and hands the plaintext straight to
    * the engine — it never passes through the executor or any model.
    */

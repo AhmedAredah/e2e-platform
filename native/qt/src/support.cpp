@@ -18,6 +18,7 @@
 #include <QKeyEvent>
 #include <QPointer>
 #include <QMetaProperty>
+#include <QSet>
 
 #ifdef E2E_QT_HAS_QUICK
 #include <QQuickItem>
@@ -33,8 +34,10 @@ void sendKeyPair(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, 
     QCoreApplication::sendEvent(target, &release);
 }
 QString clean(QString value, int limit) {
-    value.remove(QChar::Null);
-    return value.left(limit);
+    // The runner knows registered secrets; clipping here would leave prefixes
+    // that its later exact-value redaction can no longer recognize.
+    if (value.contains(QChar::Null)) return QStringLiteral("[omitted: text contains NUL]");
+    return value.size() > limit ? QStringLiteral("[omitted: text exceeds limit]") : value;
 }
 
 QJsonObject rectJson(const QRectF& rect) {
@@ -81,7 +84,29 @@ QPoint widgetPoint(QWidget* widget) {
 }
 
 namespace {
+/** Application markers cannot clear secrecy established by a sensitive fill. */
+class SensitiveObjects final : public QObject {
+public:
+    explicit SensitiveObjects(QObject* parent) : QObject(parent) {}
+    void mark(QObject* object) {
+        if (objects_.contains(object)) return;
+        objects_.insert(object);
+        QObject::connect(object, &QObject::destroyed, this, [this, object] { objects_.remove(object); });
+    }
+    bool contains(QObject* object) const { return objects_.contains(object); }
+private:
+    QSet<QObject*> objects_;
+};
+
+SensitiveObjects& sensitiveObjects() {
+    // QObject infrastructure must not outlive the application/GUI thread.
+    static QPointer<SensitiveObjects> objects;
+    if (!objects) objects = new SensitiveObjects(QCoreApplication::instance());
+    return *objects;
+}
+
 bool secureMarker(QObject* object) {
+    if (sensitiveObjects().contains(object)) return true;
     const int index = object->metaObject()->indexOfProperty("e2eSecure");
     if (index >= 0) {
         const QMetaProperty property = object->metaObject()->property(index);
@@ -92,6 +117,8 @@ bool secureMarker(QObject* object) {
     return object->property("e2eSecure").toBool();
 }
 }
+
+void markSensitiveObject(QObject* object) { sensitiveObjects().mark(object); }
 
 bool secureObject(QObject* object) {
     for (QObject* ancestor = object; ancestor; ancestor = ancestor->parent())

@@ -33,6 +33,7 @@ import {
   type WirePair,
   type WorkerToMain,
   decodeResult,
+  validateWorkerMessage,
 } from './worker/protocol.ts';
 
 export interface SchedulerEvents {
@@ -69,15 +70,14 @@ export interface RunUnitsOptions {
   readonly forceSignal: AbortSignal;
   /** Budget for a worker to dispose its engine after a forced interrupt. */
   readonly forceGraceMs: number;
+  /** Normal worker disposal budget, including time to deliver its final acknowledgement. */
+  readonly shutdownGraceMs: number;
   readonly spawn: SpawnUnitRunner;
   readonly events: SchedulerEvents;
 }
 
 /** Consecutive worker-boot failures per target before its units are failed. */
 const MAX_INIT_FAILURES = 2;
-
-/** How long a retiring or draining worker gets before it is force-killed. */
-const SHUTDOWN_GRACE_MS = 10_000;
 
 /** Runs every planned unit and streams records. */
 export async function runUnits(options: RunUnitsOptions): Promise<void> {
@@ -112,6 +112,9 @@ class SchedulerWorker {
   inFlightPair: string | undefined;
   sawFailure = false;
   becameReady = false;
+  /** Disposal completed and its final errors were delivered before exit. */
+  shutdownAcknowledged = false;
+  exitErrorReported = false;
   /** Told to tear down at once by a forced interrupt; its exit is then the one asked for. */
   terminated = false;
   private killTimer: NodeJS.Timeout | undefined;
@@ -462,7 +465,7 @@ class Scheduler {
     // sit in a queue that `isDone` waits on forever. The other callers only
     // ever retire idle workers, which never hold a queued unit.
     worker.queued = undefined;
-    worker.shutdown(SHUTDOWN_GRACE_MS);
+    worker.shutdown(this.options.shutdownGraceMs);
   }
 
   private forget(worker: SchedulerWorker): void {
@@ -479,6 +482,14 @@ class Scheduler {
   }
 
   private onMessage(worker: SchedulerWorker, message: WorkerToMain): void {
+    if (!validateWorkerMessage(message)) {
+      worker.exitErrorReported = true;
+      this.options.events.onRunError({ error: serializeError(new InfrastructureError(
+        'WORKER_PROTOCOL', 'worker sent an invalid protocol message',
+      )) });
+      worker.runner.kill();
+      return;
+    }
     switch (message.type) {
       case 'ready': {
         worker.becameReady = true;
@@ -513,7 +524,8 @@ class Scheduler {
         const state = this.targetState(worker);
         const result = decodeResult(message.result, state.target);
         worker.reported.add(pairKey(result.test.id, result.agent));
-        if (result.status !== 'passed' && result.status !== 'flaky' && result.status !== 'skipped') {
+        if ((result.status !== 'passed' && result.status !== 'flaky' && result.status !== 'skipped') ||
+          result.attempts.some((attempt) => attempt.cleanup !== 'complete')) {
           worker.sawFailure = true;
         }
         if (result.test.kind === 'setup') this.recordSetupOutcome(state, result);
@@ -521,10 +533,13 @@ class Scheduler {
         break;
       }
       case 'serial-group': {
+        if ((message.group.status !== 'passed' && message.group.status !== 'flaky' && message.group.status !== 'skipped') ||
+          message.group.attempts.some((attempt) => attempt.cleanup !== 'complete')) worker.sawFailure = true;
         this.options.events.onSerialGroup(message.group);
         break;
       }
       case 'unit-done': {
+        if (message.runErrors.length > 0) worker.sawFailure = true;
         for (const runError of message.runErrors) this.options.events.onRunError(runError);
         if (message.debug !== undefined) this.options.events.onDebug?.(message.debug);
         if (message.aiTrace !== undefined) this.options.events.onAiTrace?.(message.aiTrace);
@@ -550,12 +565,14 @@ class Scheduler {
         break;
       }
       case 'shutdown-done': {
+        worker.shutdownAcknowledged = true;
         for (const runError of message.runErrors) this.options.events.onRunError(runError);
         if (message.debug !== undefined) this.options.events.onDebug?.(message.debug);
         if (message.aiTrace !== undefined) this.options.events.onAiTrace?.(message.aiTrace);
         break;
       }
       case 'fatal': {
+        worker.exitErrorReported = true;
         this.options.events.onRunError({ error: message.error });
         worker.runner.kill();
         break;
@@ -568,7 +585,8 @@ class Scheduler {
   }
 
   private recordSetupOutcome(state: TargetState, result: ResultRecord): void {
-    if (result.status === 'passed' || result.status === 'flaky') return;
+    if ((result.status === 'passed' || result.status === 'flaky') &&
+      result.attempts.every((attempt) => attempt.cleanup === 'complete')) return;
     for (const session of result.test.sessions) {
       state.failedSessions.set(session, result.test.id);
     }
@@ -600,6 +618,14 @@ class Scheduler {
         });
       }
       this.synthesizeCrashResults(state, worker, unit);
+    } else if (tracked && worker.becameReady && !worker.shutdownAcknowledged &&
+      !worker.exitErrorReported && !this.options.interruptSignal.aborted) {
+      this.options.events.onRunError({
+        error: serializeError(new InfrastructureError(
+          'WORKER_EXIT',
+          `worker for target "${worker.targetName}" exited before acknowledging engine disposal (${detail})`,
+        ), { phase: 'cleanup' }),
+      });
     } else if (tracked && !worker.becameReady) {
       state.initFailures += 1;
       if (state.initFailures >= MAX_INIT_FAILURES) this.failTarget(state);
@@ -692,7 +718,7 @@ class Scheduler {
   private async drain(): Promise<void> {
     const remaining = [...this.workers];
     for (const worker of remaining) {
-      if (worker.state !== 'retired' && worker.runner.alive) worker.shutdown(SHUTDOWN_GRACE_MS);
+      if (worker.state !== 'retired' && worker.runner.alive) worker.shutdown(this.options.shutdownGraceMs);
     }
     await Promise.all(remaining.map((worker) => worker.runner.exit));
   }

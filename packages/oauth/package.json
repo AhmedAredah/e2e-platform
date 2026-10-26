@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/oauth",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Sign in to a personal ChatGPT, GitHub Copilot, or SuperGrok subscription and use it as an AI SDK model",
   "keywords": [
     "@e2e-cpp/core",
@@ -21,7 +21,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "provenance": false,
-    "tag": "beta"
+    "tag": "rc"
   },
   "type": "module",
   "bin": {

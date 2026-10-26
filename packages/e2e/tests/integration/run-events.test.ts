@@ -267,13 +267,11 @@ test('talks', async () => {
       const output = events.filter((event) => event.type === 'output');
       const started = events.find((event) => event.type === 'test-started')!;
       const inTest = output.filter((event) => event.pair?.testId === started.testId);
-      // Every write is one event, secret values redacted before it leaves the worker.
-      expect(inTest.map((event) => [event.stream, event.text])).toEqual([
-        ['stdout', "hello { from: 'the test' }\n"],
-        ['stderr', 'careful\n'],
-        ['stdout', 'token <secret:stripe-key> leaked'],
-        ['stdout', ' twice <secret:stripe-key>\n'],
-      ]);
+      // Secret-safe buffering can change chunk boundaries, but not ownership
+      // or the concatenated text of either stream.
+      expect(inTest.filter((event) => event.stream === 'stdout').map((event) => event.text).join(''))
+        .toBe("hello { from: 'the test' }\ntoken <secret:stripe-key> leaked twice <secret:stripe-key>\n");
+      expect(inTest.filter((event) => event.stream === 'stderr').map((event) => event.text).join('')).toBe('careful\n');
       expect(events.some((event) => event.type === 'output' && event.text.includes('sk_live'))).toBe(false);
       expect(inTest.every((event) => event.target === 'web' && event.pair?.agent === 'default')).toBe(true);
       // The module's top level runs while the file loads, outside any pair.

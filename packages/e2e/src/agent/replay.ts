@@ -3,7 +3,7 @@
  *
  * Replays one recorded trace through the same action grammar the executor
  * uses — every replayed action runs under the step's deadline, action budget,
- * origin policy, secret authorization, and recording. No model is called.
+ * navigation-scheme policy, secret authorization, and recording. No model is called.
  *
  * Adaptive, never fatal: any reason the trace cannot finish — a gap, a target
  * that moved, an action the live app rejected — ends the replayed prefix and

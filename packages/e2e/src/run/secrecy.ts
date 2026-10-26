@@ -3,6 +3,7 @@
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { TargetSession } from '../engine/surface.ts';
 import { processSecrets, SecretLedger } from '../internal/redact.ts';
+import { protectProviderIdentities } from '../internal/published-redaction.ts';
 export { processSecrets } from '../internal/redact.ts';
 
 export interface SessionSecrecy {
@@ -44,6 +45,7 @@ export function restoreProtection(secrecy: SessionSecrecy, protection: SessionPr
 export function registerStaticSecrets(secrets: ResolvedConfig['secrets']): void {
   for (const [name, { value }] of secrets) {
     if (typeof value === 'string') processSecrets.register(name, value);
+    else protectProviderIdentities();
   }
 }
 

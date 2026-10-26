@@ -14,7 +14,10 @@ if (!compareNumbers(actual, expected, { relative: 0.001 }).matches) throw new Er
 
 Numbers compare exactly unless an error budget is explicit. The symmetric predicate is
 `abs(actual - expected) <= max(absolute, relative * max(abs(actual), abs(expected)))`,
-implemented without false passes from intermediate overflow. NaN and infinity are rejected
+evaluated using normalized relative error to avoid false passes from overflow or a rounded-up
+subnormal error budget. The absolute and relative predicates are checked independently;
+the returned `allowedDifference` remains a binary64 diagnostic and may round at the limits
+of that format. NaN and infinity are rejected
 unless their separate policy explicitly permits equal values. Tolerances never change automatically.
 
 JSON object key order is immaterial; arrays are ordered. `ignorePaths` uses exact JSON pointers

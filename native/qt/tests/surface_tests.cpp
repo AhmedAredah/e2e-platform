@@ -5,9 +5,11 @@
 #include <QImage>
 #include <QJsonArray>
 #include <QLineEdit>
+#include <QLabel>
 #include <QPainter>
 #include <QTest>
 #include <functional>
+#include <new>
 #ifdef E2E_QT_HAS_QUICK
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -57,6 +59,27 @@ public:
     bool secure() const { return false; }
 };
 
+class ReadOnlyPublicEdit final : public QLineEdit {
+    Q_OBJECT
+    Q_PROPERTY(bool e2eSecure READ secure NOTIFY secureChanged)
+public:
+    using QLineEdit::QLineEdit;
+    bool secure() const { return false; }
+signals:
+    void secureChanged();
+};
+
+class RejectingPublicEdit final : public QLineEdit {
+    Q_OBJECT
+    Q_PROPERTY(bool e2eSecure READ secure WRITE setSecure NOTIFY secureChanged)
+public:
+    using QLineEdit::QLineEdit;
+    bool secure() const { return false; }
+    void setSecure(bool) {}
+signals:
+    void secureChanged();
+};
+
 class PaintWindow final : public QWidget {
 public:
     std::function<void()> duringPaint;
@@ -99,6 +122,15 @@ public:
     std::function<void()> duringPolish;
 protected:
     void updatePolish() override { if (duringPolish) duringPolish(); }
+};
+
+class ClickItem final : public QQuickItem {
+public:
+    explicit ClickItem(QQuickItem* parent) : QQuickItem(parent) { setAcceptedMouseButtons(Qt::AllButtons); }
+    int presses = 0;
+protected:
+    void mousePressEvent(QMouseEvent* event) override { ++presses; event->accept(); }
+    void mouseReleaseEvent(QMouseEvent* event) override { event->accept(); }
 };
 #endif
 }
@@ -175,6 +207,79 @@ private slots:
         ConstantPublicEdit field;
         QVERIFY(!secureObject(&field));
     }
+    void sensitiveFillIgnoresApplicationMarkerRestrictions_data() {
+        QTest::addColumn<QString>("kind");
+        for (const char* kind : {"dynamic", "constant", "read-only", "rejecting-setter", "writable"})
+            QTest::newRow(kind) << QString::fromLatin1(kind);
+    }
+    void sensitiveFillIgnoresApplicationMarkerRestrictions() {
+        QFETCH(QString, kind);
+        QWidget window;
+        window.resize(600, 220);
+        QLineEdit* field = kind == "constant" ? static_cast<QLineEdit*>(new ConstantPublicEdit(&window))
+            : kind == "read-only" ? static_cast<QLineEdit*>(new ReadOnlyPublicEdit(&window))
+            : kind == "rejecting-setter" ? static_cast<QLineEdit*>(new RejectingPublicEdit(&window))
+            : kind == "writable" ? static_cast<QLineEdit*>(new SecretEdit(&window)) : new QLineEdit(&window);
+        field->setObjectName("secret");
+        field->setGeometry(20, 70, 500, 40);
+        window.show();
+        QApplication::processEvents();
+        Surface surface;
+        const QJsonObject before = find(surface.snapshot(false).value("root").toObject(), "secret");
+        QVERIFY(!before.value("states").toObject().value("secure").toBool());
+        const QJsonObject ref = before.value("ref").toObject();
+        surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "fill"}, {"value", "sensitive-marker-regression"}, {"sensitive", true}}}});
+        QCOMPARE(field->text(), QString("sensitive-marker-regression"));
+        // An application can change or remove its own marker, but cannot undo
+        // the helper's lifetime policy, even after a clear and ordinary refill.
+        field->setProperty("e2eSecure", false);
+        if (kind == "dynamic") field->setProperty("e2eSecure", QVariant());
+        surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "clear"}}}});
+        surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "fill"}, {"value", "sensitive-marker-regression"}, {"sensitive", false}}}});
+        const QJsonObject result = surface.snapshot(true);
+        const QJsonObject node = find(result.value("root").toObject(), "secret");
+        QVERIFY(node.value("states").toObject().value("secure").toBool());
+        QVERIFY(!node.contains("value"));
+        QVERIFY(!node.contains("attributes"));
+        QVERIFY(!QJsonDocument(result).toJson().contains("sensitive-marker-regression"));
+        QVERIFY(blackRegion(result.value("screenshot").toObject(), QRectF(field->geometry())));
+    }
+    void sensitiveLifetimeEndsAtObjectDestruction() {
+        alignas(QLineEdit) unsigned char storage[sizeof(QLineEdit)];
+        auto* first = new (storage) QLineEdit;
+        markSensitiveObject(first);
+        QVERIFY(secureObject(first));
+        first->~QLineEdit();
+        auto* replacement = new (storage) QLineEdit;
+        QVERIFY(!secureObject(replacement));
+        replacement->~QLineEdit();
+    }
+    void oversizedPublicTextOmitsWholeFields() {
+        QWidget window;
+        window.resize(600, 220);
+        QLabel label(&window);
+        label.setObjectName("bounded-label");
+        label.setGeometry(20, 70, 500, 40);
+        const QString secret = QStringLiteral("STRADDLING-SECRET-NEVER-CLIP");
+        label.setAccessibleName(QString(250, 'n') + secret);
+        label.setText(QString(MaxText - 8, 't') + secret);
+        window.show();
+        QApplication::processEvents();
+        Surface surface;
+        const QJsonObject node = find(surface.snapshot(false).value("root").toObject(), "bounded-label");
+        QCOMPARE(node.value("name").toString(), QString("[omitted: text exceeds limit]"));
+        QCOMPARE(node.value("text").toString(), QString("[omitted: text exceeds limit]"));
+        QVERIFY(!QJsonDocument(node).toJson().contains("STRADDL"));
+        label.setAccessibleName("");
+        label.setText(QString(250, 'n') + secret);
+        const QJsonObject derived = find(surface.snapshot(false).value("root").toObject(), "bounded-label");
+        QCOMPARE(derived.value("name").toString(), QString("[omitted: text exceeds limit]"));
+        QCOMPARE(derived.value("text").toString(), label.text());
+        label.setText(QStringLiteral("SECRET") + QChar::Null + QStringLiteral("SUFFIX"));
+        const QJsonObject embeddedNull = find(surface.snapshot(false).value("root").toObject(), "bounded-label");
+        QCOMPARE(embeddedNull.value("text").toString(), QString("[omitted: text contains NUL]"));
+        QVERIFY(!QJsonDocument(embeddedNull).toJson().contains("SECRET"));
+    }
     void portableModifiers_data() {
         QTest::addColumn<bool>("macos");
         QTest::addColumn<bool>("dontSwap");
@@ -197,6 +302,73 @@ private slots:
         QCOMPARE(parsed.key, Qt::Key_A);
     }
 #ifdef E2E_QT_HAS_QUICK
+    void quickTextBoundsOmitWholeFields() {
+        QQuickWindow window;
+        window.resize(600, 220);
+        QQuickItem label(window.contentItem());
+        label.setObjectName("bounded-label"); label.setSize({500, 40});
+        const QString secret = QStringLiteral("STRADDLING-SECRET-NEVER-CLIP");
+        const QString text = QString(250, 'n') + secret;
+        label.setProperty("text", text);
+        window.show();
+        QApplication::processEvents();
+        Surface surface;
+        const QJsonObject node = find(surface.snapshot(false).value("root").toObject(), "bounded-label");
+        QCOMPARE(node.value("name").toString(), QString("[omitted: text exceeds limit]"));
+        QCOMPARE(node.value("text").toString(), text);
+        label.setProperty("text", QString(MaxText - 8, 't') + secret);
+        const QJsonObject oversized = find(surface.snapshot(false).value("root").toObject(), "bounded-label");
+        QCOMPARE(oversized.value("text").toString(), QString("[omitted: text exceeds limit]"));
+        QVERIFY(!QJsonDocument(oversized).toJson().contains("STRADDL"));
+    }
+    void coveredQuickTargetRejectsPointerInput_data() {
+        QTest::addColumn<QString>("kind");
+        for (const char* kind : {"tap", "doubleTap", "secondaryTap", "hover"})
+            QTest::newRow(kind) << QString::fromLatin1(kind);
+    }
+    void coveredQuickTargetRejectsPointerInput() {
+        QFETCH(QString, kind);
+        QQuickWindow window;
+        window.resize(300, 250);
+        ClickItem target(window.contentItem()), covering(window.contentItem());
+        target.setObjectName("target");
+        for (QQuickItem* item : {&target, &covering}) {
+            item->setPosition({40, 40}); item->setSize({180, 80});
+        }
+        covering.setZ(10);
+        window.show();
+        QApplication::processEvents();
+        Surface surface;
+        const QJsonObject ref = find(surface.snapshot(false).value("root").toObject(), "target").value("ref").toObject();
+        QVERIFY(!ref.isEmpty());
+        try { surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", kind}}}}); QFAIL("covered target accepted pointer input"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("NOT_ACTIONABLE")); }
+        QCOMPARE(target.presses, 0);
+        QCOMPARE(covering.presses, 0);
+        covering.setVisible(false);
+        QQuickItem decoration(&target);
+        decoration.setSize(target.size());
+        surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "tap"}}}});
+        QCOMPARE(target.presses, 1);
+        QCOMPARE(covering.presses, 0);
+    }
+    void quickPointerGrabRejectsAnotherTarget() {
+        QQuickWindow window;
+        window.resize(300, 250);
+        ClickItem target(window.contentItem()), grabber(window.contentItem());
+        target.setObjectName("target"); target.setPosition({20, 20}); target.setSize({100, 50});
+        grabber.setPosition({160, 20}); grabber.setSize({100, 50});
+        window.show();
+        QApplication::processEvents();
+        Surface surface;
+        const QJsonObject ref = find(surface.snapshot(false).value("root").toObject(), "target").value("ref").toObject();
+        QTest::mousePress(&window, Qt::LeftButton, Qt::NoModifier, {210, 45});
+        QCOMPARE(window.mouseGrabberItem(), &grabber);
+        try { surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "tap"}}}}); QFAIL("unrelated pointer grab was accepted"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("NOT_ACTIONABLE")); }
+        QCOMPARE(target.presses, 0); QCOMPARE(grabber.presses, 1);
+        QTest::mouseRelease(&window, Qt::LeftButton, Qt::NoModifier, {210, 45});
+    }
     void transformedSecretDuringPolish_data() {
         QTest::addColumn<bool>("transformList");
         QTest::newRow("transform-origin") << false;

@@ -27,4 +27,15 @@ For your own product, `createOAuthFetch(provider, { store, userAgent })` is the 
 
 Claude Pro/Max is not included: Anthropic permits subscription sign-in only for its own applications.
 
-Docs: https://e2e.tester.army/docs/subscriptions
+The fork documentation is in [`docs/subscriptions.mdx`](../../docs/subscriptions.mdx).
+
+OAuth token exchanges, refreshes and each device request have a 30-second
+network deadline, including reading the response. Device polls also respect the
+remaining code lifetime. Aborting a model request stops that caller's wait;
+a concurrent caller can finish the shared refresh. Custom providers receive an
+optional signal in `refresh(credentials, signal)` and should honor it.
+`createOAuthFetch` accepts `refreshTimeoutMs` for a different shared refresh bound.
+
+Provider error bodies are limited to 64 KiB. Diagnostics redact submitted grant
+values, remove control characters and are limited to 512 characters. This does
+not discover unknown or transformed secrets in arbitrary provider output.

@@ -1,6 +1,6 @@
 {
   "name": "@e2e-cpp/playwright",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.0",
   "description": "Playwright browser engine for e2e agentic end-to-end testing",
   "keywords": [
     "@e2e-cpp/core",
@@ -19,7 +19,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public",
     "provenance": false,
-    "tag": "beta"
+    "tag": "rc"
   },
   "type": "module",
   "exports": {
@@ -41,7 +41,7 @@
     "test:unit": "vitest run tests/unit"
   },
   "peerDependencies": {
-    "@e2e-cpp/core": ">=0.1.0 <1.0.0",
+    "@e2e-cpp/core": ">=0.2.0-rc.0 <1.0.0",
     "playwright": ">=1.63.0 <2"
   },
   "devDependencies": {

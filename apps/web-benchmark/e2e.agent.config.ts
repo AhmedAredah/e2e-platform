@@ -5,8 +5,8 @@ import base from './e2e.config.ts';
 
 /**
  * Agentic suite against the same app and account as the deterministic one.
- * It gates every PR alongside that suite (`benchmark.yml` passes the model key);
- * each step spends real model calls, cents per run. By hand:
+ * It runs only through explicit workflow dispatch or a local command;
+ * each step spends real model calls. By hand:
  *
  *   AI_GATEWAY_API_KEY=... pnpm --filter @e2e-cpp/web-benchmark test:agent
  *

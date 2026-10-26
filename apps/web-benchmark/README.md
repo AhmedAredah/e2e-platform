@@ -19,11 +19,12 @@ planted bug.
   `plantedBug`. One component per scenario in `app/src/Examples/`, served at
   `/e/<slug>`; the home page lists them all.
 - `e2e.config.ts` + `tests/`: the deterministic suite. Gates every PR
-  (`benchmark.yml`); `@e2e-cpp/github` posts each run as one pull request
-  comment.
+  (`benchmark.yml`); reports and artifacts are retained by the workflow.
+  The workflow does not post pull request comments.
 - `e2e.agent.config.ts` + `tests-agent/`: the agentic suite, derived from the
-  deterministic config. It gates every PR too. Each step spends real model
-  calls (cents per run) and needs `AI_GATEWAY_API_KEY`. `scenarios.e2e.ts`
+  deterministic config. It runs only through explicit workflow dispatch or
+  a local command. Each step spends real model calls and needs
+  `AI_GATEWAY_API_KEY`. `scenarios.e2e.ts`
   drives every task scenario the accessibility tree can carry with one
   `agent.act` per scenario and checks the success message deterministically;
   scenarios the grammar cannot finish yet are declared and skipped with the

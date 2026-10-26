@@ -1,8 +1,54 @@
-> Historical upstream changelog, preserved from the MIT base. Package names and
-> versions below refer to TesterArmy releases. This independent fork starts at
-> 0.1.0; see the repository RELEASE_STATUS.md and its Changesets for fork changes.
+# @e2e-cpp/playwright
 
-# @e2edev/playwright
+## 0.2.0-rc.0
+
+### Minor Changes
+
+- Coordinate the locally installable hardening candidate across all public modules.
+  Correct confidentiality, lifecycle, assertion and packaging regressions; add
+  Python, C# and Rust CLI/HTTP examples and extension contracts. Align security,
+  support and offline setup documentation with the implemented fork behavior.
+
+  This is a prerelease candidate. Registry publication, namespace ownership,
+  Windows/macOS runtime qualification and additional GUI framework adapters are
+  separate release requirements.
+
+### Patch Changes
+
+- c79d60c: Establish the MIT-based fork and local installation kit under independent package
+  names. Add extensible process supervision, output validators, authenticated native
+  transport, cooperative Qt integration, terminal sessions and bounded HTTP checks.
+
+  Integrate native launch configuration and lifecycle diagnostics with the MIT
+  runner, explicitly forbid model access when configured, and fail attempts on late
+  native faults. Protect known secrets in runner-controlled output, restored
+  sessions and artifacts. Omit untrusted HTTP error causes that could disclose
+  request contents. Include positive, planted-failure and installed-consumer checks.
+  Remove the upstream telemetry destination: the fork CLI collects and sends no
+  usage events, including when a compatibility preference is enabled.
+- Settle route and dialog callbacks that have already started before the final test verdict and after context cleanup. Preserve their attempt-owned errors when no later browser operation observes them, report each latched error once, and bound the entire settlement by one cancellation-aware cleanup deadline.
+- Updated dependencies [45c08b1]
+- Updated dependencies [d438348]
+- Updated dependencies [b9abd60]
+- Updated dependencies [c1d23b2]
+- Updated dependencies [ea27708]
+- Updated dependencies [195bd0d]
+- Updated dependencies
+- Updated dependencies [da6b939]
+- Updated dependencies [fb6e336]
+- Updated dependencies
+- Updated dependencies [c79d60c]
+- Updated dependencies
+- Updated dependencies [f09b69e]
+- Updated dependencies [fb6e336]
+- Updated dependencies [e9c2914]
+- Updated dependencies
+  - @e2e-cpp/core@0.2.0-rc.0
+
+---
+
+> Historical upstream changelog, preserved from the MIT base. Package names and
+> versions in this section refer to TesterArmy releases. They are not fork releases.
 
 ## 0.11.0-canary-20260917213813
 
@@ -32,12 +78,12 @@
   affected steps. Playwright supports
   the fallback; device captures still fail closed when accessibility data
   cannot establish screenshot masks.
-  
+
   Playwright bounds the complete semantic capture and reserves node IDs before
   the reader starts. An abandoned capture cannot reuse IDs or publish late
   references. Pixel-only evidence resets the agent's semantic screen comparison
   and stops cache probes without discarding the recovered screenshot.
-  
+
   Reports accept judgment steps that fail before a model call without inventing
   an observation revision or verdict explanation.
 
@@ -56,11 +102,11 @@
 - [#324](https://github.com/tester-army/e2e/pull/324) [`7fcb925`](https://github.com/tester-army/e2e/commit/7fcb925d76f41f1a8558abaa57a60de4ff365868) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Declares every pointer action at a bare point (`performAt` with the full `POINTER_ACTION_KINDS`): a click, double click, right click, held click, hover, drag between two points, and a wheel gesture from a point. `secondaryTap` on a node is a right click. Nodes report `pressed` from `aria-pressed` and `level` for headings (`aria-level`, else the `h1` through `h6` digit), and a role query passes `pressed` and `level` through to the browser.
 
 - [#318](https://github.com/tester-army/e2e/pull/318) [`4bd7e64`](https://github.com/tester-army/e2e/commit/4bd7e644e0846d69d1525f4eebc3c100dce7138e) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Add opt-in CDP transport recovery through `connect.reconnectEndpoint`. A dedicated persistent browser preserves the original page and context across disconnects, verifies their CDP identities, and invalidates stale references. Every attempt provisions a fresh browser, and dispatched operations are never repeated.
-  
+
   Recovery and dispatch share one operation budget, with timeout exhaustion distinguished from caller cancellation. Reads from an earlier connection cannot publish stale observations, and each attempt owns its connection and recordings through cleanup.
-  
+
   Observation-backed pointer and keyboard input requires fresh evidence after reconnect. Cancelled typing cannot continue its remaining keystrokes after a delayed focus read or key delivery.
-  
+
   CDP attachment installs secure-field masks before exposing the context. Recovery refuses documents that lost closed shadow DOM tracking while disconnected, preventing unmasked pixels from those documents.
 
 ### Patch Changes
@@ -89,7 +135,7 @@
 - [#290](https://github.com/tester-army/e2e/pull/290) [`799b29f`](https://github.com/tester-army/e2e/commit/799b29fbfa0444589b66bc0e59ab0b83ededf50c) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Origin allowlists are gone, everywhere. `playwright({ allowedOrigins })` gated typed navigation only; a click, a redirect, or a popup reached any origin regardless, so the list guarded nothing and had to be spelled out for every subdomain a sign-in flow touched. `allowedOrigins` on a credential or a secret gated where a password could be typed; a secret is only ever typed into a field the step was handed, a password only into a password field, so that gate guarded against a model mistake at the cost of configuring every flow that leaves the app's domain, a third-party sign-in included. `app.open()`, the agent's `navigate`, and `web.goto` open any http(s) URL, `file:`, `data:`, and `javascript:` stay `POLICY_DENIED`, and a secret fills wherever the test or the step directs it. `credentials` entries are `{ username, password }`; `secrets` entries are a string or a provider, the `{ value }` object form is gone. `type_secret` now works on a device target too. What still keys on the site of `url` (its registrable domain) is invisible to config: the browser engine's `headers` reach the site and no other host, and child frames off the site stay out of observations. `basicAuth` answers a challenge from any origin, as Playwright's own `httpCredentials` does. Engine contract: `EngineAppInfo.allowedOrigins` became `site?: string`, `EngineAppDeclaration` lost `allowedOrigins`, and `sameSite`/`siteOf` are exported from `e2e/engine`. `playwright({ allowedOrigins })` fails at config load. If a threat model ever calls for an allowlist again, it comes back as an opt-in.
 
 - [#291](https://github.com/tester-army/e2e/pull/291) [`abf1958`](https://github.com/tester-army/e2e/commit/abf19588677070fb86234f735614c40b7677e755) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: follows the reshaped engine contract. `playwright({ testIdAttribute })` names the attribute `getByTestId` and observed `testId` values read (default `data-testid`); the root config key `screen.testIdAttribute` no longer exists. `app.restart()` and `app.clearState()` land on a blank page and the runner reopens the app. Observations carry one `root` node (the document, id `root`) and `location` (the page URL).
-  
+
   Fixed: `screen.getByTestId` now honors the configured attribute; it used Playwright's process-wide default before.
 
 - [#294](https://github.com/tester-army/e2e/pull/294) [`c2c5df7`](https://github.com/tester-army/e2e/commit/c2c5df7df94b25a8284b69dd6bc00a459b770a59) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The runner is published as `e2e`. `@e2edev/e2e` is retired and deprecated on npm; every import, config, and peer range now names `e2e` (`e2e`, `e2e/agent`, `e2e/engine`). The engines and the GitHub reporter declare their peer dependency on `e2e`, so a project on `@e2edev/e2e` must switch the runner to `e2e` when it takes these versions. The CLI keeps its `e2e` bin name.
@@ -104,11 +150,11 @@
 ### Minor Changes
 
 - [#272](https://github.com/tester-army/e2e/pull/272) [`dfc4feb`](https://github.com/tester-army/e2e/commit/dfc4febe46da37420643b51bb969f423800d22fe) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: `playwright` is no longer installed by this package. It is a peer dependency, `>=1.63.0 <2`, replacing the pinned `playwright` dependency the engine carried. Add it to your project:
-  
+
   ```bash
   npm install --save-dev playwright
   ```
-  
+
   An app that already depends on Playwright for its own product keeps its version, one copy in `node_modules`, and one browser cache; before, the engine pulled in a second copy pinned to another revision, and `playwright install` provisioned two browser sets. A version outside the range may be rejected by the package manager as an unmet peer (npm's `ERESOLVE`), so upgrade `playwright` within `>=1.63.0 <2`. The floor is 1.63 because `basicAuth` maps to the per-origin `httpCredentials` list that release added. Projects scaffolded with `e2e init` need no change: init now adds `playwright` alongside the engine.
 
 - [#258](https://github.com/tester-army/e2e/pull/258) [`c553b61`](https://github.com/tester-army/e2e/commit/c553b614def4da798be5bfa3f7f04591dc253b69) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The engine declares `tapAt`: a click at one viewport point in CSS pixels with no
@@ -122,7 +168,7 @@
 ### Minor Changes
 
 - [#260](https://github.com/tester-army/e2e/pull/260) [`da6323e`](https://github.com/tester-army/e2e/commit/da6323e555292c921ffc9771960cb164119f6f7e) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Observations now reach two kinds of content a person sees and the tree did not.
-  
+
   Closed shadow roots: a context init script wraps `Element.prototype.attachShadow`
   before any page script runs and records each closed root by its host; the
   in-page reader walks those roots exactly like open ones. Third-party storefront
@@ -135,7 +181,7 @@
   recorded roots, so a password field there is covered in observation pixels and
   artifact screenshots like any other. Declarative `<template shadowrootmode="closed">` roots are
   not attached by script and stay out of reach.
-  
+
   `display: contents` elements: such an element generates no box, so its empty
   client rect list read as hidden and its whole subtree was dropped. Shopify's
   one-page checkout form is styled this way, which left every Shopify checkout

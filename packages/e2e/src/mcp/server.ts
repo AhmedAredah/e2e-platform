@@ -9,7 +9,7 @@
 
 import type { Readable, Writable } from 'node:stream';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { RedactingStdioTransport } from './output.ts';
 import { readGuide, skillTopics } from '../cli/skill.ts';
 import { ConfigurationError, errorMessage } from '../internal/errors.ts';
 import { loadProjectConfig } from './config.ts';
@@ -79,7 +79,7 @@ export async function serveMcp(options: ServeOptions): Promise<number> {
   }
   registerGuide(server);
 
-  const transport = new StdioServerTransport(options.stdin, options.stdout);
+  const transport = new RedactingStdioTransport(options.stdin, options.stdout);
   const closed = new Promise<void>((resolve) => {
     // The SDK's Server exposes a plain callback property, not an event target.
     // oxlint-disable-next-line unicorn/prefer-add-event-listener

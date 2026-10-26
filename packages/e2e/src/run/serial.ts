@@ -13,7 +13,7 @@ import { groupTitles, type RegisteredTest } from '../collect/registry.ts';
 import type { SkipInfo, TestTargetPair } from '../collect/select.ts';
 import type { ResolvedTarget } from '../config/resolve.ts';
 import type { ArtifactStore } from '../types.ts';
-import { createAttemptArtifacts, sanitizePathSegment } from './artifacts.ts';
+import { createAttemptArtifacts, artifactIdentitySegment } from './artifacts.ts';
 import type { AttemptContext, ClosingRecord } from './execute.ts';
 import type { ArtifactSink } from './fixtures.ts';
 import type { StepRecord } from './steps.ts';
@@ -184,7 +184,7 @@ async function runSerialAttempt(
   const first = members[0]!;
   const artifactSegments = [
     host.target.name,
-    sanitizePathSegment(first.test.serialId ?? first.test.id),
+    artifactIdentitySegment(first.test.serialId ?? first.test.id),
     first.agent,
     `attempt-${attemptIndex}`,
   ];

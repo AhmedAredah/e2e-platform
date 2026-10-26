@@ -187,4 +187,6 @@ npx --no-install e2e-cpp guide writing-tests  # one topic
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/tester-army/e2e/blob/main/CONTRIBUTING.md).
+Use the fork's [CONTRIBUTING.md](../../CONTRIBUTING.md) in the complete source
+checkout. Current upstream contribution instructions apply to a different
+distribution.

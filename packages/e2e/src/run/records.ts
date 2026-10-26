@@ -31,7 +31,8 @@ export interface ArtifactRecord {
    * (a secure field renders its own dots, but anything else the screen
    * showed is in the frames), and is kept as it is. report-1 also admits an
    * `incomplete` artifact without a `path`, one its producer withheld; this
-   * runner never writes one.
+   * runner also uses this when a confidential path or store reference is
+   * omitted: the retained ID, size and hash still identify the evidence.
    */
   redaction: 'complete' | 'not-required' | 'incomplete';
   producer: ArtifactProducer;

@@ -101,3 +101,21 @@ On POSIX the local supervisor creates a dedicated process group and uses SIGTERM
 Linux behavior is covered by binary-output, input/EOF, cancellation, timeout, escalation, process-group, pipe-drain, subclass, and workspace tests. The portable suite also runs on Windows/macOS; those platforms require their CI jobs or a local run before claiming verification.
 
 Primary references: [Node subprocess behavior](https://nodejs.org/api/child_process.html), [Microsoft taskkill](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/taskkill), [Windows Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects).
+
+## Application launch profiles
+
+`ApplicationLaunchProfile` is the extension boundary for runtime-specific launch
+commands. `PythonLaunchProfile` takes an explicit `interpreter` and `script`;
+`DotnetLaunchProfile` takes `dotnet` and a built `assembly`;
+`ExecutableLaunchProfile` takes a built executable, including Rust binaries.
+Each requires a logical `identity`, accepts a separate optional
+`buildFingerprint`, and resolves an immutable `{ identity, buildFingerprint?,
+process }` plan. Pass `plan.process` to `runProcess` or a process fixture, adding
+its timeout and cancellation policy.
+
+Profiles copy `args` and `env`, anchor entry points to `cwd`, default to
+`inheritEnv: false`, and pass argument arrays directly without a shell. The
+metadata does not implicitly change runner cache/session keys, and the profile
+does not build the application or verify caller-provided fingerprints. See
+[`LANGUAGES.md`](../../LANGUAGES.md) and the real three-language CLI/HTTP example
+for complete usage and qualification boundaries.

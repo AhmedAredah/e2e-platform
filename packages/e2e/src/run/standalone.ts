@@ -3,7 +3,7 @@
  * fixture graph, and no test body. This is what a dev-loop host (`e2e mcp`)
  * opens so a coding agent can drive the live app through the same `agent`,
  * `screen`, and `app` surfaces a test would, under the same launch budgets,
- * origin policy, secret handling, and cleanup as a test attempt. The runner
+ * navigation-scheme policy, secret handling, and cleanup as a test attempt. The runner
  * proper (`execute.ts`) keeps owning retries, sessions, and records; this
  * module only borrows its session lifecycle.
  */

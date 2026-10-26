@@ -5,6 +5,7 @@
  */
 
 import { ConfigurationError, TestError } from '../internal/errors.ts';
+import { processSecrets } from '../internal/redact.ts';
 import { validateJsonValue } from '../internal/json-value.ts';
 import { paramPointer, type ParamTemplate } from '../cache/template.ts';
 import { isSecret } from '../locator/screen.ts';
@@ -184,7 +185,7 @@ export function validateVerdict(verdict: unknown, executorName: string): StepVer
   }
   return {
     status,
-    summary: summary.trim().slice(0, MAX_SUMMARY_CHARS),
+    summary: processSecrets.redact(summary).trim().slice(0, MAX_SUMMARY_CHARS),
     ...(code === undefined ? {} : { errorCode: code }),
   };
 }

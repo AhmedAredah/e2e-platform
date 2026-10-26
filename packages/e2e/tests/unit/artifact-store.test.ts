@@ -11,7 +11,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { ArtifactStore, StoredArtifact } from '../../src/types.ts';
-import { createAttemptArtifacts } from '../../src/run/artifacts.ts';
+import { createAttemptArtifacts, artifactIdentitySegment } from '../../src/run/artifacts.ts';
+import { processSecrets } from '../../src/internal/redact.ts';
 
 const roots: string[] = [];
 function root(): string {
@@ -191,5 +192,28 @@ describe('artifact redaction labels', () => {
     expect(artifacts.records.map((record) => record.redaction)).toEqual(['incomplete', 'not-required', 'complete']);
     // A labelled trace still carries its file.
     expect(artifacts.records[2]).toMatchObject({ path: 'web/test-1/attempt-0/trace/trace.zip', size: 9 });
+  });
+
+  it('omits a confidential store reference without inventing a URI or losing the local evidence', async () => {
+    const secret = 'artifact-store-secret-Z39-8271';
+    processSecrets.register('store-token', secret);
+    const artifacts = createAttemptArtifacts({ artifactsRoot: root(), segments: ['safe'], attemptId: 'attempt',
+      store: { put: async () => ({ ref: `store://bucket/${secret}` }) } });
+    writeFileSync(path.join(artifacts.dir, 'shot.png'), 'fixture');
+    const id = artifacts.sink.register('screenshot', 'shot.png');
+    await artifacts.settle();
+    expect(artifacts.records[0]).toMatchObject({ id, path: 'safe/shot.png', redaction: 'incomplete', size: 7 });
+    expect(artifacts.records[0]!.ref).toBeUndefined();
+    expect(artifacts.records[0]!.sha256).toBe(createHash('sha256').update('fixture').digest('hex'));
+  });
+
+  it('digests complete test directory identities before any normalization or length bound', () => {
+    const common = 'x'.repeat(110) + 'boundary-secret-Z44';
+    const first = artifactIdentitySegment(`${common}::first`);
+    const second = artifactIdentitySegment(`${common}::second`);
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
+    expect(first).not.toContain('boundary');
+    expect(first).not.toBe(second);
+    expect(artifactIdentitySegment('a/b')).not.toBe(artifactIdentitySegment('a_b'));
   });
 });

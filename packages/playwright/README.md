@@ -88,6 +88,15 @@ downloads, keyboard and mouse, plus `expect(web).toHaveURL()` and
 `toHaveTitle()` and `toHaveClass()`. Import `test` from this package to have it
 typed; it is the same runtime `test` as `@e2e-cpp/core`'s.
 
+Route and dialog callbacks belong to the attempt that started them. Before the
+verdict and after context cleanup, the runner waits for callbacks already in
+progress within `cleanupTimeout` and reports their unobserved failures. A final
+callback cannot silently pass just because no later browser operation follows it.
+Settlement uses one deadline, honors cancellation, and does not wait for future
+events or application background activity. JavaScript handler code cannot be
+forcibly interrupted; a handler that does not finish fails settlement with
+`CLEANUP_TIMEOUT`, while browser cleanup still runs.
+
 ```ts
 import { test } from '@e2e-cpp/playwright';
 import { expect } from '@e2e-cpp/core';

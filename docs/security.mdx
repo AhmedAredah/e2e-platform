@@ -105,6 +105,31 @@ registered secrets receive the same pixel taint when passed to `fill`. Semantic
 roles, test IDs, attributes, frame paths, executor prose, errors and report
 labels are redacted. A secret-bearing node ID is refused instead of rewritten.
 
+Structured reports and events preserve their keys, control enums, numeric
+values, generated IDs, hashes, and timestamps. Test, serial, and scope IDs are
+stable opaque aliases, separate from their readable display titles. Target and
+agent names are also opaque when they contain a known secret or the configuration
+uses a secret provider. Provider configurations select this policy before the
+first event, so late resolution cannot change the join keys. Like known secret
+values, this conservative policy lasts for the process lifetime. An opaque
+alias may coincidentally contain a short registered value; it is generated
+metadata and is not the original confidential identity.
+Use the published IDs as join keys; do not reconstruct them from display
+titles or names. Internal worker and scheduler identities remain unchanged.
+
+Workers carry new resolved values to the parent over private IPC before their
+records are published. MCP protects each complete response before serialization,
+preserving request IDs, content types, schemas, and image bytes. Diagnostic
+excerpts are redacted before clipping. Native observation fields that exceed
+their bounds are omitted whole because a partial value could evade the filter.
+Buffered output remains attributed to its original test; a trailing partial
+secret is withheld when that owner changes. Artifact paths or store references
+containing known secrets are omitted, with `redaction: "incomplete"`, while
+artifact IDs and hashes remain usable for joins. A surviving reference still
+points to the original resource. Test and serial artifact directories use
+digests of complete identities; their internal directory layout is not a stable
+API. Follow the report's surviving `path` or `ref` instead of reconstructing it.
+
 Saved session state retains the full resolved-secret history and pixel taint in
 the encrypted payload. Protection is restored before the engine receives state.
 Config console output is held until static declarations are registered; runner
@@ -125,7 +150,8 @@ and worker output filtering handles secrets split across writes and UTF-8 bytes.
   request headers. Share that trace as you would the bypass secret.
 - Managed command and service logs redact values known in the runner process,
   plus command environment values of at least four characters, before disk.
-  Keep secrets out of app output: provider values may be known only to a worker.
+  Keep secrets out of app output: a value is protected in the parent only after
+  its worker has transferred the resolved value.
 - Unregistered values, arbitrary transformations, code writing its own files or
   sockets, and values printed before resolution are outside this boundary.
   The runner executes trusted code with the caller's OS privileges.
@@ -217,8 +243,11 @@ that declares only the accounts the exploration needs.
 
 ## Reporting a vulnerability
 
-Report privately through
-[GitHub security advisories](https://github.com/tester-army/e2e/security/advisories/new)
-or by mail to security@tester.army. The
-[security policy](https://github.com/tester-army/e2e/blob/main/SECURITY.md)
-states response times and supported versions.
+This fork has no published security contact or advisory endpoint. Contact the
+maintainer who supplied your copy through your established private channel.
+Do not send fork vulnerabilities to the original project or post credentials
+in public issues. Before publishing a hosted release, the maintainer must
+configure a private disclosure channel and a supported-version policy.
+No response-time or long-term maintenance commitment is currently established.
+The source checkout records these limits in its root `SECURITY.md` and
+`RELEASE_STATUS.md`.

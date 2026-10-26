@@ -39,10 +39,10 @@ export function parseSnapshot(value: unknown, observed: boolean, includePixels =
       if (['value', 'text', 'selection', 'attributes'].some((key) => raw[key] !== undefined) || (Array.isArray(raw.children) && raw.children.length > 0)) throw invalid('secure node contains observable content');
     }
     if (raw.role !== undefined) result.role = string(raw.role, 128);
-    if (raw.name !== undefined) result.name = string(raw.name, 65_536).slice(0, observed ? OBSERVED_NAME_LIMIT : 65_536);
+    if (raw.name !== undefined) result.name = observedText(raw.name, observed ? OBSERVED_NAME_LIMIT : 65_536);
     if (!secure) {
       for (const key of ['text', 'value'] as const) {
-        if (raw[key] !== undefined) result[key] = string(raw[key], 65_536).slice(0, observed && key !== 'value' ? OBSERVED_TEXT_LIMIT : 65_536);
+        if (raw[key] !== undefined) result[key] = observedText(raw[key], observed && key !== 'value' ? OBSERVED_TEXT_LIMIT : 65_536);
       }
       if (raw.attributes !== undefined) {
         if (!isRecord(raw.attributes) || Object.keys(raw.attributes).length > 64) throw invalid('node attributes');
@@ -108,5 +108,10 @@ function dimension(value: unknown): number {
 function string(value: unknown, max: number): string {
   if (typeof value !== 'string' || value.length > max) throw invalid('string bound');
   return value;
+}
+/** Without the runner's secret ledger, a partial field cannot be safely disclosed. */
+function observedText(value: unknown, limit: number): string {
+  const full = string(value, 65_536);
+  return full.length <= limit ? full : '[omitted: text exceeds limit]';
 }
 function invalid(what: string): EngineError { return new EngineError('ENGINE_FAILURE', `native bridge rejected: ${what}`, { retryable: false }); }

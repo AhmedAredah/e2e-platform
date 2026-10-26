@@ -29,8 +29,8 @@ Validation fails with `INVALID_CONFIG` for:
 - `performAt` without `pointerActions` or the reverse; a `pointerActions`
   list that is empty, repeats a kind, or names one outside
   `POINTER_ACTION_KINDS`;
-- a `state`, `artifacts`, or `session` manifest with an unknown key or a
-  non-function member. `state` needs both `capture` and `restore`;
+- a plain-object `keyboard`, `state`, `artifacts`, or `session` manifest with
+  an unknown key, or any manifest with a non-function hook. `state` needs both `capture` and `restore`;
   `artifacts` needs `screenshot`; `startTrace`/`stopTrace` and
   `startVideo`/`stopVideo` come in pairs;
 - an `app` declaration with an unknown key or a function;
@@ -38,7 +38,11 @@ Validation fails with `INVALID_CONFIG` for:
   `app`, `screen`, `platform`, or `session`.
 
 Every function on the handle is bound to the spec it came from, so a class
-instance is as valid a body as an object literal.
+instance is as valid a body as an object literal. Nested `keyboard`, `state`,
+`artifacts`, and `session` classes can keep their own state and inherit hooks;
+the handle exposes only the declared hooks, bound to that nested instance.
+Plain objects, including objects with a null prototype, still reject unknown
+keys to catch misspellings.
 
 ## Engine
 
@@ -200,7 +204,7 @@ export interface OperationContext {
 | `fixtures.<name>` | `<name>` | - | a contributed fixture; `requires: ['<name>']` gates at selection |
 | `state` | `state` | - | `test.setup` sessions and the `session:` option |
 | `artifacts` | `artifacts` | - | `app.screenshot()`, assertion evidence, `artifacts: ['trace']`, `artifacts: ['video']` and `--video` |
-| `app` | - | - | data only: the app under test, its origin policy, identity, and process |
+| `app` | - | - | data only: the app under test, its navigation-scheme policy, identity, and process |
 | `session` | - | - | `app.open()` and the agent's `navigate` verb (`open`), `app.back()` (`back`), `app.restart()` (`restart`), `app.clearState()` (`reset`) |
 
 The agent offers the model only what `actions` declares: `tap` needs the
@@ -271,6 +275,17 @@ export interface EngineKeyboard {
 | `startAttempt(context)` | `launchTimeout`; on failure or timeout `context.signal` aborts and `endAttempt` runs |
 | `endAttempt(context)` | `cleanupTimeout`; failure marks cleanup failed, the test keeps its status |
 | `dispose(context)` | `cleanupTimeout`; failure is a run error |
+
+Failed attempt cleanup ends reuse of that engine lifecycle. Remaining work in
+the current file is skipped; the next independent file receives a replacement
+worker. A supplied `rawConfig` handle is disposed and initialized again, so
+its `init` must support reuse after disposal. Failed cleanup also prevents
+retries and publication of setup sessions, even when the product body passed.
+
+Normal worker shutdown allows `cleanupTimeout` plus a delivery margin and
+requires acknowledgement that disposal finished. A worker that exits or is
+killed before that acknowledgement makes a normally completing run fail with
+`WORKER_EXIT`; requested cancellation retains interruption semantics.
 
 ```ts
 /**
@@ -736,7 +751,7 @@ back to the engine as `EngineInitInfo.app.site`; `sameSite` from
 export interface EngineSession {
   /**
    * Opens one URL the harness already resolved against the base URL and the
-   * origin policy. Absent on a surface without addressable locations.
+   * navigation-scheme policy. Absent on a surface without addressable locations.
    */
   open?(url: string, context: OperationContext): Promise<void>;
   /** Navigates back once in the surface's history. */

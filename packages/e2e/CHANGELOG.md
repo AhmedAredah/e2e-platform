@@ -1,8 +1,58 @@
-> Historical upstream changelog, preserved from the MIT base. Package names and
-> versions below refer to TesterArmy releases. This independent fork starts at
-> 0.1.0; see the repository RELEASE_STATUS.md and its Changesets for fork changes.
+# @e2e-cpp/core
 
-# e2e
+## 0.2.0-rc.0
+
+### Minor Changes
+
+- 45c08b1: The built-in agent reads a phone keyboard the way the platform does. An action result says when the on-screen keyboard closed with the action, because on a touch screen the tap that closes it is often spent on closing it and the control under the finger did not react; the model is told to act on it again rather than read an unchanged screen as success. The execution rules now require the latest result to show the asked-for outcome before a passed verdict: a result reporting no change, or only the keyboard closing, means the decisive action did not land. `scroll` repeats up to 20 screens in one call instead of 5, so a long list costs turns in proportion to its length rather than five screens at a time.
+- c1d23b2: A recording's starting and ending screens are compared as routes, not URLs. A location is reduced to its pathname with every segment that looks minted per record abstracted: uuids, hex and digit runs, long tokens mixing letters and digits, text with spaces. The query, the fragment, and a trailing slash are ignored; an app that routes in the fragment (`/#/companies/1`) routes by that path. A value the call marked with `unique()` is recognized in the slug an app derives for a record path, next to its percent- and form-encoded spellings. At the end of a step, two locations that still differ in one segment, a slug of a record the runner never saw, are the same screen when the recorded anchors are on it. The replay policy version changes, so existing caches start over.
+- Coordinate the locally installable hardening candidate across all public modules.
+  Correct confidentiality, lifecycle, assertion and packaging regressions; add
+  Python, C# and Rust CLI/HTTP examples and extension contracts. Align security,
+  support and offline setup documentation with the implemented fork behavior.
+
+  This is a prerelease candidate. Registry publication, namespace ownership,
+  Windows/macOS runtime qualification and additional GUI framework adapters are
+  separate release requirements.
+- c79d60c: Establish the MIT-based fork and local installation kit under independent package
+  names. Add extensible process supervision, output validators, authenticated native
+  transport, cooperative Qt integration, terminal sessions and bounded HTTP checks.
+
+  Integrate native launch configuration and lifecycle diagnostics with the MIT
+  runner, explicitly forbid model access when configured, and fail attempts on late
+  native faults. Protect known secrets in runner-controlled output, restored
+  sessions and artifacts. Omit untrusted HTTP error causes that could disclose
+  request contents. Include positive, planted-failure and installed-consumer checks.
+  Remove the upstream telemetry destination: the fork CLI collects and sends no
+  usage events, including when a compatibility preference is enabled.
+
+### Patch Changes
+
+- Stop assertion polling before starting another lookup after its deadline; retain known mismatches and genuine backend errors. Keep public artifact links valid by omitting confidential references, use complete-input digests for generated identity path segments, and preserve streamed-output attribution at worker lifecycle boundaries.
+- d438348: A `unique()` value is templated in a recording in every spelling a URL gives it: as typed, percent-encoded (`Acme%20Corp` in a path), and form-encoded (`Acme+Corp` in a search query). A step that ends on a search result or on a page whose path carries the value replays and passes its end check with the next run's value; before, the encoded form stayed literal and the step handed off after replaying every action.
+- b9abd60: A control with no accessible name, text, placeholder, or test id, an unlabelled input in a form, is now recorded with its place among the unnamed controls of its kind and relocates by it on replay. It is matched strictly, so an unnamed textbox never stands in for a named one, and a change in the number of unnamed twins diverges as before. Such targets used to be unrelocatable outright, so every replay through an unlabelled form stopped at its first field.
+- ea27708: A recording replays on the page it began on up to the ids the app mints per record. A step that edits or deletes a record a previous step created starts on `/companies/<id>`, and that id is new on every run; the start check compared it literally and missed with `wrong-context` every time. It now uses the same shape comparison as the end-of-step check.
+- 195bd0d: Replays hand off sooner, and less often, on list pages. Pagination ranges (`Showing 1 to 9 of 9 results`), record counts (`12 items`), millisecond timings, and bare numbers such as a badge are no longer recorded as end anchors while a stable anchor exists: they grow with the data every run leaves behind and could never read the same again. A recording's end wait is now measured from its last action to the passing screen instead of from the step's start, so a replay no longer waits out the model's thinking time before handing off.
+- da6b939: Use consistent sentence case for `e2e init` prompts and status messages.
+- fb6e336: The list reporter's live block now reaches the bottom of the terminal: the running tests take the rows under the log and the summary sits on the last rows, instead of the block stopping fourteen rows in and leaving the lower half of a tall terminal blank. The block gives rows back to the log as results print, and only once the log has grown down to the rows the running area needs does it scroll the log, as before.
+- Prevent stale locator references from passing hidden assertions, give one-shot
+  visibility reads the normal operation budget, and preserve exact whitespace in
+  input-value and attribute assertions. Keep normalized text and class-list
+  matching unchanged. Support stateful inherited classes for nested engine hooks
+  while continuing to reject unknown keys in plain-object manifests.
+- Preserve worker verdicts and public protocol grammar while redacting confidential data, and deliver complete MCP responses independently of console buffering. Keep report/event identities coherent, validate worker control messages, and redact before clipping diagnostic text. Native observations now omit oversized fields whole rather than exposing partial secret values.
+- f09b69e: Clarify the bundled setup guide for subscriptions, API keys, and local models. Correct model authentication, judge selection, locator waiting, and cache guidance.
+- fb6e336: `console.log` and `console.error` in a test reach the terminal again. Workers wrote them straight into the runner's terminal, where the live window painted over them and left stale rows behind; the worker now sends each write to the runner as an `output` run event, and the list reporter prints it above the live window under a `stdout | target file > test` heading, one heading per source until another line intervenes. A line written in pieces prints once whole, and every secret value the worker has seen is redacted before the text leaves it. Programmatic reporters receive the same event with the test id, agent, target, and stream.
+- e9c2914: Fix documentation links in CLI help, the init cache hint, and telemetry output to use https://e2e.tester.army/docs. The old domain redirects page links to paths that return 404.
+- Require acknowledged engine disposal within the configured cleanup budget,
+  quarantine failed attempt cleanup before more work or setup publication, and
+  represent cleanup and shared-session failures in JUnit. Session storage keys
+  now distinguish target/name tuples containing separators.
+
+---
+
+> Historical upstream changelog, preserved from the MIT base. Package names and
+> versions in this section refer to TesterArmy releases. They are not fork releases.
 
 ## 0.15.0-canary-20260917213813
 
@@ -11,7 +61,7 @@
 - [#335](https://github.com/tester-army/e2e/pull/335) [`15081f3`](https://github.com/tester-army/e2e/commit/15081f306837ebe1040fbcb2e63bd2efe283faaa) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Sign in with a personal subscription instead of an API key. The new `@e2edev/oauth` package runs the OAuth flows for ChatGPT Plus/Pro (the Codex sign-in, browser or device code), GitHub Copilot (the GitHub CLI's login or a device flow for your OAuth App), and SuperGrok / X Premium+ (device code), stores the tokens in `~/.config/e2e/oauth.json`, refreshes them ahead of expiry, and exposes each plan as an AI SDK model: `chatgpt('gpt-5.5')`, `copilot('claude-sonnet-5')`, `grok('grok-4')`. The e2e CLI gains `e2e login <provider>` and `e2e logout`, and `e2e init` offers the three subscriptions next to the gateways.
 
 - [#325](https://github.com/tester-army/e2e/pull/325) [`d3afa6b`](https://github.com/tester-army/e2e/commit/d3afa6bacb9a407d0bd85c9f8abb2135b1d8a2ac) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Four fixes from a real suite's first day:
-  
+
   - `e2e run login.e2e.ts` now runs the setup test that produces the session `login.e2e.ts` consumes, wherever that setup lives. Every discovered file is collected; positionals narrow which tests run, and tests in the other files are report-only unselected results. A collection error in any file fails the run, whichever files were named.
   - `test.skip(condition, reason)` inside a test body skips the running test for a fact only the app can tell. The steps that ran stay in the report, teardown runs, no retry is spent, and the result is `skipped` with the reason. A setup test cannot skip (`INVALID_ARGUMENT`); outside a body the form is `COLLECTION_ERROR`. Report schema: a skipped attempt may carry steps and a `skip` reason.
   - `expect(actual, message)` opens a value failure with the caller's label. `toBeGreaterThanOrEqual`, `toBeLessThanOrEqual`, and `toBeCloseTo(expected, digits = 2)` join the value matchers and `expect.poll`.
@@ -28,7 +78,7 @@
 - [#332](https://github.com/tester-army/e2e/pull/332) [`ed3999e`](https://github.com/tester-army/e2e/commit/ed3999e8931693f02a1a6e1737315fcea60f341b) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The list-valued selection flags share one parser. `--tag`, `--target`, and `--agent` each take a comma-separated list or repeats, each name once, and an empty value (`--tag ''`, or `--tag "$TAGS"` with the variable unset) is a usage error, exit 2. Before, `--tag smoke,billing` looked for one tag literally named that, `--tag ''` failed later as `NO_TESTS` over an empty tag name, and an empty `--target` or `--agent` silently selected every target or the default agents; `--target` now accumulates on repeat as `--agent` did. When a tag filter leaves nothing to run, `NO_TESTS` blames the filter only for the tests it filtered (a test a positional or `.only` left out is counted as such), reads correctly under `--tag-mode all` ("do not carry all of the tags"), and marks each tag no test declares with the nearest declared one: `smok (did you mean smoke?)`. A tag name containing a comma cannot be selected this way; tag validation rejects one at registration.
 
 - [#331](https://github.com/tester-army/e2e/pull/331) [`99f9ea8`](https://github.com/tester-army/e2e/commit/99f9ea81cf3d40d4eb7966b9a98cdea9c2df1745) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Malformed selection input fails where it is written, with the file named:
-  
+
   - `tags` must be a list of distinct names, none blank, with no comma and no leading or trailing whitespace, so that `--tag` can spell every one back (inner spaces are fine, quoted). Checked at registration, like `timeout`, `retries`, and `agent`; the `COLLECTION_ERROR` names the test file. A bare string such as `tags: 'smoke'` was read letter by letter, so `--tag smoke` never selected the test.
   - `tests` in the config must be a glob or a list of globs, checked and compiled when the config resolves. A wrong type was a raw TypeError reported as a test failure with exit 1 (at config load for `tests: 5`, at collection for `tests: [1]`); it is `INVALID_CONFIG`, exit 2. A malformed glob was `INVALID_GLOB` only once a run or `e2e list` collected; it is now raised when the config loads, so `e2e explore`, `e2e mcp`, and `e2e cache` refuse a config no run could use.
 
@@ -37,26 +87,26 @@
 ### Minor Changes
 
 - [#323](https://github.com/tester-army/e2e/pull/323) [`0a4b7f4`](https://github.com/tester-army/e2e/commit/0a4b7f4fe9f3b316907ce896d21153a918f853e8) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: `agent.act` takes no `vision` option and `agents.<name>.vision` is gone. The act model always works from the semantic tree and asks for pixels itself: it calls `screenshot` when the tree lacks what it needs, and from then on every action result carries a fresh screenshot and the point verbs (`tap_at`, `type_at`, `press_at`, `select_at`) act at points in it. There is no pixels-only mode and no screenshot-on-every-turn mode; the model decides, not the config. `vision` on `act` fails with `UNSUPPORTED_CAPABILITY`, and `agents.<name>.vision` is an unknown config key. `vision` stays on the judgments (`assert`, `waitFor`, `extract`) with `false` as the only default.
-  
+
   For executors: `ctx.vision` is removed from `StepExecutorContext`; `observe({ pixels: true })` is the one way to ask for pixels, and a custom executor's `agent.assert` rejects `vision` like it rejects `screenshot`.
 
 - [#314](https://github.com/tester-army/e2e/pull/314) [`0b513d9`](https://github.com/tester-army/e2e/commit/0b513d989e7086bd3998fd0d105dbea0fdd5d004) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The built-in agent's default vocabulary gains the point-addressed fallback verbs next to `screenshot` and `tap_at`: `type_at`, `press_at`, and `select_at`, each taking a point in the latest screenshot for a target the tree does not list. Every point is hit-tested against the tree the runner still holds, so a listed control is acted on by id underneath, recorded with a descriptor and replayed from the trace cache like any other action. The rules tell the model to act by id whenever the screen lists the target and to take a screenshot before naming a point; before any screenshot the point verbs answer with that reminder and spend nothing. Once a secret has been filled in the attempt, all five pixel verbs leave the vocabulary together. `waitFor` skips judgments while the screen is unchanged, comparing the pixels along with the tree when they are sent.
-  
+
   For executors: `ctx.actions.hitTest(point)` resolves a point onto the listed control and node under it without acting.
-  
+
   Engines gain a `keyboard` capability (`keyboard.type`, `keyboard.press`, optional `keyboard.dismiss`): input to whatever holds focus, with no node behind it. The agent's `type` and `press` accept no target on such an engine, `type_at` and `press_at` fall back to tapping the point and typing through the keyboard when the tree lists nothing there, and `dismiss_keyboard` is offered where the engine can hide an on-screen keyboard. That is how a field drawn on a canvas, or one a platform flattens out of its accessibility tree, gets its text. Executors get `ctx.actions.typeText`, `pressKey`, and `dismissKeyboard`; the trace cache records and replays them as free actions.
 
 - [#303](https://github.com/tester-army/e2e/pull/303) [`1c9cc16`](https://github.com/tester-army/e2e/commit/1c9cc16697cb82c0a6db924f6c0f389886b2a468) Thanks [@okwasniewski](https://github.com/okwasniewski)! - `agents.<name>.timeout` is the judgment budget: the deadline of one `assert`, `waitFor`, or `extract` call, 30 s by default. Until now that deadline was `max(30000, actionTimeout)`, so a project with a slow judge had to inflate the engine's per-operation budget to buy the model time, and every navigation and actionability wait inherited the inflated number. `actionTimeout` bounds engine operations only. A suite that raised `actionTimeout` for the judge should move the value to the agent; one that raised it for a slow page keeps it.
 
 - [#324](https://github.com/tester-army/e2e/pull/324) [`7fcb925`](https://github.com/tester-army/e2e/commit/7fcb925d76f41f1a8558abaa57a60de4ff365868) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: the engine contract's pointer side is a vocabulary, not one verb, and the vocabulary is finished before the contract locks.
-  
+
   - `Engine.tapAt(point)` is `Engine.performAt(point, action)` with a required `pointerActions` list, mirroring `perform` and `actions`. `PointerAction` is the pointer subset of the action kinds: `tap`, `doubleTap`, `secondaryTap`, `longPress`, `hover`, `dragTo` (to a second point), and `swipe` (from the point). The harness routes a point action only for a declared kind; the agent's `tap_at` verb needs the `tap` kind in `actions` or `pointerActions`. `POINTER_ACTION_KINDS`, `PointerAction`, and `PointerActionKind` are exported from `e2e/engine`.
   - `secondaryTap` joins the action kinds and `Locator.secondaryTap()` performs it: a right click, a two-finger tap.
   - `SemanticNode.states` gains `pressed` and `SemanticNode` gains `level`; `getByRole` takes `pressed` and `level`, so a toggle button and a heading level are queries on every engine.
   - `EngineSnapshot.viewport` is `{ width, height }`: the `scale` it carried meant nothing (every engine reported 1 and nothing read it); `ObservationPixels.scale` remains the image-to-CSS ratio.
   - `ScrollDirection`, `Momentum`, and `SelectOption` are defined by the contract (`e2e/engine`) and re-exported by `e2e`, so the SPI owns its own vocabulary.
   - The `Platform` type is gone: a platform is a `string` label (`web`, `ios`, `android`, or an engine's own) on `Engine.platform`, `Target.platform`, the `platform` fixture, and `platforms`. Nothing in the harness branched on the three names, so the type only pretended to.
-  
+
   `spiVersion` stays `1`.
 
 - [#317](https://github.com/tester-army/e2e/pull/317) [`2e593df`](https://github.com/tester-army/e2e/commit/2e593dfb46dc71bc1785cb0ce80c35e34c0f1a90) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Recover semantic-capture timeouts with fresh, independently masked screenshots.
@@ -66,12 +116,12 @@
   affected steps. Playwright supports
   the fallback; device captures still fail closed when accessibility data
   cannot establish screenshot masks.
-  
+
   Playwright bounds the complete semantic capture and reserves node IDs before
   the reader starts. An abandoned capture cannot reuse IDs or publish late
   references. Pixel-only evidence resets the agent's semantic screen comparison
   and stops cache probes without discarding the recovered screenshot.
-  
+
   Reports accept judgment steps that fail before a model call without inventing
   an observation revision or verdict explanation.
 
@@ -93,7 +143,7 @@
   marks the listing truncated whichever limit cut it.
 
 - [#325](https://github.com/tester-army/e2e/pull/325) [`d3afa6b`](https://github.com/tester-army/e2e/commit/d3afa6bacb9a407d0bd85c9f8abb2135b1d8a2ac) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Three fixes from a real suite's first day:
-  
+
   - `e2e run login.e2e.ts` now runs the setup test that produces the session `login.e2e.ts` consumes, wherever that setup lives. Every discovered file is collected; positionals narrow which tests run, and tests in the other files are report-only unselected results. A collection error in any file fails the run, whichever files were named.
   - `test.skip(condition, reason)` inside a test body skips the running test for a fact only the app can tell. The steps that ran stay in the report, teardown runs, no retry is spent, and the result is `skipped` with the reason. A setup test cannot skip (`INVALID_ARGUMENT`); outside a body the form is `COLLECTION_ERROR`. Report schema: a skipped attempt may carry steps and a `skip` reason.
   - `expect(actual, message)` opens a value failure with the caller's label. `toBeGreaterThanOrEqual`, `toBeLessThanOrEqual`, and `toBeCloseTo(expected, digits = 2)` join the value matchers and `expect.poll`.
@@ -148,7 +198,7 @@
 ### Minor Changes
 
 - [#291](https://github.com/tester-army/e2e/pull/291) [`abf1958`](https://github.com/tester-army/e2e/commit/abf19588677070fb86234f735614c40b7677e755) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Breaking: the engine contract (`e2e/engine`) is reshaped as the locked, UI-only, cross-platform SPI for 1.0. What breaks and what replaces it:
-  
+
   - `EngineSnapshot.nodes` is `root`, one engine-minted node with an id that stays stable across observations; `url` is `location`, an opaque address (a URL on the web, the foreground screen on a device) the harness treats as a URL only when it parses as one; `viewport` is required.
   - `Engine.url()` is gone; read `location` off an observation. `Engine.swipe` is gone; the viewport swipe is `perform(root, { kind: 'swipe' })`.
   - `Engine.actions` lists the action kinds `perform` honors and is required with it. The agent's tools and the `screen` methods derive from it, so a surface is never offered a verb it cannot do.
@@ -157,7 +207,7 @@
   - `press` keys follow one grammar in Playwright spelling (`Control+a`, `Shift+Tab`, `Enter`, one printable character); `parseKey`, `KEY_NAMES`, `KEY_MODIFIERS`, and `LOCATOR_ACTION_KINDS` are exported for engines. An invalid key fails with `INVALID_ARGUMENT` before it reaches an engine.
   - `OperationContext.origin` is required. `EnginePrepareInfo.env` is a plain readonly record, and `EnginePrepareResult.env` is the typed channel from a runner-side `prepare` to each worker's `init`, which reads it as `EngineInitInfo.env` (the run's environment plus that target's additions; other targets never see them).
   - Report: the target record no longer carries `testIdAttribute`; artifact kinds and usage counters are unchanged.
-  
+
   `spiVersion` stays `1`.
 
 - [#288](https://github.com/tester-army/e2e/pull/288) [`aa3b05b`](https://github.com/tester-army/e2e/commit/aa3b05bbbdd4534ef111e51b950002513998076f) Thanks [@okwasniewski](https://github.com/okwasniewski)! - Judgments are independent of the act loop. `agent.assert`, `agent.waitFor`,
@@ -173,7 +223,7 @@
   to the judgment tier (one judgment call, `vision` and `screenshot` allowed)
   instead of through its own `runStep`, so the judge judges them. A hand-rolled
   executor still judges its own assertions through `runStep`.
-  
+
   The judgment protocol is `agent-judgment-2`: the model answers `holds`,
   `fails`, or `inconclusive` instead of a boolean. An inconclusive
   `agent.assert`, one where the screen did not show enough to decide either
@@ -183,7 +233,7 @@
   `agent-judgment-1` schema and its fixtures stay in the package, marked
   deprecated, for the stability window; the runner requests `agent-judgment-2`
   only.
-  
+
   The report records the checkout under `run.vcs`: `commit`, `branch` when
   HEAD is on one, and `dirty` when git could say. Outside git the GitHub
   Actions variables stand in; with neither, the field is absent. It is what
@@ -276,9 +326,9 @@
   Steps that sent pixels record `visionInput` and `metrics.pixelBytes`.
 
 - [#273](https://github.com/tester-army/e2e/pull/273) [`f53e8e2`](https://github.com/tester-army/e2e/commit/f53e8e2246d07f2c7f72bf77202f216a0c44b82d) Thanks [@okwasniewski](https://github.com/okwasniewski)! - A `url` on a literal loopback address declared with port 0 (`http://127.0.0.1:0`, `http://[::1]:0`) asks the run for a free TCP port. The runner picks one when the config loads, before anything spawns, and substitutes it in the base URL, the default `allowedOrigins` entry (and an explicit one spelled with the same host and `:0`), the default `readyUrl`, and the report's target record; worker processes receive the same assignment, as does a session opened by `e2e mcp`. Port 0 on any other host is `INVALID_APP_URL`, `localhost` included: a name may resolve to another address than the one the command binds, and a port free on one is not free on the other.
-  
+
   `{port}` in the app command's `args` and `env`, in `readyUrl`, and in each service's `args`, `env`, `readyUrl`, and `teardown` expands to the port the app is served on, allocated or fixed; the command must take the port through it. On a target without a `url` the token is `INVALID_CONFIG` naming the field. Services keep the ports their config gives them. The port is free when chosen and handed to the command a moment later; another process binding it in between fails the start with `APP_UNREACHABLE`, which a rerun resolves.
-  
+
   The default cache and session identity derives from the declared URL with `:0`, so trace cache entries survive the port changing per run. Tests read the resolved URL from the new `app.baseUrl`, `undefined` on a surface whose engine declares no `url`.
 
 - [#258](https://github.com/tester-army/e2e/pull/258) [`c553b61`](https://github.com/tester-army/e2e/commit/c553b614def4da798be5bfa3f7f04591dc253b69) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The `'fallback'` vision mode is gone. It was documented as behaving like
@@ -299,10 +349,10 @@
   that hangs is cut at the deadline. The timeout is `ASSERTION_FAILED` with the
   last sample in its message; a non-finite `timeout` or `interval` is
   `INVALID_CONFIG` before the first read. It is not recorded as a report step.
-  
+
   `expect(value).toMatch(regexp)` now resets a global or sticky regexp before
   each test, so repeated checks of the same value agree.
-  
+
   ```ts
   await expect
     .poll(() => getTest(workspace).then((row) => row?.title), { timeout: 15_000 })
@@ -343,7 +393,7 @@
   to be the whole root-relative path or the run ended in `NO_TESTS`. The match is
   exact and case-sensitive, ends at a path-segment boundary, and still never
   selects a file the config globs did not discover.
-  
+
   A positional that starts with `-` and names no existing file is now a usage
   error with exit code 2 instead of a file that matches nothing. `pnpm test:e2e
   -- --headed` reaches the CLI as `run -- --headed`, so `--headed` used to be
@@ -401,7 +451,7 @@
   topic, and `createAgent` now returns its `tools` so a host can serve them.
 
 - [#262](https://github.com/tester-army/e2e/pull/262) [`8287bf9`](https://github.com/tester-army/e2e/commit/8287bf930b2e37311d215900eb91d192edefc663) Thanks [@okwasniewski](https://github.com/okwasniewski)! - One flow, several personas. The `agent` option on a test or describe block accepts a list, and the test then runs once per agent named, as one result each, in one run. `--agent` takes several names too, comma-separated or repeated: every unpinned test runs once per name, and a pinned list narrows to the names the flag also gives (a pin the flag misses stands whole, so `--agent thorough` still benchmarks a model across everything that has no opinion while every persona stays itself). A serial group runs as one unit per agent and its members share one pin; a setup test runs once per target and pins at most one agent.
-  
+
   Every result and serial group in the report records the `agent` it ran as, and the result id now digests `{ testId, targetId, agent }`, so the id of every result changes once. Reporters tell variants apart: the list reporter appends `[admin]` to a title that ran as an agent other than `default`, JUnit case names carry the same tag, and artifacts of one attempt live under `<target>/<test id>/<agent>/attempt-<n>`. The `run-started` event carries `agents` (a list) in place of `agent`, and `test-started` and `step` events carry the pair's `agent`.
 
 ### Patch Changes
@@ -472,7 +522,7 @@
   `@ai-sdk/openai-compatible` for any OpenAI-compatible endpoint, or a provider's
   own package. A string in `agent.model`, `agent.visionModel`, or
   `createAgent({ model })` is `INVALID_CONFIG` naming the constructor to write.
-  
+
   `e2e init` asks which gateway agent steps use (Vercel AI Gateway, OpenRouter,
   an OpenAI-compatible endpoint with its URL, or none) instead of a yes/no on AI,
   adds that provider package, and writes the import and the constructor into
@@ -487,7 +537,7 @@
 
 - [#253](https://github.com/tester-army/e2e/pull/253) [`31db985`](https://github.com/tester-army/e2e/commit/31db98562ad004205e9862e944f6218bc504964f) Thanks [@okwasniewski](https://github.com/okwasniewski)! - The agent loop addresses the provider's prompt cache, keeps its history
   cacheable, and recovers once from a request the model cannot fit.
-  
+
   - Every model call carries what the provider needs to serve the repeated
     prefix from its cache: on Anthropic models a cache breakpoint on the system
     prompt (covering the tool definitions) and one on the newest message, moved

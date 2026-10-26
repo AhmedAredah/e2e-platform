@@ -10,10 +10,11 @@
 import { startCallbackServer, type CallbackAnswer, type CallbackServer } from '../callback-server.ts';
 import { runDeviceFlow } from '../device-code.ts';
 import { OAuthError, describeResponse } from '../errors.ts';
+import { OAuthOperation } from '../operation.ts';
 import { decodeJwtPayload } from '../jwt.ts';
 import { generatePkce, randomState } from '../pkce.ts';
 import { foldResponsesStream } from '../sse.ts';
-import { expiryFrom, requestTokens, type TokenResponse } from '../token-endpoint.ts';
+import { expiryFrom, requestTokens, readOAuthJson, type TokenResponse } from '../token-endpoint.ts';
 import type { FetchFunction, OAuthCredentials, OAuthLoginCallbacks, OAuthProvider } from '../types.ts';
 
 /** The public OAuth client of the Codex CLI, which every third-party harness signs in through. */
@@ -66,12 +67,13 @@ export function createCodexProvider(options: CodexProviderOptions = {}): OAuthPr
           : await browserLogin(callbacks, { issuer, originator, callbackPort, timeoutMs });
       return toCredentials(tokens);
     },
-    async refresh(credentials) {
+    async refresh(credentials, signal) {
       const tokens = await requestTokens(
         'ChatGPT',
         `${issuer}/oauth/token`,
         { grant_type: 'refresh_token', refresh_token: credentials.refresh, client_id: CLIENT_ID },
         'LOGIN_REQUIRED',
+        signal,
       );
       return toCredentials(tokens, credentials);
     },
@@ -141,14 +143,14 @@ export function parseAuthorizationInput(input: string): { code: string | undefin
   return { code: value, state: undefined };
 }
 
-function exchangeCode(issuer: string, code: string, redirectUri: string, verifier: string): Promise<TokenResponse> {
+function exchangeCode(issuer: string, code: string, redirectUri: string, verifier: string, signal?: AbortSignal): Promise<TokenResponse> {
   return requestTokens('ChatGPT', `${issuer}/oauth/token`, {
     grant_type: 'authorization_code',
     code,
     redirect_uri: redirectUri,
     client_id: CLIENT_ID,
     code_verifier: verifier,
-  });
+  }, 'FLOW_FAILED', signal);
 }
 
 interface BrowserLogin {
@@ -187,7 +189,7 @@ async function browserLogin(callbacks: OAuthLoginCallbacks, flow: BrowserLogin):
     const code = server === undefined ? await pasteCode(callbacks, state) : await answerOrPaste(server, callbacks, state, flow.timeoutMs);
     if (code === undefined) throw new OAuthError('FLOW_FAILED', 'no authorization code was received');
     callbacks.onProgress?.('Exchanging the code for tokens');
-    return await exchangeCode(flow.issuer, code, redirectUri, verifier);
+    return await exchangeCode(flow.issuer, code, redirectUri, verifier, callbacks.signal);
   } finally {
     server?.close();
   }
@@ -211,7 +213,7 @@ async function answerOrPaste(server: CallbackServer, callbacks: OAuthLoginCallba
 }
 
 async function pasteCode(callbacks: OAuthLoginCallbacks, state: string): Promise<string | undefined> {
-  const pasted = parseAuthorizationInput(await callbacks.onPrompt({ message: 'Paste the URL the browser landed on (or the code it shows)' }));
+  const pasted = parseAuthorizationInput(await new OAuthOperation(callbacks.signal, LOGIN_TIMEOUT_MS).run(() => callbacks.onPrompt({ message: 'Paste the URL the browser landed on (or the code it shows)' })));
   if (pasted.state !== undefined && pasted.state !== state) {
     throw new OAuthError('FLOW_FAILED', 'the pasted code belongs to a different login attempt; start over');
   }
@@ -224,10 +226,10 @@ function deviceLogin(callbacks: OAuthLoginCallbacks, issuer: string, timeoutMs: 
     fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), ...(signal === undefined ? {} : { signal }) });
   return runDeviceFlow<TokenResponse>({
     callbacks,
-    async start() {
-      const response = await json(`${issuer}/api/accounts/deviceauth/usercode`, { client_id: CLIENT_ID });
-      if (!response.ok) throw new OAuthError('FLOW_FAILED', `ChatGPT device login could not start: ${await describeResponse(response)}`);
-      const device = (await response.json()) as { device_auth_id: string; user_code: string; interval?: string | number };
+    async start(signal) {
+      const response = await json(`${issuer}/api/accounts/deviceauth/usercode`, { client_id: CLIENT_ID }, signal);
+      if (!response.ok) throw new OAuthError('FLOW_FAILED', `ChatGPT device login could not start: ${await describeResponse(response, [], signal)}`);
+      const device = await readOAuthJson(response, signal) as { device_auth_id: string; user_code: string; interval?: string | number };
       return {
         deviceCode: device.device_auth_id,
         userCode: device.user_code,
@@ -239,15 +241,15 @@ function deviceLogin(callbacks: OAuthLoginCallbacks, issuer: string, timeoutMs: 
     async poll(authorization, signal) {
       const response = await json(`${issuer}/api/accounts/deviceauth/token`, { device_auth_id: authorization.deviceCode, user_code: authorization.userCode }, signal);
       if (response.ok) {
-        const grant = (await response.json()) as { authorization_code: string; code_verifier: string };
-        return { status: 'granted', value: await exchangeCode(issuer, grant.authorization_code, `${issuer}/deviceauth/callback`, grant.code_verifier) };
+        const grant = await readOAuthJson(response, signal) as { authorization_code: string; code_verifier: string };
+        return { status: 'granted', value: await exchangeCode(issuer, grant.authorization_code, `${issuer}/deviceauth/callback`, grant.code_verifier, signal) };
       }
       // Pending shows as 403 or 404 until the user enters the code.
       if (response.status === 403 || response.status === 404) {
         await response.body?.cancel();
         return { status: 'pending' };
       }
-      throw new OAuthError('FLOW_FAILED', `ChatGPT device login failed: ${await describeResponse(response)}`);
+      throw new OAuthError('FLOW_FAILED', `ChatGPT device login failed: ${await describeResponse(response, [authorization.deviceCode, authorization.userCode], signal)}`);
     },
   });
 }

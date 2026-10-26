@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import * as cli from '../../src/cli.ts';
+import { loginHint } from '../../src/providers.ts';
 
 /** The e2e CLI types this module by hand; the names it calls must exist here. */
 describe('@e2e-cpp/oauth/cli', () => {
+  it('returns success for help and names only locally installed fork executables', async () => {
+    const out: string[] = [];
+    const stream = { write: (chunk: string) => (out.push(chunk), true) } as unknown as NodeJS.WritableStream;
+    expect(await cli.runOAuthCli(['--help'], { stdout: stream, stderr: stream, isTTY: false })).toBe(0);
+    expect(out.join('')).toContain('e2e-cpp-oauth login');
+    expect(out.join('')).not.toContain('e2e-oauth');
+    expect(loginHint('openai')).toBe('run `e2e-cpp login openai` (or `npx --no-install e2e-cpp-oauth login openai`)');
+  });
   it('exports the entry points the e2e CLI calls', () => {
     expect(typeof cli.runLogin).toBe('function');
     expect(typeof cli.runLogout).toBe('function');

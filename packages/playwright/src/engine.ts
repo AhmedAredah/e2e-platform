@@ -79,6 +79,7 @@ export function playwright(options: PlaywrightOptions = {}): EngineHandle {
     init: (info) => surface.init(info),
     startAttempt: (context) => surface.startAttempt(context),
     endAttempt: (context) => surface.endAttempt(context),
+    settleAttempt: (context) => surface.settleAttempt(context),
     dispose: (context) => surface.dispose(context),
     observe: (operation, observeOptions) => surface.observe(operation, observeOptions),
     locate: (expression, operation) => surface.locate(expression, operation),

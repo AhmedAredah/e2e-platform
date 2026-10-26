@@ -96,6 +96,35 @@ it.each(['dialog', 'route'] as const)('keeps a late %s failure on the attempt th
   await expect(surface.guard(operation(), 'next attempt', async () => 'clean')).resolves.toBe('clean');
 });
 
+it.each(['dialog', 'route'] as const)('settles a started %s callback after context close without another surface operation', async (kind) => {
+  let release!: () => void;
+  const waiting = new Promise<void>((resolve) => { release = resolve; });
+  let callback: Promise<void>;
+  if (kind === 'dialog') {
+    surface.dialogs.add(async () => { await waiting; throw new Error('final callback failed'); });
+    callback = surface.dialogs.dispatch({ type: () => 'confirm', message: () => 'final', dismiss: async () => undefined } as unknown as Dialog);
+  } else {
+    const web = createWebFixture(surface, {
+      operation,
+      fixture: (_name: string, value: unknown) => value,
+      expectable: (value: unknown) => value,
+      app: { resolveUrl: (url: string) => url },
+    } as unknown as EngineFixtureContext);
+    await web.route('**/*', async () => { await waiting; throw new Error('final callback failed'); });
+    callback = registered!({
+      request: () => ({ postData: () => null, url: () => 'https://example.test/', method: () => 'GET', headers: () => ({}) }),
+      abort: async () => undefined,
+    } as unknown as Route);
+  }
+  await surface.endAttempt(cleanup());
+  const settling = surface.settleAttempt(cleanup());
+  const rejected = expect(settling).rejects.toThrow('final callback failed');
+  release();
+  await rejected;
+  await callback;
+  await expect(surface.settleAttempt(cleanup())).resolves.toBeUndefined();
+});
+
 it('collects saved trace and video segments after ordinary context replacement fails', async () => {
   await surface.startVideo(operation());
   await surface.startTrace(operation());

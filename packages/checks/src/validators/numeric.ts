@@ -33,11 +33,13 @@ export class NumericValidator extends OutputValidator<number, NumericTolerance> 
     const scale = Math.max(Math.abs(actual), Math.abs(expected));
     const relativeDifference = relative === 0 ? 0 : relative * scale;
     const allowedDifference = Math.max(absolute, relativeDifference);
-    // Subtraction may overflow for two finite opposite-sign values. Dividing
-    // first preserves the relative predicate without treating Infinity <= Infinity as proof.
-    const relativeMatch = relative > 0 && scale > 0 && Math.abs(actual / scale - expected / scale) <= relative;
-    const matches = Number.isFinite(difference) && Number.isFinite(allowedDifference) ? difference <= allowedDifference : relativeMatch;
-    return { matches, difference, allowedDifference };
+    // Normalize the error, not the tolerance: multiplying a subnormal scale can
+    // round the permitted error upward. Divide operands first only on overflow.
+    const relativeError = scale === 0 ? 0 : Number.isFinite(difference) ? difference / scale : Math.abs(actual / scale - expected / scale);
+    const matches = difference <= absolute || (relative > 0 && relativeError <= relative);
+    return { matches, difference, allowedDifference,
+      ...(!matches && difference <= allowedDifference ? { reason: `Relative difference ${relativeError} exceeds ${relative}; absolute difference ${difference} exceeds ${absolute}` } : {}),
+    };
   }
 
 

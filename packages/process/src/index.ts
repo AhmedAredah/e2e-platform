@@ -1,4 +1,8 @@
 export { ProcessError } from './error.ts';
+export { ApplicationLaunchProfile, type ApplicationLaunchOptions, type ApplicationLaunch, type ApplicationCommand } from './launch/profile.ts';
+export { ExecutableLaunchProfile, type ExecutableLaunchOptions } from './launch/executable.ts';
+export { PythonLaunchProfile, type PythonLaunchOptions } from './launch/python.ts';
+export { DotnetLaunchProfile, type DotnetLaunchOptions } from './launch/dotnet.ts';
 export { LocalProcessRunner, ProcessRunner, runProcess, startProcess } from './process/runner.ts';
 export { terminateProcessTree } from './tree.ts';
 export { ProcessWorkspace } from './fixtures/workspace.ts';

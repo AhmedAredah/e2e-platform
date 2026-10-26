@@ -35,7 +35,7 @@ QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth
             if (auto* button = qobject_cast<QAbstractButton*>(widget)) {
                 const QString text = clean(button->text());
                 node["text"] = text;
-                if (name.isEmpty()) name = text.left(256);
+                if (name.isEmpty()) name = clean(text, 256);
                 if (button->isCheckable()) states[node.value("role") == "button" ? "pressed" : "checked"] = button->isChecked();
             } else if (auto* edit = qobject_cast<QLineEdit*>(widget)) {
                 node["value"] = clean(edit->text());

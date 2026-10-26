@@ -90,10 +90,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Literal manifests have closed keys; class instances may also hold their own state. */
+function isPlainManifest(value: object): boolean {
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 /**
  * Validates one nested hook manifest (`state`, `artifacts`, `session`): a
- * plain object whose keys are closed and whose members are functions. Returns
- * a copy with every function bound to the manifest, so class-based bodies work.
+ * plain object with closed keys or a class instance with its own state. Known
+ * hooks must be functions and are bound to the original manifest instance.
  */
 function hookManifest<K extends keyof typeof NESTED_HOOKS>(
   name: string,
@@ -103,9 +109,11 @@ function hookManifest<K extends keyof typeof NESTED_HOOKS>(
 ): Record<string, unknown> {
   if (!isRecord(value)) throw invalid(name, `${key} must be an object`);
   const hooks: readonly string[] = NESTED_HOOKS[key];
-  for (const member of Object.keys(value)) {
-    if (!hooks.includes(member)) {
-      throw invalid(name, `${key} has unknown key "${member}"; expected one of ${hooks.join(', ')}`);
+  if (isPlainManifest(value)) {
+    for (const member of Object.keys(value)) {
+      if (!hooks.includes(member)) {
+        throw invalid(name, `${key} has unknown key "${member}"; expected one of ${hooks.join(', ')}`);
+      }
     }
   }
   const bound: Record<string, unknown> = {};
@@ -186,7 +194,7 @@ export function defineEngine(spec: Engine): EngineHandle {
   }
   // A literal's unknown key is a misspelling or a misplaced tool; a class
   // instance's own fields are its state, so only literals are checked.
-  if (Object.getPrototypeOf(spec) === Object.prototype) {
+  if (isPlainManifest(spec)) {
     const known: readonly string[] = KNOWN_KEYS;
     for (const key of Object.keys(spec)) {
       if (!known.includes(key)) {

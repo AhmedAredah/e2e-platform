@@ -30,7 +30,7 @@ import {
   testIdQuery,
   textQuery,
 } from './expression.ts';
-import { Deadline, POLL_INTERVAL_MS, pollCondition, sleep } from '../internal/time.ts';
+import { POLL_INTERVAL_MS, pollCondition, sleep } from '../internal/time.ts';
 
 export interface SecretResolver {
   /**
@@ -442,7 +442,7 @@ class LocatorImpl extends ScreenImpl implements Locator {
   }
 
   private async readOptional(): Promise<SemanticNode | null> {
-    const deadline = new Deadline(0);
+    const deadline = this.context.engine.deadline();
     const { node } = await this.context.engine.tryRead(this.expression, deadline);
     return node;
   }

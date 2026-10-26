@@ -3,6 +3,7 @@ import { NativeEngine } from './engine/native-engine.ts';
 import type { NativeOptions } from './options.ts';
 
 export { NativeEngine } from './engine/native-engine.ts';
+export type { NativeProcessLaunch } from './engine/native-process.ts';
 export { NativeDriver, type NativeInitialization, type NativeScreenshot } from './driver/native-driver.ts';
 export { RpcNativeDriver } from './driver/rpc-native-driver.ts';
 export { NativeTransport, type RequestContext } from './transport/native-transport.ts';

@@ -246,7 +246,7 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
     an executor keeps in `attempt.memory` is its own; the harness never
     reports it.
   - A secret fill is authorized by the runner, not the model: authentic
-    unresolved handle, a secure sink, allowed top-level and frame origin, an
+    unresolved handle, a configured secret declared by the step, an enabled
     editable node with a compatible purpose, a current observation, and no
     control transfer since. The model never sees or picks the value.
   - Every model tool call is parsed into a closed schema and authorized
@@ -254,9 +254,10 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
     refs, and denied destinations are `POLICY_DENIED`. Model text is never
     evaluated as code, selectors, shell, or config. App content, ledger text,
     and pixels are quoted as untrusted evidence with no policy authority.
-  - Navigation is checked against the target's allowed origins on every hop
-    (initial URL, redirects, popups, frames, agent requests). `file:`, `data:`,
-    `javascript:`, link-local, and cloud-metadata destinations are denied.
+  - Explicit navigation rejects `file:`, `data:` and `javascript:` URLs.
+    There is no navigation or secret-fill origin allowlist and no general
+    link-local/cloud-metadata network restriction. Redirects and popups are not
+    rechecked. Do not promise these protections; see SECURITY.md.
   - Sessions are per-run, target-bound, AES-256-GCM encrypted with a
     memory-only key, and deleted at cleanup; payloads never enter diagnostics.
   - Reports escape contextually, strip terminal controls, generate artifact

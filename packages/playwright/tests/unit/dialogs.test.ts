@@ -127,4 +127,54 @@ describe('ErrorLatch', () => {
     expect(() => latch.throwPending()).toThrow(first);
     expect(() => latch.throwPending()).not.toThrow();
   });
+
+  it('settles a started dialog handler and reports its late failure without another step', async () => {
+    const latch = new ErrorLatch();
+    const router = new DialogRouter(latch);
+    let release!: () => void;
+    const paused = new Promise<void>((resolve) => { release = resolve; });
+    router.add(async () => { await paused; throw new Error('final dialog handler failed'); });
+    const callback = router.dispatch(fakeDialog().dialog);
+    const settling = latch.settle({ timeoutMs: 1000, signal: new AbortController().signal });
+    const rejected = expect(settling).rejects.toMatchObject({ code: 'ENGINE_FAILURE', message: expect.stringContaining('final dialog handler failed') });
+    release();
+    await rejected;
+    await callback;
+    await expect(latch.settle({ timeoutMs: 1000, signal: new AbortController().signal })).resolves.toBeUndefined();
+  });
+
+  it('uses one deadline when another callback begins during settlement', async () => {
+    vi.useFakeTimers();
+    const latch = new ErrorLatch();
+    let finish!: () => void;
+    try {
+      void latch.track(new Promise<void>((resolve) => {
+        setTimeout(() => {
+          void latch.track(new Promise<void>((done) => { finish = done; }));
+          resolve();
+        }, 80);
+      }));
+      const settling = latch.settle({ timeoutMs: 100, signal: new AbortController().signal });
+      const rejected = expect(settling).rejects.toMatchObject({ code: 'CLEANUP_TIMEOUT' });
+      await vi.advanceTimersByTimeAsync(100);
+      await rejected;
+      finish();
+      await latch.settle({ timeoutMs: 100, signal: new AbortController().signal });
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('abandons settlement on cancellation without consuming an error that arrives later', async () => {
+    const latch = new ErrorLatch();
+    let reject!: (cause: Error) => void;
+    const callback = latch.track(new Promise<void>((_resolve, fail) => { reject = fail; }));
+    const controller = new AbortController();
+    const settling = latch.settle({ timeoutMs: 1000, signal: controller.signal });
+    const cancelled = expect(settling).rejects.toMatchObject({ code: 'CANCELLED' });
+    controller.abort();
+    await cancelled;
+    reject(new Error('late callback fault'));
+    await callback;
+    await expect(latch.settle({ timeoutMs: 1000, signal: new AbortController().signal })).rejects.toThrow('late callback fault');
+    expect(() => latch.throwPending()).not.toThrow();
+  });
 });
