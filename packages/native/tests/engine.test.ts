@@ -62,9 +62,14 @@ describe('native engine through the real e2e-platform runner', () => {
   });
 
   it('includes labels in positive and negated polling assertion failures', async () => {
-    for (const assertion of ['toHaveText("wrong")', 'not.toHaveText("Ready")']) {
-      const result = await scenario(`await app.open(); await expect(screen.getByTestId('status'), '[oracle:calculation]').${assertion};`);
-      expect(result.report.run.results[0]?.attempts[0]?.error?.message).toContain('[oracle:calculation]');
+    // This tests real cross-process reporting, not a 100 ms scheduling bound.
+    // Exact deadline and early-timeout behavior use controlled clocks separately.
+    for (const assertion of ['toHaveText("wrong", { timeout: 1000 })', 'not.toHaveText("Ready", { timeout: 1000 })']) {
+      const result = await scenario(`await app.open(); await expect(screen.getByTestId('status')).toHaveText('Ready', { timeout: 5000 }); await expect(screen.getByTestId('status'), '[oracle:calculation]').${assertion};`);
+      expect(result.report.run.results[0]?.attempts[0]?.error).toMatchObject({
+        code: 'ASSERTION_FAILED', message: expect.stringContaining('[oracle:calculation]'),
+      });
+      expect(result.report.run.results[0]?.attempts[0]?.error?.message).toContain('observed: text "Ready"');
     }
   });
 
