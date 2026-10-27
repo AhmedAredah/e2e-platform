@@ -30,11 +30,15 @@ test('sends stdin and waits for the CLI to finish', async ({ processes }) => {
 });
 
 test('preserves the expected nonzero exit and diagnostic for bad input', async ({ processes }) => {
-  const result = await processes.run({
-    executable, args: ['sum', '--a', '1x', '--b', '2'], expectedExitCodes: [2], timeoutMs: 5_000,
-  });
+  // Exercise extraction failures, unread suffixes and non-finite/range errors.
+  // libc++ and libstdc++ can reject the same input at different parsing stages.
+  for (const input of ['1x', '1!', 'not-a-number', 'nan', 'inf', '1e9999']) {
+    const result = await processes.run({
+      executable, args: ['sum', '--a', input, '--b', '2'], expectedExitCodes: [2], timeoutMs: 5_000,
+    });
 
-  expect(result.exitCode).toBe(2);
-  expect(result.stdout.bytes.byteLength).toBe(0);
-  expect(result.stderr.bytes.toString('utf8')).toContain('unexpected characters in number');
+    expect(result.exitCode).toBe(2);
+    expect(result.stdout.bytes.byteLength).toBe(0);
+    expect(result.stderr.bytes.toString('utf8').replace(/\r\n/g, '\n')).toBe(`error: expected a finite number: ${input}\n`);
+  }
 });

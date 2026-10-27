@@ -71,6 +71,11 @@ expected exit code and diagnostic, so an arbitrary crash is not accepted as
 successful bad-input handling. Numerical tolerances are explicit, and expected
 values are not regenerated from the program being tested.
 
+Malformed, partially parsed, out-of-range and non-finite operands all produce
+exit code 2, empty stdout and `error: expected a finite number: <input>` on stderr.
+The diagnostic is the same across C++ standard libraries, regardless of which
+numeric-extraction stage detects the invalid input.
+
 ## Extension structure
 
 `include/calculator/` holds the contracts; `src/` separates parsing, operations,

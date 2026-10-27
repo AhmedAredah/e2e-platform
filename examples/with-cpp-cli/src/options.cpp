@@ -16,7 +16,9 @@ double parse_number(const std::string& text) {
         throw std::runtime_error("expected a finite number: " + text);
     }
     stream >> std::ws;
-    if (!stream.eof()) throw std::runtime_error("unexpected characters in number: " + text);
+    // Standard libraries differ in whether malformed suffixes fail extraction
+    // or remain unread. Both paths must expose the same CLI input contract.
+    if (!stream.eof()) throw std::runtime_error("expected a finite number: " + text);
     return value;
 }
 
