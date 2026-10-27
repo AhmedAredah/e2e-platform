@@ -48,10 +48,9 @@ portable tests passed 38. Windows driver/WPF builds and AX/AppKit FFI checks pas
 locally; those are not Windows/macOS execution evidence.
 
 This workspace cannot open the D-Bus Unix sockets required for live GTK. Real
-Windows/macOS desktops are also unavailable locally. Hosted results must be
-checked at the exact commit before these new platform paths are marked qualified.
-Historical hosted results in `RELEASE_STATUS.md` apply only to their recorded
-commits. Installation, source-quality and scheduler results do not substitute for
+Windows/macOS desktops are also unavailable locally. The exact-commit hosted
+results below supply the corresponding native acceptance evidence. Historical
+results in `RELEASE_STATUS.md` apply only to their recorded commits. Installation, source-quality and scheduler results do not substitute for
 native platform acceptance.
 
 Final local checks also passed: source lint/dead-code/build/typechecks and 49
@@ -80,6 +79,34 @@ copies. The existing structural error marker now preserves an observed mismatch
 at the deadline; new regressions fail before the correction and pass afterward.
 Initial or early backend failures still retain their original classification. Portable
 startup tests cover transient failures, empty trees, cancellation and timeout.
+
+## Qualified code checkpoint
+
+All 22 required jobs passed at
+[`9c0bf5eb63d85088e318395be6e6010ab88a1d0a`](https://github.com/AhmedAredah/e2e-platform/commit/9c0bf5eb63d85088e318395be6e6010ab88a1d0a) on 2026-10-27.
+The optional live-model job was not invoked. No production source changed after
+this checkpoint in the documentation update recording these results.
+
+| Workflow | Required jobs passed | Verified scope |
+| --- | --- | --- |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128536) | 3 | Quality gate, testbed, Node 22.22.3 and 24.22.1 unit/integration suites |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128829) | 9 | C++ CLI/HTTP, installed SDK and kit, Qt Widgets/Quick, static/shared consumers, exports and masked capture |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250) | 5 | Real GTK3/WPF/AppKit, installed TypeScript/C++ consumers, owned cleanup and Windows Job Object |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128390) | 3 | Python/C#/Rust CLI/HTTP positive and planted-negative scenarios on three operating systems |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128694) | 1 | Deterministic browser benchmark; optional live-model job not invoked |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128234) | 1 | Local documentation validation |
+
+Each OS desktop archive records four installed-consumer cases: TypeScript and C++
+positives passed, their independent planted defects failed at the required oracle,
+and all four cases completed cleanup. Archive bytes were checked against the
+published SHA-256 digest and the qualification's source commit. Artifact links
+are subject to GitHub's retention period.
+
+| Desktop archive | SHA-256 |
+| --- | --- |
+| [linux-atspi](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12766907820) | `ab0826110facaa6ed04c30d9afc47e7a2cdb7c9728a211092433f92f75828772` |
+| [windows-uia](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12765873464) | `248ff1f51c78f763960cb43ca0259b998d2e3f3b02e5addd2129b732524e738c` |
+| [macos-ax](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12766234100) | `111307cb0e2d81160342a9a940337795c098c01e32ec1de1be10c1ab2cb1ab8c` |
 
 ## Dependency and release boundaries
 

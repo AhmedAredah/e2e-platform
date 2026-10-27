@@ -12,18 +12,39 @@ tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted eviden
 including the formerly failing macOS Quick profile. Older checkpoints below are
 historical; the following table identifies the source actually tested.
 
-## October 27 follow-up fixes
+## Current follow-up qualification
 
-The follow-up review found seven concrete defects or reliability gaps. Their
-fixes and validation are tracked in
-[CPP_FOLLOWUP_RESOLUTION.md](docs/development/CPP_FOLLOWUP_RESOLUTION.md).
-The working revision adds exact C++ HTTP JSON parsing, strict host JSON,
-identity-bound password protection, Windows option preflight, Qt scroll
-postconditions, run-local desktop exclusion, and the patched `qs` 6.16.1.
-New hosted checks install the public packages and CMake SDK, then run both
-TypeScript and compiled C++ against real GTK/WPF/AppKit fixtures, with independent
-wrong-output rejection. New workflow definitions are not passing evidence.
-The historical results below do not qualify these follow-up changes.
+All 22 required jobs across six workflows passed on 2026-10-27 for code checkpoint
+[`9c0bf5eb63d85088e318395be6e6010ab88a1d0a`](https://github.com/AhmedAredah/e2e-platform/commit/9c0bf5eb63d85088e318395be6e6010ab88a1d0a).
+The optional live-model benchmark was not invoked. These results qualify the
+named reference applications, controls and display backends. This documentation
+records that exact code checkpoint; it does not treat later source changes as tested.
+
+The seven review findings and additional hosted integration corrections are
+tracked in [CPP_FOLLOWUP_RESOLUTION.md](docs/development/CPP_FOLLOWUP_RESOLUTION.md).
+They cover exact C++ HTTP JSON parsing, strict host JSON, identity-bound password
+protection, Windows option preflight, Qt scroll postconditions, run-local desktop
+exclusion, `qs` 6.16.1, macOS accessibility startup and installed assertion deadlines.
+
+| Workflow | Required jobs passed | Verified scope |
+| --- | --- | --- |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128536) | 3 | Quality gate, testbed, Node 22.22.3 and 24.22.1 unit/integration suites |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128829) | 9 | C++ CLI/HTTP, installed SDK and kit, Qt Widgets/Quick, static/shared consumers, exports and masked capture |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250) | 5 | Real GTK3/WPF/AppKit, installed TypeScript/C++ consumers, owned cleanup and Windows Job Object |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128390) | 3 | Python/C#/Rust CLI/HTTP positive and planted-negative scenarios on three operating systems |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128694) | 1 | Deterministic browser benchmark; optional live-model job not invoked |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128234) | 1 | Local documentation validation |
+
+The desktop acceptance installs the public packages and CMake SDK into a fresh
+consumer project. Both TypeScript and compiled C++ pass the real GTK/WPF/AppKit
+workflow, reject the independent planted wrong result at the intended assertion,
+and complete owned cleanup. The three evidence archives were downloaded and
+verified against their SHA-256 digests and source commit. Their identities are in
+[support-profiles.json](docs/development/support-profiles.json).
+
+The installed seven-package consumer kit passes its production dependency audit
+with zero findings. Optional docs/demo dependency findings and registry/publication
+gates remain documented below. No stable release or registry publication is claimed.
 
 ## Previous hosted evidence
 
