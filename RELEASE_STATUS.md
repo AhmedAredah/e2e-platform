@@ -22,7 +22,7 @@ macOS environment assertions and unnecessary Python HTTP hostname resolution.
 
 [AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform) was created
 as a real GitHub fork of TesterArmy e2e. Issues and private vulnerability reporting
-are enabled. The reviewed candidate source is maintained on
+are enabled. The reviewed candidate source and default branch are
 [`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main).
 The separately retained `main` branch remains
 the original upstream Apache-licensed snapshot. **It is not this candidate.**

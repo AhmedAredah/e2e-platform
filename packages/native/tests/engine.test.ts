@@ -156,9 +156,9 @@ describe('native engine through the real e2e-platform runner', () => {
     expect(JSON.stringify(result.report)).toContain('truncated');
   });
 
-  it('stops the real helper even when a subclass close hook fails', async () => {
+  it.each([['ECONNRESET', 'ECONNRESET'], ['private-code', 'unclassified']])('stops the real helper and sanitizes a subclass cleanup code (%s)', async (code, diagnostic) => {
     class ThrowingDriver extends RpcNativeDriver {
-      override close(): void { super.close(); throw new Error('extension close failed'); }
+      override close(): void { super.close(); throw Object.assign(new Error('private-error-message'), { code }); }
     }
     class ThrowingEngine extends NativeEngine {
       protected override createDriver(transport: NativeTransport) { return new ThrowingDriver(transport); }
@@ -172,7 +172,9 @@ describe('native engine through the real e2e-platform runner', () => {
       await engine.startAttempt({ attemptId: 'attempt', artifactsDir: cwd, signal, appLog: () => {}, environment: () => {} });
       await engine.launch(context);
       const pid = Number(await readFile(path.join(cwd, 'pid'), 'utf8'));
-      await expect(engine.stop({ signal: AbortSignal.abort(), timeoutMs: 1000 })).rejects.toThrow('cleanup failed');
+      const failure = await engine.stop({ signal: AbortSignal.abort(), timeoutMs: 1000 }).catch((error: unknown) => error);
+      expect(failure).toMatchObject({ code: 'ENGINE_FAILURE', message: `native application cleanup failed (driver-close:${diagnostic})` });
+      expect(String(failure)).not.toContain('private-');
       expect(() => process.kill(pid, 0)).toThrow();
     } finally { await engine.stop({ signal, timeoutMs: 1000 }); await rm(cwd, { recursive: true, force: true }); }
   });

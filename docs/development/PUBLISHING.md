@@ -1,7 +1,7 @@
 # Publishing the reviewed candidate
 
 The canonical repository is `AhmedAredah/e2e-platform`, a GitHub fork of
-`tester-army/e2e`. The reviewed candidate source branch is `mit-main`.
+`tester-army/e2e`. The reviewed candidate source and default branch are `mit-main`.
 Source publication is separate from package publication and release qualification;
 no GitHub release has been published. The branch is rooted at MIT
 revision `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. Preserve the separately

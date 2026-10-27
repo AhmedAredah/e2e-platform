@@ -47,6 +47,10 @@ and locator reads retain the complete visible fields. Native bridge frames and
 HTTP response JSON reject invalid UTF-8 instead of accepting replacement characters
 as application data. Errors omit the malformed payload from diagnostics.
 
+Native cleanup failures identify the lifecycle stage and recognized system error
+codes, such as `process-io:ECONNRESET`. Arbitrary extension error messages and
+unrecognized codes are withheld; an unknown code is reported as `unclassified`.
+
 ## Build the source example
 
 Install the repository's pinned pnpm/Node prerequisites, CMake 3.21 or newer and

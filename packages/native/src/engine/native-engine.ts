@@ -18,6 +18,21 @@ import { OutputLineReader } from './output-lines.ts';
 import type { NativeProcessLaunch } from './native-process.ts';
 
 const DEFAULT_MESSAGE_LIMIT = 16 * 1024 * 1024;
+const CLEANUP_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'EPERM', 'EACCES', 'ESRCH', 'EBADF',
+  'ERR_STREAM_PREMATURE_CLOSE', 'ERR_STREAM_DESTROYED', 'ABORT_ERR',
+  'PROCESS_CLEANUP_FAILED', 'PROCESS_IO_FAILED', 'PROCESS_STDIN_CLOSED']);
+
+/** Retain actionable cleanup categories without publishing arbitrary error data. */
+function cleanupCodes(error: unknown): string {
+  const codes: string[] = [];
+  try {
+    for (let depth = 0; depth < 3 && isRecord(error); depth++) {
+      if (typeof error.code === 'string' && CLEANUP_ERROR_CODES.has(error.code)) codes.push(error.code);
+      error = error.cause;
+    }
+  } catch { /* Extension error objects can have throwing getters. */ }
+  return codes.join('/') || 'unclassified';
+}
 
 export class NativeEngine {
   private info: EngineInitInfo | undefined;
@@ -183,8 +198,13 @@ export class NativeEngine {
     this.driver = undefined;
     this.process = undefined;
     const failures: unknown[] = [];
+    const diagnostics: string[] = [];
+    const failed = (stage: string, cause: unknown) => {
+      failures.push(cause);
+      diagnostics.push(`${stage}:${cleanupCodes(cause)}`);
+    };
     for (const release of [this.unsubscribe, this.disconnectSubscription]) {
-      try { release?.(); } catch (cause) { failures.push(cause); }
+      try { release?.(); } catch (cause) { failed('release', cause); }
     }
     this.unsubscribe = undefined;
     this.disconnectSubscription = undefined;
@@ -192,15 +212,15 @@ export class NativeEngine {
       if (!context.signal.aborted) {
         try { await driver.shutdown({ signal: context.signal, timeoutMs: Math.min(200, context.timeoutMs) }); } catch { /* Process supervision supplies the final stop. */ }
       }
-      try { driver.close(); } catch (cause) { failures.push(cause); }
+      try { driver.close(); } catch (cause) { failed('driver-close', cause); }
     }
     if (child !== undefined) {
       try {
         const result = await child.stop();
-        if (result.ioError !== undefined) failures.push(result.ioError);
-      } catch (cause) { failures.push(cause); }
+        if (result.ioError !== undefined) failed('process-io', result.ioError);
+      } catch (cause) { failed('process-stop', cause); }
     }
-    if (failures.length > 0) throw new EngineError('ENGINE_FAILURE', 'native application cleanup failed', { retryable: false, cause: new AggregateError(failures) });
+    if (failures.length > 0) throw new EngineError('ENGINE_FAILURE', `native application cleanup failed (${diagnostics.join(', ')})`, { retryable: false, cause: new AggregateError(failures) });
   }
 
   async snapshot(context: OperationContext, pixels: boolean, observed = true): Promise<EngineSnapshot> {
