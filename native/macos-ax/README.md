@@ -72,8 +72,8 @@ provider-supplied placeholder text are bounded and omitted for secure controls.
 The optional `actionability` protocol probe performs only reads and checks for
 supported actions/settable attributes. The runner may poll an unready probe;
 `perform` repeats checks and dispatches a mutation once. The probe never fills,
-selects, focuses, scrolls or marks an element sensitive. All new control paths
-remain experimental until the interactive acceptance suite qualifies them.
+selects, focuses, scrolls or marks an element sensitive. The reference AppKit
+controls passed native acceptance; other providers need their own qualification.
 Names and values intentionally preserve full embedded-NUL strings so a
 partial secret is not accidentally disclosed. Oversized fields are omitted in
 full. `viewport` records the largest accessible window size, or 1×1 while no
@@ -123,21 +123,21 @@ loopback connections and child cleanup. `check-macos` typechecks the platform FF
 and startup code without linking Apple frameworks; the executable still rejects
 non-macOS execution. It is not a GUI emulator and is not a macOS runtime pass.
 
-The rc.3
-[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
-passed 23 Rust tests on macOS 15 and Ubuntu 24.04 and built the real AppKit
-fixture on macOS at source revision
-`3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`. That job did not run the interactive
-AX/AppKit acceptance procedure; native compilation and portable tests do not
-establish GUI behavior.
+The [native macOS acceptance job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012450)
+passed on macOS 15 at `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`: 32 Rust tests,
+real AppKit controls, all eight advertised actions, selection by label/index/ID,
+current geometry, readonly preflight, secure omission, deliberately wrong-output
+rejection and owned application cleanup. This is limited reference qualification.
+The fixture's optional selection/scroll behavior is application-owned: an
+NSAccessibilityElement represents a real scrollable view and implements its
+advertised action. It does not establish that every stock AppKit control exposes
+AXScrollToVisible. Unsupported operations still return explicit errors.
 
-The real Rust AppKit fixture and
-[`scripts/verify-macos.py`](scripts/verify-macos.py) form the runtime qualification
-check. Run the commands in
+Run the same real fixture and [`scripts/verify-macos.py`](scripts/verify-macos.py)
+using the commands in
 [`examples/with-desktop/rust/README.md`](../../examples/with-desktop/rust/README.md)
-on macOS. Until that job passes, this backend is implemented but experimental and
-unqualified for release claims. Permission-denied and unsupported-platform runs
-must remain failures, not skipped successes.
+on each additional supported platform/provider combination. Permission-denied
+and unsupported-platform runs remain failures, not skipped successes.
 The verifier runs the fixture twice, including its deliberately broken `--wrong`
 mode, and requires the same expected-output assertion to reject that defect.
 The fixture also exposes application-owned selectable and scrollable controls;

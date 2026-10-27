@@ -8,27 +8,35 @@ authoring SDKs are not included. The application under test can use Python, C#/.
 another language; GUI support depends on accessible controls and the driver.
 
 The [C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md)
-tracks protocol 2 hardening, local validation and remaining release blockers,
-including the macOS Qt Quick crash. Historical passes below do not resolve
-those blockers.
+tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted evidence,
+including the formerly failing macOS Quick profile. Older checkpoints below are
+historical; the following table identifies the source actually tested.
 
-This candidate adds Windows process environment isolation fixes (with the documented
-SystemRoot bootstrap exception), qualified AT-SPI text-interface dispatch, sanitized
-Linux startup diagnostics, portable path comparisons and deterministic negative
-verification. The detailed original review evidence below was recorded for rc.2;
-unchanged source trees remain traceable through the publication history. Hosted
-checks below identify the exact source checkpoints that were tested. Current candidate
-results are recorded per source commit in GitHub Actions and the accompanying
-validation bundle; the previous checkpoint's passes do not qualify later changes.
-The rc.4 changes address supervised native termination, redacted log drainage,
-macOS environment assertions and unnecessary Python HTTP hostname resolution.
-The rc.5 changes add bounded macOS process-group reaping retries, safe pnpm 12
-Windows launcher resolution, native cleanup categories and a synchronized terminal
-overflow fixture. The rc.6 candidate adds an explicit macOS terminal setup
-command and separates direct Node verification in metacharacter paths from
-npm launcher verification in conventional paths. The documented Windows npm
-shim limitation remains; use the direct Node command for paths containing `&`.
-The current candidate must pass its own hosted checks.
+## Current hosted evidence
+
+Recorded 2026-10-27. All 21 required jobs across five workflows passed at
+`4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; one optional live-model job was
+not invoked. A pass is limited to the named applications, controls, kits and
+display backends. The seven-package consumer kit is independently checksummed and
+smoke-tested; no registry publication or stable release tag has been created.
+
+| Scope | Source and hosted result |
+| --- | --- |
+| Full quality gate, testbed, unit/integration suites and Chrome/CDP; Node 22.22.3 and 24.22.1 | `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293662), all three jobs passed. |
+| C++ command, SDK and clean seven-package installation on Ubuntu 24.04, Windows Server 2022 and macOS 15 | `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293679), all nine jobs passed. |
+| Qt Widgets/Quick, installed C++ authored tests, static/shared consumers, export and masked capture | Same native run: Qt 6.4.2 Linux x86_64 offscreen/X11; Qt 6.8.3 Windows x86_64 offscreen/native Windows style; Qt 6.8.3 macOS arm64 offscreen/Basic and Cocoa/macOS style. |
+| Linux GTK3 and Windows UIA/WPF real controls, independent wrong-output rejection and owned cleanup | `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; [GTK3](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012218) and [WPF](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176011950) passed. |
+| Windows Job Object ownership and actual TypeScript supervisor client | Same checkpoint; [Windows process job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012371) passed. |
+| Python/C#/Rust CLI and HTTP positives and deliberately wrong results, three operating systems | `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293733), all three jobs passed. |
+| Retained deterministic browser benchmark | Same checkpoint; [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293497) passed; optional model job was not invoked. |
+| macOS AX/AppKit, all eight advertised operations, real scroll viewport, selection forms, wrong-output rejection and cleanup | `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; [AppKit](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012450) passed; all five jobs in that desktop run passed. |
+
+The original macOS Quick failure was diagnosed with LLDB in Qt's native style
+rendering through the offscreen backend. Headless tests now select Basic, and a
+separate Cocoa/native-style job preserves native-style coverage. Both passed.
+The helper does not override the consuming application's style. Native-window
+actions confirm activation before typing; asynchronous close tests await the
+read-only failure latch. No failing Quick tests were skipped.
 
 ## Current implementation and evidence boundaries
 
@@ -53,14 +61,14 @@ supervised services with explicit readiness. Application state reset remains a
 test fixture responsibility. The optional Windows Job Object supervisor is a
 separate native component, not a silent upgrade to default taskkill behavior.
 
-Local OS-driver checks against these changes passed **81 Python tests**, **76
-portable UIA checks** and **32 Rust tests**. The UIA driver cross-build completed
-without warnings/errors, and the AX `check-macos` FFI typecheck passed. These
-results do not run Windows UIA or macOS AX on an interactive desktop. New native
-Windows/macOS/Linux Qt profiles and the manual `qt-live` workflow are configured;
-they remain unqualified until their actual candidate runs and artifacts pass.
-Other candidate results must be recorded by exact source revision, separately
-from the historical checkpoints below.
+Local OS-driver checks pass **81 Python tests**, **81 portable UIA checks** and
+**32 Rust tests**. Native hosted results above are separate from portable tests.
+The local seven-package kit passes manifest integrity, clean install/reinstall,
+plain Node imports, strict public types, initializer/first test, deliberate failure
+rejection, metacharacter paths and conventional npm launch paths. Its installed
+production dependency audit reports zero findings. Default Windows taskkill and
+npm shim limitations remain documented; the explicit Job Object helper and direct
+Node command are available for their respective cases.
 
 ## Publication state
 
@@ -217,33 +225,26 @@ fully qualified. They require separate remediation and runtime verification.
 
 ## Remaining release gates
 
-The OS drivers remain prerelease implementations. Linux GTK3 reference controls
-now have limited live qualification under hosted D-Bus/Xvfb; the earlier local
-host's AF_UNIX restriction does not invalidate that separate result. Windows UIA
-and macOS AX still need native interactive desktops and permissions for their
-live acceptance tests. Portable tests and successful native builds do not qualify
-GUI behavior. Each additional framework, toolkit version and display backend
-requires its own real-control test.
+The documented C++/Qt, Linux GTK3 and Windows WPF reference profiles have the
+hosted evidence listed above. Every additional framework, toolkit version and
+display backend requires its own real-control test. macOS AX/AppKit acceptance
+also passed, including the application-owned optional scroll/selection controls. The manual release workflow reruns the complete
+quality, native, language and desktop gates before creating an installation kit.
 
-Mobile simulators/hardware and live model-provider qualification remain open.
-The hosted browser/CDP pass and successful desktop-contracts jobs cover only the
-profiles and source checkpoints listed above; they do not qualify these other gates.
-Generic custom-painted controls, global OS input, OS-driver screenshots, native
-video, visual-diff assertions and hybrid DOM/native switching are absent. The
-bounded C++ SDK does not remove the remaining authoring gaps for Python, C# and
-Rust or imply every TypeScript feature is exposed in C++.
+Mobile simulator/hardware and live model-provider qualification remain outside
+this candidate's verified scope. Generic custom-painted controls, global OS input,
+OS-sidecar screenshots, native video, visual diffs and integrated native/DOM
+switching are not implemented. Python/C#/Rust test-authoring SDKs remain future
+extensions; these application languages already work through the shared runner.
 
-| Gate | Evidence needed before expanding the claim |
+| Gate | Requirement before publication or a broader support claim |
 | --- | --- |
-| Installable candidate | Checksummed seven-package kit, clean consumer install and reinstall, installed C++/Qt CMake consumers, positive runs and planted-defect failures for the exact artifact. |
-| Cross-platform Qt | Actual results for Linux offscreen/Xvfb, Windows and macOS Qt kits, followed by interactive QPA profiles. Cover new models, modal/window behavior, stale controls, custom adapters and negative tests. |
-| OS accessibility | Rerun Linux GTK reference acceptance after changes; complete interactive UIA/WPF and AX/AppKit acceptance with permissions. Add real C++ toolkit fixtures before advertising GTKmm, wxWidgets, JUCE, FLTK or Win32-family certification. |
-| Windows process ownership | Native Job Object tests proving suspended launch, assignment before execution, descendant termination after natural root exit, cancellation and broken supervisor cleanup. Default taskkill limitations remain documented. |
-| Language authoring | Qualify the C++ bridge's documented operations and failure paths. Design Python/C#/.NET/Rust authoring bindings separately if tests must be written in those languages. |
-| Retained browser/mobile | Run the retained engines at the new source checkpoint; qualify the intended browser/simulator/device profiles and live-provider paths separately. |
-| Distribution | Assess dependencies and notices for the exact source/binary bundle, verify namespace/publication rights and record release revision and checksums. |
+| Exact distribution | Rebuild/checksum and smoke-test the final kit; run the complete release workflow against its selected commit. No stale success aggregates are accepted. |
+| Additional toolkits/platforms | Add real controls and positive/negative acceptance for each claimed combination. Existing reference passes are not universal framework certification. |
+| Optional docs/Expo tooling | Resolve or explicitly assess remaining dependency findings and peer conflicts before shipping or hosting those tools. They are excluded from the consumer kit. |
+| Mobile and live providers | Qualify the chosen simulator/device/provider profiles separately; deterministic browser passes do not substitute. |
+| Registry/public release | Verify namespace ownership, publication rights, release revision, notices and checksums. No npm package publication is claimed. |
 
-Before a stable release, complete the real platform gates, assess or resolve the
-remaining dependency findings for each shipped distribution, and verify publication
-and install paths on the hosted repository. Declared platform profiles are in
+MIT provenance and separate dependency licenses are retained. Declared platform
+profiles and exact evidence are in
 [support-profiles.json](docs/development/support-profiles.json).

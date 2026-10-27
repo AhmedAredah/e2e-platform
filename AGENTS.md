@@ -275,7 +275,8 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
 
 - CI uses standard GitHub-hosted runners and SHA-pinned actions. The spec
   workflow checks Node 22.22.3 and 24.22.1. The C++ workflow adds Linux/macOS/Windows
-  command and installation checks, plus Linux Qt offscreen validation. Workflow
+  command and installation checks, Linux Qt offscreen/X11, Windows native/offscreen
+  and macOS Cocoa/offscreen Qt validation. Workflow
   configuration alone is not evidence that an OS/toolkit has passed.
 - Provider-backed jobs require explicit manual dispatch. Workflows do not send
   pull-request messages, publish packages or modify upstream repositories.

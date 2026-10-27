@@ -132,15 +132,18 @@ convert an unavailable graphical session or permission into a pass.
 Qualify every advertised toolkit/OS profile using accessible text input, buttons,
 check state, selection where supported, disabled controls, password redaction,
 stale object behavior, intentional assertion failures, and application cleanup.
-Use the platform workflows and retain their artifacts. The rc.3
-[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
-passed the Linux GTK3 reference-controls acceptance test under D-Bus/Xvfb.
-Windows UIA and macOS AX have native build and portable-test evidence, but their
-interactive desktop acceptance tests remain unrun. These are prerelease backends;
-the Linux reference result does not qualify other toolkits or display sessions.
+Use the platform workflows and retain their artifacts. The current
+[desktop acceptance run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705)
+passed all five jobs at `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`: real GTK3, WPF and
+AppKit controls, portable Rust checks, and Windows Job Object ownership/client
+integration. AppKit selection/scrolling and WPF scrolling include application-owned
+accessibility implementations; ordinary controls do not automatically acquire
+those optional capabilities. These are limited reference profiles, not blanket
+framework certification. Exact Qt/display evidence is in RELEASE_STATUS.md.
+
 The bounded C++ authoring bridge is included separately from application drivers.
 It shares the runner's lifecycle and reports and supports its documented calls;
 it is not full TypeScript API parity. pytest, xUnit and Cargo authoring adapters
 are not included. Python, C# and Rust applications use the TypeScript/JavaScript
-test API. New Qt OS/kit workflows and the interactive `qt-live` workflow are
-qualification plans until their exact candidate runs complete successfully.
+test API. Additional toolkit/control/display combinations require their own
+qualified fixtures and recorded results.

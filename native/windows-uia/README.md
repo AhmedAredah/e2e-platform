@@ -6,12 +6,13 @@ application's programming language. Its first acceptance fixture is WPF. Other
 frameworks (WinForms, WinUI, Qt, Avalonia, Python toolkits and Rust toolkits) must
 be qualified separately on their actual Windows versions and UIA providers.
 
-**Status:** experimental. The rc.3
-[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
-passed 39 portable checks and built the driver and WPF fixture on Windows Server
-2022 at source revision `3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`.
-Windows GUI behavior is not verified by those results. Run the live acceptance procedure on an interactive Windows
-desktop before claiming that platform is supported. Session 0, the lock screen,
+**Status:** limited reference qualification. The
+[Windows UIA job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176011950)
+passed 81 portable checks, native builds and real WPF control acceptance on
+Windows Server 2022 at `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`. The live suite
+checks readonly preflight, supported scrolling, clipping, secure omission,
+independent wrong-output rejection and owned cleanup. Qualify additional
+applications/providers separately. Session 0, the lock screen,
 UAC secure desktops, elevated targets and remote/reused applications are outside
 this implementation's supported scope.
 

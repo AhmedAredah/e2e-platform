@@ -1,13 +1,14 @@
 {
   "schemaVersion": 1,
   "candidate": "0.2.0-rc.7",
-  "evidenceSourceCommit": "3baeb8d6bd90b799f7784e67e24c9922d5e27b2f",
+  "evidenceSourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
   "desktopEvidence": {
-    "candidate": "0.2.0-rc.3",
+    "candidate": "0.2.0-rc.7",
     "recordedAt": "2026-10-27",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430",
+    "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705",
     "conclusion": "success",
-    "scope": "Desktop contract tests, Linux GTK3 reference acceptance and native Windows/macOS builds; not an all-CI pass"
+    "scope": "Five jobs: real GTK3, WPF and AppKit reference acceptance; Windows Job Object and TypeScript client; Rust portable tests. Does not certify arbitrary frameworks."
   },
   "testLanguage": "TypeScript/JavaScript; bounded C++ authoring bridge",
   "applicationLanguages": [
@@ -37,24 +38,52 @@
       "screenshots": "source-masked Qt helper capture",
       "qualification": {
         "status": "qualified-limited",
-        "evidenceCandidate": "0.2.0-rc.2",
-        "os": "Linux x64",
-        "qt": "6.4.2",
-        "inputBackend": "offscreen/software",
+        "evidenceCandidate": "0.2.0-rc.7",
+        "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293679",
+        "profiles": [
+          {
+            "os": "Ubuntu 24.04",
+            "qt": "6.4.2",
+            "display": [
+              "offscreen/software",
+              "X11/xcb/software"
+            ],
+            "architecture": "x86_64"
+          },
+          {
+            "os": "Windows Server 2022",
+            "qt": "6.8.3",
+            "display": [
+              "offscreen/Windows style",
+              "native windows/Windows style"
+            ],
+            "architecture": "x86_64"
+          },
+          {
+            "os": "macOS 15",
+            "qt": "6.8.3",
+            "display": [
+              "offscreen/Basic style",
+              "Cocoa/macOS style"
+            ],
+            "architecture": "arm64"
+          }
+        ],
         "limits": [
-          "Selected reference controls",
-          "No Windows/macOS result",
+          "Selected Widgets/Quick reference controls, C++ authored tests and installed static/shared consumers",
+          "No arbitrary canvas or hybrid DOM support",
+          "Headless native macOS style is not a qualified configuration",
           "Quick selectOption requires supported non-editable closed-popup ComboBox"
         ]
       },
       "actionability": true,
-      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
       "windowManagement": "Qt-owned visible windows; modal guards",
       "customControls": "public source-level ControlAdapter; registration disables helper screenshots",
       "configuredWorkflows": [
-        "native.yml qt-linux offscreen/x11",
-        "native.yml qt-desktop-kits Windows/macOS Qt 6.8.3 offscreen",
-        "qt-live.yml manual interactive QPA profiles"
+        "native.yml: Linux offscreen/X11, Windows offscreen/native, macOS Basic/offscreen and macOS/Cocoa",
+        "qt-live.yml: additional manually selected interactive profiles require separate evidence"
       ]
     },
     {
@@ -75,20 +104,21 @@
       "screenshots": false,
       "qualification": {
         "status": "qualified-limited",
-        "portableTests": 68,
+        "evidenceCandidate": "0.2.0-rc.7",
+        "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012218",
+        "portableTests": 81,
         "liveStatus": "passed-reference-fixture",
-        "os": "Ubuntu 24.04",
-        "toolkit": "GTK3",
-        "displayBackend": "D-Bus/Xvfb",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506790",
+        "os": "Ubuntu 24.04 / D-Bus / Xvfb",
         "limits": [
-          "Selected GTK3 reference controls and deliberately wrong-output rejection",
-          "Other toolkits, controls and display backends require separate qualification",
-          "The earlier local AF_UNIX restriction is not the hosted run result"
-        ]
+          "Reference controls and independent planted-defect rejection only",
+          "Other toolkits and display environments require their own qualification",
+          "No global keyboard or screenshots"
+        ],
+        "architecture": "x86_64"
       },
       "actionability": true,
-      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
       "localPortableChecks": 81
     },
     {
@@ -108,17 +138,24 @@
       "keyboard": false,
       "screenshots": false,
       "qualification": {
-        "status": "experimental",
-        "portableTests": 39,
-        "compileStatus": "Driver and WPF fixture built on Windows Server 2022",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506975",
-        "liveStatus": "not-run",
-        "reason": "Requires interactive Windows host"
+        "status": "qualified-limited",
+        "evidenceCandidate": "0.2.0-rc.7",
+        "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176011950",
+        "portableTests": 81,
+        "liveStatus": "passed-reference-fixture",
+        "os": "Windows Server 2022 / WPF",
+        "limits": [
+          "Reference controls and independent planted-defect rejection only",
+          "Other toolkits and display environments require their own qualification",
+          "No global keyboard or screenshots",
+          "Scroll positive fixture supplies IScrollItemProvider; clipped stock controls without that pattern fail explicitly"
+        ],
+        "architecture": "x86_64"
       },
       "actionability": true,
-      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
-      "localPortableChecks": 76,
-      "localCompileStatus": "Windows-target cross-build passed; no interactive Windows run"
+      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
+      "localPortableChecks": 81
     },
     {
       "backend": "macos-ax",
@@ -137,15 +174,23 @@
       "keyboard": false,
       "screenshots": false,
       "qualification": {
-        "status": "experimental",
-        "portableTests": 23,
-        "compileStatus": "Rust tests and AppKit fixture build passed on macOS 15; portable tests also passed on Ubuntu 24.04",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506918",
-        "liveStatus": "not-run",
-        "reason": "Requires macOS, SDK and Accessibility permission"
+        "status": "qualified-limited",
+        "evidenceCandidate": "0.2.0-rc.7",
+        "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012450",
+        "portableTests": 32,
+        "liveStatus": "passed-reference-fixture",
+        "os": "macOS 15 / AppKit",
+        "limits": [
+          "Reference controls and independent planted-defect rejection only",
+          "Other toolkits and display environments require their own qualification",
+          "No global keyboard or screenshots",
+          "Selection and scroll acceptance use application-owned accessibility elements; stock controls may not expose these operations"
+        ],
+        "architecture": "arm64"
       },
       "actionability": true,
-      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
       "selection": "writable AXSelectedChildren; unique direct child label/AXIdentifier/index",
       "visibility": "explicit known/unknown flag; unknown cannot prove visible, hidden or absence",
       "localPortableChecks": 32,
@@ -168,5 +213,20 @@
     "python": "not implemented",
     "csharp": "not implemented",
     "rust": "not implemented"
+  },
+  "nativeEvidence": {
+    "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293679",
+    "conclusion": "success",
+    "jobs": 9
+  },
+  "specEvidence": {
+    "sourceCommit": "4f1f6a0f889f5979d39b8eaa912c35307bd8c596",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293662",
+    "conclusion": "success",
+    "nodeVersions": [
+      "22.22.3",
+      "24.22.1"
+    ]
   }
 }

@@ -10,16 +10,16 @@ GUI coverage depends on the exposed controls and selected driver. Independent ou
 wrong results even when an application exits successfully or displays success.
 
 Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
-These changes remain a prerelease; the unresolved macOS Quick crash and native
-platform reruns block release approval.
+The reviewed C++/Qt defects are fixed and the complete nine-job native matrix
+has passed. These changes remain a prerelease with explicitly bounded support.
 
 The current prerelease is **0.2.0-rc.7**. Its source branch is
 [`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared
 full-repository archive contains source and may include a local installation kit.
 Git history is available through cloning the repository.
-Linux GTK3 reference controls have limited live qualification. Windows UIA and
-macOS AX remain experimental pending interactive desktop tests; portable tests
-and native builds do not establish GUI behavior. Read
+Linux GTK3, Windows UIA/WPF and macOS AX/AppKit reference controls have limited
+live qualification, including deliberate wrong-output rejection. These passes
+apply to documented profiles and do not certify every framework. Read
 [RELEASE_STATUS.md](RELEASE_STATUS.md) for tested scope and remaining release gates.
 
 The fork starts from upstream commit

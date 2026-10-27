@@ -136,10 +136,10 @@ redacts a password, fills/clears text, focuses, checks/unchecks idempotently,
 selects a list item, invokes a button and checks its resulting label. It then
 repeats against deliberately wrong application output and verifies rejection.
 Missing GI/display/bus support fails the live command; it is never reported as
-a passed or silently skipped desktop test. The rc.3
-[`desktop-contracts` run 40429517430](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
-passed all 68 portable tests and this live GTK3 procedure on Ubuntu 24.04 at
-source revision `3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`. The earlier local
+a passed or silently skipped desktop test. The
+[Linux GTK3 job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40500293705/job/122176012218)
+passed all 81 portable tests and this live GTK3 procedure on Ubuntu 24.04 at
+source revision `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`. The earlier local
 development host denied AF_UNIX sockets; that limitation applies to the local
 attempt, not the successful hosted D-Bus/Xvfb run. This evidence covers the
 reference fixture and does not qualify Wayland, arbitrary GTK applications or
