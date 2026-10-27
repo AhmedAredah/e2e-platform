@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -38,8 +38,10 @@ export function runPackageManager(name, args, options) {
 test('installer passes the six checked local package paths to npm without a shell', () => fixture(({ directory, project, manifest, execute }) => {
   const result = execute();
   assert.equal(result.status, 0, result.stderr);
+  // Node resolves the installer module through filesystem aliases (macOS
+  // /var -> /private/var); the explicitly supplied project cwd stays literal.
   assert.deepEqual(JSON.parse(readFileSync(join(directory, 'invoked.json'), 'utf8')), {
-    name: 'npm', args: ['install', '--save-dev', ...manifest.packages.map(({ file }) => join(directory, file))], cwd: project,
+    name: 'npm', args: ['install', '--save-dev', ...manifest.packages.map(({ file }) => join(realpathSync(directory), file))], cwd: project,
   });
 }));
 
