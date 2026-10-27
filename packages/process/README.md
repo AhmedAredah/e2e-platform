@@ -99,6 +99,8 @@ it. Other omitted Windows bootstrap variables are supplied as empty strings to
 prevent libuv from silently restoring their parent values. Explicitly removing
 one of those variables also leaves an empty value. Ambient `NODE_V8_COVERAGE` is
 not propagated into an isolated environment or restored after explicit removal.
+Child startup libraries can initialize their own variables; for example, macOS
+CoreFoundation may create `__CF_USER_TEXT_ENCODING` from the user's encoding settings.
 This environment policy is not a process security sandbox.
 
 ## Platform boundaries

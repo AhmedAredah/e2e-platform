@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/core",
-  "version": "0.2.0-rc.3",
+  "version": "0.2.0-rc.4",
   "description": "SDK, runner, and CLI for agentic end-to-end testing",
   "keywords": [
     "@e2e-platform/core",

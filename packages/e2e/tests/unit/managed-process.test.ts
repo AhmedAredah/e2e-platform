@@ -129,6 +129,80 @@ describe('ManagedProcess log', () => {
     expect(content).toContain('to stderr\n');
   });
 
+  it.each([0, 7])('drains a split secret after the leader exits with code %i', async (exitCode) => {
+    const pidFile = path.join(dir, 'writer.pid');
+    const writer = `
+      require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+      process.once('disconnect', () => setTimeout(() => {
+        process.stdout.write(process.env.SECRET.slice(8) + ' port=443\\n', () => process.exit(0));
+      }, 100));
+      process.stdout.write('token=' + process.env.SECRET.slice(0, 8), () => process.send('ready'));
+    `;
+    const leader = `
+      const child = require('node:child_process').fork('-e', [${JSON.stringify(writer)}], { stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
+      child.once('message', () => process.exit(${exitCode}));
+    `;
+    const app = new ManagedProcess('delayed writer', {
+      executable: process.execPath, args: ['-e', leader], log: 'delayed.log',
+      env: { SECRET: 'hunter2-hunter2' }, startupTimeout: 5_000, shutdownTimeout: 100,
+    }, dir, { waitForExit: true });
+    try {
+      const failure = await app.start().catch((error: unknown) => error);
+      if (exitCode === 0) expect(failure).toBeUndefined();
+      else {
+        expect(failure).toBeInstanceOf(InfrastructureError);
+        expect((failure as Error).message).toContain('token=<secret:SECRET> port=443');
+      }
+      expect(fs.readFileSync(path.join(dir, 'delayed.log'), 'utf8')).toBe('token=<secret:SECRET> port=443\n');
+    } finally {
+      await app.stop();
+      if (fs.existsSync(pidFile)) {
+        try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already stopped. */ }
+      }
+    }
+  });
+
+  it.skipIf(process.platform === 'win32')('bounds retained pipes and makes concurrent stops wait without exposing a secret prefix', async () => {
+    const pidFile = path.join(dir, 'escaped.pid');
+    const leaderFile = path.join(dir, 'leader.pid');
+    const writer = `
+      require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
+      setInterval(() => {}, 1000);
+      process.stdout.write('token=' + process.env.SECRET.slice(0, 8), () => process.send('ready'));
+    `;
+    const leader = `
+      require('node:fs').writeFileSync(${JSON.stringify(leaderFile)}, String(process.pid));
+      const child = require('node:child_process').fork('-e', [${JSON.stringify(writer)}], { detached: true, stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
+      child.once('message', () => process.exit(0));
+    `;
+    const app = new ManagedProcess('retained pipes', {
+      executable: process.execPath, args: ['-e', leader], log: 'retained.log',
+      env: { SECRET: 'hunter2-hunter2' }, startupTimeout: 5_000, shutdownTimeout: 100,
+    }, dir, { waitForExit: true });
+    const starting = app.start();
+    try {
+      await vi.waitFor(() => {
+        expect(fs.existsSync(pidFile)).toBe(true);
+        const leaderPid = Number(fs.readFileSync(leaderFile, 'utf8'));
+        expect(() => process.kill(-leaderPid, 0)).toThrow();
+      }, { timeout: 5_000 });
+      const stoppedAt = Date.now();
+      const stoppedLogs = await Promise.all([app.stop(), app.stop()].map(async (stopped) => {
+        await stopped;
+        return fs.readFileSync(path.join(dir, 'retained.log'), 'utf8');
+      }));
+      await starting;
+      expect(stoppedLogs).toEqual(['token=', 'token=']);
+      expect(Date.now() - stoppedAt).toBeLessThan(4_000);
+    } finally {
+      await app.stop();
+      if (fs.existsSync(pidFile)) {
+        try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already stopped. */ }
+      }
+      await starting;
+    }
+  });
+
   it('appends across runs instead of truncating', async () => {
     await step('app.log').start();
     await step('app.log').start();

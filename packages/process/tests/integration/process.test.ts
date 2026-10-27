@@ -88,16 +88,23 @@ process.stdout.write('CONTROLLER_COMPLETED\\n');
   it('omits inherited application, search-path and coverage values', async () => {
     vi.stubEnv('E2E_PROCESS_AMBIENT', 'must-not-inherit');
     vi.stubEnv('NODE_V8_COVERAGE', join(await directory(), 'coverage'));
+    const parentEncoding = `0x${(process.getuid?.() ?? 0).toString(16)}:0x6ffffffe:0x6fffffff`;
+    vi.stubEnv('__CF_USER_TEXT_ENCODING', parentEncoding);
     const result = await runProcess(node('process.stdout.write(JSON.stringify(process.env))', { inheritEnv: false, env: { E2E_PROCESS_ONLY: 'yes' } }));
     const observed = JSON.parse(result.stdout.bytes.toString()) as Record<string, string>;
     expect(observed.E2E_PROCESS_ONLY).toBe('yes');
     expect(observed.E2E_PROCESS_AMBIENT).toBeUndefined();
     expect(observed.NODE_V8_COVERAGE).toBeUndefined();
+    expect(observed['__CF_USER_TEXT_ENCODING']).not.toBe(parentEncoding);
     expect(observed.PATH).toBe(process.platform === 'win32' ? '' : undefined);
     for (const [key, value] of Object.entries(observed)) {
       if (key === 'E2E_PROCESS_ONLY') continue;
       if (process.platform === 'win32' && key.toUpperCase() === 'SYSTEMROOT') expect(value).toBe(process.env.SYSTEMROOT ?? '');
-      else expect(value).toBe('');
+      else if (process.platform === 'darwin' && key === '__CF_USER_TEXT_ENCODING') {
+        // CoreFoundation creates its own UID/encoding value during child startup.
+        expect(value).toMatch(/^0x[\da-f]+:(?:0x[\da-f]+|\d+):(?:0x[\da-f]+|\d+)\s*$/i);
+        expect(Number(value.split(':')[0])).toBe(process.getuid!());
+      } else expect(value, `unexpected child environment variable ${key}`).toBe('');
     }
   });
 

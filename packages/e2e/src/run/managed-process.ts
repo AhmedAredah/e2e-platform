@@ -27,6 +27,8 @@ const PROGRESS_NOTICE_MIN_MS = 5_000;
 /** How much of the process's own output a startup failure quotes. */
 const OUTPUT_TAIL_LINES = 20;
 const OUTPUT_TAIL_BYTES = 4_096;
+/** A descendant retaining an inherited pipe cannot keep startup or shutdown waiting forever. */
+const OUTPUT_DRAIN_TIMEOUT_MS = 1_000;
 /**
  * `command.env` values this long are redacted from the quoted output; shorter
  * ones (a port, a flag) would blank ordinary text without hiding anything.
@@ -115,6 +117,8 @@ export interface ManagedProcessHooks {
 export class ManagedProcess {
   private child: ChildProcess | null = null;
   private reusedExisting = false;
+  private drainOutput: (() => Promise<void>) | undefined;
+  private stopping: Promise<void> | undefined;
 
   constructor(
     private readonly label: string,
@@ -154,10 +158,15 @@ export class ManagedProcess {
   }
 
   /** Redacts managed output before any log bytes reach disk, retaining split values across writes. */
-  private captureLog(child: ChildProcess, fd: number): void {
+  private captureLog(child: ChildProcess, fd: number): () => Promise<void> {
     const ledger = new SecretLedger(Object.entries(this.command.env ?? {}).filter(([, value]) => value.length >= REDACTED_ENV_MIN_LENGTH));
     const filter = new StreamingRedactor(ledger);
     let closed = false;
+    let interrupted = false;
+    let resolveDrained!: () => void;
+    const drained = new Promise<void>((resolve) => { resolveDrained = resolve; });
+    let draining: Promise<void> | undefined;
+    const streams = [child.stdout, child.stderr].filter((stream) => stream !== null);
     const refresh = (): void => { for (const [name, value] of processSecrets.snapshot()) ledger.register(name, value); };
     const write = (text: string): void => {
       if (text !== '' && !closed) {
@@ -165,14 +174,44 @@ export class ManagedProcess {
       }
     };
     const chunk = (bytes: Buffer): void => { refresh(); write(filter.write(bytes)); };
-    child.stdout?.on('data', chunk);
-    child.stderr?.on('data', chunk);
-    child.once('close', () => {
-      refresh();
-      write(filter.flush());
-      closed = true;
-      fs.closeSync(fd);
-    });
+    const failed = (): void => { interrupted = true; };
+    const finish = (forced: boolean): void => {
+      if (closed) return;
+      try {
+        refresh();
+        write(filter.flush(forced || interrupted));
+      } catch {
+        // Withhold any unresolved output if diagnostic filtering fails.
+      } finally {
+        closed = true;
+        for (const stream of streams) {
+          stream.removeListener('data', chunk);
+          if (stream.closed) stream.removeListener('error', failed);
+          else stream.once('close', () => stream.removeListener('error', failed));
+        }
+        child.removeListener('close', finished);
+        try { fs.closeSync(fd); } catch { /* A failed diagnostic log must not crash the runner. */ }
+        resolveDrained();
+      }
+    };
+    const finished = (): void => { finish(streams.some((stream) => !stream.readableEnded)); };
+    for (const stream of streams) {
+      stream.on('data', chunk);
+      stream.on('error', failed);
+    }
+    child.once('close', finished);
+    return () => {
+      draining ??= (async () => {
+        const timer = setTimeout(() => {
+          // Withhold an unfinished secret before severing pipes still held by descendants.
+          finish(true);
+          for (const stream of streams) stream.destroy();
+        }, OUTPUT_DRAIN_TIMEOUT_MS);
+        try { await drained; }
+        finally { clearTimeout(timer); }
+      })();
+      return draining;
+    };
   }
 
   /** The preflight probe, the spawn, and the readiness wait behind `start`. */
@@ -230,7 +269,9 @@ export class ManagedProcess {
       if (logFd !== undefined) fs.closeSync(logFd);
       throw cause;
     }
-    if (logFd !== undefined) this.captureLog(child, logFd);
+    this.drainOutput = logFd === undefined ? undefined : this.captureLog(child, logFd);
+    this.stopping = undefined;
+    this.reusedExisting = false;
     this.child = child;
     live.add(child);
     let spawnError: Error | undefined;
@@ -255,6 +296,8 @@ export class ManagedProcess {
         return;
       }
       if (spawnError !== undefined) {
+        await this.drainOutput?.();
+        live.delete(child);
         throw new InfrastructureError(
           'APP_UNREACHABLE',
           `${this.label} failed to start: ${spawnError.message}`,
@@ -262,6 +305,7 @@ export class ManagedProcess {
         );
       }
       if (exit !== undefined) {
+        await this.drainOutput?.();
         if (readyUrl === undefined && exit.code === 0) return;
         throw this.unreachable(
           `${this.label} ${describeExit(exit)} ${readyUrl === undefined ? 'instead of 0' : 'before becoming ready'}`,
@@ -308,8 +352,8 @@ export class ManagedProcess {
    * The startup failure with the log's tail under it, so the report alone
    * says what the process was doing when it stalled or died. The message
    * lands in the report, so `command.env` values are redacted from the quote
-   * with the same redactor and markers as the traces, the way the log itself
-   * never is. Without a log there is nothing to quote, and the message says
+   * with the same redactor and markers as the already-filtered log and traces.
+   * Without a log there is nothing to quote, and the message says
    * how to get one.
    */
   private unreachable(message: string, logOffset: number | undefined): InfrastructureError {
@@ -391,6 +435,15 @@ export class ManagedProcess {
 
   /** Gracefully terminates the whole process group, then force-kills. A reused process was never ours to stop. */
   async stop(): Promise<void> {
+    this.stopping ??= (async () => {
+      try { await this.stopOwned(); }
+      finally { await this.drainOutput?.(); }
+    })();
+    await this.stopping;
+  }
+
+  /** Releases process ownership even when the leader is already gone. */
+  private async stopOwned(): Promise<void> {
     if (this.reusedExisting) return;
     const child = this.child;
     this.child = null;
@@ -401,39 +454,47 @@ export class ManagedProcess {
     }
     const shutdownTimeout = this.command.shutdownTimeout ?? 10_000;
     let leaderExited = child.exitCode !== null || child.signalCode !== null;
+    let onExit: (() => void) | undefined;
     const exited = new Promise<void>((resolve) => {
       if (leaderExited) resolve();
-      else child.once('exit', () => { leaderExited = true; resolve(); });
-    });
-    signalProcessGroup(child, 'SIGTERM');
-    if (process.platform !== 'win32') {
-      // Waiting for the leader's exit is insufficient: a descendant can
-      // ignore SIGTERM while its parent has already finished successfully.
-      const deadline = Date.now() + shutdownTimeout;
-      while (processGroupAlive(child) && Date.now() < deadline) {
-        const timer = new AbortController();
-        const pause = sleep(Math.min(25, Math.max(0, deadline - Date.now())), timer.signal).catch(() => undefined);
-        await (leaderExited ? pause : Promise.race([pause, exited]));
-        timer.abort();
+      else {
+        onExit = () => { leaderExited = true; resolve(); };
+        child.once('exit', onExit);
       }
-      if (processGroupAlive(child)) signalProcessGroup(child, 'SIGKILL');
+    });
+    try {
+      signalProcessGroup(child, 'SIGTERM');
+      if (process.platform !== 'win32') {
+        // Waiting for the leader's exit is insufficient: a descendant can
+        // ignore SIGTERM while its parent has already finished successfully.
+        const deadline = Date.now() + shutdownTimeout;
+        while (processGroupAlive(child) && Date.now() < deadline) {
+          const timer = new AbortController();
+          const pause = sleep(Math.min(25, Math.max(0, deadline - Date.now())), timer.signal).catch(() => undefined);
+          await (leaderExited ? pause : Promise.race([pause, exited]));
+          timer.abort();
+        }
+        if (processGroupAlive(child)) signalProcessGroup(child, 'SIGKILL');
+        live.delete(child);
+        return;
+      }
+      // The timer is cancelled once the process is gone: left pending, it kept
+      // the event loop alive for the whole timeout after the run had ended.
+      const timer = new AbortController();
+      const timedOut = sleep(shutdownTimeout, timer.signal).then(
+        () => 'timeout' as const,
+        () => 'exited' as const,
+      );
+      const winner = await Promise.race([exited.then(() => 'exited' as const), timedOut]);
+      timer.abort();
+      if (winner === 'timeout') {
+        signalProcessGroup(child, 'SIGKILL');
+        await exited.catch(() => undefined);
+      }
       live.delete(child);
-      return;
+    } finally {
+      if (onExit !== undefined) child.removeListener('exit', onExit);
     }
-    // The timer is cancelled once the process is gone: left pending, it kept
-    // the event loop alive for the whole timeout after the run had ended.
-    const timer = new AbortController();
-    const timedOut = sleep(shutdownTimeout, timer.signal).then(
-      () => 'timeout' as const,
-      () => 'exited' as const,
-    );
-    const winner = await Promise.race([exited.then(() => 'exited' as const), timedOut]);
-    timer.abort();
-    if (winner === 'timeout') {
-      signalProcessGroup(child, 'SIGKILL');
-      await exited.catch(() => undefined);
-    }
-    live.delete(child);
   }
 }
 

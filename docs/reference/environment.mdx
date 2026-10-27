@@ -88,4 +88,6 @@ On Windows, `SystemRoot` remains available for OS initialization unless explicit
 overridden or removed; other omitted bootstrap variables are empty to prevent
 libuv from restoring parent values. Supply any needed `PATH`, temporary-directory
 and profile values yourself. Ambient `NODE_V8_COVERAGE` is not copied into an
-isolated process. These controls do not sandbox the application.
+isolated process. Child startup libraries may initialize their own variables,
+such as macOS CoreFoundation's `__CF_USER_TEXT_ENCODING`; these are not inherited
+application values. These controls do not sandbox the application.

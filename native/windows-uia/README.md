@@ -6,9 +6,11 @@ application's programming language. Its first acceptance fixture is WPF. Other
 frameworks (WinForms, WinUI, Qt, Avalonia, Python toolkits and Rust toolkits) must
 be qualified separately on their actual Windows versions and UIA providers.
 
-**Status:** experimental. The driver and WPF fixture cross-compile on Linux;
-portable protocol tests run on Linux. Windows GUI behavior is not verified by
-those results. Run the live acceptance procedure on an interactive Windows
+**Status:** experimental. The rc.3
+[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+passed 39 portable checks and built the driver and WPF fixture on Windows Server
+2022 at source revision `3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`.
+Windows GUI behavior is not verified by those results. Run the live acceptance procedure on an interactive Windows
 desktop before claiming that platform is supported. Session 0, the lock screen,
 UAC secure desktops, elevated targets and remote/reused applications are outside
 this implementation's supported scope.

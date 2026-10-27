@@ -107,7 +107,11 @@ convert an unavailable graphical session or permission into a pass.
 Qualify every advertised toolkit/OS profile using accessible text input, buttons,
 check state, selection where supported, disabled controls, password redaction,
 stale object behavior, intentional assertion failures, and application cleanup.
-Use the platform workflows and retain their artifacts. Until these pass on the
-native operating systems, the new OS drivers remain experimental prerelease backends.
+Use the platform workflows and retain their artifacts. The rc.3
+[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+passed the Linux GTK3 reference-controls acceptance test under D-Bus/Xvfb.
+Windows UIA and macOS AX have native build and portable-test evidence, but their
+interactive desktop acceptance tests remain unrun. These are prerelease backends;
+the Linux reference result does not qualify other toolkits or display sessions.
 Native-language pytest/xUnit/Cargo/C++ test-authoring SDKs are not included: applications
 in those languages use the shared TypeScript tests.

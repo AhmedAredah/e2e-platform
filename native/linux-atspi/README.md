@@ -4,8 +4,9 @@ This optional MIT-licensed driver implements the existing authenticated native
 bridge protocol using GNOME AT-SPI. The runner remains TypeScript; the tested
 application can use Python, C#, C++, Rust, or another language **if its toolkit
 exposes the required accessible controls**. Language alone does not establish
-GUI support. This is an experimental backend pending a successful live desktop
-qualification run; protocol/provider unit tests are not a GTK certification.
+GUI support. The GTK3 reference controls have limited live qualification on
+Ubuntu 24.04 under D-Bus/Xvfb. Other toolkit, control and display combinations
+remain experimental; protocol/provider unit tests are not a GTK certification.
 
 ## Install and run
 
@@ -125,9 +126,14 @@ redacts a password, fills/clears text, focuses, checks/unchecks idempotently,
 selects a list item, invokes a button and checks its resulting label. It then
 repeats against deliberately wrong application output and verifies rejection.
 Missing GI/display/bus support fails the live command; it is never reported as
-a passed or silently skipped desktop test. This development host denies AF_UNIX
-sockets, and `dbus-run-session -- /bin/true` fails before any GUI runs. Therefore
-live GTK/AT-SPI behavior has **not** been qualified here.
+a passed or silently skipped desktop test. The rc.3
+[`desktop-contracts` run 40429517430](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+passed all 68 portable tests and this live GTK3 procedure on Ubuntu 24.04 at
+source revision `3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`. The earlier local
+development host denied AF_UNIX sockets; that limitation applies to the local
+attempt, not the successful hosted D-Bus/Xvfb run. This evidence covers the
+reference fixture and does not qualify Wayland, arbitrary GTK applications or
+other accessibility toolkits.
 
 API references: [GNOME AT-SPI](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/index.html),
 [Action](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.Action.do_action.html),

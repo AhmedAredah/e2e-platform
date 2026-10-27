@@ -17,6 +17,14 @@ process.once('beforeExit', () => {
 await rm(summaryFile, {force: true});
 const manifest = await buildApplications();
 const env = {...process.env, E2E_TELEMETRY_DISABLED: '1', DO_NOT_TRACK: '1'};
+let pythonTransport;
+try { pythonTransport = await runProcess({executable: manifest.runtimes.python.executable, args: [path.join(root, 'scripts', 'languages', 'python-http.test.py')], cwd: root, env, timeoutMs: 10_000, maxOutputBytes: 64 * 1024}); }
+catch (error) {
+  if (error.result) { process.stdout.write(error.result.stdout.bytes); process.stderr.write(error.result.stderr.bytes); }
+  throw error;
+}
+process.stdout.write(pythonTransport.stdout.bytes); process.stderr.write(pythonTransport.stderr.bytes);
+if (pythonTransport.stdout.truncated || pythonTransport.stderr.truncated) throw new Error('Python transport regression output exceeded its capture budget');
 
 /** A nonzero negative run counts only when its intended tests actually failed their assertions. */
 async function verifyRun(negative) {

@@ -4,9 +4,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type E2EConfig, type StepExecutor } from '@e2e-platform/core';
+import type { ProcessResult, ProcessSession } from '@e2e-platform/process';
 import { run } from '@e2e-platform/core/runner';
 import type { RequestContext } from '../src/index.ts';
-import { NativeEngine, NativeTransport, RpcNativeDriver, native } from '../src/index.ts';
+import { NativeEngine, NativeTransport, RpcNativeDriver, native, type NativeProcessLaunch } from '../src/index.ts';
 import { describe, expect, it, vi } from 'vitest';
 import type { OperationContext } from '@e2e-platform/core/engine';
 
@@ -226,7 +227,7 @@ describe('native engine through the real e2e-platform runner', () => {
     expect(result.exitCode).not.toBe(0);
   });
 
-  it('bounds readiness and retains a crash even if the test restarts the app', async () => {
+  it('bounds readiness and retains a disconnected bridge even if the test immediately restarts the app', async () => {
     const unready = await scenario('await app.open();', ['--no-ready'], native({ screenshots: false, launchTimeout: 100 }));
     expect(unready.status).toBe('failed');
     expect(JSON.stringify(unready.report)).toContain('ACTION_FAILED');
@@ -238,7 +239,40 @@ describe('native engine through the real e2e-platform runner', () => {
     `, ['--exit-on-perform']);
     expect(crashed.status).toBe('error');
     expect(crashed.report.run.results[0]?.attempts[0]?.status).toBe('failed');
-    expect(JSON.stringify(crashed.report)).toContain('exited unexpectedly');
+    // TCP close can precede the process exit event. An immediate restart may
+    // request supervised termination first, but cannot erase the bridge fault.
+    expect(crashed.report.run.results[0]?.attempts[0]?.error).toMatchObject({
+      category: 'infrastructure', code: 'ENGINE_FAILURE', phase: 'afterEach',
+      message: expect.stringMatching(/^native (bridge disconnected unexpectedly|application exited unexpectedly)/),
+    });
+  });
+
+  it('retains a confirmed natural crash after the application restarts', async () => {
+    const exits: ProcessResult[] = [];
+    class ConfirmedExitEngine extends NativeEngine {
+      private previousResult: Promise<ProcessResult> | undefined;
+      protected override async createProcess(launch: NativeProcessLaunch): Promise<ProcessSession> {
+        const child = await super.createProcess(launch);
+        this.previousResult = child.result;
+        return child;
+      }
+      override async launch(context: OperationContext): Promise<void> {
+        // Synchronize on real process completion instead of racing TCP close
+        // against restart's stop request or relying on an arbitrary delay.
+        if (this.previousResult !== undefined) exits.push(await this.previousResult);
+        await super.launch(context);
+      }
+    }
+    const result = await scenario(`
+      await app.open();
+      await screen.getByTestId('submit').click().catch(() => {});
+      await app.restart();
+    `, ['--exit-on-perform'], new ConfirmedExitEngine({ screenshots: false }).handle());
+    expect(exits).toHaveLength(1);
+    expect(exits[0]).toMatchObject({ status: 'exited', exitCode: 22 });
+    expect(result.status, JSON.stringify(result.report)).toBe('error');
+    expect(result.report.run.results[0]?.attempts[0]?.status).toBe('failed');
+    expect(JSON.stringify(result.report)).toContain('exited unexpectedly');
   });
 
   it('rejects source secret leakage and uncertain disconnected mutations', async () => {
@@ -251,6 +285,38 @@ describe('native engine through the real e2e-platform runner', () => {
     expect(JSON.stringify(disconnected.report)).toContain('ACTION_FAILED');
     expect(JSON.stringify(disconnected.report)).toContain('disconnected after dispatch');
     expect(JSON.stringify(disconnected.report)).toContain('bridge disconnected');
+  });
+
+  it('does not reinterpret supervised nonzero termination as a second application crash', async () => {
+    const terminations: ProcessResult[] = [];
+    class NonzeroTerminationEngine extends NativeEngine {
+      protected override async createProcess(launch: NativeProcessLaunch): Promise<ProcessSession> {
+        const child = await super.createProcess(launch);
+        // Windows taskkill reports a nonzero exit code for an intentional stop.
+        // Reproduce that contract on every host while retaining the real process,
+        // TCP disconnection, attempt cancellation, and awaited cleanup lifecycle.
+        const result = child.result.then((completion) => {
+          if (completion.status !== 'aborted' && completion.status !== 'stopped') return completion;
+          const terminated = { ...completion, exitCode: 1, signal: null };
+          terminations.push(terminated);
+          return terminated;
+        });
+        return { ...child, result,
+          get stdout() { return child.stdout; }, get stderr() { return child.stderr; },
+          async stop() { await child.stop(); return result; },
+        };
+      }
+    }
+    const result = await scenario('await app.open(); await screen.getByTestId("submit").click();',
+      ['--disconnect-perform'], new NonzeroTerminationEngine({ screenshots: false }).handle());
+    expect(terminations).toHaveLength(1);
+    expect(result.status, JSON.stringify(result.report)).toBe('failed');
+    const attempt = result.report.run.results[0]?.attempts[0];
+    expect(attempt?.error?.code).toBe('ACTION_FAILED');
+    expect(attempt?.cleanup).toBe('complete');
+    expect(JSON.stringify(result.report)).toContain('disconnected after dispatch');
+    expect(JSON.stringify(result.report)).toContain('bridge disconnected');
+    expect(JSON.stringify(result.report)).not.toContain('exited unexpectedly');
   });
 
   it('honors a subclassed driver through the standard engine lifecycle', async () => {

@@ -43,6 +43,11 @@ fixture limits readiness to 5 seconds, requests to 2 seconds, output to 64 KiB a
 service lifetime to 15 seconds, and stops the owned process even when an assertion
 fails. No preselected port or arbitrary sleep is needed.
 
+The Python transport binds the numeric loopback address without hostname lookup,
+so startup does not depend on the host's DNS resolver. The verifier runs a
+standard-library regression check with hostname resolution disabled before the
+shared end-to-end suites.
+
 `--wrong-result` intentionally offsets the sum by one. It must remain detectable.
 Tests are authored in TypeScript; this example includes no Python/.NET/Rust test
 SDK and no GUI automation adapter.

@@ -21,7 +21,7 @@ accessibility permissions. Complete those prerequisites before an offline run.
 | `@e2e-platform/process` | Direct executable/argument invocation, streaming stdin, separate bounded stdout/stderr capture, optional full binary log files, deadlines, cancellation, exit contracts and owned-process cleanup | A pipe is not a terminal. Windows cleanup uses taskkill, not Job Objects; descendants cannot be guaranteed after a root process exits naturally. No OS sandbox or automatic result validation. |
 | `@e2e-platform/checks` | Explicit numerical tolerances, structural JSON and keyed CSV comparison, bounded mismatch reports | The application or test author supplies independent expected values. No automatic tolerance widening or golden-output acceptance. |
 | `@e2e-platform/native` | A native e2e engine over an authenticated loopback protocol, semantic locators, declared actions and optional helper screenshots | Requires a compatible helper or separately installed OS sidecar; the TypeScript package alone does not install system drivers. |
-| `native/linux-atspi`, `windows-uia`, `macos-ax` | Python AT-SPI, C# UIA, Rust AX accessibility providers | Experimental OS backends; no OS screenshots or global keyboard injection; real platform qualification required. |
+| `native/linux-atspi`, `windows-uia`, `macos-ax` | Python AT-SPI, C# UIA, Rust AX accessibility providers | Linux GTK3 reference controls have limited D-Bus/Xvfb qualification; Windows/macOS GUI acceptance remains unrun. No OS screenshots or global keyboard injection. |
 | `native/qt` | Cooperative Qt helper and demonstration applications | Toolkit event injection is not OS-wide input. Qualify Widgets/Quick controls and each selected Qt kit; custom-painted content needs application semantics or separate image checks. |
 | `@e2e-platform/terminal` | VT screen state and terminal sessions over a transport, with optional real PTY integration | Optional node-pty must be installed and compiled separately. Semantic terminal text and keyboard input are supported; no invented buttons, clicks, screenshots or universal graphics support. |
 | `@e2e-platform/protocol` | Bounded HTTP requests, status checks, JSON and Standard Schema validation | An RPC transport extension point does not implement gRPC or WebSocket support. Service launch/reset and domain assertions remain fixtures. |
@@ -54,7 +54,7 @@ result is inferred from Linux tests or from workflow configuration.
 | Drogon, Crow, oat++, Pistache, Boost.Beast HTTP services | HTTP protocol client plus service fixture | Included HTTP contracts; no framework-specific reset/discovery. |
 | gRPC, WebSocket or custom RPC | Caller-provided transport | Not implemented by the HTTP module. |
 | GTK/gtkmm, wxWidgets, Win32/MFC/WTL/WinUI, AppKit | AT-SPI, UIA or AX sidecar where the toolkit exposes controls | Implemented OS backends are experimental; qualify actual toolkit/control/OS versions. |
-| Python GTK, WPF/WinForms, Rust AppKit | Real reference GUI fixtures with native driver acceptance scripts | Fixtures included; real OS tests remain separate from portable protocol tests. |
+| Python GTK, WPF/WinForms, Rust AppKit | Real reference GUI fixtures with native driver acceptance scripts | Python GTK3 reference acceptance passed on Ubuntu 24.04 under D-Bus/Xvfb. WPF and Rust AppKit built on their native OSes; interactive GUI acceptance remains unrun. WinForms requires separate qualification. |
 | PySide/PyQt, Tkinter, wxPython, Kivy, Avalonia/MAUI, Slint/egui/iced/Tauri | An eligible OS accessibility backend or a future specific adapter | No blanket toolkit certification; Qt Python binding, custom painting and hybrid DOM/native coordination remain separate work. |
 | JUCE, FLTK, Dear ImGui | Future framework-specific helper/test-engine integration | Not implemented; licenses and control coverage need separate review. |
 | SDL, SFML, GLFW, raylib, Unreal, Godot | Future scene/frame/input adapter or exposed process/protocol interface | No game/scene adapter included. |
@@ -211,6 +211,12 @@ The workflow configures Windows, macOS and Linux CLI jobs and a Linux Qt job on
 standard GitHub runners. A workflow definition is not evidence those remote jobs
 have run: retain the actual reports for each OS/architecture/toolchain/Qt kit.
 Native Windows and macOS behavior needs validation on those operating systems.
+
+For OS accessibility drivers, the rc.3
+[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+provides limited live GTK3 evidence plus native Windows/macOS build and portable
+test evidence. It does not establish an all-CI pass or interactive UIA/AX behavior.
+See [RELEASE_STATUS.md](RELEASE_STATUS.md) for the exact tested source revision.
 
 Before adding a supported configuration, exercise both passing and failing
 reference cases: bad numerical output behind a success message, crashes/hangs,

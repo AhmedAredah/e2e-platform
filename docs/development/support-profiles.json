@@ -1,6 +1,14 @@
 {
   "schemaVersion": 1,
-  "candidate": "0.2.0-rc.2",
+  "candidate": "0.2.0-rc.4",
+  "evidenceSourceCommit": "3baeb8d6bd90b799f7784e67e24c9922d5e27b2f",
+  "desktopEvidence": {
+    "candidate": "0.2.0-rc.3",
+    "recordedAt": "2026-10-27",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430",
+    "conclusion": "success",
+    "scope": "Desktop contract tests, Linux GTK3 reference acceptance and native Windows/macOS builds; not an all-CI pass"
+  },
   "testLanguage": "TypeScript/JavaScript",
   "applicationLanguages": [
     "Python",
@@ -28,6 +36,7 @@
       "screenshots": "source-masked Qt helper capture",
       "qualification": {
         "status": "qualified-limited",
+        "evidenceCandidate": "0.2.0-rc.2",
         "os": "Linux x64",
         "qt": "6.4.2",
         "inputBackend": "offscreen/software",
@@ -54,10 +63,18 @@
       "keyboard": false,
       "screenshots": false,
       "qualification": {
-        "status": "experimental",
-        "portableTests": 63,
-        "liveStatus": "blocked",
-        "reason": "Host denies AF_UNIX required by D-Bus"
+        "status": "qualified-limited",
+        "portableTests": 68,
+        "liveStatus": "passed-reference-fixture",
+        "os": "Ubuntu 24.04",
+        "toolkit": "GTK3",
+        "displayBackend": "D-Bus/Xvfb",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506790",
+        "limits": [
+          "Selected GTK3 reference controls and deliberately wrong-output rejection",
+          "Other toolkits, controls and display backends require separate qualification",
+          "The earlier local AF_UNIX restriction is not the hosted run result"
+        ]
       }
     },
     {
@@ -78,7 +95,8 @@
       "qualification": {
         "status": "experimental",
         "portableTests": 39,
-        "compileStatus": "Cross-compiled driver and WPF fixture on Linux",
+        "compileStatus": "Driver and WPF fixture built on Windows Server 2022",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506975",
         "liveStatus": "not-run",
         "reason": "Requires interactive Windows host"
       }
@@ -100,7 +118,8 @@
       "qualification": {
         "status": "experimental",
         "portableTests": 23,
-        "compileStatus": "Platform source typechecked; Apple frameworks not linked on Linux",
+        "compileStatus": "Rust tests and AppKit fixture build passed on macOS 15; portable tests also passed on Ubuntu 24.04",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506918",
         "liveStatus": "not-run",
         "reason": "Requires macOS, SDK and Accessibility permission"
       }
@@ -111,5 +130,6 @@
     "Application language alone does not qualify a toolkit",
     "A source workflow is not a recorded platform pass",
     "No foreign-language full runner SDKs are included"
-  ]
+  ],
+  "candidateVerificationSource": "GitHub Actions runs for the exact source commit and the accompanying validation bundle"
 }

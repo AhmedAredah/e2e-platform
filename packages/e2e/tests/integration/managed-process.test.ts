@@ -142,6 +142,30 @@ describe('ManagedProcess', () => {
     expect(await isReachable(`http://127.0.0.1:${port}/`)).toBe(false);
   });
 
+  it('owns newly spawned commands after the same instance previously reused an external server', async () => {
+    const port = await freePort();
+    const external = nodeApp(port);
+    const app = nodeApp(port, { reuseExisting: true });
+    try {
+      await external.start();
+      await app.start();
+      expect(app.reused).toBe(true);
+      await app.stop();
+      expect(await isReachable(`http://127.0.0.1:${port}/`)).toBe(true);
+      await external.stop();
+      await app.start();
+      expect(app.reused).toBe(false);
+      await app.stop();
+      expect(await isReachable(`http://127.0.0.1:${port}/`)).toBe(false);
+      await app.start();
+      await app.stop();
+      expect(await isReachable(`http://127.0.0.1:${port}/`)).toBe(false);
+    } finally {
+      await app.stop();
+      await external.stop();
+    }
+  });
+
   it('without reuseExisting, a server another process already runs fails the launch before spawning', async () => {
     const port = await freePort();
     const devServer = nodeApp(port);

@@ -20,7 +20,7 @@ Install the core kit into your test project first. From that project's directory
 replace the tarball path below with the actual filename emitted by `pack`:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-agent-device-0.2.0-rc.3.tgz
+npm install --save-dev /path/to/e2e-platform-agent-device-0.2.0-rc.4.tgz
 ```
 
 `agent-device` needs Xcode with an iOS simulator runtime, or the Android SDK

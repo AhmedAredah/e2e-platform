@@ -276,10 +276,11 @@ export interface CommandConfig {
 }
 ```
 
-`log` must stay inside the project root and holds the raw, unredacted
-output, so keep it in an ignored directory. A startup failure quotes the last
-20 lines appended since the command started, with `command.env` values
-replaced by `<secret:NAME>` markers. Without `reuseExisting`, a `readyUrl`
+`log` must stay inside the project root. Registered secrets and `command.env`
+values of at least four characters are replaced by `<secret:NAME>` markers
+before output reaches disk, including values split across writes. Unknown secrets
+cannot be inferred, so keep logs in an ignored directory. A startup failure quotes
+the last 20 lines appended since the command started. Without `reuseExisting`, a `readyUrl`
 that already answers is `APP_ALREADY_RUNNING`. `{port}` on a target without a
 `url` is `INVALID_CONFIG`.
 
@@ -337,6 +338,10 @@ that outlive the original command, and force-kills remaining members after
 `shutdownTimeout`. A child that deliberately starts a separate process group
 is outside this ownership boundary. On Windows this command manager stops
 the direct child; use a service's explicit `teardown` for additional processes.
+Before a completed command returns, startup diagnostics are read, or shutdown
+finishes, managed logs get up to one additional second to drain. If inherited
+pipes remain open, the runner closes its read ends and withholds any unfinished
+secret suffix instead of waiting indefinitely.
 [Starting your app](/starting-your-app) shows a full example.
 
 ## artifacts

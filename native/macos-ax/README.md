@@ -97,6 +97,14 @@ loopback connections and child cleanup. `check-macos` typechecks the platform FF
 and startup code without linking Apple frameworks; the executable still rejects
 non-macOS execution. It is not a GUI emulator and is not a macOS runtime pass.
 
+The rc.3
+[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+passed 23 Rust tests on macOS 15 and Ubuntu 24.04 and built the real AppKit
+fixture on macOS at source revision
+`3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`. That job did not run the interactive
+AX/AppKit acceptance procedure; native compilation and portable tests do not
+establish GUI behavior.
+
 The real Rust AppKit fixture and
 [`scripts/verify-macos.py`](scripts/verify-macos.py) form the runtime qualification
 check. Run the commands in

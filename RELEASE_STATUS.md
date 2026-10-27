@@ -1,7 +1,7 @@
-# e2e-platform 0.2.0-rc.3
+# e2e-platform 0.2.0-rc.4
 
 This is a reviewed **prerelease**, not a fully qualified stable release. The ten
-public JavaScript packages use `0.2.0-rc.3` and `@e2e-platform/*`; the executable
+public JavaScript packages use `0.2.0-rc.4` and `@e2e-platform/*`; the executable
 and repository folder are `e2e-platform`. Tests are written in TypeScript or
 JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
@@ -12,7 +12,11 @@ SystemRoot bootstrap exception), qualified AT-SPI text-interface dispatch, sanit
 Linux startup diagnostics, portable path comparisons and deterministic negative
 verification. The detailed original review evidence below was recorded for rc.2;
 unchanged source trees remain traceable through the publication history. Hosted
-checks and follow-up evidence identify the exact rc.3 commit being tested.
+checks below identify the exact rc.3 commit that was tested. Current candidate
+results are recorded per source commit in GitHub Actions and the accompanying
+validation bundle; the previous checkpoint's passes do not qualify later changes.
+The rc.4 changes address supervised native termination, redacted log drainage,
+macOS environment assertions and unnecessary Python HTTP hostname resolution.
 
 ## Publication state
 
@@ -60,12 +64,49 @@ separate. OS sidecars are Python (Linux), C# (Windows), and Rust (macOS); the
 cooperative Qt bridge is C++. These are platform implementations, not four
 independent full test-runner SDKs.
 
-## Recorded verification
+## Recorded rc.3 checkpoint
 
-Checks below ran against this candidate on the available Linux x64 environment.
-Detailed logs, command records, intentional failures and hashes accompany the
-validation bundle. Earlier unsuccessful runs are retained and clearly superseded
-by qualified reruns. Historical rc.0/rc.1 results do not qualify this candidate.
+The source checkpoint is
+[`3baeb8d6bd90b799f7784e67e24c9922d5e27b2f`](https://github.com/AhmedAredah/e2e-platform/commit/3baeb8d6bd90b799f7784e67e24c9922d5e27b2f).
+Local Linux checks before that commit passed 38 process tests (one Windows-only
+regression skipped), 80 native package tests, 68 Python AT-SPI portable tests and
+55 maintenance-script tests. Lint, the dead-code gate, workspace typechecks,
+76 error-code references, 7 embedded examples and 47 documentation pages passed.
+The rc.3 six-package kit passed clean installation/reinstallation, default
+initialization, deterministic execution, deliberate wrong-output rejection,
+plain Node imports, public API typechecking and the installed-dependency audit.
+The logs identify the tested working tree; these local results do not establish
+Windows or macOS GUI behavior.
+
+On 2026-10-27, hosted
+[`desktop-contracts` run 40429517430](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)
+passed all four jobs at that exact source checkpoint:
+
+| Hosted profile | Result and limits |
+| --- | --- |
+| Ubuntu 24.04 / AT-SPI | Shared-runner/Python interoperability, 68 portable tests and the real GTK3 accessible-controls acceptance test passed under D-Bus/Xvfb. This qualifies the reference controls and deliberately wrong-output rejection, not every Linux toolkit or display session. |
+| Windows Server 2022 / UIA | 39 portable protocol checks, the UIA driver build and WPF fixture build passed on Windows. The interactive UIA/WPF acceptance test was not run. |
+| macOS 15 / AX | 23 portable Rust tests and the real AppKit fixture build passed on macOS; the Rust tests also passed on Ubuntu 24.04. The interactive AX/AppKit acceptance test was not run. |
+
+The same source checkpoint passed
+[`docs` run 40429517498](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517498)
+and [`benchmark` run 40429517568](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517568).
+This is not an all-CI pass: the
+[`native` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517414)
+and [`languages` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517651)
+reported failures requiring follow-up. The
+[`spec` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517523)
+failed on Node 24 because startup diagnostics could be read before redacted
+output finished draining; Node 22 and source-quality jobs passed. The rc.4
+changes address these failures. Later source changes require their own recorded results.
+
+## Historical rc.2 verification baseline
+
+The following detailed review ran against **0.2.0-rc.2**, before the rc.3 changes,
+on the available Linux x64 environment. It is retained as historical evidence,
+not presented as a rerun against the current candidate. Detailed logs, command records, intentional
+failures and hashes accompany the rc.2 validation bundle. Earlier unsuccessful
+runs are retained and clearly superseded by the qualified rc.2 reruns.
 
 | Area | Result and limits |
 | --- | --- |
@@ -83,14 +124,15 @@ by qualified reruns. Historical rc.0/rc.1 results do not qualify this candidate.
 | Exact installed six-package kit | Install and npm ci, default initializer/first test, plain Node imports, strict API types, notices, tamper checks and planted-failure verdict passed; zero reported installed-dependency vulnerabilities. |
 | Source quality | Lint, dead-code gate, all ten builds, workspace typechecks, 76 error-code references, 7 embedded examples and 47 documentation pages passed. Dead-code tooling retains 12 advisory class-member warnings. |
 
-The validation summary links the exact consumer-kit and browser reports. This source ZIP contains tracked source and Git history plus a checksummed
-six-package JavaScript install kit. A normal GitHub source ZIP contains neither
+The historical validation summary links the exact rc.2 consumer-kit and browser
+reports. Prepared full-repository bundles contain tracked source and Git history
+plus a checksummed six-package JavaScript install kit. A normal GitHub source ZIP contains neither
 Git history nor the generated kit. SDKs, Qt, browser binaries, OS libraries and
 package-manager caches remain external prerequisites.
 
 ## Dependency findings
 
-Compatible dependency updates reduced the full workspace audit from **57 to 11**
+The dated rc.2 dependency review reduced the full workspace audit from **57 to 11**
 findings: 8 high, 2 moderate, 1 low. Every remaining path is in optional Mintlify
 preview/online-validation tooling or the private Expo benchmark. The production-only
 workspace audit includes private apps and has 3 findings, all Expo: node-forge,
@@ -106,14 +148,18 @@ fully qualified. They require separate remediation and runtime verification.
 
 ## Remaining release gates
 
-The new OS drivers remain experimental. This host denies AF_UNIX sockets needed
-for D-Bus/AT-SPI. Windows UIA and macOS AX need native interactive desktops and
-permissions; portable tests and cross-compilation are not live qualification.
-Each additional framework and toolkit version requires its own real-control test.
+The OS drivers remain prerelease implementations. Linux GTK3 reference controls
+now have limited live qualification under hosted D-Bus/Xvfb; the earlier local
+host's AF_UNIX restriction does not invalidate that separate result. Windows UIA
+and macOS AX still need native interactive desktops and permissions for their
+live acceptance tests. Portable tests and successful native builds do not qualify
+GUI behavior. Each additional framework, toolkit version and display backend
+requires its own real-control test.
 
 Full browser CDP attach/recovery, mobile simulators/hardware and live model-provider
-qualification remain open. The corresponding workflows are source, not successful
-remote runs. Native-language full runner SDKs, generic custom-painted controls,
+qualification remain open. The successful desktop-contracts jobs cover only the
+profiles listed above; they do not qualify these other gates. Native-language
+full runner SDKs, generic custom-painted controls,
 global OS input, OS-driver screenshots and hybrid DOM/native switching are absent.
 
 Before a stable release, complete the real platform gates, assess or resolve the

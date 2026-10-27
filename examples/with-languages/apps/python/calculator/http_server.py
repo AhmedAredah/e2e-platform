@@ -1,6 +1,7 @@
 """Loopback-only demo transport; not a production HTTP server."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from socketserver import TCPServer
 from urllib.parse import parse_qs, urlsplit
 from .operations import Calculator
 
@@ -9,6 +10,11 @@ class CalculatorServer(HTTPServer):
     def __init__(self, calculator: Calculator):
         self.calculator = calculator
         super().__init__(("127.0.0.1", 0), CalculatorHandler)
+
+    def server_bind(self):
+        """Bind numeric loopback without HTTPServer's blocking hostname lookup."""
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
 
 
 class CalculatorHandler(BaseHTTPRequestHandler):

@@ -1,5 +1,15 @@
 # @e2e-platform/protocol
 
+## 0.2.0-rc.4
+
+### Patch Changes
+
+- Prepare a coordinated candidate with supervised desktop shutdown classification,
+  complete redacted startup diagnostics, isolated macOS environment verification,
+  and a numeric-loopback Python HTTP fixture without hostname resolution.
+  Record hosted GTK qualification separately from portable driver checks and
+  interactive platform acceptance that remains outstanding.
+
 ## 0.2.0-rc.3
 
 ### Patch Changes

@@ -139,7 +139,9 @@ export class NativeEngine {
       if (Date.now() >= deadline) throw new EngineError('OPERATION_TIMEOUT', 'native process acquisition exceeded its operation budget', { retryable: false });
       void child.result.then((result) => {
         // A crash may finish draining after restart has already requested stop.
-        const crashed = (result.exitCode !== null && result.exitCode !== 0) || result.status === 'signaled';
+        // Supervised stops retain their own status even when Windows taskkill
+        // supplies a nonzero exit code; that is not a second application crash.
+        const crashed = (result.status === 'exited' && result.exitCode !== null && result.exitCode !== 0) || result.status === 'signaled';
         if (crashed || (!this.stopping && this.process === child)) this.markFault(child, `native application exited unexpectedly (status ${result.status}, exit code ${result.exitCode}, signal ${result.signal})`);
       });
       const port = await this.readiness(child, token, remaining());
