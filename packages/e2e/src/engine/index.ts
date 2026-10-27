@@ -603,6 +603,12 @@ export interface Engine {
    * targets without being over-subscribed. Omit when there is no such bound.
    */
   readonly workers?: number;
+  /**
+   * A run-local exclusive resource shared across target names. Only one live
+   * worker may hold a key, including workers still disposing. Independent runs
+   * must provide their own external isolation. Omit for independently usable resources.
+   */
+  readonly exclusiveResource?: string;
   /** capability: observation. */
   observe?(context: OperationContext, options?: EngineObserveOptions): Promise<EngineSnapshot>;
   /**

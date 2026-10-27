@@ -17,6 +17,19 @@ bool visuallyVisible(QQuickItem* item) {
         if (!current->isVisible() || current->opacity() == 0) return false;
     return true;
 }
+bool centerVisible(QQuickItem* item) {
+    if (!item->window() || item->width() <= 0 || item->height() <= 0) return false;
+    const QPointF center = item->mapToScene(item->boundingRect().center());
+    if (!QRectF(0, 0, item->window()->width(), item->window()->height()).contains(center)) return false;
+    for (QQuickItem* parent = item->parentItem(); parent; parent = parent->parentItem())
+        if (parent->clip() && !parent->boundingRect().contains(parent->mapFromScene(center))) return false;
+    return true;
+}
+bool hasFlickable(QQuickItem* item) {
+    for (QQuickItem* parent = item->parentItem(); parent; parent = parent->parentItem())
+        if (parent->inherits("QQuickFlickable")) return true;
+    return false;
+}
 }
 QJsonObject QuickAdapter::node(QObject* object, QObject* rootObject, int depth, ObjectRegistry& registry, bool isRoot) {
     auto* item = qobject_cast<QQuickItem*>(object);
@@ -109,6 +122,8 @@ void QuickAdapter::ready(QObject* object, QObject* root, const QJsonObject& acti
     if (auto* window = qobject_cast<QQuickWindow*>(object); window && kind == "swipe") item = window->contentItem();
     if (kind == "scrollIntoView") {
         if (!item || !visuallyVisible(item) || item->window() != root) throw Failure("NOT_ACTIONABLE", "Qt Quick scroll target is hidden or outside the active window");
+        if (!(custom_ && custom_->handles(object)) && !centerVisible(item) && !hasFlickable(item))
+            throw Failure("UNSUPPORTED_CAPABILITY", "Qt Quick target is clipped without a supported scroll container");
         return;
     }
     actionable(item, root);
@@ -136,6 +151,7 @@ void QuickAdapter::ready(QObject* object, QObject* root, const QJsonObject& acti
 }
 void QuickAdapter::scrollIntoView(QObject* object, QObject*) {
     QPointer<QQuickItem> target(static_cast<QQuickItem*>(object));
+    if (centerVisible(target)) return;
     for (QQuickItem* parent = target->parentItem(); parent; parent = parent->parentItem()) {
         if (!parent->inherits("QQuickFlickable")) continue;
         auto* content = qobject_cast<QQuickItem*>(parent->property("contentItem").value<QObject*>());
@@ -155,6 +171,7 @@ void QuickAdapter::scrollIntoView(QObject* object, QObject*) {
         if (!parent->setProperty("contentY", nextY) || !target || !container)
             throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt Quick container changed during scrolling");
     }
+    if (!target || !centerVisible(target)) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt Quick scrolling did not expose the target center");
 }
 void QuickAdapter::swipe(QObject* object, QObject* root, const QString& direction) {
     auto* window = static_cast<QQuickWindow*>(root);

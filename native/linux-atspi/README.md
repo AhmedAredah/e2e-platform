@@ -72,7 +72,10 @@ available without pip or a virtual environment.
 | Global keyboard / screenshots | Unavailable | Never advertised, captured or fabricated |
 
 Password controls and `e2e-secure:true` accessible attributes suppress contents,
-attributes and descendants at source. Initially secure controls use the fixed
+attributes and descendants at source. Detection stays attached to the retained
+control identity even after a reveal toggle or removal of the secure attribute;
+an observed password retains its password purpose. Defunct identities are pruned
+and never reassigned to replacement controls. Initially secure controls use the fixed
 name `Secure control` and omit accessible IDs; provider-derived names can contain
 contents. A sensitive fill retains only its label/ID observed before the fill and
 additionally marks that

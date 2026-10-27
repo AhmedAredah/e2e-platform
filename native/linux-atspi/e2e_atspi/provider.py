@@ -48,6 +48,7 @@ class AtspiProvider(AccessibilityProvider):
         self._next_id = 0
         self._last_seen: set[str] = set()
         self._secure_ids: set[str] = set()
+        self._password_ids: set[str] = set()
         self._safe_metadata: dict[str, tuple[str, str | None]] = {}
         self._last_metadata: dict[str, tuple[str, str | None]] = {}
 
@@ -68,6 +69,14 @@ class AtspiProvider(AccessibilityProvider):
         obj.clear_cache()
         if self._state(obj, "DEFUNCT") or obj.get_process_id() != self.pid:
             raise DriverError("NODE_STALE", "accessible no longer belongs to the application")
+
+    def _secure(self, identity: str, role: str, attributes: dict[str, Any]) -> bool:
+        """Keep observed sensitivity for this identity's lifetime, including reveal toggles."""
+        if role == "password text":
+            self._password_ids.add(identity)
+        if role == "password text" or attributes.get("e2e-secure") == "true":
+            self._secure_ids.add(identity)
+        return identity in self._secure_ids
 
     def snapshot(self) -> dict[str, Any]:
         """Build a bounded tree; unavailable or incomplete sources never prove absence."""
@@ -93,7 +102,7 @@ class AtspiProvider(AccessibilityProvider):
             seen.add(identity)
             role_name = obj.get_role_name()
             attributes = obj.get_attributes() or {}
-            secure = role_name == "password text" or attributes.get("e2e-secure") == "true" or identity in self._secure_ids
+            secure = self._secure(identity, role_name, attributes)
             states = {"secure": secure, "disabled": not self._state(obj, "ENABLED"),
                       "focused": self._state(obj, "FOCUSED"), "hidden": role_name != "application" and (not self._state(obj, "SHOWING") or not self._state(obj, "VISIBLE")),
                       "selected": self._state(obj, "SELECTED")}
@@ -121,7 +130,7 @@ class AtspiProvider(AccessibilityProvider):
                     viewport["width"] = max(viewport["width"], min(32768, max(1, rect.x + rect.width)))
                     viewport["height"] = max(viewport["height"], min(32768, max(1, rect.y + rect.height)))
             if secure:
-                node["inputPurpose"] = "password" if role_name == "password text" else "generic-secret"
+                node["inputPurpose"] = "password" if identity in self._password_ids else "generic-secret"
             else:
                 text = obj.get_text_iface()
                 if text is not None:
@@ -208,6 +217,7 @@ class AtspiProvider(AccessibilityProvider):
                 self._objects.pop(identity)
                 self._ids.pop(obj, None)
                 self._secure_ids.discard(identity)
+                self._password_ids.discard(identity)
                 self._safe_metadata.pop(identity, None)
                 self._last_metadata.pop(identity, None)
         return {"root": root, "viewport": viewport, "truncated": truncated}
@@ -342,7 +352,7 @@ class AtspiProvider(AccessibilityProvider):
                 candidate = obj.get_child_at_index(index)
                 self._alive(candidate)
                 attributes = candidate.get_attributes() or {}
-                if candidate.get_role_name() == "password text" or attributes.get("e2e-secure") == "true" or self._ids.get(candidate) in self._secure_ids:
+                if self._secure(self._id(candidate), candidate.get_role_name(), attributes):
                     continue
                 if candidate.get_name() == label:
                     indices.append(index)
@@ -364,6 +374,7 @@ class AtspiProvider(AccessibilityProvider):
         self._ids.clear()
         self._last_seen.clear()
         self._secure_ids.clear()
+        self._password_ids.clear()
         self._safe_metadata.clear()
         self._last_metadata.clear()
         self.api.exit()

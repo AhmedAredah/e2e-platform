@@ -49,6 +49,9 @@ is not GUI qualification.
   and enabled states, with bounded child traversal and a stable synthetic root.
 - Secure text fields (`AXSecureTextField`) and explicit sensitive fills omit
   content, name, identifier, attributes and children before serialization.
+  Observed password sensitivity and password purpose remain attached to the
+  retained AX identity after reveal/subrole changes. A replacement identity does
+  not inherit the old classification; allocated IDs are never reused.
 
 No raw mouse input, keyboard events, screenshots, system-wide
 root, cross-process dialogs, WebView DOM, attach-to-existing-PID or arbitrary

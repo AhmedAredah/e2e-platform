@@ -379,6 +379,30 @@ describe('scheduler capacity', () => {
     expect(fleet.spawned.slice(0, 4).map((worker) => worker.targetName)).toEqual(['ios', 'ios', 'web', 'web']);
   });
 
+  it.each([false, true])('serializes shared resources across targets, including failed workers (%s)', async (fail) => {
+    const engine = defineEngine({ name: 'shared', version: '1', spiVersion: 1, workers: 4, exclusiveResource: 'session:one' });
+    const targets = [makeTarget('first', 0, engine), makeTarget('second', 1, engine)];
+    const files = ['one', 'two'].map(name => `tests/${name}.e2e.ts`);
+    const tests = files.map(file => makeTest(file, 'case'));
+    const selections = targets.map(target => ({ target, pairs: tests.map(test => makePair(test, target)) }));
+    const fleet = new FakeFleet(fail ? { status: { [tests[0]!.id]: 'failed' } } : {});
+    const collected = await run(makeSelection(selections), makeCollection(files, selections[0]!.pairs), fleet, { workers: 4 });
+    expect(collected.results).toHaveLength(4);
+    expect(fleet.peakLive).toBe(1);
+    expect(new Set(fleet.spawned.map(worker => worker.targetName))).toEqual(new Set(['first', 'second']));
+  });
+
+  it('runs independent exclusive resources concurrently', async () => {
+    const targets = ['one', 'two'].map((resource, index) => makeTarget(resource, index,
+      defineEngine({ name: 'isolated', version: '1', spiVersion: 1, exclusiveResource: resource })));
+    const test = makeTest('tests/one.e2e.ts', 'case');
+    const selections = targets.map(target => ({ target, pairs: [makePair(test, target)] }));
+    const fleet = new FakeFleet();
+    const collected = await run(makeSelection(selections), makeCollection([test.file], selections[0]!.pairs), fleet, { workers: 4 });
+    expect(collected.results).toHaveLength(2);
+    expect(fleet.peakLive).toBe(2);
+  });
+
   it('replaces a discarded worker of a capped target only once its exit freed the slot', async () => {
     const target = makeTarget('ios', 0, boundedEngine(1));
     const pairs = ['a', 'b', 'c', 'd'].map((name) => makePair(makeTest(`tests/${name}.e2e.ts`, name), target));

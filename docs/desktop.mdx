@@ -25,6 +25,11 @@ and scopes inspection to its process. It does not attach to arbitrary running ap
 See the repository's `DESKTOP.md` and `native/<backend>/README.md` for installation
 commands, capability lists and native qualification scripts.
 
+All native targets, including Qt, share the runner's `local-desktop` exclusive
+resource. Within one run, only one native worker can own the desktop at a time,
+and its cleanup completes before another native target starts. Separate runner
+processes still require separate desktop sessions or external serialization.
+
 ## Accessible behavior
 
 Control patterns must support the requested action. A missing pattern produces an
@@ -40,6 +45,17 @@ direct child. AX nodes with unknown visibility cannot satisfy positive or negate
 visibility assertions. These semantic checks do not prove screen occlusion.
 Missing AX enabled/focused state is also explicitly unknown and cannot satisfy
 positive or negated assertions for that state.
+
+Windows selection preflight resolves the requested realized option and rejects
+missing, disabled or ambiguous matches without changing the UI. Open a collapsed
+popup explicitly before selecting an option its provider has not exposed.
+Qt scrolling succeeds only when the target center is visible in its supported
+container hierarchy. Unsupported clipping fails; an uncertain post-scroll result
+is not retried. Already-visible controls need no scroll.
+
+Linux and macOS retain observed password sensitivity for each control identity,
+including after a reveal toggle. Such controls retain their password purpose
+and never expose their content through a later nonsecure snapshot.
 
 Qt adds owned-window enumeration/activation, selected model/view item mappings
 and a public C++ `ControlAdapter` source extension. Custom adapters disable helper

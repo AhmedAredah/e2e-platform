@@ -144,6 +144,10 @@ describe('defineEngine', () => {
 
   it('copies a declared workers bound and rejects one that is not a positive integer', () => {
     expect(defineEngine(observingEngine({ workers: 2 })).workers).toBe(2);
+    expect(defineEngine(observingEngine({ exclusiveResource: 'session:one' })).exclusiveResource).toBe('session:one');
+    for (const exclusiveResource of ['', ' ', 'x\n', 'x'.repeat(257), 1]) {
+      expect(() => defineEngine(observingEngine({ exclusiveResource: exclusiveResource as string }))).toThrow(/exclusiveResource/);
+    }
     expect(defineEngine(observingEngine()).workers).toBeUndefined();
     for (const workers of [0, -1, 1.5, Number.NaN, '2' as never]) {
       expect(() => defineEngine(observingEngine({ workers }))).toThrow(/workers must be a positive safe integer/);

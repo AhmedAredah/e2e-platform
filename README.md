@@ -10,8 +10,11 @@ GUI coverage depends on the exposed controls and selected driver. Independent ou
 wrong results even when an application exits successfully or displays success.
 
 Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
-The reviewed C++/Qt defects are fixed and the complete nine-job native matrix
-has passed. These changes remain a prerelease with explicitly bounded support.
+The earlier C++/Qt checkpoint passed the complete nine-job native matrix.
+The [follow-up corrections](docs/development/CPP_FOLLOWUP_RESOLUTION.md) address
+numeric parsing, password protection, action readiness, scrolling and shared
+desktop scheduling, with new installed-consumer acceptance checks. Each revision
+requires its own hosted qualification. This remains a prerelease with bounded support.
 
 The current prerelease is **0.2.0-rc.7**. Its source branch is
 [`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared

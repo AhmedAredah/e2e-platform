@@ -80,7 +80,7 @@ export class NativeEngine {
     const options = this.options;
     return defineEngine({
       name: 'native', version: (createRequire(import.meta.url)('../../package.json') as { version: string }).version, spiVersion: 1,
-      platform: options.platform ?? 'desktop', workers: 1, actions: this.actions,
+      platform: options.platform ?? 'desktop', workers: 1, exclusiveResource: 'local-desktop', actions: this.actions,
       validateApp(app: EngineAppDeclaration, { targetName }) {
         if (app.appPath === undefined || app.url !== undefined) throw new ConfigurationError('INVALID_CONFIG', `target "${targetName}" native app needs appPath and supports launchArguments; url is unsupported`);
       },

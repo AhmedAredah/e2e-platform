@@ -16,5 +16,15 @@ E2E_TEST("C++ test validates a real HTTP application") {
     session.expect_equal(result.at("sum"), 4, "[oracle:calculation]");
     session.expect_equal(session.http().get(base + "/sum?a=invalid&b=2").status, 400);
     session.expect_equal(session.http().get(base + "/missing").status, 404);
+    for (const auto* path : {"/precision/decimal", "/precision/underflow"}) {
+        const auto precise = session.http().get(base + path);
+        session.expect_equal(precise.status, 200);
+        bool rejected = false;
+        try { precise.json(); } catch (const e2e::Error&) { rejected = true; }
+        session.expect_equal(rejected, true, "[oracle:precision] lossy HTTP number must be rejected");
+    }
+    const auto integers = session.http().get(base + "/precision/integers").json();
+    session.expect_equal(integers.at("max"), 18446744073709551615ULL);
+    session.expect_equal(integers.at("min"), std::numeric_limits<std::int64_t>::min());
 }
 E2E_TEST_MAIN()

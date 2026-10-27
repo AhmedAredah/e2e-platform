@@ -2,6 +2,7 @@ import { createProcessTest } from '@e2e-platform/process/test';
 import { LocalProcessRunner } from '@e2e-platform/process';
 import { CppTestHost, type CppTestOptions } from './host.ts';
 import { MAX_LINE_BYTES, invalid, record, string, timeout } from './protocol.ts';
+import { decodeJson } from './json.ts';
 
 export type { CppTestOptions } from './host.ts';
 
@@ -16,8 +17,7 @@ export async function registerCppTests(options: CppTestOptions): Promise<void> {
     timeoutMs: timeout(options.discoveryTimeoutMs, 5000), maxOutputBytes: MAX_LINE_BYTES,
   });
   if (result.stdout.truncated || result.stderr.truncated) invalid();
-  let raw: unknown;
-  try { raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(result.stdout.bytes)); } catch { invalid(); }
+  const raw = decodeJson(result.stdout.bytes);
   const manifest = record(raw, ['protocol', 'tests']);
   if (manifest.protocol !== 2 || !Array.isArray(manifest.tests) || manifest.tests.length === 0 || manifest.tests.length > 10_000) invalid();
   const names = manifest.tests.map(value => string(value, 1024));

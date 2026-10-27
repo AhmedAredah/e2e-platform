@@ -380,6 +380,8 @@ class Scheduler {
   private canPlaceWork(state: TargetState): boolean {
     if (this.findAvailable(state.target.name) !== undefined) return true;
     if (!this.hasCapacity(state)) return false;
+    const holders = this.resourceHolders(state);
+    if (holders.length > 0) return holders.every(worker => worker.state === 'idle');
     if (this.workers.length < this.options.workers) return true;
     return this.findRetirableForeignWorker(state.target.name) !== undefined;
   }
@@ -392,13 +394,22 @@ class Scheduler {
    * it is gone.
    */
   private hasCapacity(state: TargetState): boolean {
-    const capacity = state.workers ?? state.target.engine?.workers ?? this.options.workers;
+    const capacity = state.target.engine?.exclusiveResource === undefined
+      ? state.workers ?? state.target.engine?.workers ?? this.options.workers : 1;
     return this.workersOf(state.target.name).length < capacity;
   }
 
   /** Every worker of one target that has not exited yet, retired ones included. */
   private workersOf(targetName: string): SchedulerWorker[] {
     return this.workers.filter((worker) => worker.targetName === targetName);
+  }
+
+  /** Foreign holders retain a shared resource until their process actually exits. */
+  private resourceHolders(state: TargetState): SchedulerWorker[] {
+    const resource = state.target.engine?.exclusiveResource;
+    if (resource === undefined) return [];
+    return this.workers.filter(worker => worker.targetName !== state.target.name
+      && this.targets.get(worker.targetName)?.target.engine?.exclusiveResource === resource);
   }
 
   /**
@@ -414,6 +425,11 @@ class Scheduler {
     const available = this.findAvailable(state.target.name);
     if (available !== undefined) return available;
     if (!this.hasCapacity(state)) return undefined;
+    const holders = this.resourceHolders(state);
+    if (holders.length > 0) {
+      for (const worker of holders) if (worker.state === 'idle') this.retire(worker);
+      return undefined;
+    }
     if (this.workers.length < this.options.workers) return this.spawn(state);
     const foreign = this.findRetirableForeignWorker(state.target.name);
     if (foreign !== undefined) this.retire(foreign);

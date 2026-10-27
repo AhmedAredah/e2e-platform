@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 #pragma once
-#include <nlohmann/json.hpp>
+#include <e2e/json.hpp>
 #include <cstdint>
 #include <cmath>
 #include <istream>
@@ -11,39 +11,8 @@
 #include <vector>
 
 namespace e2e {
-using Json = nlohmann::json;
-inline constexpr std::size_t max_protocol_line = 1024 * 1024;
 inline constexpr std::uint64_t max_protocol_requests = 10000;
 inline constexpr int protocol_version = 2;
-
-/** A bounded diagnostic; never includes application values or remote exception text. */
-class Error : public std::runtime_error {
-public:
-    explicit Error(const char* message) : std::runtime_error(message) {}
-};
-
-/** Rejects values JSON serialization would silently replace, before any wire operation. */
-inline void validate_json_value(const Json& value, std::size_t depth = 0) {
-    if (depth > 64) throw Error("JSON nesting exceeds the protocol limit");
-    if (value.is_number_float() && !std::isfinite(value.get<double>())) throw Error("Nonfinite JSON numbers are not supported");
-    if (value.is_discarded() || value.is_binary()) throw Error("Unsupported JSON value");
-    if (value.is_structured()) for (const auto& child : value) validate_json_value(child, depth + 1);
-}
-
-/** Parses bounded JSON with duplicate-key and excessive-nesting rejection. */
-inline Json parse_json(const std::string& text) {
-    if (text.size() > max_protocol_line) throw Error("JSON exceeds the protocol limit");
-    std::vector<std::unordered_set<std::string>> keys;
-    try {
-        return Json::parse(text, [&keys](int depth, Json::parse_event_t event, Json& value) {
-            if (depth > 64) throw Error("JSON nesting exceeds the protocol limit");
-            if (event == Json::parse_event_t::object_start) keys.emplace_back();
-            else if (event == Json::parse_event_t::object_end) keys.pop_back();
-            else if (event == Json::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second) throw Error("JSON contains duplicate object keys");
-            return true;
-        });
-    } catch (...) { throw Error("Invalid protocol JSON"); }
-}
 
 /** Alternate hosts implement one synchronous, ordered protocol call boundary. */
 class Transport {

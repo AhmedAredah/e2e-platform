@@ -74,6 +74,12 @@ export interface Engine {
    * higher. Omit when the engine has no concurrency limit.
    */
   readonly workers?: number;
+  /**
+   * Run-local exclusive resource key. Targets sharing a key use at most one
+   * live worker in total; cleanup must finish before ownership transfers.
+   * Separate runner processes require their own external isolation.
+   */
+  readonly exclusiveResource?: string;
   /** capability: observation. */
   observe?(context: OperationContext, options?: EngineObserveOptions): Promise<EngineSnapshot>;
   /**

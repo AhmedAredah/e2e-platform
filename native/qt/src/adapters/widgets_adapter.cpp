@@ -20,6 +20,25 @@
 #include <cmath>
 
 namespace e2e::qt::detail {
+namespace {
+bool centerVisible(QWidget* widget, QWidget* root) {
+    if (widget->width() <= 0 || widget->height() <= 0) return false;
+    const QPoint center = widget->rect().center();
+    for (QWidget* parent = widget; parent; parent = parent->parentWidget()) {
+        const QPoint mapped = widget->mapTo(parent, center);
+        if (!parent->rect().contains(mapped) || (!parent->mask().isEmpty() && !parent->mask().contains(mapped))) return false;
+        if (parent == root) return true;
+    }
+    return false;
+}
+bool hasScrollArea(QWidget* widget, QWidget* root) {
+    for (QWidget* parent = widget->parentWidget(); parent; parent = parent->parentWidget()) {
+        if (qobject_cast<QScrollArea*>(parent)) return true;
+        if (parent == root) break;
+    }
+    return false;
+}
+}
 QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth, ObjectRegistry& registry, bool isRoot) {
     auto* widget = qobject_cast<QWidget*>(object);
     auto* root = qobject_cast<QWidget*>(rootObject);
@@ -129,6 +148,8 @@ void WidgetsAdapter::ready(QObject* object, QObject* root, const QJsonObject& ac
         if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->ready(static_cast<QWidget*>(root), true); return; }
         auto* widget = qobject_cast<QWidget*>(object);
         if (!widget || !widget->isVisible() || widget->window() != root) throw Failure("NOT_ACTIONABLE", "Qt scroll target is hidden or outside the active window");
+        if (!(custom_ && custom_->handles(object)) && !centerVisible(widget, static_cast<QWidget*>(root)) && !hasScrollArea(widget, static_cast<QWidget*>(root)))
+            throw Failure("UNSUPPORTED_CAPABILITY", "Qt target is clipped without a supported scroll container");
         return;
     }
     actionable(object, root);
@@ -143,15 +164,19 @@ void WidgetsAdapter::ready(QObject* object, QObject* root, const QJsonObject& ac
 void WidgetsAdapter::scrollIntoView(QObject* object, QObject* root) {
     if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->scrollIntoView(); return; }
     auto* widget = static_cast<QWidget*>(object);
+    if (centerVisible(widget, static_cast<QWidget*>(root))) return;
     QPointer<QWidget> target(widget);
+    QPointer<QWidget> guardedRoot(static_cast<QWidget*>(root));
     for (QWidget* parent = widget->parentWidget(); parent; parent = parent->parentWidget()) {
         if (auto* scroll = qobject_cast<QScrollArea*>(parent)) {
             QPointer<QWidget> container(parent);
             scroll->ensureWidgetVisible(target, 8, 8);
-            if (!target || !container) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt scroll target was destroyed");
+            if (!target || !container || !guardedRoot) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt scroll target was destroyed");
         }
         if (parent == root) break;
     }
+    if (!target || !guardedRoot || !centerVisible(target, guardedRoot))
+        throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt scrolling did not expose the target center");
 }
 void WidgetsAdapter::swipe(QObject* object, QObject*, const QString& direction) {
     auto* virtualTarget = dynamic_cast<WidgetTarget*>(object);

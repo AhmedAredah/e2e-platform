@@ -1,10 +1,8 @@
+import { decodeJson } from './json.ts';
+import { invalid, MAX_LINE_BYTES } from './limits.ts';
+export { invalid, MAX_LINE_BYTES, MAX_REQUESTS } from './limits.ts';
+
 /** A bounded, closed request protocol shared with the C++17 test client. */
-export const MAX_LINE_BYTES = 1024 * 1024;
-export const MAX_REQUESTS = 10_000;
-
-/** Rejects malformed input without quoting application-controlled content. */
-export function invalid(): never { throw new Error('Invalid C++ test protocol'); }
-
 /** Checks a plain JSON object and, optionally, its exact allowed keys. */
 export function record(value: unknown, keys?: readonly string[]): Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) invalid();
@@ -30,8 +28,7 @@ export interface Request { readonly protocol: 2; readonly id: number; readonly m
 
 /** Decodes UTF-8 strictly and bounds request shape before dispatch. */
 export function parseRequest(bytes: Buffer): Request {
-  let raw: unknown;
-  try { raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { invalid(); }
+  const raw = decodeJson(bytes);
   const data = record(raw, ['protocol', 'id', 'method', 'params']);
   if (data.protocol !== 2 || !Number.isSafeInteger(data.id) || (data.id as number) <= 0) invalid();
   return { protocol: 2, id: data.id as number, method: string(data.method, 100), params: record(data.params) };

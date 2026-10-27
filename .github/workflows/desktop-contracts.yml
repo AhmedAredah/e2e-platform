@@ -16,7 +16,7 @@ env:
 jobs:
   linux-atspi:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -39,10 +39,24 @@ jobs:
       - run: python3 -m unittest discover -s native/linux-atspi/tests -v
       - name: Real GTK accessible controls
         run: dbus-run-session -- xvfb-run -a /usr/bin/python3 native/linux-atspi/tests/live_smoke.py
+      - name: Installed TypeScript and C++ desktop consumers
+        run: >-
+          dbus-run-session -- xvfb-run -a node scripts/native/verify-desktop-consumer.mjs
+          --backend linux-atspi --driver /usr/bin/python3
+          --driver-arg "${{ github.workspace }}/native/linux-atspi/driver.py"
+          --app /usr/bin/python3 --app-arg "${{ github.workspace }}/examples/with-desktop/python/gtk_controls.py"
+          --wrong-arg=--wrong
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: desktop-consumer-linux
+          path: .e2e/desktop-consumer/
+          include-hidden-files: true
+
 
   windows-uia:
     runs-on: windows-2022
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -55,13 +69,32 @@ jobs:
       - run: dotnet build examples/with-desktop/dotnet/AccessibleDemo.csproj -c Release
       - name: Exercise real WPF accessible controls and owned cleanup
         run: python native/windows-uia/tests/live_smoke.py --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - name: Installed TypeScript and C++ desktop consumers
+        run: >-
+          node scripts/native/verify-desktop-consumer.mjs --backend windows-uia
+          --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe
+          --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe --wrong-arg=--planted-bug
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: desktop-consumer-windows
+          path: .e2e/desktop-consumer/
+          include-hidden-files: true
+
 
   rust-ax:
     strategy:
       matrix:
         os: [ubuntu-24.04, macos-15]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -76,6 +109,30 @@ jobs:
       - name: Exercise real AppKit accessibility with permission required
         if: runner.os == 'macOS'
         run: python3 native/macos-ax/scripts/verify-macos.py --driver native/macos-ax/target/debug/e2e-platform-macos-ax --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        if: runner.os == 'macOS'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        if: runner.os == 'macOS'
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - if: runner.os == 'macOS'
+        run: pnpm install --frozen-lockfile
+      - if: runner.os == 'macOS'
+        run: pnpm build:native
+      - name: Installed TypeScript and C++ desktop consumers
+        if: runner.os == 'macOS'
+        run: >-
+          node scripts/native/verify-desktop-consumer.mjs --backend macos-ax
+          --driver native/macos-ax/target/debug/e2e-platform-macos-ax
+          --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo --wrong-arg=--wrong
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && runner.os == 'macOS'
+        with:
+          name: desktop-consumer-macos
+          path: .e2e/desktop-consumer/
+          include-hidden-files: true
+
 
   windows-process:
     runs-on: windows-2022

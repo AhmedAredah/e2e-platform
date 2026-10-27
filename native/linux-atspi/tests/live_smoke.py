@@ -123,6 +123,11 @@ def scenario(wrong=False):
         password = client.node("Secure control")
         assert password["states"]["secure"]
         assert not {"value", "text", "attributes", "children"} & password.keys()
+        client.perform("Reveal password", kind="tap")
+        revealed = client.node("Secure control")
+        assert revealed["ref"]["id"] == password["ref"]["id"], "reveal fixture must retain accessible identity"
+        assert revealed["states"]["secure"] and revealed["inputPurpose"] == "password"
+        assert "fixture-secret-never-serialize" not in json.dumps(client.snapshot())
         client.perform("Name", kind="focus")
         client.perform("Name", kind="fill", value="Ada", sensitive=False)
         assert client.node("Name")["value"] == "Ada"

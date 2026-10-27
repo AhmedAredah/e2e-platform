@@ -18,6 +18,7 @@ const KNOWN_KEYS = [
   'spiVersion',
   'platform',
   'workers',
+  'exclusiveResource',
   'observe',
   'locate',
   'perform',
@@ -210,6 +211,9 @@ export function defineEngine(spec: Engine): EngineHandle {
   if (spec.workers !== undefined && (!Number.isSafeInteger(spec.workers) || spec.workers < 1)) {
     throw invalid(name, 'workers must be a positive safe integer: the most workers the engine serves per target');
   }
+  if (spec.exclusiveResource !== undefined && (typeof spec.exclusiveResource !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$/.test(spec.exclusiveResource))) {
+    throw invalid(name, 'exclusiveResource must be a nonempty resource identifier of at most 256 characters');
+  }
 
   const capabilities = new Set<EngineCapability>();
   if (spec.observe !== undefined) capabilities.add('observation');
@@ -251,6 +255,7 @@ export function defineEngine(spec: Engine): EngineHandle {
     spiVersion: spec.spiVersion,
     platform: spec.platform,
     workers: spec.workers,
+    exclusiveResource: spec.exclusiveResource,
   });
   for (const member of FUNCTION_MEMBERS) {
     const fn = spec[member];

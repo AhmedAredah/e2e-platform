@@ -31,7 +31,9 @@
     "packages/process/tests/types/launch-profiles.ts",
     "examples/with-cpp-sdk/e2e*.config.ts",
     "examples/with-cpp-sdk/tests/**/*.ts",
-    "scripts/native/verify-cpp-sdk.mjs"
+    "scripts/native/verify-cpp-sdk.mjs",
+    "examples/with-desktop/tests/**/*.ts",
+    "scripts/native/verify-desktop-consumer.mjs"
   ],
   "ignorePatterns": [
     "docs/**",

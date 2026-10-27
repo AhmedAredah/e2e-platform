@@ -135,6 +135,9 @@ CalculatorHttpHandler::CalculatorHttpHandler(const BinaryOperation& operation, b
 HttpResponse CalculatorHttpHandler::handle(const std::string& method, const std::string& target) const {
     if (method != "GET") return {405, "{\"error\":\"method not allowed\"}"};
     if (target == "/health") return {200, "{\"ok\":true}"};
+    if (target == "/precision/decimal") return {200, "{\"value\":1.0000000000000001}"};
+    if (target == "/precision/underflow") return {200, "{\"value\":1e-9999}"};
+    if (target == "/precision/integers") return {200, "{\"max\":18446744073709551615,\"min\":-9223372036854775808}"};
     if (target.rfind("/sum?", 0) != 0) return {404, "{\"error\":\"not found\"}"};
     const std::string query = target.substr(5);
     std::istringstream parts(query);

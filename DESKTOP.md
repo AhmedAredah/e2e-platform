@@ -13,6 +13,12 @@ kit does not require Qt, a graphical session, Python, .NET or Rust.
 | `desktop({ backend: 'windows-uia', ... })` | C#/.NET | Windows UI Automation patterns | Build and launch the Windows sidecar in an interactive session |
 | `desktop({ backend: 'macos-ax', ... })` | Rust | macOS Accessibility attributes/actions | Build and launch the macOS sidecar with Accessibility permission |
 
+Native targets, including Qt, share the `local-desktop` exclusive resource within
+one runner invocation. One worker owns that resource until cleanup finishes,
+including when configuration requests more workers or names multiple native
+targets. Separate runner processes require external serialization or independent
+desktop sessions. Independent non-native resources can still run concurrently.
+
 The sidecars launch and own one application. They do not attach to arbitrary
 pre-existing programs. Use an actual executable: an interpreter plus script for
 Python, `dotnet` plus a built assembly for .NET, or a compiled app for C++/Rust.

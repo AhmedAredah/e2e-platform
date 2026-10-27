@@ -90,15 +90,21 @@ public sealed class SelectionControlAdapter : ControlAdapter
     public override Action Prepare(AutomationElement element, string kind, JsonElement action, MutationGuard mutation)
     {
         _ = Pattern<SelectionPattern>(element, SelectionPattern.Pattern);
-        return () => Select(element, action, mutation);
+        _ = Candidate(element, action);
+        return () =>
+        {
+            var selected = Candidate(element, action);
+            if (!selected.Current.IsSelected) mutation.Dispatch(selected.Select);
+            var deadline = Environment.TickCount64 + 1000;
+            while (!selected.Current.IsSelected && Environment.TickCount64 < deadline) Thread.Sleep(10);
+            if (!selected.Current.IsSelected) throw new DriverException("ACTION_MAY_HAVE_COMMITTED");
+        };
     }
 
-    private static void Select(AutomationElement element, JsonElement action, MutationGuard mutation)
+    private static SelectionItemPattern Candidate(AutomationElement element, JsonElement action)
     {
-        if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out var expansion) && ((ExpandCollapsePattern)expansion).Current.ExpandCollapseState == ExpandCollapseState.Collapsed)
-        {
-            mutation.Dispatch(((ExpandCollapsePattern)expansion).Expand);
-        }
+        // Enumerate only realized items. Opening a popup during readonly readiness
+        // would commit an action before the runner has authorized dispatch.
         var option = action.GetProperty("value");
         var matches = new List<AutomationElement>();
         var items = new List<AutomationElement>();
@@ -127,8 +133,7 @@ public sealed class SelectionControlAdapter : ControlAdapter
         if (matches.Count == 0) throw new DriverException("NOT_ACTIONABLE");
         if (matches.Count > 1) throw new DriverException("NOT_ACTIONABLE");
         if (!matches[0].Current.IsEnabled) throw new DriverException("NOT_ACTIONABLE");
-        var selection = Pattern<SelectionItemPattern>(matches[0], SelectionItemPattern.Pattern);
-        if (!selection.Current.IsSelected) mutation.Dispatch(selection.Select);
+        return Pattern<SelectionItemPattern>(matches[0], SelectionItemPattern.Pattern);
     }
 }
 

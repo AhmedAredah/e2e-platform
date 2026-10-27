@@ -150,6 +150,10 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   custom adapter for application-specific actions.
 - `scrollIntoView` also supports QScrollArea child widgets and existing items
   inside Qt Quick Flickable containers through public scroll-position APIs.
+  Success requires the target center to be visible through its clipping ancestors.
+  An already-visible target succeeds without movement. Clipped ordinary children
+  without a supported scroll container fail explicitly; a dispatched scroll that
+  cannot establish this postcondition reports `ACTION_MAY_HAVE_COMMITTED`.
   Quick model views expose instantiated visual delegates, not offscreen model
   rows. `swipe` sends a discrete Qt wheel event in the requested direction;
   momentum other than `none` is rejected. It is not a kinetic touch gesture.

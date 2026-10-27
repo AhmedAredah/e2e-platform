@@ -228,5 +228,16 @@
       "22.22.3",
       "24.22.1"
     ]
+  },
+  "followupReview": {
+    "reviewedSourceCommit": "f59dbf285536ae9cf14eff43b3900c1b4889718e",
+    "record": "CPP_FOLLOWUP_RESOLUTION.md",
+    "qualification": "pending-exact-commit-hosted-results",
+    "desktopConcurrency": "One native worker across all native targets per runner invocation; external isolation required between runner processes",
+    "installedDesktopConsumerProfiles": [
+      "linux-atspi/GTK3",
+      "windows-uia/WPF",
+      "macos-ax/AppKit"
+    ]
   }
 }

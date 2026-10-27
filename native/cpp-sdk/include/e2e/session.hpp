@@ -150,7 +150,7 @@ struct HttpResponse {
     int status;
     Json headers;
     std::string body;
-    Json json() const { return parse_json(body); }
+    Json json(JsonNumberPolicy policy = JsonNumberPolicy::exact) const { return parse_json(body, policy); }
 };
 
 /** Bounded HTTP exchanges are executed by the parent's installed protocol client. */

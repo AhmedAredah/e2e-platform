@@ -120,6 +120,14 @@ def scenario(args, wrong=False):
         secure = [node for node in nodes if node.get('states', {}).get('secure')]
         assert secure, 'NSSecureTextField was not recognized'
         assert all(not any(key in node for key in ('value', 'text', 'attributes', 'children')) for node in secure)
+        protected_ids = {node['ref']['id'] for node in secure}
+        perform('reveal-password', dict(kind='tap'))
+        revealed = snapshot()
+        retained = [node for node in revealed if node['ref']['id'] in protected_ids]
+        assert len(retained) == len(protected_ids), 'reveal fixture lost its accessible identity'
+        assert all(node.get('states', {}).get('secure') and node.get('inputPurpose') == 'password' for node in retained)
+        assert all(not any(key in node for key in ('value', 'text', 'attributes', 'children')) for node in retained)
+        checks.append('password reveal retains secure identity and suppresses source values')
         checks.append('real AppKit controls and secure-source suppression')
         assert initialized.get('actionability') is True
         original = find(nodes, 'input')

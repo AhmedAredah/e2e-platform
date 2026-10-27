@@ -67,6 +67,7 @@ unsafe extern "C" {
 static mut MOVING: Id = std::ptr::null_mut();
 static mut INPUT: Id = std::ptr::null_mut();
 static mut OUTPUT: Id = std::ptr::null_mut();
+static mut REVEALABLE: Id = std::ptr::null_mut();
 static WRONG_OUTPUT: AtomicBool = AtomicBool::new(false);
 unsafe fn selector(name: &str) -> Sel {
     let name = CString::new(name).unwrap();
@@ -121,6 +122,15 @@ unsafe extern "C" fn apply(_: Id, _: Sel, _: Id) {
             send0(INPUT, selector("stringValue"))
         };
         set_id(OUTPUT, selector("setStringValue:"), value);
+    }
+}
+unsafe extern "C" fn reveal_password(_: Id, _: Sel, _: Id) {
+    unsafe {
+        set_id(
+            REVEALABLE,
+            selector("setAccessibilitySubrole:"),
+            std::ptr::null_mut(),
+        );
     }
 }
 /// Must run on the GUI/main thread. The owning driver closes the process after the test.
@@ -178,6 +188,12 @@ pub unsafe fn run() {
             move_control,
             signature.as_ptr()
         ));
+        assert!(class_addMethod(
+            actions_class,
+            selector("revealPassword:"),
+            reveal_password,
+            signature.as_ptr()
+        ));
         objc_registerClassPair(actions_class);
         let actions = send0(send0(actions_class, selector("alloc")), selector("init"));
         let button = control("NSButton", rect(324., 228., 120., 32.), "Apply", "apply");
@@ -224,6 +240,33 @@ pub unsafe fn run() {
             text("fixture-password"),
         );
         set_id(content, selector("addSubview:"), password);
+        REVEALABLE = control(
+            "NSTextField",
+            rect(24., 92., 280., 24.),
+            "Revealed password",
+            "revealable",
+        );
+        set_id(
+            REVEALABLE,
+            selector("setAccessibilitySubrole:"),
+            text("AXSecureTextField"),
+        );
+        set_id(
+            REVEALABLE,
+            selector("setStringValue:"),
+            text("fixture-password-reveal"),
+        );
+        set_id(content, selector("addSubview:"), REVEALABLE);
+        let reveal = control(
+            "NSButton",
+            rect(314., 92., 130., 24.),
+            "Reveal password",
+            "reveal-password",
+        );
+        set_id(reveal, selector("setTitle:"), text("Reveal password"));
+        set_id(reveal, selector("setTarget:"), actions);
+        set_sel(reveal, selector("setAction:"), selector("revealPassword:"));
+        set_id(content, selector("addSubview:"), reveal);
         accessible_controls::install(content);
         set_id(
             window,

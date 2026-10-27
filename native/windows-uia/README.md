@@ -57,8 +57,9 @@ to the directly launched PID; child-process windows are not merged into its tree
 `selectOption` accepts an exact label string, `{label}`, a child AutomationId
 via `{value}`, or an index in the currently realized option list. Virtualized
 unrealized options require a future realization adapter; they are not silently
-selected by an index. Combo boxes may be expanded to expose their options.
-Failures after expansion report an uncertain mutation outcome. Unchecking a
+selected by an index. Open a collapsed combo box explicitly when its provider
+has not exposed the required option. Selection does not implicitly expand it.
+Unchecking a
 selected radio is unsupported unless its provider exposes TogglePattern.
 Toggle transitions are observed before any next transition, and an uncertain
 transition is never replayed.
@@ -71,8 +72,11 @@ request accepts the same reference/action shape as `perform`, validates current
 ownership, enabled/visible state and the required UIA pattern, and returns null
 when the control is ready. It never expands, selects, fills or scrolls a control.
 The actual action repeats these checks immediately before dispatch. Selection
-preflight verifies the container pattern; options revealed only by expansion are
-resolved during the single mutation, not by a supposedly readonly probe.
+preflight resolves the requested realized option, checks its ownership and enabled
+state, and rejects missing, disabled or ambiguous matches as `NOT_ACTIONABLE`.
+The runner can wait for a delayed option without mutating the UI. Dispatch resolves
+the option again, selects it once if necessary, and confirms the selected state;
+an unconfirmed result is `ACTION_MAY_HAVE_COMMITTED`.
 Scrolling does not realize missing virtualized objects. Locate an offscreen
 exposed control by a stable test ID before scrolling; role queries normally
 exclude hidden controls.

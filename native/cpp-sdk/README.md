@@ -4,6 +4,16 @@ Write test bodies in C++17 and execute them through the same E2E Platform schedu
 
 The SDK requires the Node.js runner and its `@e2e-platform/cpp` adapter. It is not a standalone replacement for the runner. A C++ test can drive any configured supported target; available controls and actions depend on that target's driver. The application and its tests do not need to use the same language.
 
+`HttpResponse::json()` uses `e2e::JsonNumberPolicy::exact` by default: the original
+numeric token must retain its decimal value after parsing and serialization.
+It preserves signed/unsigned 64-bit integers and rejects silent rounding or
+underflow, including `1.0000000000000001` and `1e-9999`. Use
+`response.json(e2e::JsonNumberPolicy::binary64)` explicitly if those conversions
+are intentional. This is a round-trip check, not arbitrary-precision arithmetic.
+Both modes reject duplicate keys, excessive nesting, oversized input and
+nonfinite numbers. Literal numbers are limited to 4,096 characters. Errors omit
+response contents.
+
 ## Install and consume with CMake
 
 ```sh

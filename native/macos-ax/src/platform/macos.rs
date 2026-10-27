@@ -221,7 +221,7 @@ pub struct MacOsProvider {
     application: Cf,
     pid: i32,
     registry: IdentityRegistry,
-    sensitive: HashSet<usize>,
+    sensitive: crate::sensitivity::SensitiveIdentities,
     current_ids: HashSet<usize>,
     deadline: Instant,
     viewport: (f64, f64),
@@ -252,7 +252,7 @@ impl MacOsProvider {
             application,
             pid,
             registry: IdentityRegistry::new(),
-            sensitive: HashSet::new(),
+            sensitive: crate::sensitivity::SensitiveIdentities::default(),
             current_ids: HashSet::new(),
             deadline: Instant::now(),
             viewport: (1.0, 1.0),
@@ -300,6 +300,10 @@ impl MacOsProvider {
             }
         }))
     }
+    fn observe_secure(&mut self, object: AxRef, identity: usize) -> Result<bool> {
+        let password = self.text(object, "AXSubrole")?.as_deref() == Some("AXSecureTextField");
+        Ok(self.sensitive.observe(identity, password))
+    }
     fn observed_value(&mut self, object: AxRef) -> Result<Option<String>> {
         let Some(value) = self.get(object, "AXValue")? else {
             return Ok(None);
@@ -328,9 +332,7 @@ impl MacOsProvider {
             return Ok(None);
         }
         let identity = self.registry.id(label.0)?;
-        if self.sensitive.contains(&identity)
-            || self.text(label.0, "AXSubrole")?.as_deref() == Some("AXSecureTextField")
-        {
+        if self.observe_secure(label.0, identity)? {
             return Ok(None);
         }
         let title = self.observed_text(label.0, "AXTitle")?;
@@ -447,8 +449,7 @@ impl MacOsProvider {
         let role = self
             .text(object, "AXRole")?
             .ok_or_else(DriverError::stale)?;
-        let secure = self.sensitive.contains(&id)
-            || self.text(object, "AXSubrole")?.as_deref() == Some("AXSecureTextField");
+        let secure = self.observe_secure(object, id)?;
         let enabled = self.boolean(object, "AXEnabled")?;
         let disabled = enabled != Some(true);
         let rect = self.rect(object)?;
@@ -479,11 +480,7 @@ impl MacOsProvider {
             node["states"]["focused"] = json!(focused);
         }
         if secure {
-            node["inputPurpose"] = json!(if self.sensitive.contains(&id) {
-                "generic-secret"
-            } else {
-                "password"
-            });
+            node["inputPurpose"] = json!(self.sensitive.purpose(id));
             return Ok(Some(node));
         }
         node["attributes"] = json!({"visibility":visibility.label()});
@@ -630,9 +627,7 @@ impl MacOsProvider {
                 return Err(DriverError::stale());
             }
             let identity = self.registry.id(candidate.0)?;
-            if self.sensitive.contains(&identity)
-                || self.text(candidate.0, "AXSubrole")?.as_deref() == Some("AXSecureTextField")
-            {
+            if self.observe_secure(candidate.0, identity)? {
                 continue;
             }
             let selected = match choice {
@@ -912,7 +907,7 @@ impl AccessibleProvider for MacOsProvider {
                 }
                 if *sensitive {
                     let identity = self.registry.id(object)?;
-                    self.sensitive.insert(identity);
+                    self.sensitive.mark_secret(identity);
                 }
                 let value = Cf::string(value)?;
                 self.set(object, "AXValue", value.0)

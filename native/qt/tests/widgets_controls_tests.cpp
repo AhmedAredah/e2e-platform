@@ -96,6 +96,24 @@ public:
 class WidgetsControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void ordinaryClippingCannotReportSuccessfulScrolling() {
+        QWidget window; window.resize(300, 160);
+        QWidget clip(&window); clip.setGeometry(0, 0, 100, 80);
+        QLineEdit input(&clip); input.setObjectName("clipped-input"); input.setGeometry(0, 200, 80, 30);
+        expose(window);
+        Surface surface;
+        auto node = find(surface.snapshot(false).value("root").toObject(), "clipped-input");
+        const auto command = action(node, {{"kind", "scrollIntoView"}});
+        for (bool preflight : {true, false}) {
+            try { if (preflight) surface.actionability(command); else surface.perform(command); QFAIL("unsupported clipped widget acknowledged"); }
+            catch (const Failure& error) { QCOMPARE(error.code, QString("UNSUPPORTED_CAPABILITY")); }
+            QCOMPARE(input.y(), 200);
+        }
+        input.move(0, 0);
+        node = find(surface.snapshot(false).value("root").toObject(), "clipped-input");
+        surface.perform(action(node, {{"kind", "scrollIntoView"}}));
+        QCOMPARE(input.pos(), QPoint(0, 0));
+    }
     void publicAdaptersAreVersionedRetainedAndDispatchedOnce() {
         QWidget window; window.resize(320,180); QWidget custom(&window); custom.setObjectName("custom"); custom.setGeometry(10,10,180,50);
         QLineEdit child(&custom); child.setText("private-child"); expose(window);

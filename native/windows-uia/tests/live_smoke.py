@@ -190,9 +190,33 @@ def verify(driver, app, broken):
         session.perform("enabled", "uncheck")
         session.wait_for(lambda tree: not session.find(tree, "enabled")["states"]["checked"])
         checks += 3
+        session.perform("open-choice", "tap")
         session.perform("choice", "selectOption", value={"label": "Beta"})
         session.wait_for(lambda tree: any(node.get("name") == "Beta" and node.get("states", {}).get("selected") for node in nodes(tree["root"])))
         checks += 1
+        delayed = session.find(session.snapshot(), "delayed-choice")
+        for label in ("Later", "Disabled option", "Duplicate"):
+            try:
+                session.call("actionability", {"ref": delayed["ref"], "action": {"kind": "selectOption", "value": label}})
+            except RpcError as error:
+                assert error.code == "NOT_ACTIONABLE"
+            else:
+                raise AssertionError("Absent, disabled or ambiguous option reported ready")
+        session.perform("load-choice", "tap")
+        deadline = time.monotonic() + 5
+        while True:
+            delayed = session.find(session.snapshot(), "delayed-choice")
+            try:
+                session.call("actionability", {"ref": delayed["ref"], "action": {"kind": "selectOption", "value": "Later"}})
+                break
+            except RpcError as error:
+                assert error.code == "NOT_ACTIONABLE" and time.monotonic() < deadline
+                time.sleep(0.05)
+        snapshot = session.snapshot()
+        assert not any(node.get("name") == "Later" and node.get("states", {}).get("selected") for node in nodes(snapshot["root"])), "preflight changed selection"
+        session.perform("delayed-choice", "selectOption", value="Later")
+        session.wait_for(lambda tree: any(node.get("name") == "Later" and node.get("states", {}).get("selected") for node in nodes(tree["root"])))
+        checks += 4
         expect_error(session, "readonly", "fill", "NOT_ACTIONABLE", value="changed")
         expect_error(session, "disabled", "tap", "NOT_ACTIONABLE")
         checks += 2

@@ -12,7 +12,20 @@ tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted eviden
 including the formerly failing macOS Quick profile. Older checkpoints below are
 historical; the following table identifies the source actually tested.
 
-## Current hosted evidence
+## October 27 follow-up fixes
+
+The follow-up review found seven concrete defects or reliability gaps. Their
+fixes and validation are tracked in
+[CPP_FOLLOWUP_RESOLUTION.md](docs/development/CPP_FOLLOWUP_RESOLUTION.md).
+The working revision adds exact C++ HTTP JSON parsing, strict host JSON,
+identity-bound password protection, Windows option preflight, Qt scroll
+postconditions, run-local desktop exclusion, and the patched `qs` 6.16.1.
+New hosted checks install the public packages and CMake SDK, then run both
+TypeScript and compiled C++ against real GTK/WPF/AppKit fixtures, with independent
+wrong-output rejection. New workflow definitions are not passing evidence.
+The historical results below do not qualify these follow-up changes.
+
+## Previous hosted evidence
 
 Recorded 2026-10-27. All 21 required jobs across five workflows passed at
 `4f1f6a0f889f5979d39b8eaa912c35307bd8c596`; one optional live-model job was
@@ -61,8 +74,8 @@ supervised services with explicit readiness. Application state reset remains a
 test fixture responsibility. The optional Windows Job Object supervisor is a
 separate native component, not a silent upgrade to default taskkill behavior.
 
-Local OS-driver checks pass **81 Python tests**, **81 portable UIA checks** and
-**32 Rust tests**. Native hosted results above are separate from portable tests.
+Local follow-up OS-driver checks pass 85 Python tests, 81 portable UIA checks and
+34 Rust tests. Native hosted results above are separate from portable tests.
 The local seven-package kit passes manifest integrity, clean install/reinstall,
 plain Node imports, strict public types, initializer/first test, deliberate failure
 rejection, metacharacter paths and conventional npm launch paths. Its installed
@@ -209,8 +222,10 @@ package-manager caches remain external prerequisites.
 
 ## Dependency findings
 
-The dated rc.2 dependency review reduced the full workspace audit from **57 to 11**
-findings: 8 high, 2 moderate, 1 low. Every remaining path is in optional Mintlify
+The current pinned-pnpm full-workspace audit reports 11 findings: 8 high,
+2 moderate, 1 low. The follow-up override updates `qs` to 6.16.1; its
+comma-serialization advisory is no longer present. The dated rc.2 inventory
+below records an earlier dependency review, not the current lockfile. Every remaining path is in optional Mintlify
 preview/online-validation tooling or the private Expo benchmark. The production-only
 workspace audit includes private apps and has 3 findings, all Expo: node-forge,
 Zod 3 and decode-uri-component. No public package/engine production path appears

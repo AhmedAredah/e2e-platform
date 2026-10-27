@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 const execute = promisify(execFile);
 for (const scenario of [
+  { script: 'verify-desktop-consumer.mjs', helpers: ['completion-guard.mjs', 'cmake-targets.mjs', 'verification-report.mjs'], summary: `.e2e/desktop-consumer/${{linux:'linux-atspi',win32:'windows-uia',darwin:'macos-ax'}[process.platform]}/qualification.json`, args: ['--invalid'] },
   { script: 'install-kit-smoke.mjs', helpers: ['package-manager.mjs'], summary: '.e2e/cpp/install-kit-smoke-summary.json', args: ['--invalid'] },
   { script: 'qt-export-proof.mjs', helpers: ['completion-guard.mjs', 'verified-screenshot.mjs', 'cmake-targets.mjs'], summary: '.e2e/cpp/qt-exports/qt-export-proof.json', args: [] },
 ]) {

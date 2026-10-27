@@ -262,10 +262,18 @@ fail the case. Assertion messages can identify a numerical oracle:
 
 TypeScript locator assertions also accept a message:
 `await expect(screen.getByTestId('result'), 'total').toHaveText('4')`.
-Use deliberate messages without secrets. HTTP `response.json()` now checks
-numeric precision; choose `{ decimalPrecision: 'binary64' }` explicitly for
-intentional finite C++ floating-point output. CSV numeric columns accept that
-same option. Default exact-integer checks remain enabled.
+Use deliberate messages without secrets. C++ `response.json()` rejects decimal
+rounding and underflow by default, including `1.0000000000000001` becoming `1`
+and `1e-9999` becoming zero. Signed and unsigned 64-bit integer values retain
+their precision. Use `response.json(e2e::JsonNumberPolicy::binary64)` only when
+binary64 rounding and underflow are intentional. This checks decimal round trips;
+it does not supply arbitrary-precision decimal arithmetic. Nonfinite values,
+duplicate object keys, excessive nesting and oversized responses still fail.
+
+The TypeScript HTTP API uses the separate option
+`{ decimalPrecision: 'binary64' }` for intentional finite floating-point output.
+CSV numeric columns accept that same TypeScript option. Default exact-integer
+checks remain enabled.
 
 For Qt tab mutations use `e2e::qt::TrackedTabBar` or `TrackedTabWidget`, or supply
 an application control adapter. Plain tab controls remain readable but cannot

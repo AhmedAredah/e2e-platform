@@ -60,6 +60,26 @@ public:
 class QuickControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void ordinaryClippingAndOutOfContentScrollingCannotReportSuccess() {
+        for (bool flickable : {false, true}) {
+            QQmlEngine engine; QQuickWindow window; window.resize(300, 160); QQmlComponent component(&engine);
+            const QByteArray container = flickable ? "Flickable { contentWidth:100; contentHeight:80; " : "Item { ";
+            component.setData("import QtQuick\nimport QtQuick.Controls\n" + container + "width:100; height:80; clip:true; TextField { objectName:'clipped-input'; y:200; width:80; height:30 } }", QUrl());
+            auto* root = qobject_cast<QQuickItem*>(component.create()); QVERIFY2(root, qPrintable(component.errorString()));
+            root->setParent(window.contentItem()); root->setParentItem(window.contentItem());
+            window.show(); window.requestActivate(); QApplication::processEvents();
+            QVERIFY(QTest::qWaitForWindowExposed(&window)); QTRY_VERIFY(window.isSceneGraphInitialized());
+            Surface surface; const auto node = find(surface.snapshot(false).value("root").toObject(), "clipped-input");
+            const auto command = QJsonObject{{"ref", node.value("ref")}, {"action", QJsonObject{{"kind", "scrollIntoView"}}}};
+            try { surface.perform(command); QFAIL("unsupported clipped Quick control acknowledged"); }
+            catch (const Failure& error) { QCOMPARE(error.code, QString(flickable ? "ACTION_MAY_HAVE_COMMITTED" : "UNSUPPORTED_CAPABILITY")); }
+            if (flickable) QCOMPARE(root->property("contentY").toDouble(), 0.0);
+            else {
+                auto* input = root->findChild<QQuickItem*>("clipped-input"); QVERIFY(input); input->setY(0);
+                surface.perform(command); QCOMPARE(input->y(), 0.0);
+            }
+        }
+    }
     void optionPreflightWaitsWithoutChangingSelection() {
         QuickFixture fixture("model: ['One']"); QVERIFY(fixture.control);
         const auto params=QJsonObject{{"ref",fixture.ref},{"action",QJsonObject{{"kind","selectOption"},{"value","Later"}}}};
