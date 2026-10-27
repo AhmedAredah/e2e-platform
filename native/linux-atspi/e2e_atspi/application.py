@@ -12,6 +12,22 @@ from .protocol import ProtocolSession
 from .provider import AtspiProvider
 
 
+def _failure_location(error: Exception) -> str:
+    """Identify driver defects without logging exception text or application data."""
+    category = next((kind.__name__ for kind in (ImportError, AttributeError, TypeError,
+                    ValueError, OSError, RuntimeError) if isinstance(error, kind)), "Exception")
+    locations = {os.path.join(os.path.dirname(__file__), name): name
+                 for name in ("application.py", "provider.py", "protocol.py")}
+    location = "external"
+    trace = error.__traceback__
+    while trace is not None:
+        filename = locations.get(trace.tb_frame.f_code.co_filename)
+        if filename:
+            location = f"{filename}:{trace.tb_lineno}"
+        trace = trace.tb_next
+    return f"{category}@{location}"
+
+
 class OwnedApplication:
     """Own a process group and terminate it on every normal driver exit path."""
 
@@ -71,11 +87,15 @@ class DriverApplication:
         application = None
         provider = None
         previous = {}
+        stage = "launch"
+        readiness_failure = "no-complete-tree"
         try:
             for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
                 previous[signum] = signal.signal(signum, _interrupted)
             application = OwnedApplication(command)
+            stage = "provider-initialization"
             provider = self.create_provider(application.process.pid)
+            stage = "accessibility-readiness"
             deadline = time.monotonic() + 10
             while True:
                 if application.process.poll() is not None:
@@ -84,11 +104,12 @@ class DriverApplication:
                     initial = provider.snapshot()
                     if any(node.get("children") for node in initial["root"].get("children", [])):
                         break
-                except Exception:
-                    pass
+                except Exception as error:
+                    readiness_failure = _failure_location(error)
                 if time.monotonic() >= deadline:
                     raise RuntimeError("application accessibility readiness timed out")
                 time.sleep(0.1)
+            stage = "transport"
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
                 listener.bind(("127.0.0.1", 0))
                 listener.listen(1)
@@ -96,14 +117,18 @@ class DriverApplication:
                 print('E2E_NATIVE_READY {"port":%d}' % listener.getsockname()[1], flush=True)
                 connection, _ = listener.accept()
                 with connection:
+                    stage = "session"
                     ProtocolSession(token, provider).serve(connection, lambda: application.process.poll() is None)
             if application.process.poll() not in (None, 0):
                 return 1
             return 0
         except (KeyboardInterrupt, SystemExit):
             return 0
-        except Exception:
-            print("Linux accessibility driver failed; verify GI/AT-SPI dependencies, session bus, display, and application accessibility", file=sys.stderr)
+        except Exception as error:
+            diagnostic = f"stage={stage}; failure={_failure_location(error)}"
+            if stage == "accessibility-readiness":
+                diagnostic += f"; last-snapshot={readiness_failure}"
+            print("Linux accessibility driver failed; verify GI/AT-SPI dependencies, session bus, display, and application accessibility; " + diagnostic, file=sys.stderr)
             return 2
         finally:
             # Process supervision may send SIGTERM immediately after the shutdown

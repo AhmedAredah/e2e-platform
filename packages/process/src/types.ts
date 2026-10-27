@@ -30,9 +30,9 @@ export interface ProcessOptions {
   readonly args?: readonly string[];
   /** Defaults to the caller's working directory, resolved once before launch. */
   readonly cwd?: string;
-  /** Overrides inherited variables; undefined removes one. */
+  /** Overrides inherited variables; undefined removes one (Windows bootstrap keys become empty). */
   readonly env?: Readonly<Record<string, string | undefined>>;
-  /** Set false to supply only env, without inheriting the controller's environment. */
+  /** Set false to omit inherited application variables. Windows keeps SystemRoot for OS initialization unless explicitly overridden. */
   readonly inheritEnv?: boolean;
   /** A wall-clock deadline for the entire process lifetime; omitted means no deadline. */
   readonly timeoutMs?: number;

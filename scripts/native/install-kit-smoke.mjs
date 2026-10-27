@@ -87,7 +87,7 @@ for (const constructor of [PythonLaunchProfile, DotnetLaunchProfile, ExecutableL
   rmSync(join(project, 'tests/example.e2e.ts'));
   rmSync(join(project, 'e2e.config.ts'));
 
-  writeFileSync(join(project, 'e2e.config.ts'), "export default { modelPolicy: 'forbid', targets: [{ name: 'local', platform: 'test' }] };\n");
+  writeFileSync(join(project, 'e2e.config.ts'), "export default { retries: 0, modelPolicy: 'forbid', targets: [{ name: 'local', platform: 'test' }] };\n");
   writeFileSync(join(project, 'tests/installed.e2e.ts'), `import { test, expect } from '@e2e-platform/process/test';
 test('installed process fixture owns a real child', async ({ processes }) => {
   const child = await processes.run({ executable: process.execPath, args: ['-e', 'process.stdout.write("installed kit")'], timeoutMs: 5000 });

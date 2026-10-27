@@ -8,7 +8,7 @@ export interface ApplicationLaunchOptions {
   readonly cwd?: string;
   readonly args?: readonly string[];
   readonly env?: Readonly<Record<string, string | undefined>>;
-  /** Defaults to false: runtime environment must be supplied deliberately. */
+  /** Defaults to false: supply runtime variables deliberately; Windows SystemRoot remains available for OS initialization. */
   readonly inheritEnv?: boolean;
 }
 

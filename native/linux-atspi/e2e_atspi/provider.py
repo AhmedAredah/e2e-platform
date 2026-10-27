@@ -122,10 +122,13 @@ class AtspiProvider(AccessibilityProvider):
             else:
                 text = obj.get_text_iface()
                 if text is not None:
-                    count = text.get_character_count()
+                    # GI returns the Accessible instance, whose deprecated
+                    # get_text() accessor shadows Text.get_text(start, end).
+                    # Qualify the interface so a real text read is dispatched.
+                    count = self.api.Text.get_character_count(text)
                     if not 0 <= count <= MAX_TEXT:
                         truncated = True
-                    content = text.get_text(0, count) if 0 <= count <= MAX_TEXT else "[omitted: text exceeds limit]"
+                    content = self.api.Text.get_text(text, 0, count) if 0 <= count <= MAX_TEXT else "[omitted: text exceeds limit]"
                     node["value" if node["role"] == "textbox" else "text"] = content or ""
             # Charge each node before retention, including worst-case escaped Unicode.
             # Children add their own metadata cost; the allowance covers array syntax.

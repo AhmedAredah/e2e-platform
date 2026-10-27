@@ -1,10 +1,18 @@
-# e2e-platform 0.2.0-rc.2
+# e2e-platform 0.2.0-rc.3
 
 This is a reviewed **prerelease**, not a fully qualified stable release. The ten
-public JavaScript packages use `0.2.0-rc.2` and `@e2e-platform/*`; the executable
+public JavaScript packages use `0.2.0-rc.3` and `@e2e-platform/*`; the executable
 and repository folder are `e2e-platform`. Tests are written in TypeScript or
 JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
+
+
+This candidate adds Windows process environment isolation fixes (with the documented
+SystemRoot bootstrap exception), qualified AT-SPI text-interface dispatch, sanitized
+Linux startup diagnostics, portable path comparisons and deterministic negative
+verification. The detailed original review evidence below was recorded for rc.2;
+unchanged source trees remain traceable through the publication history. Hosted
+checks and follow-up evidence identify the exact rc.3 commit being tested.
 
 ## Publication state
 
@@ -14,8 +22,9 @@ are enabled. The reviewed candidate source is maintained on
 [`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main).
 The separately retained `main` branch remains
 the original upstream Apache-licensed snapshot. **It is not this candidate.**
-No GitHub release, npm publication, remote CI pass or registry namespace ownership
-is claimed. Clone `mit-main` or use the reviewed full-repository archive.
+No GitHub release, npm publication or registry namespace ownership is claimed.
+Hosted CI results are recorded in [GitHub Actions](https://github.com/AhmedAredah/e2e-platform/actions).
+Clone `mit-main` or use the reviewed full-repository archive.
 [Publishing instructions](docs/development/PUBLISHING.md) preserve upstream `main`
 and update `mit-main` without a force push.
 

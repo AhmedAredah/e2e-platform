@@ -92,6 +92,15 @@ Completed sessions resolve `result` with `status`, `exitCode`, `signal`, `durati
 
 Invalid arguments fail with `TypeError` before launch. `timeoutMs` includes the child lifetime; omitted means no execution deadline. `killGraceMs` defaults to 500 ms on POSIX. `drainTimeoutMs` bounds inherited pipes after root exit (default 5000 ms); expiration closes the pipes and fails cleanup. Environment values inherit from the controller unless `inheritEnv: false`; `env` overrides values and `undefined` removes them. Windows variable names are matched case-insensitively.
 
+With `inheritEnv: false`, supply the runtime executable path and any required `PATH`,
+temporary-directory or profile variables deliberately. On Windows, `SystemRoot`
+is retained for OS/Winsock initialization unless you explicitly override or remove
+it. Other omitted Windows bootstrap variables are supplied as empty strings to
+prevent libuv from silently restoring their parent values. Explicitly removing
+one of those variables also leaves an empty value. Ambient `NODE_V8_COVERAGE` is
+not propagated into an isolated environment or restored after explicit removal.
+This environment policy is not a process security sandbox.
+
 ## Platform boundaries
 
 On POSIX the local supervisor creates a dedicated process group and uses SIGTERM followed by SIGKILL. It also cleans remaining group members when the root exits naturally. On Windows it uses the system `taskkill /PID /T /F` command while the root is alive. This is forceful on Windows; the POSIX grace period does not apply there. Windows descendants surviving a naturally exited root cannot reliably be recovered with taskkill. No Windows Job Object implementation is included. GUI applications that detach/break away, change process groups, spawn through external services, or require elevated privileges need a stronger supervisor or explicit app-specific teardown. The post-exit drain deadline avoids waiting forever for inherited pipes; it cannot contain escaped processes.

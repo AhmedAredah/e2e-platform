@@ -18,12 +18,32 @@ function duration(value: number | undefined, name: string): void {
 /** Makes a fresh environment and gives Windows variable overrides case-insensitive semantics. */
 function environment(options: ProcessOptions): NodeJS.ProcessEnv {
   const result: NodeJS.ProcessEnv = options.inheritEnv === false ? {} : { ...process.env };
+  const overrides = new Set(Object.keys(options.env ?? {}).map((key) => key.toUpperCase()));
   for (const [key, value] of Object.entries(options.env ?? {})) {
     if (process.platform === 'win32') {
       for (const existing of Object.keys(result)) if (existing.toLowerCase() === key.toLowerCase()) delete result[existing];
     }
-    if (value === undefined) delete result[key];
-    else result[key] = value;
+    result[key] = value;
+  }
+  // Node copies coverage settings unless the supplied environment owns the key.
+  const coverageKey = Object.keys(result).find((key) => process.platform === 'win32' ? key.toUpperCase() === 'NODE_V8_COVERAGE' : key === 'NODE_V8_COVERAGE');
+  if (coverageKey !== undefined && coverageKey !== 'NODE_V8_COVERAGE') {
+    result.NODE_V8_COVERAGE = result[coverageKey];
+    delete result[coverageKey];
+  } else if (coverageKey === undefined && options.inheritEnv === false) {
+    result.NODE_V8_COVERAGE = undefined;
+  }
+  if (process.platform === 'win32') {
+    // libuv restores omitted bootstrap variables from the controller. Empty
+    // values prevent that fallback; SystemRoot remains available for Winsock.
+    const keys = new Map(Object.keys(result).map((key) => [key.toUpperCase(), key]));
+    const systemRoot = Object.entries(process.env).find(([key]) => key.toUpperCase() === 'SYSTEMROOT')?.[1] ?? '';
+    for (const name of ['HOMEDRIVE', 'HOMEPATH', 'LOGONSERVER', 'PATH', 'SYSTEMDRIVE', 'SYSTEMROOT', 'TEMP', 'USERDOMAIN', 'USERNAME', 'USERPROFILE', 'WINDIR']) {
+      const key = keys.get(name);
+      if (key !== undefined && result[key] !== undefined) continue;
+      if (key !== undefined) delete result[key];
+      result[name] = name === 'SYSTEMROOT' && options.inheritEnv === false && !overrides.has(name) ? systemRoot : '';
+    }
   }
   return result;
 }

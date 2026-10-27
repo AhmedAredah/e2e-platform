@@ -81,3 +81,11 @@ An app `command` or `service` receives `PATH`, `HOME`, `TMPDIR`, `TMP`,
 `TEMP`, `SystemRoot`, and `COMSPEC`, plus whatever `command.env` sets.
 `APP_URL` is read by the scaffolded config module, not the runner; pass it
 through `command.env` if the dev server needs it too.
+
+The separate `@e2e-platform/process` fixtures inherit the controller environment
+by default. Set `inheritEnv: false` to supply application variables explicitly.
+On Windows, `SystemRoot` remains available for OS initialization unless explicitly
+overridden or removed; other omitted bootstrap variables are empty to prevent
+libuv from restoring parent values. Supply any needed `PATH`, temporary-directory
+and profile values yourself. Ambient `NODE_V8_COVERAGE` is not copied into an
+isolated process. These controls do not sandbox the application.

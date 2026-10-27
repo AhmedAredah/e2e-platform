@@ -29,7 +29,7 @@ or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.2. Coordinated versions and changelogs use Changesets prerelease mode.
+`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.3. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -150,11 +150,11 @@ candidate). Either engine can be installed independently:
 
 ```sh
 # Browser engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.2.tgz playwright@1.63.0
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.3.tgz playwright@1.63.0
 npx --no-install playwright install chromium
 
 # Mobile engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.2.tgz
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.3.tgz
 npx --no-install agent-device doctor
 ```
 

@@ -34,9 +34,9 @@ class FakeObject:
     def get_component_iface(self): return None
     def get_text_iface(self): return self
     def get_character_count(self): return len(self.value)
-    def get_text(self, start, end):
-        self.reads += 1
-        return self.value[start:end]
+    # Accessible.get_text is a deprecated interface accessor, not Text.get_text.
+    # GI returns this same object for get_text_iface(), exposing the collision.
+    def get_text(self): return self
     def get_child_count(self): return len(self.children)
     def get_child_at_index(self, index): return self.children[index]
     def get_editable_text_iface(self): return self if self.role in ("entry", "password text") else None
@@ -62,8 +62,19 @@ class StateTypes:
     def __getattr__(self, name): return name
 
 
+class TextInterface:
+    @staticmethod
+    def get_character_count(obj): return len(obj.value)
+
+    @staticmethod
+    def get_text(obj, start, end):
+        obj.reads += 1
+        return obj.value[start:end]
+
+
 class Api:
     StateType = StateTypes()
+    Text = TextInterface
     def __init__(self, app): self.desktop = FakeObject("Desktop", "desktop", [app])
     def init(self): return 0
     def set_timeout(self, first, second): pass
@@ -82,6 +93,14 @@ class ProviderTests(unittest.TestCase):
         self.provider.snapshot()
 
     def perform(self, obj, **action): self.provider.perform(self.provider._ids[obj], action)
+
+    def test_text_read_uses_interface_despite_accessible_method_collision(self):
+        self.entry.value = "Ada"
+        self.assertIs(self.entry.get_text(), self.entry)
+        with self.assertRaises(TypeError):
+            self.entry.get_text(0, 3)
+        node = self.provider.snapshot()["root"]["children"][0]["children"][0]
+        self.assertEqual(node["value"], "Ada")
 
     def test_password_never_read(self):
         snap = self.provider.snapshot()

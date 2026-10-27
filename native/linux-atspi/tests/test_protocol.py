@@ -1,5 +1,6 @@
 """Protocol and lifecycle tests do not require a desktop or GI installation."""
 import json
+import io
 import os
 from pathlib import Path
 import socket
@@ -11,11 +12,11 @@ import tempfile
 import time
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import live_smoke
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from e2e_atspi.application import OwnedApplication
+from e2e_atspi.application import DriverApplication, OwnedApplication, _failure_location
 from e2e_atspi.contracts import AccessibilityProvider, DriverError
 from e2e_atspi.protocol import MAX_FRAME, ProtocolSession
 
@@ -39,6 +40,52 @@ class FakeProvider(AccessibilityProvider):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_startup_diagnostics_never_include_exception_data(self):
+        class SecretException(Exception):
+            pass
+        for error, category in ((AttributeError("secret-accessible-name"), "AttributeError"),
+                                (SecretException("secret-application-output"), "Exception")):
+            try:
+                raise error
+            except Exception as failure:
+                self.assertEqual(_failure_location(failure), category + "@external")
+
+    def test_startup_diagnostics_locate_driver_source_without_values(self):
+        # Compile a failing expression at the real driver's source path. Only the
+        # approved filename and line are emitted; expression text stays private.
+        source = str(Path(__file__).resolve().parents[1] / "e2e_atspi" / "provider.py")
+        try:
+            exec(compile("raise AttributeError('secret-control-name')", source, "exec"))
+        except AttributeError as failure:
+            self.assertEqual(_failure_location(failure), "AttributeError@provider.py:1")
+
+    def test_readiness_failure_is_sanitized_and_reaps_application(self):
+        provider = FakeProvider()
+        provider.error = AttributeError("secret-accessible-name")
+        owned = Mock()
+        owned.process.poll.return_value = None
+        output = io.StringIO()
+        with patch.dict(os.environ, {"E2E_NATIVE_TOKEN": TOKEN}), \
+             patch("e2e_atspi.application.OwnedApplication", return_value=owned), \
+             patch.object(DriverApplication, "create_provider", return_value=provider), \
+             patch("e2e_atspi.application.time.monotonic", side_effect=[0, 11]), \
+             patch("sys.stderr", output):
+            self.assertEqual(DriverApplication().run(["fixture"]), 2)
+        self.assertIn("stage=accessibility-readiness", output.getvalue())
+        self.assertIn("last-snapshot=AttributeError@application.py:", output.getvalue())
+        self.assertNotIn("secret-accessible-name", output.getvalue())
+        self.assertNotIn(TOKEN, output.getvalue())
+        owned.close.assert_called_once_with()
+
+    def test_live_selection_resolves_option_instead_of_same_named_label(self):
+        client = live_smoke.Client.__new__(live_smoke.Client)
+        option = {"name": "Beta", "role": "option", "states": {"selected": True},
+                  "children": [{"name": "Beta", "role": "text"}]}
+        with patch.object(client, "snapshot", return_value={"root": {"children": [option]}}):
+            with self.assertRaises(AssertionError):
+                client.node("Beta")
+            self.assertIs(client.node("Beta", role="option"), option)
+
     def setUp(self):
         self.provider = FakeProvider()
         self.session = ProtocolSession(TOKEN, self.provider)

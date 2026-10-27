@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,7 +57,8 @@ describe('desktop accessibility sidecar integration', () => {
       await withDesktop([], async (engine, directory, info) => {
         await engine.launch(context);
         const driver = JSON.parse(await readFile(path.join(directory, 'driver.json'), 'utf8')) as { sidecarPid: number; appPid: number; command: string; args: string[]; cwd: string; tokenPresent: boolean };
-        expect(driver).toMatchObject({ command: process.execPath, args: info.app.launchArguments, cwd: directory, tokenPresent: true });
+        expect(driver).toMatchObject({ command: process.execPath, args: info.app.launchArguments, tokenPresent: true });
+        expect(await realpath(driver.cwd)).toBe(await realpath(directory));
         expect(await targetRecord(directory)).toEqual({ pid: driver.appPid, args: ['spaces and "quotes"', '; literal $(command)', '--'], allowed: 'yes' });
         expect((await engine.snapshot(context, false)).root.name).toBe('Mock desktop');
         await engine.stop({ signal, timeoutMs: 2000 });

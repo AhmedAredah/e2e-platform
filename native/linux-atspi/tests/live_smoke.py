@@ -66,8 +66,9 @@ class Client:
             raise AssertionError("fixture tree unexpectedly truncated")
         return result
 
-    def node(self, name):
-        nodes = [node for node in walk(self.snapshot()["root"]) if node.get("name") == name]
+    def node(self, name, *, role=None):
+        nodes = [node for node in walk(self.snapshot()["root"])
+                 if node.get("name") == name and (role is None or node.get("role") == role)]
         if len(nodes) != 1:
             raise AssertionError(f"expected exactly one {name} control")
         return nodes[0]
@@ -131,7 +132,9 @@ def scenario(wrong=False):
         client.perform("Remember", kind="uncheck")
         assert not client.node("Remember")["states"]["checked"]
         client.perform("Choice", kind="selectOption", value={"index": 1})
-        assert client.node("Beta")["states"]["selected"]
+        # GTK exposes both the list row and its label with the same name.
+        # Selection belongs to the option, so resolve by role as well as name.
+        assert client.node("Beta", role="option")["states"]["selected"]
         client.perform("Submit", kind="tap")
         expected = "Hello Ada"
         deadline = time.monotonic() + 2

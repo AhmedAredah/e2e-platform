@@ -3,9 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { execFile } from 'node:child_process';
+import { once } from 'node:events';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
+import { Worker } from 'node:worker_threads';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocalProcessRunner, ProcessError, ProcessRunner, ProcessWorkspace, runProcess, startProcess, terminateProcessTree } from '../../src/index.ts';
 import type { ProcessOptions, ProcessSession, RunProcessOptions, ProcessResult } from '../../src/index.ts';
 
@@ -29,6 +31,7 @@ async function until(read: () => boolean): Promise<void> {
 }
 
 afterEach(async () => {
+  vi.unstubAllEnvs();
   await Promise.all(sessions.splice(0).map((session) => session.stop()));
   await Promise.all(temporary.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
@@ -76,13 +79,58 @@ process.stdout.write('CONTROLLER_COMPLETED\\n');
   it('applies cwd and environment overrides/removals without mutating the caller', async () => {
     const cwd = await directory();
     const result = await runProcess(node('process.stdout.write(JSON.stringify({cwd:process.cwd(),value:process.env.E2E_PROCESS_VALUE,missing:process.env.E2E_PROCESS_MISSING}))', { cwd, env: { E2E_PROCESS_VALUE: 'hello', E2E_PROCESS_MISSING: undefined } }));
-    expect(JSON.parse(result.stdout.bytes.toString())).toEqual({ cwd: await realpath(cwd), value: 'hello' });
+    const observed = JSON.parse(result.stdout.bytes.toString()) as { cwd: string; value: string };
+    expect(observed).toEqual({ cwd: expect.any(String), value: 'hello' });
+    expect(await realpath(observed.cwd)).toBe(await realpath(cwd));
     expect(process.env.E2E_PROCESS_VALUE).toBeUndefined();
   });
 
-  it('can omit the inherited environment', async () => {
-    const result = await runProcess(node('process.stdout.write(process.env.E2E_PROCESS_ONLY+":"+String(process.env.PATH))', { inheritEnv: false, env: { E2E_PROCESS_ONLY: 'yes' } }));
-    expect(result.stdout.bytes.toString()).toBe('yes:undefined');
+  it('omits inherited application, search-path and coverage values', async () => {
+    vi.stubEnv('E2E_PROCESS_AMBIENT', 'must-not-inherit');
+    vi.stubEnv('NODE_V8_COVERAGE', join(await directory(), 'coverage'));
+    const result = await runProcess(node('process.stdout.write(JSON.stringify(process.env))', { inheritEnv: false, env: { E2E_PROCESS_ONLY: 'yes' } }));
+    const observed = JSON.parse(result.stdout.bytes.toString()) as Record<string, string>;
+    expect(observed.E2E_PROCESS_ONLY).toBe('yes');
+    expect(observed.E2E_PROCESS_AMBIENT).toBeUndefined();
+    expect(observed.NODE_V8_COVERAGE).toBeUndefined();
+    expect(observed.PATH).toBe(process.platform === 'win32' ? '' : undefined);
+    for (const [key, value] of Object.entries(observed)) {
+      if (key === 'E2E_PROCESS_ONLY') continue;
+      if (process.platform === 'win32' && key.toUpperCase() === 'SYSTEMROOT') expect(value).toBe(process.env.SYSTEMROOT ?? '');
+      else expect(value).toBe('');
+    }
+  });
+
+  it('does not restore explicitly removed inherited search-path or coverage values', async () => {
+    vi.stubEnv('NODE_V8_COVERAGE', join(await directory(), 'coverage'));
+    const env = process.platform === 'win32' ? { Path: undefined, node_v8_coverage: undefined } : { PATH: undefined, NODE_V8_COVERAGE: undefined };
+    const result = await runProcess(node('process.stdout.write(JSON.stringify({path:process.env.PATH,coverage:process.env.NODE_V8_COVERAGE}))', { env }));
+    expect(JSON.parse(result.stdout.bytes.toString())).toEqual(process.platform === 'win32' ? { path: '' } : {});
+  });
+
+  it('keeps explicitly supplied search-path values in an isolated environment', async () => {
+    const value = join(await directory(), 'explicit search path');
+    const result = await runProcess(node('process.stdout.write(process.env.PATH)', { inheritEnv: false, env: { [process.platform === 'win32' ? 'Path' : 'PATH']: value } }));
+    expect(result.stdout.bytes.toString()).toBe(value);
+  });
+
+  it.runIf(process.platform === 'win32')('preserves SystemRoot from a case-sensitive worker environment', async () => {
+    const systemRoot = process.env.SYSTEMROOT;
+    if (systemRoot === undefined) throw new Error('The Windows test host must supply SystemRoot');
+    const worker = new Worker(`
+const { parentPort, workerData } = require('node:worker_threads');
+void (async () => {
+  const { runProcess } = await import(workerData.module);
+  const result = await runProcess({ executable: process.execPath, args: ['-e', 'process.stdout.write(process.env.SYSTEMROOT)'], inheritEnv: false });
+  parentPort.postMessage(result.stdout.bytes.toString());
+})();
+`, { eval: true, env: { SystemRoot: systemRoot }, workerData: { module: new URL('../../dist/index.js', import.meta.url).href } });
+    try {
+      const [observed] = await once(worker, 'message');
+      expect(observed).toBe(systemRoot);
+    } finally {
+      await worker.terminate();
+    }
   });
 
   it('closes absent stdin and writes provided binary input before EOF', async () => {

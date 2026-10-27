@@ -6,6 +6,7 @@ const executable = process.platform === 'win32' ? '../build/Release/e2e_qt_quick
 
 export default {
   modelPolicy: 'forbid',
+  retries: 0,
   tests: './tests-quick/**/*.e2e.ts',
   targets: [{
     name: 'qt-quick',

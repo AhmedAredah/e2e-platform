@@ -1,5 +1,14 @@
 # @e2e-platform/playwright
 
+## 0.2.0-rc.3
+
+### Patch Changes
+
+- Qualify a coordinated candidate with corrected Windows process environment isolation,
+  GI-qualified Linux AT-SPI text access, sanitized startup diagnostics, portable path
+  checks, and deterministic planted-defect verification. Retain Windows SystemRoot
+  for OS initialization unless explicitly overridden or removed.
+
 ## 0.2.0-rc.2
 
 ### Patch Changes
