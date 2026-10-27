@@ -280,3 +280,18 @@ Set `-DE2E_QT_TEST_QPA=xcb` for an X11 build; the default comes from
 CTest executables and their children use that selection. Delete the build cache
 or pass a new value when changing platforms. Offscreen acceptance does not
 qualify native desktop input routing.
+
+On macOS, Qt 6.8.3 Quick Controls' native macOS style requires a Cocoa window.
+The offscreen acceptance profile explicitly uses `QT_QUICK_CONTROLS_STYLE=Basic`;
+the separate `cocoa` profile exercises the native `macOS` style. Detailed CTests
+also default to Basic for macOS/offscreen only, overridable through
+`E2E_QT_TEST_STYLE`. This setting belongs to the tests, not the installed bridge.
+Applications launched offscreen should choose a compatible style explicitly.
+The recorded failing backtrace reached `QMacStylePrivate::drawNSViewInRect` while
+polishing a Quick button, before a bridge action. See Qt's
+[native macOS style documentation](https://doc.qt.io/qt-6/qtquickcontrols-macos.html).
+
+Explicit window activation invalidates prior observations before dispatch and
+waits up to one second for Qt's focus window to match. Denied activation or
+destruction returns `ACTION_MAY_HAVE_COMMITTED`; the helper does not acknowledge
+an unconfirmed focus request or bypass operating-system focus restrictions.

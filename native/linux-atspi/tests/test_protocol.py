@@ -309,7 +309,7 @@ class ProtocolTests(unittest.TestCase):
                 def alive():
                     try:
                         return state.read_text().rsplit(")", 1)[1].split()[0] != "Z"
-                    except FileNotFoundError:
+                    except (FileNotFoundError, ProcessLookupError):
                         return False
                 deadline = time.monotonic() + 1
                 while alive() and time.monotonic() < deadline:

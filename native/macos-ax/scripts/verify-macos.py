@@ -93,7 +93,13 @@ def scenario(args, wrong=False):
         def wait_for(predicate):
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline:
-                nodes = snapshot()
+                try:
+                    nodes = snapshot()
+                except RpcError as error:
+                    if error.code not in {'NODE_STALE', 'OPERATION_TIMEOUT'}:
+                        raise
+                    time.sleep(0.1)
+                    continue
                 if predicate(nodes):
                     return nodes
                 time.sleep(0.1)

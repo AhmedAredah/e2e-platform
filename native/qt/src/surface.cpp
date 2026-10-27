@@ -13,6 +13,8 @@
 #include <QInputMethodEvent>
 #include <QPainter>
 #include <QKeySequence>
+#include <QElapsedTimer>
+#include <QTest>
 
 namespace e2e::qt::detail {
 Surface::Surface() {
@@ -57,10 +59,17 @@ void Surface::activateWindow(const QString& id) {
     if (!window || !window->isVisible()) throw Failure("NOT_ACTIONABLE", "Qt window is not visible");
     QWindow* modal = QGuiApplication::modalWindow();
     if (modal && modal != window) throw Failure("NOT_ACTIONABLE", "another Qt modal window blocks activation");
+    // Activation can dispatch application callbacks. Invalidate observations
+    // before input, including when the window disappears or activation is denied.
+    root_.clear(); adapter_ = nullptr; registry_.begin(); stable_.clear();
     window->raise();
     if (!object || !window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window was destroyed during activation");
     window->requestActivate();
-    root_.clear(); adapter_ = nullptr; registry_.begin(); stable_.clear();
+    QElapsedTimer elapsed; elapsed.start();
+    while (object && window && QGuiApplication::focusWindow() != window && elapsed.elapsed() < 1000)
+        QTest::qWait(10);
+    if (!object || !window || QGuiApplication::focusWindow() != window)
+        throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window did not acquire keyboard activation");
 }
 void Surface::actionability(const QJsonObject& params) {
     ensureRoot();

@@ -103,7 +103,7 @@ jobs:
           if-no-files-found: warn
 
   qt-desktop-kits:
-    # Toolkit-event/offscreen acceptance is distinct from interactive OS qualification.
+    # Verify headless and native-window profiles separately; neither bypasses OS focus policy.
     strategy:
       fail-fast: false
       matrix:
@@ -111,15 +111,30 @@ jobs:
           - os: windows-2022
             host: windows
             arch: win64_msvc2022_64
+            platform: offscreen
+            style: Windows
+          - os: windows-2022
+            host: windows
+            arch: win64_msvc2022_64
+            platform: windows
+            style: Windows
           - os: macos-15
             host: mac
             arch: clang_64
+            platform: offscreen
+            style: Basic
+          - os: macos-15
+            host: mac
+            arch: clang_64
+            platform: cocoa
+            style: macOS
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     env:
-      QT_QPA_PLATFORM: offscreen
-      E2E_REQUIRE_QPA_PLATFORM: offscreen
+      QT_QPA_PLATFORM: ${{ matrix.platform }}
+      E2E_REQUIRE_QPA_PLATFORM: ${{ matrix.platform }}
       QT_QUICK_BACKEND: software
+      QT_QUICK_CONTROLS_STYLE: ${{ matrix.style }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -149,7 +164,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: qt-${{ matrix.os }}-6.8.3-offscreen
+          name: qt-${{ matrix.os }}-6.8.3-${{ matrix.platform }}-${{ matrix.style }}
           path: |
             .e2e/cpp/
             examples/with-qt/build/ctest-results.xml

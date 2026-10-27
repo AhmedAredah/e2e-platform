@@ -22,6 +22,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
     {
         lastObserved.Invalidate();
         var observed = new HashSet<string>();
+        var visiting = new HashSet<string>();
         var count = 0;
         var truncated = false;
         var budget = new SnapshotBudget();
@@ -31,50 +32,61 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             var current = element.Current;
             if (current.ProcessId != processId) { truncated = true; return null; }
             var runtime = string.Join(',', element.GetRuntimeId());
-            if (!observed.Add(runtime)) { truncated = true; return null; }
-            if (!byRuntime.TryGetValue(runtime, out var entry) || !IsAlive(entry.Element))
+            if (!observed.Add(runtime))
             {
-                if (entry != null) { byId.Remove(entry.Id); sensitive.Forget(entry.Id); }
-                if (byId.Count >= 20000) throw new DriverException("ENGINE_FAILURE");
-                entry = new Entry("uia-" + ++sequence, element, Bounded(current.AutomationId, 1024));
-                byRuntime[runtime] = entry;
-                byId[entry.Id] = entry;
+                // Popups can expose an already traversed subtree through a second
+                // parent. Only a reference to an active ancestor is a cycle.
+                if (visiting.Contains(runtime)) truncated = true;
+                return null;
             }
-            var secure = sensitive.Observe(entry.Id, current.IsPassword);
-            var states = new Dictionary<string, bool> {
-                ["disabled"] = !current.IsEnabled, ["hidden"] = current.IsOffscreen,
-                ["focused"] = current.HasKeyboardFocus, ["secure"] = secure
-            };
-            var node = new Dictionary<string, object?> {
-                ["ref"] = new { id = entry.Id, revision = "" }, ["role"] = ControlSemantics.Role(current.ControlType.Id, element.TryGetCurrentPattern(GridItemPattern.Pattern, out _)),
-                ["name"] = secure ? "" : budget.Text(current.Name), ["states"] = states
-            };
-            if (!string.IsNullOrEmpty(entry.TestId)) node["testId"] = budget.Text(entry.TestId, 1024);
-            if (secure) { node["inputPurpose"] = current.IsPassword ? "password" : "generic-secret"; return node; }
-            if (element.TryGetCurrentPattern(TogglePattern.Pattern, out var toggle))
+            visiting.Add(runtime);
+            try
             {
-                var state = ((TogglePattern)toggle).Current.ToggleState;
-                if (state != ToggleState.Indeterminate) states["checked"] = state == ToggleState.On;
+                if (!byRuntime.TryGetValue(runtime, out var entry) || !IsAlive(entry.Element))
+                {
+                    if (entry != null) { byId.Remove(entry.Id); sensitive.Forget(entry.Id); }
+                    if (byId.Count >= 20000) throw new DriverException("ENGINE_FAILURE");
+                    entry = new Entry("uia-" + ++sequence, element, Bounded(current.AutomationId, 1024));
+                    byRuntime[runtime] = entry;
+                    byId[entry.Id] = entry;
+                }
+                var secure = sensitive.Observe(entry.Id, current.IsPassword);
+                var states = new Dictionary<string, bool> {
+                    ["disabled"] = !current.IsEnabled, ["hidden"] = current.IsOffscreen,
+                    ["focused"] = current.HasKeyboardFocus, ["secure"] = secure
+                };
+                var node = new Dictionary<string, object?> {
+                    ["ref"] = new { id = entry.Id, revision = "" }, ["role"] = ControlSemantics.Role(current.ControlType.Id, element.TryGetCurrentPattern(GridItemPattern.Pattern, out _)),
+                    ["name"] = secure ? "" : budget.Text(current.Name), ["states"] = states
+                };
+                if (!string.IsNullOrEmpty(entry.TestId)) node["testId"] = budget.Text(entry.TestId, 1024);
+                if (secure) { node["inputPurpose"] = current.IsPassword ? "password" : "generic-secret"; return node; }
+                if (element.TryGetCurrentPattern(TogglePattern.Pattern, out var toggle))
+                {
+                    var state = ((TogglePattern)toggle).Current.ToggleState;
+                    if (state != ToggleState.Indeterminate) states["checked"] = state == ToggleState.On;
+                }
+                if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var selected))
+                {
+                    states["selected"] = ((SelectionItemPattern)selected).Current.IsSelected;
+                    if (current.ControlType == ControlType.RadioButton) states["checked"] = states["selected"];
+                }
+                if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out var expanded))
+                    states["expanded"] = ((ExpandCollapsePattern)expanded).Current.ExpandCollapseState == ExpandCollapseState.Expanded;
+                if (element.TryGetCurrentPattern(ValuePattern.Pattern, out var value)) node["value"] = budget.Text(((ValuePattern)value).Current.Value);
+                else if (element.TryGetCurrentPattern(RangeValuePattern.Pattern, out var range)) node["value"] = budget.Text(ControlSemantics.NumericValue(((RangeValuePattern)range).Current.Value));
+                else if (current.ControlType == ControlType.Text) node["text"] = budget.Text(current.Name);
+                var children = new List<object>();
+                for (var child = TreeWalker.ControlViewWalker.GetFirstChild(element); child != null; child = TreeWalker.ControlViewWalker.GetNextSibling(child))
+                {
+                    if (count >= 10000) { truncated = true; break; }
+                    var built = Visit(child, depth + 1);
+                    if (built != null) children.Add(built);
+                }
+                if (children.Count > 0) node["children"] = children;
+                return node;
             }
-            if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var selected))
-            {
-                states["selected"] = ((SelectionItemPattern)selected).Current.IsSelected;
-                if (current.ControlType == ControlType.RadioButton) states["checked"] = states["selected"];
-            }
-            if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out var expanded))
-                states["expanded"] = ((ExpandCollapsePattern)expanded).Current.ExpandCollapseState == ExpandCollapseState.Expanded;
-            if (element.TryGetCurrentPattern(ValuePattern.Pattern, out var value)) node["value"] = budget.Text(((ValuePattern)value).Current.Value);
-            else if (element.TryGetCurrentPattern(RangeValuePattern.Pattern, out var range)) node["value"] = budget.Text(ControlSemantics.NumericValue(((RangeValuePattern)range).Current.Value));
-            else if (current.ControlType == ControlType.Text) node["text"] = budget.Text(current.Name);
-            var children = new List<object>();
-            for (var child = TreeWalker.ControlViewWalker.GetFirstChild(element); child != null; child = TreeWalker.ControlViewWalker.GetNextSibling(child))
-            {
-                if (count >= 10000) { truncated = true; break; }
-                var built = Visit(child, depth + 1);
-                if (built != null) children.Add(built);
-            }
-            if (children.Count > 0) node["children"] = children;
-            return node;
+            finally { visiting.Remove(runtime); }
         }
         try
         {

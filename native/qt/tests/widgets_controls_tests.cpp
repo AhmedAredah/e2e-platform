@@ -52,7 +52,10 @@ QJsonObject findText(const QJsonObject& node, const QString& text, const QString
     return {};
 }
 QJsonObject action(const QJsonObject& node, QJsonObject command) { return {{"ref", node.value("ref")}, {"action", command}}; }
-void expose(QWidget& window) { window.show(); window.activateWindow(); QApplication::processEvents(); }
+void expose(QWidget& window) {
+    window.show(); window.activateWindow();
+    QVERIFY(QTest::qWaitForWindowActive(&window));
+}
 class ApplicationControlAdapter : public e2e::qt::ControlAdapter {
 public:
     QString name() const override { return "application-control"; }
@@ -253,7 +256,8 @@ private slots:
         QWidget first, second; first.resize(200,120); second.resize(200,120); first.setWindowTitle("First"); second.setWindowTitle("Second");
         expose(first); Surface surface; const auto firstRoot = surface.snapshot(false).value("root").toObject().value("ref"); expose(second);
         QString firstId; for(const auto& entry:surface.windows()) if(entry.toObject().value("title")=="First") firstId=entry.toObject().value("id").toString();
-        QVERIFY(!firstId.isEmpty()); surface.activateWindow(firstId); QApplication::processEvents();
+        QVERIFY(!firstId.isEmpty()); surface.activateWindow(firstId);
+        QCOMPARE(QApplication::activeWindow(), &first);
         QCOMPARE(surface.snapshot(false).value("root").toObject().value("ref"),firstRoot);
         expose(second); QVERIFY(surface.snapshot(false).value("root").toObject().value("ref") != firstRoot);
         QDialog modal(&second); modal.setWindowModality(Qt::ApplicationModal); expose(modal);
