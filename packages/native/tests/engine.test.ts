@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { closeSync, fstatSync, openSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,6 +30,43 @@ test('native scenario', async ({ app, screen }) => { ${body} });\n`);
 }
 
 describe('native engine through the real e2e-platform runner', () => {
+  it('retains an isolated profile and process ownership until a failed stop is recovered', async () => {
+    const cwd = await mkdtemp(path.join(os.tmpdir(), 'e2e-retained-profile-'));
+    let profile = '';
+    let pid: number | undefined;
+    let stops = 0;
+    class RecoverableEngine extends NativeEngine {
+      protected override async createProcess(launch: NativeProcessLaunch): Promise<ProcessSession> {
+        profile = launch.options.env?.['E2E_NATIVE_PROFILE_DIR'] ?? '';
+        const child = await super.createProcess(launch); pid = child.pid;
+        return { ...child, get stdout() { return child.stdout; }, get stderr() { return child.stderr; },
+          async stop() { if (++stops === 1) throw new Error('stop unavailable'); return child.stop(); },
+        };
+      }
+    }
+    const engine = new RecoverableEngine({ screenshots: false, isolateProfile: true });
+    const signal = new AbortController().signal;
+    const context: OperationContext = { signal, timeoutMs: 3000, runId: 'run', attemptId: 'attempt', origin: 'test' };
+    try {
+      await engine.init({ runId: 'run', targetName: 'mock', projectRoot: cwd, app: { appPath: process.execPath, launchArguments: [helper] }, env: process.env, headed: false, workerSlot: 0, signal });
+      await engine.startAttempt({ attemptId: 'attempt', artifactsDir: cwd, signal, appLog: () => {}, environment: () => {} });
+      await engine.launch(context);
+      await expect(engine.stop(context)).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+      expect(profile).not.toBe(''); await access(profile);
+      expect(pid).toBeGreaterThan(0); expect(() => process.kill(pid!, 0)).not.toThrow();
+      await expect(engine.startAttempt({ attemptId: 'next', artifactsDir: cwd, signal, appLog: () => {}, environment: () => {} })).rejects.toMatchObject({ code: 'INVALID_STATE' });
+      await engine.stop(context);
+      expect(stops).toBe(2); await expect(access(profile)).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally { await engine.stop(context); await rm(cwd, { recursive: true, force: true }); }
+  });
+
+  it('includes labels in positive and negated polling assertion failures', async () => {
+    for (const assertion of ['toHaveText("wrong")', 'not.toHaveText("Ready")']) {
+      const result = await scenario(`await app.open(); await expect(screen.getByTestId('status'), '[oracle:calculation]').${assertion};`);
+      expect(result.report.run.results[0]?.attempts[0]?.error?.message).toContain('[oracle:calculation]');
+    }
+  });
+
   it('keeps the existing application alive when restart is already aborted', async () => {
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'e2e-native-preabort-'));
     const engine = new NativeEngine({ screenshots: false });
@@ -110,7 +147,8 @@ describe('native engine through the real e2e-platform runner', () => {
     const cleanupError = new Error('driver close failed');
     class FailingDriver extends RpcNativeDriver {
       override async initialize(token: string, context: RequestContext): Promise<never> { await super.initialize(token, context); throw initializationError; }
-      override close(): void { super.close(); throw cleanupError; }
+      failed = false;
+      override close(): void { super.close(); if (!this.failed) { this.failed = true; throw cleanupError; } }
     }
     class FailingEngine extends NativeEngine {
       protected override createDriver(transport: NativeTransport): RpcNativeDriver { return new FailingDriver(transport); }
@@ -158,7 +196,8 @@ describe('native engine through the real e2e-platform runner', () => {
 
   it.each([['ECONNRESET', 'ECONNRESET'], ['private-code', 'unclassified']])('stops the real helper and sanitizes a subclass cleanup code (%s)', async (code, diagnostic) => {
     class ThrowingDriver extends RpcNativeDriver {
-      override close(): void { super.close(); throw Object.assign(new Error('private-error-message'), { code }); }
+      failed = false;
+      override close(): void { super.close(); if (!this.failed) { this.failed = true; throw Object.assign(new Error('private-error-message'), { code }); } }
     }
     class ThrowingEngine extends NativeEngine {
       protected override createDriver(transport: NativeTransport) { return new ThrowingDriver(transport); }

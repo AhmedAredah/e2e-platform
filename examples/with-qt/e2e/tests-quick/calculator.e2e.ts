@@ -7,6 +7,6 @@ test('drives a Qt Quick calculation through the visual tree', async ({ app, scre
   await screen.getByTestId('tax').check();
   await screen.getByTestId('currency').selectOption({ value: 'USD' });
   await screen.getByTestId('calculate').click();
-  await expect(screen.getByTestId('result')).toHaveText('Total: 82.50 USD');
+  await expect(screen.getByTestId('result'), '[oracle:calculation]').toHaveText('Total: 82.50 USD');
   await expect(screen.getByTestId('status')).toHaveText('Calculated');
 });

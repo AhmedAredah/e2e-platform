@@ -13,8 +13,8 @@ E2E_TEST("C++ test validates a real HTTP application") {
     const auto result = response.json();
     session.expect_equal(result.at("schemaVersion"), 1);
     session.expect_equal(result.at("operation"), "sum");
-    session.expect_equal(result.at("sum"), 4);
+    session.expect_equal(result.at("sum"), 4, "[oracle:calculation]");
     session.expect_equal(session.http().get(base + "/sum?a=invalid&b=2").status, 400);
     session.expect_equal(session.http().get(base + "/missing").status, 404);
 }
-int main(int argc, char** argv) { return e2e::run(argc, argv); }
+E2E_TEST_MAIN()

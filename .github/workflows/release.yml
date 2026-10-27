@@ -38,66 +38,11 @@ jobs:
       # Provider tests use local mock servers; live-provider suites are excluded.
       - run: pnpm test
 
-  command-platforms:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.22.1
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Prepare the optional macOS terminal peer
-        if: runner.os == 'macOS'
-        run: |
-          pnpm build:native
-          node packages/terminal/dist/cli/setup.js
-      - run: pnpm test:native
-      - run: pnpm test:scripts
-      - run: node scripts/native/verify.mjs
-      - run: node scripts/native/verify-cpp-sdk.mjs
-      - run: node scripts/native/install-kit-smoke.mjs
-
-  qt-linux:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    env:
-      QT_QPA_PLATFORM: offscreen
-      E2E_REQUIRE_QPA_PLATFORM: offscreen
-      QT_QUICK_BACKEND: software
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.22.1
-          cache: pnpm
-      - name: Install Qt development and QML runtime modules
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qt6-base-dev qt6-declarative-dev qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-layouts qml6-module-qtqml-workerscript qml6-module-qtquick-templates qml6-module-qtquick-window
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build:native
-      - run: node scripts/native/verify.mjs --qt-only --require-quick
-      - name: Run installed C++ authored Qt tests
-        run: node scripts/native/verify-cpp-sdk.mjs --qt
-      - run: pnpm verify:qt:install
-      - run: pnpm verify:qt:exports
+  native-platforms:
+    uses: ./.github/workflows/native.yml
 
   package:
-    needs: [quality, command-platforms, qt-linux, language-platforms, desktop-contracts]
+    needs: [quality, native-platforms, language-platforms, desktop-contracts]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

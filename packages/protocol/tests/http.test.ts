@@ -178,3 +178,38 @@ test('a throwing schema cannot echo its input into a diagnostic', async () => {
   expect(failure).toMatchObject({ code: 'SCHEMA_MISMATCH' });
   expect(inspect(failure, { depth: 10 })).not.toContain(marker);
 });
+
+test('HTTP JSON checks number tokens before conversion and offers explicit binary64 policy', async () => {
+  for (const token of ['9007199254740993', '1.0000000000000000001', '1e999', '1e-9999']) {
+    const response = new HttpResponse(new Response(), Buffer.from(`{"value":${token}}`));
+    expect(() => response.json()).toThrow('not valid JSON');
+    await expect(response.validate({ '~standard': { validate: value => ({ value }) } })).rejects.toMatchObject({ code: 'INVALID_JSON' });
+  }
+  const rounded = new HttpResponse(new Response(), Buffer.from('{"value":0.10000000000000001}'));
+  expect(rounded.json({ decimalPrecision: 'binary64' })).toEqual({ value: 0.1 });
+  expect(() => new HttpResponse(new Response(), Buffer.from('1e999')).json({ decimalPrecision: 'binary64' })).toThrow();
+});
+
+test('sanitizes result getters and rejects malformed schema results', async () => {
+  const secret = 'SCHEMA_RESULT_PRIVATE_SENTINEL';
+  const response = new HttpResponse(new Response(), Buffer.from(JSON.stringify({ token: secret })));
+  const outputs = [null, {}, { issues: {} }, { get value() { throw new Error(secret); } }, { get issues() { throw new Error(secret); } }];
+  for (const output of outputs) {
+    let failure: unknown;
+    try { await response.validate({ '~standard': { validate: () => output } } as never); } catch (error) { failure = error; }
+    expect(failure).toMatchObject({ code: 'SCHEMA_MISMATCH' });
+    expect(inspect(failure, { depth: 10 })).not.toContain(secret);
+  }
+});
+
+test('rejects silent JSON request transformations before transport', async () => {
+  let sent = 0;
+  class Transport extends HttpTransport {
+    async send(): Promise<HttpResponse> { sent++; return new HttpResponse(new Response(), Buffer.from('{}')); }
+  }
+  const client = new HttpProtocolClient({ baseUrl }, new Transport());
+  for (const json of [{ value: Infinity }, { value: NaN }, { value: undefined }, [undefined], new Date(), { toJSON: () => null }]) {
+    await expect(client.post('/', { json })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' });
+  }
+  expect(sent).toBe(0);
+});

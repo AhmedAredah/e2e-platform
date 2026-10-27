@@ -722,7 +722,7 @@ export type PollExpectation<T> = {
 
 /** The `expect` entry: dispatch on the argument, plus `expect.poll`. */
 export interface Expect {
-  (actual: Locator): AsyncExpectation;
+  (actual: Locator, message?: string): AsyncExpectation;
   <E extends object>(actual: Expectable<E>): E;
   /** `message` opens the failure text, so a bare `expected false to be true` says which check it was. */
   <T>(actual: T, message?: string): ValueExpectation<T>;

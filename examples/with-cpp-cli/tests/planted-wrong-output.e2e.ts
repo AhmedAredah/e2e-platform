@@ -17,6 +17,6 @@ test('rejects the planted wrong result even though the program exits successfull
   const comparison = compareJson(await exportedResult(directory), {
     schemaVersion: 1, operation: 'sum', operands: [1.5, 2.5], sum: 4,
   });
-  expect(comparison.differences).toEqual([]);
+  expect(comparison.differences, '[oracle:calculation]').toEqual([]);
   expect(comparison.matches).toBe(true);
 });

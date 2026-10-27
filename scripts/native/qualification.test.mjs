@@ -10,14 +10,15 @@ import { readBuildQualification } from './build-qualification.mjs';
 function negativeReport() {
   return { schemaVersion: 'report-1', run: { status: 'failed', errors: [], results: [{
     kind: 'test', status: 'failed', titlePath: ['rejects a planted error'],
-    attempts: [{ cleanup: 'complete', error: { code: 'ASSERTION_FAILED', category: 'test' } }],
+    attempts: [{ cleanup: 'complete', error: { code: 'ASSERTION_FAILED', category: 'test', message: '[oracle:calculation] differs' } }],
   }] } };
 }
-const failure = { expected: 'failed', failureTitle: 'rejects a planted error' };
+const failure = { expected: 'failed', failureTitle: 'rejects a planted error', failureOracle: '[oracle:calculation]' };
 
 test('qualification requires the intended assertion and complete owned-process cleanup', () => {
   assert.equal(validateNativeReport(negativeReport(), failure).status, 'failed');
   for (const mutate of [
+    (report) => { report.run.results[0].attempts[0].error.message = 'Earlier unrelated assertion failed'; },
     (report) => { report.run.results[0].attempts[0].error.code = 'DEPENDENCY_MISSING'; },
     (report) => { report.run.results[0].attempts[0].cleanup = 'incomplete'; },
     (report) => { report.run.results[0].attempts = []; },

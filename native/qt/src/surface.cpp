@@ -12,6 +12,7 @@
 #include <QCoreApplication>
 #include <QInputMethodEvent>
 #include <QPainter>
+#include <QKeySequence>
 
 namespace e2e::qt::detail {
 Surface::Surface() {
@@ -125,7 +126,13 @@ void Surface::type(QObject* object, const QString& text, bool replace, ObjectAda
     QPointer<QObject> target(object);
     adapter.focus(object);
     if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during focus");
-    if (replace) { key(target, "ControlOrMeta+A", adapter); if (target) key(target, "Backspace", adapter); }
+    if (replace) {
+        const QKeySequence selectAll(QKeySequence::SelectAll);
+        if (selectAll.count() != 1) throw Failure("UNSUPPORTED_CAPABILITY", "platform has no single-key select-all binding");
+        const auto combination = selectAll[0];
+        adapter.key(target, combination.key(), combination.keyboardModifiers());
+        if (target) key(target, "Backspace", adapter);
+    }
     if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during input");
     for (qsizetype index = 0; index < text.size();) {
         if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during input");

@@ -67,7 +67,7 @@ function linkPackages(example, packages) {
 
 /** Requires complete cleanup and the intended assertion failure, never a broken setup or skipped test. */
 function verifyReport(reportPath, expected, minimumResults, failureTitle) {
-  return validateNativeReport(JSON.parse(readFileSync(reportPath, 'utf8')), { expected, minimumResults, failureTitle });
+  return validateNativeReport(JSON.parse(readFileSync(reportPath, 'utf8')), { expected, minimumResults, failureTitle, failureOracle: '[oracle:calculation]' });
 }
 
 /** Finds retained evidence without assuming the test's Unicode subdirectory name. */

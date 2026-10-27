@@ -48,6 +48,7 @@ class Session:
             self.socket = socket.create_connection(("127.0.0.1", port), timeout=15)
             self.stream = self.socket.makefile("rwb")
             initialized = self.call("initialize", {"protocolVersion": 1, "token": self.token})
+            assert initialized.get("actionability") is True
             assert initialized["keyboard"] is False and initialized["screenshots"] is False
             self.wait_for(lambda snapshot: self.find(snapshot, "submit"))
             snapshot = self.snapshot()
@@ -160,6 +161,10 @@ def verify(driver, app, broken):
         secure = session.find(snapshot, "password")
         assert secure["states"]["secure"] and not any(key in secure for key in ("value", "text", "attributes", "children"))
         checks += 2
+        original = session.find(snapshot, "input")
+        assert session.call("actionability", {"ref": original["ref"], "action": {"kind": "fill", "value": "must-not-be-written"}}) is None
+        assert session.find(session.snapshot(), "input").get("value") == original.get("value"), "preflight mutated input"
+        checks += 1
         session.perform("input", "fill", value="portable desktop")
         session.perform("submit", "tap")
         snapshot = session.wait_for(lambda tree: session.find(tree, "result")["name"] != "idle")
@@ -197,6 +202,21 @@ def verify(driver, app, broken):
         else:
             raise AssertionError("Stale node accepted")
         checks += 1
+        late = session.find(session.snapshot(), "late")
+        assert late is not None, "clipped fixture control must remain discoverable"
+        try:
+            session.call("actionability", {"ref": late["ref"], "action": {"kind": "tap"}})
+        except RpcError as error:
+            assert error.code == "NOT_ACTIONABLE"
+        else:
+            raise AssertionError("Clipped control was actionable before scrolling")
+        session.perform("late", "scrollIntoView")
+        session.wait_for(lambda tree: not session.find(tree, "late")["states"]["hidden"])
+        session.perform("late", "tap")
+        session.perform("input", "scrollIntoView")
+        session.wait_for(lambda tree: not session.find(tree, "input")["states"]["hidden"])
+        session.wait_for(lambda tree: session.find(tree, "result")["name"] == "scrolled")
+        checks += 2
         session.perform("input", "fill", value="sensitive-marker", sensitive=True)
         snapshot = session.snapshot()
         assert "sensitive-marker" not in json.dumps(snapshot)

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "calculator/options.h"
+#include "calculator/number.h"
 
 #include <cmath>
 #include <locale>
@@ -7,21 +8,6 @@
 #include <stdexcept>
 
 namespace calculator {
-// Reject partial numbers and non-finite inputs rather than serializing invalid JSON.
-double parse_number(const std::string& text) {
-    std::istringstream stream(text);
-    stream.imbue(std::locale::classic());
-    double value = 0;
-    if (!(stream >> value) || !std::isfinite(value)) {
-        throw std::runtime_error("expected a finite number: " + text);
-    }
-    stream >> std::ws;
-    // Standard libraries differ in whether malformed suffixes fail extraction
-    // or remain unread. Both paths must expose the same CLI input contract.
-    if (!stream.eof()) throw std::runtime_error("expected a finite number: " + text);
-    return value;
-}
-
 Options CommandLineParser::parse(int argc, char** argv, const std::string& operation, std::istream& input) const {
     if (argc < 2 || std::string(argv[1]) != operation) {
         throw std::runtime_error("usage: e2e_cpp_calculator sum (--a NUMBER --b NUMBER | --stdin) [--output PATH] [--wrong-output]");
@@ -44,11 +30,11 @@ Options CommandLineParser::parse(int argc, char** argv, const std::string& opera
                 options.output = value;
             } else if (flag == "--a") {
                 if (options.has_a) throw std::runtime_error("duplicate --a");
-                options.a = parse_number(value);
+                options.a = NumberParser{}.parse(value);
                 options.has_a = true;
             } else {
                 if (options.has_b) throw std::runtime_error("duplicate --b");
-                options.b = parse_number(value);
+                options.b = NumberParser{}.parse(value);
                 options.has_b = true;
             }
         } else {
@@ -63,8 +49,8 @@ Options CommandLineParser::parse(int argc, char** argv, const std::string& opera
         if (!(input >> first >> second) || (input >> extra)) {
             throw std::runtime_error("stdin must contain exactly two numbers");
         }
-        options.a = parse_number(first);
-        options.b = parse_number(second);
+        options.a = NumberParser{}.parse(first);
+        options.b = NumberParser{}.parse(second);
     } else if (!options.has_a || !options.has_b) {
         throw std::runtime_error("both --a and --b are required");
     }

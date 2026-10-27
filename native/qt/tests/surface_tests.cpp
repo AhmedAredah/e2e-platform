@@ -319,6 +319,21 @@ private slots:
         QCOMPARE(parsed.key, Qt::Key_A);
     }
 #ifdef E2E_QT_HAS_QUICK
+    void secureQuickWindowHidesTitleChildrenAndPixels() {
+        QQuickWindow window; window.resize(400, 200);
+        window.setTitle("synthetic-window-secret"); window.setProperty("e2eSecure", true);
+        QQuickItem label(window.contentItem()); label.setObjectName("private-child"); label.setSize({200,40});
+        label.setProperty("text", "synthetic-child-secret");
+        window.show(); window.requestActivate(); QApplication::processEvents();
+        QVERIFY(QTest::qWaitForWindowExposed(&window)); QTRY_VERIFY(window.isSceneGraphInitialized());
+        Surface surface; const auto snapshot = surface.snapshot(true);
+        const auto root = snapshot.value("root").toObject();
+        QVERIFY(root.value("states").toObject().value("secure").toBool());
+        QVERIFY(!root.contains("name")); QVERIFY(!root.contains("children"));
+        QVERIFY(!QJsonDocument(snapshot).toJson().contains("synthetic-"));
+        QVERIFY(!QJsonDocument(surface.windows()).toJson().contains("synthetic-"));
+        QVERIFY(blackRegion(snapshot.value("screenshot").toObject(), QRectF(0,0,400,200)));
+    }
     void quickTextBoundsOmitWholeFields() {
         QQuickWindow window;
         window.resize(600, 220);

@@ -30,6 +30,7 @@ public:
     QImage capture(QObject*) override;
     void secureRegions(QObject*, QList<QRectF>&, int&) const override;
 private:
+    int optionIndex(QObject*, const QJsonValue&) const;
     ControlAdapters* custom_;
     QJsonObject node(QObject*, QObject*, int, ObjectRegistry&, bool);
 };

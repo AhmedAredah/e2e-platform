@@ -5,7 +5,7 @@ import { CppTestHost } from '../src/host.ts';
 
 /** Simulates a child receiving its response before the supervisor acknowledges the write. */
 test('serializes response writes when the next request arrives before write acknowledgement', async () => {
-  const request = (id: number): Buffer => Buffer.from(JSON.stringify({ protocol: 1, id, method: 'expect.true', params: { actual: true } }) + '\n');
+  const request = (id: number): Buffer => Buffer.from(JSON.stringify({ protocol: 2, id, method: id === 1 ? 'case.start' : id === 3 ? 'case.complete' : 'expect.true', params: id === 1 ? { name: 'write ordering' } : id === 3 ? {} : { actual: true } }) + '\n');
   const capture = { bytes: Buffer.alloc(0), totalBytes: 0, truncated: false };
   const completed: ProcessResult = { executable: 'fixture', args: [], cwd: '.', pid: 1, status: 'exited', exitCode: 0, signal: null, durationMs: 1, stdout: capture, stderr: capture };
   let finish: (result: ProcessResult) => void = () => {};

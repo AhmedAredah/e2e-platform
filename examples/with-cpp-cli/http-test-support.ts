@@ -25,7 +25,7 @@ async function readyPort(child: ProcessSession): Promise<number> {
 
 /** Owns startup, requests and teardown, including when a deliberately wrong result fails an assertion. */
 export async function withCppService<T>(processes: ProcessFixture, wrong: boolean, body: (client: HttpClient) => Promise<T>): Promise<T> {
-  const executable = process.env['E2E_CPP_HTTP_BINARY'] ?? resolve('build', process.platform === 'win32' ? 'Release/e2e_cpp_http.exe' : 'e2e_cpp_http');
+  const executable = process.env['E2E_CPP_HTTP_BINARY'] ?? resolve('build', 'bin', process.platform === 'win32' ? 'e2e_cpp_http.exe' : 'e2e_cpp_http');
   const child = await processes.start({ executable, args: wrong ? ['--wrong-result'] : [], timeoutMs: 15_000, maxOutputBytes: 64 * 1024, killGraceMs: 500, drainTimeoutMs: 1000 });
   let outcome: { ok: true; value: T } | { ok: false; error: unknown };
   try {

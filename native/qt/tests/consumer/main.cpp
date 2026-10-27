@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include <e2e/qt/bridge.h>
 #include <e2e/qt/control_adapter.h>
-#include <QCoreApplication>
+#include <QApplication>
+#include <e2e/qt/tracked_tabs.h>
 #include <memory>
 #include <thread>
 
@@ -18,7 +19,10 @@ private:
     QString name_;
 };
 int main(int argc, char** argv) {
-    QCoreApplication app(argc, argv);
+    QApplication app(argc, argv);
+    e2e::qt::TrackedTabWidget tabs; tabs.addTab(new QWidget, "First");
+    e2e::qt::TrackedTabBar bar; bar.addTab("First");
+    if (bar.generation() == 0) return 6;
     qunsetenv("E2E_NATIVE_TOKEN");
     e2e::qt::Bridge bridge;
     auto adapter = std::make_shared<ConsumerAdapter>();

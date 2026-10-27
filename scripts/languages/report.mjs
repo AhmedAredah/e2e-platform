@@ -14,7 +14,7 @@ export function validateLanguageReport(document, negative) {
     const attempt = item.attempts[0];
     if (attempt.status !== (negative ? 'failed' : 'passed') || (!negative && attempt.error !== undefined)) throw new Error('Attempt outcome contradicts the intended result');
     if (attempt.cleanup !== 'complete' || attempt.secondaryErrors?.length) throw new Error('Application cleanup did not complete');
-    if (negative && (attempt.error?.code !== 'ASSERTION_FAILED' || attempt.error.category !== 'test')) throw new Error('A negative run failed for a reason other than its planted wrong result');
+    if (negative && (attempt.error?.code !== 'ASSERTION_FAILED' || attempt.error.category !== 'test' || !attempt.error.message?.includes('independent calculator output oracle'))) throw new Error('A negative run failed for a reason other than its planted wrong result');
   }
   if (expectedCases.size !== 0) throw new Error('A required language/scenario pair did not run');
   return selected.length;

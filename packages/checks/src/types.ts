@@ -46,6 +46,8 @@ export interface JsonComparisonOptions extends ComparisonOptions {
 
 /** CSV rows may be aligned by unique keys; header ordering is immaterial. */
 export interface CsvComparisonOptions extends ComparisonOptions {
+  /** Explicitly permit finite decimal-to-binary64 rounding before applying tolerances. */
+  readonly decimalPrecision?: 'exact' | 'binary64';
   readonly keyColumns?: readonly string[];
   readonly ignoreColumns?: readonly string[];
   readonly delimiter?: string;

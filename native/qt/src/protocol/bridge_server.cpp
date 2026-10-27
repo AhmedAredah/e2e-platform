@@ -9,6 +9,7 @@
 #include <QWindow>
 #include <QWidget>
 #include <cstdio>
+#include <cmath>
 namespace e2e::qt::detail {
 BridgeServer::BridgeServer(QObject* parent) : QObject(parent), server(this) {
     QObject::connect(&server, &QTcpServer::newConnection, this, [this] { accept(); });
@@ -146,7 +147,7 @@ void BridgeServer::dispatch(const QByteArray& line, const ConnectionTarget& targ
             if (parse.error != QJsonParseError::NoError || !document.isObject()) throw Failure("INVALID_STATE", "invalid JSON-RPC message");
             const QJsonObject message = document.object();
             id = message.value("id");
-            if (message.value("jsonrpc") != "2.0" || (!id.isString() && !id.isDouble()) || !message.value("method").isString())
+            if (message.value("jsonrpc") != "2.0" || (!id.isDouble() || id.toDouble() < 1 || id.toDouble() > 9007199254740991.0 || std::floor(id.toDouble()) != id.toDouble()) || !message.value("method").isString())
                 throw Failure("INVALID_STATE", "invalid JSON-RPC envelope");
             if (message.contains("params") && !message.value("params").isObject()) throw Failure("INVALID_STATE", "params must be an object");
             const QString method = message.value("method").toString();

@@ -2,17 +2,19 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { runProcess } from '../../packages/process/dist/index.js';
-import { compareJson } from '../../packages/checks/dist/index.js';
 import { VerificationCompletionGuard } from './completion-guard.mjs';
 import { readStepScreenshot } from './verified-screenshot.mjs';
 import { configuredExecutables, requireExecutableTarget } from './cmake-targets.mjs';
 
 const completion = new VerificationCompletionGuard();
 const root = fileURLToPath(new URL('../../', import.meta.url));
+const evidence = join(root, '.e2e', 'cpp', 'qt-exports');
+await rm(join(evidence, 'qt-export-proof.json'), { force: true });
+const { runProcess } = await import('../../packages/process/dist/index.js');
+const { compareJson } = await import('../../packages/checks/dist/index.js');
 const executable = process.env.E2E_QT_DEMO
   ?? requireExecutableTarget(configuredExecutables(join(root, 'examples/with-qt/build')), 'e2e_qt_demo');
-const evidence = join(root, '.e2e', 'cpp', 'qt-exports');
+
 const core = pathToFileURL(join(root, 'packages/e2e/dist/index.js')).href;
 const native = pathToFileURL(join(root, 'packages/native/dist/index.js')).href;
 const results = [];

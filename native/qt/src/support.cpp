@@ -19,6 +19,11 @@
 #include <QPointer>
 #include <QMetaProperty>
 #include <QSet>
+#include <QKeySequence>
+#include <QApplication>
+#include <QWindow>
+#include <QElapsedTimer>
+#include <QTest>
 
 #ifdef E2E_QT_HAS_QUICK
 #include <QQuickItem>
@@ -41,6 +46,23 @@ QString clean(QString value, int limit) {
     // that its later exact-value redaction can no longer recognize.
     if (value.contains(QChar::Null)) return QStringLiteral("[omitted: text contains NUL]");
     return value.size() > limit ? QStringLiteral("[omitted: text exceeds limit]") : value;
+}
+
+/** Activates the selected toolkit window before requesting its child keyboard focus. */
+void activateWidgetWindow(QWidget* widget) {
+    QPointer<QWidget> target(widget);
+    QPointer<QWidget> root(widget->window());
+    QPointer<QWindow> window(root->windowHandle());
+    if (!window) throw Failure("NOT_ACTIONABLE", "Qt window is not exposed");
+    if (auto* modal = QApplication::activeModalWidget(); modal && modal != root)
+        throw Failure("NOT_ACTIONABLE", "another modal window blocks keyboard focus");
+    if (root->isActiveWindow()) return;
+    root->activateWindow();
+    if (!target || !root || !window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during activation");
+    window->requestActivate();
+    QElapsedTimer elapsed; elapsed.start();
+    while (target && root && window && !root->isActiveWindow() && elapsed.elapsed() < 1000) QTest::qWait(10);
+    if (!target || !root || !root->isActiveWindow()) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window did not acquire keyboard activation");
 }
 
 QJsonObject rectJson(const QRectF& rect) {
@@ -177,6 +199,16 @@ bool secureObject(QObject* object) {
 }
 
 ParsedKey parseKey(QString value) {
+    // Portable primary shortcuts follow the active Qt platform theme, including
+    // offscreen themes on macOS. Physical Control/Meta keep their explicit grammar.
+    if (value.startsWith("ControlOrMeta+")) {
+        const auto binding = QKeySequence(QKeySequence::SelectAll);
+        if (binding.count() == 1) {
+            auto parsed = parseKey(value.mid(14), {false, false});
+            parsed.modifiers |= binding[0].keyboardModifiers();
+            return parsed;
+        }
+    }
 #ifdef Q_OS_MACOS
     constexpr bool macos = true;
 #else

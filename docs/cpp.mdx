@@ -245,3 +245,28 @@ contracts, qualification gates and primary-source references. Framework sources:
 [Qt compatibility](https://doc.qt.io/qt-6/qtmodules.html),
 [Node child processes](https://nodejs.org/api/child_process.html) and
 [CTest](https://cmake.org/cmake/help/latest/manual/ctest.1.html).
+
+## Review hardening and migration
+
+The C++ authoring transport is now protocol 2. Rebuild SDK test binaries together
+with the host adapter; the native desktop wire stays version 1. Use
+`E2E_TEST_MAIN()` for Unicode case dispatch on Windows. Equality retains nested
+64-bit integer precision; nonfinite values and premature successful process exits
+fail the case. Assertion messages can identify a numerical oracle:
+`session.expect_equal(actual, expected, "total")` and
+`locator.expect().message("total").to_have_text("4")`.
+
+TypeScript locator assertions also accept a message:
+`await expect(screen.getByTestId('result'), 'total').toHaveText('4')`.
+Use deliberate messages without secrets. HTTP `response.json()` now checks
+numeric precision; choose `{ decimalPrecision: 'binary64' }` explicitly for
+intentional finite C++ floating-point output. CSV numeric columns accept that
+same option. Default exact-integer checks remain enabled.
+
+For Qt tab mutations use `e2e::qt::TrackedTabBar` or `TrackedTabWidget`, or supply
+an application control adapter. Plain tab controls remain readable but cannot
+provide provable structural identity. Header scrolling that lacks a supported
+implementation fails explicitly. Requested combobox options are checked during
+read-only preflight. These are control-specific contracts, not universal toolkit
+certification. See `native/qt/README.md` for the matching installed Qt kit and
+CTest display-platform settings.

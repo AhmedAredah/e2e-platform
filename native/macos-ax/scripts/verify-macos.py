@@ -15,6 +15,12 @@ import sys
 import time
 
 
+class RpcError(AssertionError):
+    def __init__(self, code):
+        self.code = code
+        super().__init__('native operation failed: ' + code)
+
+
 def descendants(pid):
     rows = subprocess.check_output(['/bin/ps', '-axo', 'pid=,ppid='], text=True)
     pairs = [tuple(map(int, row.split())) for row in rows.splitlines() if len(row.split()) == 2]
@@ -69,7 +75,7 @@ def scenario(args, wrong=False):
             response = json.loads(line)
             assert response.get('id') == next_id and response.get('jsonrpc') == '2.0'
             if 'error' in response:
-                raise AssertionError('native operation failed: ' + response['error'].get('data', {}).get('code', 'unknown'))
+                raise RpcError(response['error'].get('data', {}).get('code', 'unknown'))
             return response['result']
 
         def snapshot():
@@ -99,7 +105,7 @@ def scenario(args, wrong=False):
 
         initialized = request('initialize', dict(protocolVersion=1, token=token))
         assert initialized['keyboard'] is False and initialized['screenshots'] is False
-        assert set(initialized['actions']) == {'tap', 'fill', 'clear', 'focus', 'check', 'uncheck'}
+        assert set(initialized['actions']) == {'tap', 'fill', 'clear', 'focus', 'check', 'uncheck', 'scrollIntoView', 'selectOption'}
         checks.append('authenticated capability negotiation')
         nodes = wait_for(lambda nodes: {'input', 'apply', 'echo', 'option'} <= {node.get('testId') for node in nodes})
         children = descendants(process.pid)
@@ -108,6 +114,26 @@ def scenario(args, wrong=False):
         assert secure, 'NSSecureTextField was not recognized'
         assert all(not any(key in node for key in ('value', 'text', 'attributes', 'children')) for node in secure)
         checks.append('real AppKit controls and secure-source suppression')
+        assert initialized.get('actionability') is True
+        original = find(nodes, 'input')
+        assert request('actionability', dict(ref=original['ref'], action=dict(kind='fill', value='preflight-only'))) is None
+        assert find(snapshot(), 'input').get('value') == original.get('value'), 'preflight mutated input'
+        moving = find(snapshot(), 'moving')
+        mover = find(snapshot(), 'move-control')
+        assert request('actionability', dict(ref=moving['ref'], action=dict(kind='tap'))) is None
+        request('perform', dict(ref=mover['ref'], action=dict(kind='tap')))
+        # Do not take a snapshot: the driver must use fresh window/ancestor geometry.
+        deadline = time.monotonic() + 5
+        while True:
+            try:
+                request('actionability', dict(ref=moving['ref'], action=dict(kind='tap')))
+            except RpcError as error:
+                assert error.code == 'NOT_ACTIONABLE'
+                break
+            if time.monotonic() >= deadline:
+                raise AssertionError('stale visible geometry accepted after the control moved')
+            time.sleep(0.05)
+        checks.append('read-only preflight and current geometry after an unsnapshotted move')
         perform('input', dict(kind='focus'))
         perform('input', dict(kind='fill', value='Rust AX verified', sensitive=False))
         perform('apply', dict(kind='tap'))

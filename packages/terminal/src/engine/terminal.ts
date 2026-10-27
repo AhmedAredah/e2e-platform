@@ -208,7 +208,7 @@ export class TerminalEngine implements Engine {
     // that the runner can no longer recognize and redact.
     const bounded = (text: string, limit: number): string => observed && text.length > limit ? '[omitted: text exceeds limit]' : text;
     return {
-      location: snapshot.title === '' ? 'terminal' : snapshot.title,
+      location: 'terminal',
       viewport: { width: snapshot.columns, height: snapshot.rows },
       root: {
         ref: { id: 'terminal', revision: '' }, role: 'terminal',

@@ -203,8 +203,10 @@ export class NativeEngine {
       try { await this.stopInternal(context); } catch (error) { failures.push(error); }
       const profile = this.profile;
       try {
-        await profile?.dispose();
-        if (this.profile === profile) this.profile = undefined;
+        if (this.process === undefined && this.driver === undefined) {
+          await profile?.dispose();
+          if (this.profile === profile) this.profile = undefined;
+        }
       } catch (error) { failures.push(error); }
       if (failures.length === 1) throw failures[0];
       if (failures.length > 1) throw new EngineError('ENGINE_FAILURE', 'native process and profile cleanup failed', { retryable: false, cause: new AggregateError(failures) });
@@ -218,9 +220,7 @@ export class NativeEngine {
     this.stopping = true;
     const driver = this.driver;
     const child = this.process;
-    this.driver = undefined;
     this.initialized = undefined;
-    this.process = undefined;
     const failures: unknown[] = [];
     const diagnostics: string[] = [];
     const failed = (stage: string, cause: unknown) => {
@@ -236,12 +236,13 @@ export class NativeEngine {
       if (!context.signal.aborted) {
         try { await driver.shutdown({ signal: context.signal, timeoutMs: Math.min(200, context.timeoutMs) }); } catch { /* Process supervision supplies the final stop. */ }
       }
-      try { driver.close(); } catch (cause) { failed('driver-close', cause); }
+      try { driver.close(); if (this.driver === driver) this.driver = undefined; } catch (cause) { failed('driver-close', cause); }
     }
     if (child !== undefined) {
       try {
         const result = await child.stop();
         if (result.ioError !== undefined) failed('process-io', result.ioError);
+        else if (this.process === child) this.process = undefined;
       } catch (cause) { failed('process-stop', cause); }
     }
     if (failures.length > 0) throw new EngineError('ENGINE_FAILURE', `native application cleanup failed (${diagnostics.join(', ')})`, { retryable: false, cause: new AggregateError(failures) });

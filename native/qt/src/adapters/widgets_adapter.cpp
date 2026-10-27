@@ -132,6 +132,7 @@ void WidgetsAdapter::ready(QObject* object, QObject* root, const QJsonObject& ac
         return;
     }
     actionable(object, root);
+    if (kind == "selectOption" && !(custom_ && custom_->handles(object))) optionIndex(object, action.value("value"));
     if ((kind == "fill" || kind == "clear") && !(custom_ && custom_->handles(object)) && !editable(object)) throw Failure("NOT_ACTIONABLE", "Qt target is not editable");
     if (kind == "swipe") {
         const QString direction = requiredText(action, "direction");
@@ -187,6 +188,7 @@ QWidget* WidgetsAdapter::keyboardTarget(QObject* object) const {
 void WidgetsAdapter::focus(QObject* object) {
     if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->focus(); return; }
     QPointer<QWidget> target(static_cast<QWidget*>(object));
+    activateWidgetWindow(target);
     target->setFocus(Qt::OtherFocusReason);
     if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt widget was destroyed during focus");
     keyboardTarget(target);
@@ -223,7 +225,7 @@ void WidgetsAdapter::setChecked(QObject* object, bool value) {
     if (checked(object) != value) click(object, Qt::LeftButton, false, false);
 }
 QObject* WidgetsAdapter::focused(QObject*) const { return QApplication::focusWidget(); }
-void WidgetsAdapter::selectOption(QObject* object, const QJsonValue& option) {
+int WidgetsAdapter::optionIndex(QObject* object, const QJsonValue& option) const {
     auto* combo = qobject_cast<QComboBox*>(object);
     if (!combo) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires QComboBox");
     const int count = combo->count();
@@ -257,6 +259,14 @@ void WidgetsAdapter::selectOption(QObject* object, const QJsonValue& option) {
     const QPersistentModelIndex selected(combo->model()->index(index, combo->modelColumn(), combo->rootModelIndex()));
     const auto allowed = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     if (!selected.isValid() || (selected.flags() & allowed) != allowed) throw Failure("NOT_ACTIONABLE", "combobox option is disabled or not selectable");
+    return index;
+}
+void WidgetsAdapter::selectOption(QObject* object, const QJsonValue& option) {
+    const int index = optionIndex(object, option);
+    auto* combo = qobject_cast<QComboBox*>(object);
+    const int count = combo->count();
+    const QPersistentModelIndex selected(combo->model()->index(index, combo->modelColumn(), combo->rootModelIndex()));
+    const auto allowed = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     if (combo->currentIndex() == index) return;
     const QString expectedText = combo->itemText(index);
     const QVariant expectedValue = combo->itemData(index);

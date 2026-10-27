@@ -4,9 +4,9 @@ import { withCppService } from '../http-test-support.ts';
 
 test('C++ HTTP returns independent arithmetic and rejects invalid requests', async ({ processes }) => {
   await withCppService(processes, false, async (client) => {
-    const actual = (await client.get('/sum?a=0.1&b=0.2')).expectStatus(200).json();
+    const actual = (await client.get('/sum?a=0.1&b=0.2')).expectStatus(200).json({ decimalPrecision: 'binary64' });
     expect(compareJson(actual, { schemaVersion: 1, operation: 'sum', operands: [0.1, 0.2], sum: 0.3 }, { numbers: { absolute: 1e-12 } }).matches).toBe(true);
-    for (const query of ['a=invalid&b=2', 'a=1&b=2&a=3', 'a=1&b=2&garbage', 'a=nan&b=2', 'a=1e308&b=1e308', 'a=1&b=2&']) {
+    for (const query of ['a=invalid&b=2', 'a=1e-9999&b=2', 'a=1&b=2&a=3', 'a=1&b=2&garbage', 'a=nan&b=2', 'a=1e308&b=1e308', 'a=1&b=2&']) {
       (await client.get(`/sum?${query}`)).expectStatus(400);
     }
     (await client.get('/missing')).expectStatus(404);

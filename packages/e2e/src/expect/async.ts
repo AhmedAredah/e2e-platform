@@ -93,10 +93,11 @@ class AsyncExpectationImpl implements AsyncExpectation {
   constructor(
     private readonly internals: LocatorInternals,
     private readonly negated: boolean,
+    private readonly message: string | undefined,
   ) {}
 
   get not(): AsyncExpectation {
-    return new AsyncExpectationImpl(this.internals, !this.negated);
+    return new AsyncExpectationImpl(this.internals, !this.negated, this.message);
   }
 
   private get label(): string {
@@ -125,6 +126,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
           return new TestError(
             'ASSERTION_FAILED',
             [
+              ...(this.message === undefined ? [] : [this.message]),
               `${api} failed`,
               `locator: ${this.label}`,
               `expected: ${expected}`,
@@ -335,6 +337,6 @@ function observedState(sample: Sample): string {
   return active.length === 0 ? 'default states' : `states: ${active.join(', ')}`;
 }
 
-export function createAsyncExpectation(internals: LocatorInternals): AsyncExpectation {
-  return new AsyncExpectationImpl(internals, false);
+export function createAsyncExpectation(internals: LocatorInternals, message?: string): AsyncExpectation {
+  return new AsyncExpectationImpl(internals, false, message);
 }

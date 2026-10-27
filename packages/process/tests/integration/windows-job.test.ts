@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,7 +36,7 @@ describe('Windows supervisor client portable wire contract (not native Job Objec
     const result = await runner().run({ ...node('process.stdout.write(JSON.stringify({args:process.argv.slice(1),cwd:process.cwd(),env:process.env}))'), args: ['-e', 'process.stdout.write(JSON.stringify({args:process.argv.slice(1),cwd:process.cwd(),env:process.env}))', '--', ...args], cwd, inheritEnv: false, env: { E2e_Only: 'kept' } });
     const value = JSON.parse(result.stdout.bytes.toString()) as { args: string[]; cwd: string; env: Record<string, string> };
     expect(value.args).toEqual(args);
-    expect(value.cwd).toBe(cwd);
+    expect(await realpath(value.cwd)).toBe(await realpath(cwd));
     expect(value.env.E2E_ONLY).toBe('kept');
     expect(value.env.E2E_AMBIENT).toBeUndefined();
     expect(result.ioError).toBeUndefined();

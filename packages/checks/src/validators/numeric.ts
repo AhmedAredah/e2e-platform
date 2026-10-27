@@ -1,5 +1,6 @@
 import { OutputValidator } from './base.ts';
 import type { ComparisonResult, NumericComparison, NumericTolerance } from '../types.ts';
+import { withinTolerance } from '../internal/binary64.ts';
 
 /** Extensible numeric oracle with an explicit error budget and non-finite policies. */
 export class NumericValidator extends OutputValidator<number, NumericTolerance> {
@@ -36,7 +37,7 @@ export class NumericValidator extends OutputValidator<number, NumericTolerance> 
     // Normalize the error, not the tolerance: multiplying a subnormal scale can
     // round the permitted error upward. Divide operands first only on overflow.
     const relativeError = scale === 0 ? 0 : Number.isFinite(difference) ? difference / scale : Math.abs(actual / scale - expected / scale);
-    const matches = difference <= absolute || (relative > 0 && relativeError <= relative);
+    const matches = withinTolerance(actual, expected, absolute, relative);
     return { matches, difference, allowedDifference,
       ...(!matches && difference <= allowedDifference ? { reason: `Relative difference ${relativeError} exceeds ${relative}; absolute difference ${difference} exceeds ${absolute}` } : {}),
     };

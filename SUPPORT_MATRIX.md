@@ -1,5 +1,10 @@
 # Application and platform support
 
+Current review status and unresolved release gates are tracked in
+[the C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
+Plain Qt tab controls are observable; safe mutations require the tracked tab
+classes or a registered application adapter.
+
 This branch adds process, native-bridge, terminal, protocol, C++ authoring and
 output-checking modules to the existing e2e runner. It does not infer a GUI automation API from
 the fact that an application was written in C++, Python, C# or Rust. The application boundary and

@@ -79,9 +79,13 @@ QJsonObject QuickAdapter::snapshot(QObject* root, ObjectRegistry& registry) {
     auto* window = static_cast<QQuickWindow*>(root);
     QJsonObject tree = registry.node(window, true);
     tree["role"] = "window";
-    tree["name"] = clean(window->title(), 256);
+    const bool secure = secureObject(window);
+    if (secure) {
+        tree["states"] = QJsonObject{{"secure", true}};
+        tree["inputPurpose"] = "generic-secret";
+    } else tree["name"] = clean(window->title(), 256);
     tree["rect"] = rectJson(QRectF(0, 0, window->width(), window->height()));
-    tree["children"] = QJsonArray{node(window->contentItem(), window, 1, registry, false)};
+    if (!secure) tree["children"] = QJsonArray{node(window->contentItem(), window, 1, registry, false)};
     return {{"root", tree}, {"viewport", QJsonObject{{"width", window->width()}, {"height", window->height()}}}, {"location", "qt:view"}, {"truncated", registry.truncated}};
 }
 void QuickAdapter::actionable(QObject* object, QObject* root) const {
@@ -108,6 +112,7 @@ void QuickAdapter::ready(QObject* object, QObject* root, const QJsonObject& acti
         return;
     }
     actionable(item, root);
+    if (kind == "selectOption" && !(custom_ && custom_->handles(object))) optionIndex(object, action.value("value"));
     if ((kind == "fill" || kind == "clear") && !(custom_ && custom_->handles(object)) && !editable(item)) throw Failure("NOT_ACTIONABLE", "Qt Quick target is not editable");
     if (kind == "swipe") {
         const QString direction = requiredText(action, "direction");
@@ -215,7 +220,7 @@ bool QuickAdapter::checkable(QObject* object) const { return object->property("c
 bool QuickAdapter::checked(QObject* object) const { return object->property("checked").toBool(); }
 void QuickAdapter::setChecked(QObject* object, bool value) { if (checked(object) != value) click(object, Qt::LeftButton, false, false); }
 QObject* QuickAdapter::focused(QObject* root) const { return static_cast<QQuickWindow*>(root)->activeFocusItem(); }
-void QuickAdapter::selectOption(QObject* object, const QJsonValue& option) {
+int QuickAdapter::optionIndex(QObject* object, const QJsonValue& option) const {
     // Inspect only the control's public QML API. No private Qt headers or
     // generated JavaScript are involved, and selection follows the key path so
     // application handlers receive ComboBox::activated as real input does.
@@ -263,6 +268,12 @@ void QuickAdapter::selectOption(QObject* object, const QJsonValue& option) {
     // Editable controls route navigation keys into their text editor. Refuse
     // that different interaction contract instead of setting currentIndex.
     if (target->property("editable").toBool()) throw Failure("UNSUPPORTED_CAPABILITY", "selectOption requires a non-editable Qt Quick ComboBox");
+    return index;
+}
+void QuickAdapter::selectOption(QObject* object, const QJsonValue& option) {
+    const int index = optionIndex(object, option);
+    QPointer<QObject> target(object);
+    const int count = target->property("count").toInt();
     if (target->property("currentIndex").toInt() == index) return;
     QString expectedText;
     QVariant expectedValue;
@@ -289,6 +300,12 @@ QImage QuickAdapter::capture(QObject* root) {
     return window->grabWindow();
 }
 void QuickAdapter::secureRegions(QObject* root, QList<QRectF>& regions, int& count) const {
+    if (secureObject(root)) {
+        const auto* window = static_cast<QQuickWindow*>(root);
+        ++count;
+        regions.append(QRectF(0, 0, window->width(), window->height()));
+        return;
+    }
     QList<QQuickItem*> stack{static_cast<QQuickWindow*>(root)->contentItem()};
     int visited = 0;
     while (!stack.isEmpty()) {

@@ -1,7 +1,7 @@
 import type { FixtureContext, TestFixtures } from '@e2e-platform/core';
 import type { ProcessFixture, ProcessRunner } from '@e2e-platform/process';
 import { CppDispatcher } from './dispatch.ts';
-import { LineDecoder, MAX_LINE_BYTES, MAX_REQUESTS, invalid, parseRequest } from './protocol.ts';
+import { LineDecoder, MAX_LINE_BYTES, MAX_REQUESTS, invalid, parseRequest, record, string } from './protocol.ts';
 
 export interface CppTestOptions {
   /** Path to the compiled test executable; commands never pass through a shell. */
@@ -36,6 +36,8 @@ export class CppTestHost {
     let lastId = 0;
     let requests = 0;
     let busy = false;
+    let started = false;
+    let completed = false;
     let failed: Error | undefined;
     let dispatchFailure: unknown;
     const active = new Set<Promise<void>>();
@@ -63,10 +65,30 @@ export class CppTestHost {
             await previousWrite;
             if (controller.signal.aborted || failed !== undefined) throw new Error('C++ test transport stopped');
             let response: object;
-            try { response = { protocol: 1, id: request.id, result: await dispatch.dispatch(request) }; }
+            try {
+              let result: unknown = null;
+              if (request.method === 'case.start') {
+                record(request.params, ['name', 'source']);
+                if (started || string(request.params.name, 1024) !== name) invalid();
+                if (request.params.source !== undefined) {
+                  const source = record(request.params.source, ['file', 'line']);
+                  const file = string(source.file, 255);
+                  if (!file || /[\\/]/.test(file) || [...file].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) || !Number.isSafeInteger(source.line) || (source.line as number) < 1) invalid();
+                  dispatch.setSource(`C++ case ${file}:${source.line as number}: `);
+                }
+                started = true;
+              } else {
+                if (!started || completed) invalid();
+                if (request.method === 'case.complete') {
+                  record(request.params, []);
+                  completed = true;
+                } else result = await dispatch.dispatch(request);
+              }
+              response = { protocol: 2, id: request.id, result };
+            }
             catch (cause) {
               dispatchFailure ??= cause ?? new Error('C++ requested operation failed');
-              response = { protocol: 1, id: request.id, error: { message: 'C++ requested operation failed' } };
+              response = { protocol: 2, id: request.id, error: { message: 'C++ requested operation failed' } };
             }
             const data = JSON.stringify(response);
             if (Buffer.byteLength(data) > MAX_LINE_BYTES) invalid();
@@ -94,6 +116,7 @@ export class CppTestHost {
       if (failed !== undefined) throw failed;
       if (busy) throw new Error('C++ test exited with an unfinished operation');
       if (dispatchFailure !== undefined) throw dispatchFailure;
+      if (!started || !completed) throw new Error('C++ test exited before completing its registered body');
       if (result.status !== 'exited' || result.exitCode !== 0 || result.ioError !== undefined) throw new Error('C++ test failed, exceeded its deadline, or could not clean up');
     } catch (cause) { operationFailure = cause; } finally {
       unsubscribe(); controller.abort();

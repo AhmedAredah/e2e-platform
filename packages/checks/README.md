@@ -65,3 +65,9 @@ class MassBalanceValidator extends OutputValidator<{ incoming: number; outgoing:
 
 The public `index.ts` is a facade. Implementations are split into `validators/`, shared
 `types.ts`, bounded file readers in `io/`, and private mechanics in `internal/`.
+
+`parseJson(text, options)` applies the same precision policy to in-memory JSON.
+Numeric CSV columns also accept `decimalPrecision: 'binary64'` for explicit
+`max_digits10` interoperability. Tolerance verdicts compare the exact represented
+binary64 operands and budgets, so a rounded subtraction cannot turn an out-of-
+budget difference into a pass. Diagnostic differences may still be rounded.

@@ -30,7 +30,7 @@ void rejects_void_results() {
         [](auto& session) { session.expect_true(true); },
     };
     for (const auto& operation : operations) {
-        std::istringstream input("{\"protocol\":1,\"id\":1,\"result\":false}\n");
+        std::istringstream input("{\"protocol\":2,\"id\":1,\"result\":false}\n");
         std::ostringstream output;
         e2e::StdioTransport transport(input, output);
         e2e::Session session(transport);
@@ -45,14 +45,16 @@ void rejects_void_results() {
 
 void caught_failures_still_fail() {
     for (const auto* response : {
-        "{\"protocol\":1,\"id\":1,\"error\":{\"message\":\"private diagnostic\"}}\n",
-        "{\"protocol\":1,\"id\":1,\"result\":false}\n",
+        "{\"protocol\":2,\"id\":1,\"error\":{\"message\":\"private diagnostic\"}}\n",
+        "{\"protocol\":2,\"id\":1,\"result\":false}\n",
     }) {
         e2e::registry().clear();
         e2e::registry().push_back({"caught failure", [](e2e::Session& session) {
             try { session.expect_true(true); } catch (const e2e::Error&) {}
         }});
-        std::istringstream input(response);
+        std::string operation(response);
+        operation.replace(operation.find("\"id\":1"), 6, "\"id\":2");
+        std::istringstream input("{\"protocol\":2,\"id\":1,\"result\":null}\n" + operation);
         std::ostringstream output;
         auto* original_input = std::cin.rdbuf(input.rdbuf());
         auto* original_output = std::cout.rdbuf(output.rdbuf());
@@ -65,10 +67,29 @@ void caught_failures_still_fail() {
     }
 }
 
+void lossless_numbers_and_local_failures() {
+    const auto frame = e2e::Json{{"protocol",2},{"id",1},{"result",nullptr}}.dump()+"\n";
+    {
+        std::istringstream input(frame); std::ostringstream output; e2e::StdioTransport transport(input,output); e2e::Session session(transport);
+        session.expect_equal(e2e::Json{{"wide",18446744073709551615ULL}}, e2e::Json{{"wide",18446744073709551614ULL}});
+        const auto params=e2e::parse_json(output.str()).at("params");
+        require(params.at("actual")=="{\"wide\":18446744073709551615}","uint64 lost before wire");
+        require(params.at("expected")=="{\"wide\":18446744073709551614}","distinct uint64 lost before wire");
+    }
+    for (const double number : {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN()}) {
+        for (const bool http : {false,true}) {
+            std::istringstream input(frame); std::ostringstream output; e2e::StdioTransport transport(input,output); e2e::Session session(transport);
+            try { if(http) session.http().post_json("http://localhost/",{{"nested",{number}}}); else session.expect_equal({{"nested",{number}}},nullptr); }
+            catch(const e2e::Error&) {}
+            require(transport.failed() && output.str().empty(),"nonfinite value serialized or caught failure erased");
+        }
+    }
+}
+
 void validates_typed_results() {
     const e2e::Json process{{"status", "exited"}, {"exitCode", 4294967295ULL}, {"stdout", "ok"}, {"stderr", ""}, {"truncated", false}};
     const e2e::Json http{{"status", 200}, {"headers", {{"content-type", "application/json"}}}, {"body", "{}"}};
-    const auto frame = [](const e2e::Json& result) { return e2e::Json{{"protocol", 1}, {"id", 1}, {"result", result}}.dump() + '\n'; };
+    const auto frame = [](const e2e::Json& result) { return e2e::Json{{"protocol", 2}, {"id", 1}, {"result", result}}.dump() + '\n'; };
     {
         std::istringstream input(frame(process)); std::ostringstream output;
         e2e::StdioTransport transport(input, output); e2e::Session session(transport);
@@ -107,12 +128,17 @@ void validates_typed_results() {
     }
 }
 }
+#ifdef _WIN32
+int wmain() {
+#else
 int main() {
+#endif
     try {
         rejects_void_results();
         caught_failures_still_fail();
         validates_typed_results();
-        std::istringstream input("{\"protocol\":1,\"id\":1,\"result\":null}\n{\"protocol\":1,\"id\":2,\"result\":3}\n");
+        lossless_numbers_and_local_failures();
+        std::istringstream input("{\"protocol\":2,\"id\":1,\"result\":null}\n{\"protocol\":2,\"id\":2,\"result\":3}\n");
         std::ostringstream output;
         e2e::StdioTransport transport(input, output);
         e2e::Session session(transport);
@@ -124,19 +150,19 @@ int main() {
         require(request["method"] == "locator.assert" && request["params"]["negate"] == true && request["params"]["timeoutMs"] == 2000, "assertion semantics lost");
         require(request["params"]["selector"].size() == 2 && request["params"]["selector"][0]["name"] == "Project", "selector scope lost");
         for (const auto* response : {
-            "{\"protocol\":1,\"id\":2,\"result\":null}\n",
-            "{\"protocol\":1,\"id\":1.0,\"result\":null}\n",
-            "{\"protocol\":2,\"id\":1,\"result\":null}\n",
-            "{\"protocol\":1,\"id\":1,\"result\":null,\"extra\":true}\n",
-            "{\"protocol\":1,\"id\":1,\"result\":null,\"error\":{}}\n",
-            "{\"protocol\":1,\"id\":1,\"id\":1,\"result\":null}\n",
-            "{\"protocol\":1,\"id\":1,\"error\":{\"message\":\"sensitive-fixture\"}}\n",
-            "{\"protocol\":1,\"id\":1,\"result\":null}",
+            "{\"protocol\":2,\"id\":2,\"result\":null}\n",
+            "{\"protocol\":2,\"id\":1.0,\"result\":null}\n",
+            "{\"protocol\":3,\"id\":1,\"result\":null}\n",
+            "{\"protocol\":2,\"id\":1,\"result\":null,\"extra\":true}\n",
+            "{\"protocol\":2,\"id\":1,\"result\":null,\"error\":{}}\n",
+            "{\"protocol\":2,\"id\":1,\"id\":1,\"result\":null}\n",
+            "{\"protocol\":2,\"id\":1,\"error\":{\"message\":\"sensitive-fixture\"}}\n",
+            "{\"protocol\":2,\"id\":1,\"result\":null}",
         }) rejects(response);
         rejects(std::string(e2e::max_protocol_line + 1, 'x') + '\n');
-        rejects("{\"protocol\":1,\"id\":1,\"result\":" + std::string(70, '[') + "0" + std::string(70, ']') + "}\n");
+        rejects("{\"protocol\":2,\"id\":1,\"result\":" + std::string(70, '[') + "0" + std::string(70, ']') + "}\n");
         std::ostringstream replies;
-        for (std::uint64_t id = 1; id <= e2e::max_protocol_requests; ++id) replies << "{\"protocol\":1,\"id\":" << id << ",\"result\":null}\n";
+        for (std::uint64_t id = 1; id <= e2e::max_protocol_requests; ++id) replies << "{\"protocol\":2,\"id\":" << id << ",\"result\":null}\n";
         std::istringstream limited_input(replies.str());
         std::ostringstream limited_output;
         e2e::StdioTransport limited(limited_input, limited_output);

@@ -48,6 +48,8 @@ unsafe extern "C" {
     #[link_name = "objc_msgSend"]
     fn set_int(object: Id, selector: Sel, arg: isize);
     #[link_name = "objc_msgSend"]
+    fn set_point(object: Id, selector: Sel, point: Point);
+    #[link_name = "objc_msgSend"]
     fn init_frame(object: Id, selector: Sel, frame: Rect) -> Id;
     #[link_name = "objc_msgSend"]
     fn init_window(
@@ -61,6 +63,7 @@ unsafe extern "C" {
     #[link_name = "objc_msgSend"]
     fn string_utf8(object: Id, selector: Sel, text: *const c_char) -> Id;
 }
+static mut MOVING: Id = std::ptr::null_mut();
 static mut INPUT: Id = std::ptr::null_mut();
 static mut OUTPUT: Id = std::ptr::null_mut();
 static WRONG_OUTPUT: AtomicBool = AtomicBool::new(false);
@@ -98,6 +101,15 @@ unsafe fn control(kind: &str, frame: Rect, label: &str, id: &str) -> Id {
         set_id(object, selector("setAccessibilityLabel:"), text(label));
         set_id(object, selector("setAccessibilityIdentifier:"), text(id));
         object
+    }
+}
+unsafe extern "C" fn move_control(_: Id, _: Sel, _: Id) {
+    unsafe {
+        set_point(
+            MOVING,
+            selector("setFrameOrigin:"),
+            Point { x: 1000., y: 10. },
+        );
     }
 }
 unsafe extern "C" fn apply(_: Id, _: Sel, _: Id) {
@@ -159,6 +171,12 @@ pub unsafe fn run() {
             apply,
             signature.as_ptr()
         ));
+        assert!(class_addMethod(
+            actions_class,
+            selector("moveControl:"),
+            move_control,
+            signature.as_ptr()
+        ));
         objc_registerClassPair(actions_class);
         let actions = send0(send0(actions_class, selector("alloc")), selector("init"));
         let button = control("NSButton", rect(324., 228., 120., 32.), "Apply", "apply");
@@ -175,6 +193,24 @@ pub unsafe fn run() {
         set_int(checkbox, selector("setButtonType:"), 3);
         set_id(checkbox, selector("setTitle:"), text("Enabled option"));
         set_id(content, selector("addSubview:"), checkbox);
+        MOVING = control(
+            "NSButton",
+            rect(24., 10., 180., 28.),
+            "Moving control",
+            "moving",
+        );
+        set_id(MOVING, selector("setTitle:"), text("Moving control"));
+        set_id(content, selector("addSubview:"), MOVING);
+        let mover = control(
+            "NSButton",
+            rect(220., 10., 180., 28.),
+            "Move control",
+            "move-control",
+        );
+        set_id(mover, selector("setTitle:"), text("Move control"));
+        set_id(mover, selector("setTarget:"), actions);
+        set_sel(mover, selector("setAction:"), selector("moveControl:"));
+        set_id(content, selector("addSubview:"), mover);
         let password = control(
             "NSSecureTextField",
             rect(24., 62., 280., 28.),

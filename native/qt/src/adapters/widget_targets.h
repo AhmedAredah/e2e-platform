@@ -9,6 +9,7 @@
 #include <QTabBar>
 #include <memory>
 #include <vector>
+#include <optional>
 
 namespace e2e::qt::detail {
 /** Lifetime checked identities for controls that are not separate QWidgets. */
@@ -42,6 +43,7 @@ private:
     int count_ = -1;
     QString tabText_;
     QVariant tabData_;
+    std::optional<quint64> tabGeneration_;
     bool hidden() const;
 };
 

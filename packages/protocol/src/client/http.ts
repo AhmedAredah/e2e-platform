@@ -1,6 +1,7 @@
 import { HttpResponse } from '../model/response.ts';
 import { ProtocolError, type HttpClientOptions, type HttpRequestOptions } from '../model/types.ts';
 import { FetchHttpTransport, HttpTransport } from '../transport/http.ts';
+import { requestJson } from './json.ts';
 
 function positiveInteger(value: number, name: string): number {
   if (!Number.isSafeInteger(value) || value <= 0) throw new ProtocolError('INVALID_ARGUMENT', `${name} must be a positive safe integer`);
@@ -62,7 +63,7 @@ export class HttpProtocolClient extends ProtocolClient {
     const headers = requestHeaders(this.#headers, options.headers);
     let body: string | Uint8Array | undefined = options.body;
     if (options.json !== undefined) {
-      try { body = JSON.stringify(options.json); }
+      try { body = requestJson(options.json); }
       catch { throw new ProtocolError('INVALID_ARGUMENT', 'Request JSON cannot be serialized'); }
       if (body === undefined) throw new ProtocolError('INVALID_ARGUMENT', 'Request JSON cannot be serialized');
       if (!headers.has('content-type')) headers.set('content-type', 'application/json');

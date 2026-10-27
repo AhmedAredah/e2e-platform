@@ -4,7 +4,7 @@ import { LineDecoder, MAX_LINE_BYTES, parseRequest } from '../src/protocol.ts';
 describe('C++ protocol framing', () => {
   test('preserves UTF-8 split across byte chunks and multiple frames', () => {
     const decoder = new LineDecoder();
-    const input = Buffer.from(JSON.stringify({ protocol: 1, id: 1, method: 'expect.equal', params: { actual: '日本語', expected: '日本語' } }) + '\n');
+    const input = Buffer.from(JSON.stringify({ protocol: 2, id: 1, method: 'expect.equal', params: { actual: '日本語', expected: '日本語' } }) + '\n');
     const frames: Buffer[] = [];
     for (const byte of input) decoder.push(Buffer.from([byte]), line => frames.push(line));
     decoder.finish();
@@ -15,6 +15,6 @@ describe('C++ protocol framing', () => {
     const decoder = new LineDecoder(); decoder.push(Buffer.from('{}'), () => {});
     expect(() => decoder.finish()).toThrow();
     expect(() => parseRequest(Buffer.from([0xff]))).toThrow();
-    for (const value of [{ protocol: 2, id: 1, method: 'x', params: {} }, { protocol: 1, id: 0, method: 'x', params: {} }, { protocol: 1, id: 1, method: 'x', params: {}, extra: true }]) expect(() => parseRequest(Buffer.from(JSON.stringify(value)))).toThrow();
+    for (const value of [{ protocol: 3, id: 1, method: 'x', params: {} }, { protocol: 2, id: 0, method: 'x', params: {} }, { protocol: 2, id: 1, method: 'x', params: {}, extra: true }]) expect(() => parseRequest(Buffer.from(JSON.stringify(value)))).toThrow();
   });
 });

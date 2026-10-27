@@ -7,6 +7,6 @@ E2E_TEST("C++ test rejects a planted wrong CLI result") {
     if (!executable || !*executable) throw e2e::Error("E2E_CPP_BINARY is required");
     const auto result = session.processes().run(executable, {"sum", "--a", "1.5", "--b", "2.5", "--wrong-output"});
     session.expect_equal(result.exit_code.value_or(-1), 0);
-    session.expect_equal(e2e::parse_json(result.stdout_text).at("sum"), 4);
+    session.expect_equal(e2e::parse_json(result.stdout_text).at("sum"), 4, "[oracle:calculation]");
 }
-int main(int argc, char** argv) { return e2e::run(argc, argv); }
+E2E_TEST_MAIN()

@@ -6,7 +6,7 @@ import { validateLanguageReport } from './report.mjs';
 function report(negative) {
   const titles = negative ? ['rejects the planted CLI wrong result', 'rejects the planted HTTP wrong result'] : ['CLI returns independently checked arithmetic', 'CLI rejects malformed operands with a nonzero exit', 'HTTP returns checked arithmetic and rejects malformed requests'];
   const status = negative ? 'failed' : 'passed';
-  return {schemaVersion: 'report-1', run: {status, errors: [], results: ['python', 'dotnet', 'rust'].flatMap(targetId => titles.map(title => ({kind: 'test', targetId, titlePath: [title], status, attempts: [{status, cleanup: 'complete', secondaryErrors: [], ...(negative ? {error: {category: 'test', code: 'ASSERTION_FAILED'}} : {})}]})))}};
+  return {schemaVersion: 'report-1', run: {status, errors: [], results: ['python', 'dotnet', 'rust'].flatMap(targetId => titles.map(title => ({kind: 'test', targetId, titlePath: [title], status, attempts: [{status, cleanup: 'complete', secondaryErrors: [], ...(negative ? {error: {category: 'test', code: 'ASSERTION_FAILED', message: 'independent calculator output oracle: mismatch'}} : {})}]})))}};
 }
 
 test('accepts complete positive and independently rejected negative coverage', () => {
@@ -14,6 +14,7 @@ test('accepts complete positive and independently rejected negative coverage', (
   assert.equal(validateLanguageReport(report(true), true), 6);
 });
 for (const [name, mutate] of [
+  ['unrelated earlier assertion', document => {document.run.results[0].attempts[0].error.message = 'other assertion';}],
   ['missing runtime', document => document.run.results.splice(0, 2)],
   ['duplicate CLI replacing HTTP', document => {document.run.results[1].titlePath = document.run.results[0].titlePath;}],
   ['skipped negative', document => {document.run.results[0].status = 'skipped';}],

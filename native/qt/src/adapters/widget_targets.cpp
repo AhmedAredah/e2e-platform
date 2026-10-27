@@ -13,11 +13,13 @@
 #include <QTest>
 #include <QWindow>
 #include <algorithm>
+#include <e2e/qt/tracked_tabs.h>
 
 namespace e2e::qt::detail {
 WidgetTarget::WidgetTarget(QWidget* owner, const QModelIndex& index) : kind_(Kind::ModelItem), owner_(owner), index_(index) {}
 WidgetTarget::WidgetTarget(QWidget* owner, QAction* action) : kind_(Kind::Action), owner_(owner), action_(action) {}
 WidgetTarget::WidgetTarget(QTabBar* owner, int tab) : kind_(Kind::Tab), owner_(owner), number_(tab), count_(owner->count()), tabText_(owner->tabText(tab)), tabData_(owner->tabData(tab)) {
+    if (auto* tracked = dynamic_cast<TrackedTabBar*>(owner)) tabGeneration_ = tracked->generation();
     QObject::connect(owner, &QTabBar::tabMoved, this, [this](int from, int to) {
         if (number_ == from) number_ = to;
         else if (from < number_ && number_ <= to) --number_;
@@ -31,6 +33,7 @@ bool WidgetTarget::valid() const {
     if (kind_ == Kind::Action) return action_ && owner_->actions().contains(action_);
     if (kind_ == Kind::Tab) {
         auto* tabs = static_cast<QTabBar*>(owner_.data());
+        if (tabGeneration_ && dynamic_cast<TrackedTabBar*>(tabs)->generation() != *tabGeneration_) return false;
         return tabs->count() == count_ && number_ >= 0 && number_ < count_ && tabs->tabText(number_) == tabText_ && tabs->tabData(number_) == tabData_;
     }
     return static_cast<QHeaderView*>(owner_.data())->count() == count_ && number_ >= 0 && number_ < count_;
@@ -141,6 +144,7 @@ QJsonObject WidgetTarget::snapshot(ObjectRegistry& registry, QWidget* root) cons
 }
 void WidgetTarget::ready(QWidget* root, bool allowOffscreen) const {
     QWidget* widget = owner();
+    if (kind_ == Kind::Tab && !tabGeneration_) throw Failure("UNSUPPORTED_CAPABILITY", "tab mutation requires TrackedTabBar/TrackedTabWidget or an application control adapter");
     if (widget->window() != root || hidden() || !widget->isEnabled()) throw Failure("NOT_ACTIONABLE", "Qt virtual control is not available in the active window");
     if (kind_ == Kind::ModelItem && !index_.flags().testFlag(Qt::ItemIsEnabled)) throw Failure("NOT_ACTIONABLE", "Qt model item is disabled");
     if (kind_ == Kind::Action && (!action_->isEnabled() || action_->isSeparator())) throw Failure("NOT_ACTIONABLE", "Qt menu action is disabled or a separator");
@@ -171,6 +175,7 @@ void WidgetTarget::click(Qt::MouseButton button, bool twice, bool hover) {
 void WidgetTarget::focus() {
     QWidget* widget = owner();
     QPointer<QWidget> guard(widget);
+    activateWidgetWindow(widget);
     if (kind_ == Kind::ModelItem) static_cast<QAbstractItemView*>(widget)->setCurrentIndex(index_);
     else if (kind_ == Kind::Action) {
         if (auto* menu = qobject_cast<QMenu*>(widget)) menu->setActiveAction(action_);
@@ -184,6 +189,7 @@ void WidgetTarget::scrollIntoView() {
     QWidget* widget = owner();
     if (kind_ == Kind::ModelItem) static_cast<QAbstractItemView*>(widget)->scrollTo(index_, QAbstractItemView::EnsureVisible);
     else if (kind_ == Kind::Tab) throw Failure("UNSUPPORTED_CAPABILITY", "scrolling a tab strip requires its navigation controls");
+    else throw Failure("UNSUPPORTED_CAPABILITY", "scrolling this virtual control requires an application control adapter");
 }
 void WidgetTarget::setChecked(bool value) {
     if (!checkable()) throw Failure("UNSUPPORTED_CAPABILITY", "Qt virtual control is not checkable");

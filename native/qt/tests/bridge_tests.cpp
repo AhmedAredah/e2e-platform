@@ -148,7 +148,7 @@ private slots:
         QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
         environment.insert("E2E_NATIVE_TOKEN", Token);
         environment.insert("E2E_NATIVE_PORT", "0");
-        environment.insert("QT_QPA_PLATFORM", "offscreen");
+        if (!environment.contains("QT_QPA_PLATFORM")) environment.insert("QT_QPA_PLATFORM", "offscreen");
         process.setProcessEnvironment(environment);
         process.start(QCoreApplication::applicationFilePath(), {"--fixture"});
         QVERIFY(process.waitForStarted(5000));
@@ -174,6 +174,16 @@ private slots:
     }
     void rejectsWrongToken() {
         QCOMPARE(rpc("initialize", {{"protocolVersion", 1}, {"token", "wrong"}}).value("error").toObject().value("data").toObject().value("code").toString(), QString("POLICY_DENIED"));
+    }
+    void rejectsNonIntegerRequestIds() {
+        for (const auto id : {QJsonValue("text"), QJsonValue(0), QJsonValue(-1), QJsonValue(1.5), QJsonValue(9007199254740992.0)}) {
+            const QJsonObject request{{"jsonrpc","2.0"},{"id",id},{"method","initialize"},{"params",QJsonObject{{"protocolVersion",1},{"token",Token}}}};
+            socket.write(QJsonDocument(request).toJson(QJsonDocument::Compact)+'\n'); socket.waitForBytesWritten(3000);
+            while (!buffer.contains('\n')) { QVERIFY(socket.waitForReadyRead(5000)); buffer += socket.readAll(); }
+            const auto end=buffer.indexOf('\n'); const auto response=QJsonDocument::fromJson(buffer.left(end)).object(); buffer.remove(0,end+1);
+            QCOMPARE(response.value("error").toObject().value("data").toObject().value("code").toString(),QString("INVALID_STATE"));
+        }
+        QVERIFY(login());
     }
     void stableIdsAndMaskedPixels() {
         QVERIFY(login());

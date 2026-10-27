@@ -7,6 +7,10 @@ bounded C++ authoring bridge connected to the shared runner. Python, C# and Rust
 authoring SDKs are not included. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
 
+The [C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md)
+tracks protocol 2 hardening, local validation and remaining release blockers,
+including the macOS Qt Quick crash. Historical passes below do not resolve
+those blockers.
 
 This candidate adds Windows process environment isolation fixes (with the documented
 SystemRoot bootstrap exception), qualified AT-SPI text-interface dispatch, sanitized

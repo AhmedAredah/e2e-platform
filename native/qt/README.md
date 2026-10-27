@@ -134,8 +134,9 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   `setData` to fake user editing. Open an editor with the application's normal
   input and locate that editor separately. Lazy model rows must be loaded by the
   application; the helper does not call `fetchMore`.
-- QMenu/QMenuBar actions, QTabBar tabs and header sections have separate
-  semantic nodes. Tap follows their Qt pointer event path. Checkable menu
+- QMenu/QMenuBar actions, tabs and header sections have separate
+  semantic nodes. Actionable tabs require `TrackedTabBar`/`TrackedTabWidget`
+  (see below). Tap follows their Qt pointer event path. Checkable menu
   actions support check/uncheck, and tabs expose selected state. Tab additions,
   removals or changed labels/data conservatively invalidate old tab references.
   Header tapping follows the application's sorting/click handlers. Hidden,
@@ -249,3 +250,33 @@ Primary references: [Qt Test](https://doc.qt.io/qt-6/qttest-index.html),
 [Qt object/QML inspection](https://doc.qt.io/qt-6/qtqml-cppintegration-interactqmlfromcpp.html),
 [Qt Quick ComboBox](https://doc.qt.io/qt-6/qml-qtquick-controls-combobox.html),
 and [Qt accessibility](https://doc.qt.io/qt-6/accessible.html).
+
+## Reviewed control and installation contracts
+
+Use `<e2e/qt/tracked_tabs.h>` and `e2e::qt::TrackedTabBar` or
+`e2e::qt::TrackedTabWidget` for actionable tabs. These extensible subclasses retain
+normal Qt behavior and track insert/remove generations without occupying
+application `tabData`. Structural hooks are final so subclasses cannot disable
+tracking; override `onTabInserted`/`onTabRemoved` for additional behavior. Every structural change invalidates prior tab references,
+including a remove/reinsert with identical labels and counts. Plain `QTabBar`
+tabs remain observable, but mutations fail with `UNSUPPORTED_CAPABILITY` because
+public Qt APIs cannot prove their lifetime. A registered application adapter is
+another explicit integration option. Offscreen header/action scrolling also
+returns `UNSUPPORTED_CAPABILITY`; it never acknowledges a no-op as success.
+
+Combobox preflight resolves the requested option and its availability without
+sending input. Secure `QQuickWindow` roots suppress titles and children and mask
+the whole capture. Replacement typing uses the platform's standard Select All
+binding, including macOS control/meta configurations. Widget focus requests
+window activation and checks the outcome within a bounded wait before typing.
+This does not bypass operating-system focus restrictions.
+
+Installed CMake packages require the exact build Qt version, compiler family
+and pointer width. Use the same compatible Qt/compiler/architecture kit or
+rebuild the bridge; those checks cannot prove every ABI or plugin dependency.
+Static/shared installed acceptance includes both Widgets and Quick consumers.
+Set `-DE2E_QT_TEST_QPA=xcb` for an X11 build; the default comes from
+`QT_QPA_PLATFORM` or `offscreen` and is recorded in the CMake cache. All detailed
+CTest executables and their children use that selection. Delete the build cache
+or pass a new value when changing platforms. Offscreen acceptance does not
+qualify native desktop input routing.

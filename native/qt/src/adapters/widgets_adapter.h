@@ -31,6 +31,7 @@ public:
     QImage capture(QObject*) override;
     void secureRegions(QObject*, QList<QRectF>&, int&) const override;
 private:
+    int optionIndex(QObject*, const QJsonValue&) const;
     ControlAdapters* custom_;
     WidgetTargets targets_;
     QWidget* keyboardTarget(QObject*) const;

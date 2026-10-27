@@ -191,7 +191,7 @@ test('observation limits never disclose partial secrets and locators retain full
   expect(observed.root.name).toBe('[omitted: text exceeds limit]');
   expect(observed.root.text).toBe('[omitted: text exceeds limit]');
   expect(observed.root.children?.[0]?.text).toBe('[omitted: text exceeds limit]');
-  expect(JSON.stringify(observed.root)).not.toContain(secret.slice(0, 12));
+  expect(JSON.stringify(observed)).not.toContain(secret.slice(0, 12));
   const located = engine.map(snapshot, false);
   expect(located.root.name).toBe(title);
   expect(located.root.text).toBe(text);

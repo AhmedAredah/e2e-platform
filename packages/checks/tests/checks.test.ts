@@ -13,6 +13,11 @@ describe('numerical error budgets', () => {
     expect(compareNumbers(101, 100, { relative: 0.01 }).matches).toBe(true);
     expect(compareNumbers(0, 1, { relative: 0.01 }).matches).toBe(false);
   });
+  test('does not round a hard error boundary into a false pass', () => {
+    expect(compareNumbers(1, 0.49999999999999994, { absolute: 0.5 }).matches).toBe(false);
+    expect(compareNumbers(1, 0.49999999999999994, { relative: 0.5 }).matches).toBe(false);
+    expect(compareNumbers(1, 0.5, { absolute: 0.5 }).matches).toBe(true);
+  });
   test('does not mistake arithmetic overflow for passing evidence', () => {
     expect(compareNumbers(1e308, -1e308, { relative: 1.5, unsafeIntegers: 'allow' }).matches).toBe(false);
     expect(compareNumbers(1e308, -1e308, { relative: 2, unsafeIntegers: 'allow' }).matches).toBe(true);
@@ -179,4 +184,11 @@ test('supports explicit C++ max_digits10 rounding without weakening the strict d
       await expect(readJsonFile(file, 1024, { decimalPrecision: 'binary64' })).rejects.toThrow();
     }
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('numeric CSV supports explicit binary64 rounding without weakening exact defaults', () => {
+  const a = 'x\n0.10000000000000001', b = 'x\n0.1';
+  expect(() => compareCsv(a, b, { numbers: { absolute: 1e-12 } })).toThrow('round-trip');
+  expect(compareCsv(a, b, { decimalPrecision: 'binary64', numbers: { absolute: 1e-12 } }).matches).toBe(true);
+  expect(() => compareCsv('x\n9007199254740993', 'x\n9007199254740992', { decimalPrecision: 'binary64', numbers: {} })).toThrow('Unsafe integer');
 });

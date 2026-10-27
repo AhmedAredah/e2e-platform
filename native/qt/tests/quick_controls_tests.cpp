@@ -60,6 +60,16 @@ public:
 class QuickControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void optionPreflightWaitsWithoutChangingSelection() {
+        QuickFixture fixture("model: ['One']"); QVERIFY(fixture.control);
+        const auto params=QJsonObject{{"ref",fixture.ref},{"action",QJsonObject{{"kind","selectOption"},{"value","Later"}}}};
+        try { fixture.surface.actionability(params); QFAIL("missing Quick option ready"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+        fixture.control->setProperty("model",QStringList{"One","Later"});
+        try { fixture.surface.actionability(params); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+        QTest::qWait(60); fixture.surface.actionability(params); QCOMPARE(fixture.control->property("currentIndex").toInt(),0);
+        fixture.surface.perform(params); QCOMPARE(fixture.control->property("currentIndex").toInt(),1);
+    }
     void accessibleRolesAndFlickableScrollingUsePublicQtInterfaces() {
         QQmlEngine engine; QQuickWindow window; window.resize(400,200); QQmlComponent component(&engine);
         component.setData("import QtQuick\nimport QtQuick.Controls\nFlickable { objectName: 'scroller'; width:400; height:200; contentWidth:400; contentHeight:900; clip:true; Rectangle { objectName:'semantic'; width:80; height:40; Accessible.role: Accessible.Slider; Accessible.name:'Volume' } Button { objectName:'late'; x:10; y:700; width:120; height:40; text:'Late' } }",QUrl());

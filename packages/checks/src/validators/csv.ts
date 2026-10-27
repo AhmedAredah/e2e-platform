@@ -55,7 +55,7 @@ function csvRecords(text: string, options: CsvComparisonOptions): { headers: str
       const value = fields[i]!;
       const numeric = /^[+-]?(?:(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|Infinity)$/.test(value) || value === 'NaN';
       if (options.numbers !== undefined && numeric && !(options.keyColumns ?? []).includes(name)) {
-        record[name] = ['NaN', 'Infinity', '+Infinity', '-Infinity'].includes(value) ? Number(value) : parseDecimal(value, options.numbers.unsafeIntegers);
+        record[name] = ['NaN', 'Infinity', '+Infinity', '-Infinity'].includes(value) ? Number(value) : parseDecimal(value, options.numbers.unsafeIntegers, options.decimalPrecision);
       } else record[name] = value;
     });
     rows.push(record);
@@ -69,6 +69,7 @@ export class CsvValidator extends OutputValidator<string, CsvComparisonOptions> 
   constructor(protected readonly json: JsonValidator = new JsonValidator()) { super(); }
 /** Compares CSV records, optionally aligning uniquely keyed rows before value checks. */
   compare(actualText: string, expectedText: string, options: CsvComparisonOptions = {}): ComparisonResult {
+    if (options.decimalPrecision !== undefined && !['exact', 'binary64'].includes(options.decimalPrecision)) throw new TypeError('Invalid CSV decimalPrecision policy');
     const actual = csvRecords(actualText, options);
     const expected = csvRecords(expectedText, options);
     const ignore = new Set(options.ignoreColumns ?? []);

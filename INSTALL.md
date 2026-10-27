@@ -1,5 +1,8 @@
 # Install this candidate in another project
 
+The C++ review changes use authoring protocol 2: update the host adapter
+and rebuild SDK test binaries together. See [the resolution and release gates](docs/development/CPP_REVIEW_RESOLUTION.md).
+
 Use Node.js 22.22.3 or newer in the 22.x line, or Node.js 24.8.0 or newer.
 A prepared full-repository bundle can include `release-packages/` with seven built
 npm tarballs, a checksum manifest and an installer. A Git clone or GitHub source ZIP

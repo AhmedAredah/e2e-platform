@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include <e2e/qt/tracked_tabs.h>
 #include "../src/surface.h"
 #include <QApplication>
 #include <QComboBox>
@@ -9,6 +10,7 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QTableView>
+#include <QHeaderView>
 #include <QListView>
 #include <QTreeView>
 #include <QMenu>
@@ -190,7 +192,7 @@ private slots:
         catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
     }
     void tabsMenusAndAccessibleValues() {
-        QWidget window; window.resize(440,240); QTabBar tabs(&window); tabs.setGeometry(10,10,350,35); tabs.addTab("First"); tabs.addTab("Second");
+        QWidget window; window.resize(440,240); e2e::qt::TrackedTabBar tabs(&window); tabs.setGeometry(10,10,350,35); tabs.addTab("First"); tabs.addTab("Second");
         QSlider slider(Qt::Horizontal,&window); slider.setGeometry(10,65,300,30); slider.setObjectName("volume"); slider.setValue(37);
         expose(window); Surface surface; auto snapshot = surface.snapshot(false).value("root").toObject();
         auto second = findText(snapshot,"Second","tab"); QVERIFY(!second.isEmpty());
@@ -204,6 +206,41 @@ private slots:
         menu.popup(window.mapToGlobal(QPoint(30,100))); QApplication::processEvents();
         auto menuNode = findText(surface.snapshot(false).value("root").toObject(),"Menu choice","menuitemcheckbox"); QVERIFY(!menuNode.isEmpty());
         surface.perform(action(menuNode,{{"kind","check"}})); QVERIFY(choice->isChecked());
+    }
+    void removedAndRecreatedTabCannotReuseAnOldReference() {
+        e2e::qt::TrackedTabBar tabs; tabs.resize(350,40); tabs.addTab("First"); tabs.addTab("Second"); expose(tabs);
+        Surface surface; auto old = findText(surface.snapshot(false).value("root").toObject(),"Second","tab");
+        tabs.removeTab(1); tabs.addTab("Second");
+        try { surface.perform(action(old,{{"kind","tap"}})); QFAIL("replacement accepted old reference"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("NODE_STALE")); }
+        auto current = findText(surface.snapshot(false).value("root").toObject(),"Second","tab");
+        QVERIFY(current.value("ref") != old.value("ref")); surface.perform(action(current,{{"kind","tap"}})); QCOMPARE(tabs.currentIndex(),1);
+    }
+    void untrackedTabsRefuseMutationWithAnExplicitCapabilityError() {
+        QTabBar tabs; tabs.resize(350,40); tabs.addTab("First"); tabs.addTab("Second"); expose(tabs);
+        Surface surface; const auto tab = findText(surface.snapshot(false).value("root").toObject(),"Second","tab");
+        try { surface.perform(action(tab,{{"kind","tap"}})); QFAIL("untracked tab mutation accepted"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
+        QCOMPARE(tabs.currentIndex(),0);
+    }
+    void offscreenHeaderScrollingDoesNotAcknowledgeANoOp() {
+        QTableView table; QStandardItemModel model(2,10); model.setHeaderData(9,Qt::Horizontal,"Last header");
+        table.setModel(&model); table.resize(300,150); expose(table); Surface surface;
+        auto header = findText(surface.snapshot(false).value("root").toObject(),"Last header","columnheader"); QVERIFY(!header.isEmpty());
+        const auto before=table.horizontalScrollBar()->value();
+        try { surface.perform(action(header,{{"kind","scrollIntoView"}})); QFAIL("unsupported header scrolling acknowledged"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
+        QCOMPARE(table.horizontalScrollBar()->value(),before);
+    }
+    void preflightWaitsForTheRequestedOptionWithoutInput() {
+        WidgetFixture fixture; QSignalSpy selected(&fixture.combo,&QComboBox::currentIndexChanged);
+        const auto params=QJsonObject{{"ref",fixture.ref},{"action",QJsonObject{{"kind","selectOption"},{"value","Later"}}}};
+        try { fixture.surface.actionability(params); QFAIL("missing option ready"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+        fixture.combo.addItem("Later");
+        try { fixture.surface.actionability(params); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+        QTest::qWait(60); fixture.surface.actionability(params); QCOMPARE(selected.count(),0);
+        fixture.surface.perform(params); QCOMPARE(fixture.combo.currentText(),QString("Later")); QCOMPARE(selected.count(),3);
     }
     void preflightWaitsForStableGeometryAndNeverMutates() {
         WidgetFixture fixture; auto params = action(find(fixture.surface.snapshot(false).value("root").toObject(),"combo"),{{"kind","tap"}});

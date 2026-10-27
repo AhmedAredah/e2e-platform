@@ -9,9 +9,14 @@ Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
 
+Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
+These changes remain a prerelease; the unresolved macOS Quick crash and native
+platform reruns block release approval.
+
 The current prerelease is **0.2.0-rc.7**. Its source branch is
 [`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared
-full-repository archive also includes Git history and a local installation kit.
+full-repository archive contains source and may include a local installation kit.
+Git history is available through cloning the repository.
 Linux GTK3 reference controls have limited live qualification. Windows UIA and
 macOS AX remain experimental pending interactive desktop tests; portable tests
 and native builds do not establish GUI behavior. Read

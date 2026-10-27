@@ -35,7 +35,7 @@ E2E_TEST("calculates a total") {
     session.screen().get_by_test_id("result").expect().to_have_text("Total: 6");
 }
 
-int main(int argc, char** argv) { return e2e::run(argc, argv); }
+E2E_TEST_MAIN()
 ```
 
 Register the compiled binary from a `.e2e.ts` file:
@@ -57,7 +57,7 @@ Use the normal E2E configuration to select the application and engine, then run 
 
 Custom TypeScript fixtures, test hooks, native window enumeration/activation, multi-option selection and arbitrary driver extensions are not yet exposed by this SDK. They remain separate from application-language compatibility. A C++ framework is not automatically certified because a C++ test can communicate with its application.
 
-The version 1 newline JSON protocol caps each frame at 1 MiB, nesting at 64 levels and calls at 10,000 per test process. IDs are positive ordered integers; duplicate keys, malformed or mismatched responses, missing newlines and excess output fail closed. The parent enforces discovery, execution and process cleanup timeouts. Transport error messages do not repeat application output.
+The version 2 C++ authoring newline JSON protocol caps each frame at 1 MiB, nesting at 64 levels and calls at 10,000 per test process. IDs are positive ordered integers; duplicate keys, malformed or mismatched responses, missing newlines and excess output fail closed. The parent enforces discovery, execution and process cleanup timeouts. Transport error messages do not repeat application output.
 
 Void actions and assertions require a JSON `null` acknowledgement. A failed
 operation or malformed acknowledgement makes the connection unusable and the
@@ -78,3 +78,29 @@ node scripts/native/verify-cpp-sdk.mjs --qt
 ```
 
 The verifier builds and installs the SDK, builds an external `find_package` consumer, installs the packed npm kit into a separate directory, and executes compiled C++ CLI and HTTP positive and planted-error tests. The HTTP application is supervised outside the C++ test API, with readiness and owned shutdown. Optional Qt checks drive controls through the real Qt helper. Retained qualification metadata and strict report/cleanup evidence are in `.e2e/cpp/sdk/`. Configured CI profiles are not evidence of a pass until their artifacts exist.
+
+## Protocol 2 migration and numeric fidelity
+
+Rebuild test binaries against these headers and update `@e2e-platform/cpp` together.
+Protocol 1 authoring binaries are rejected; the desktop driver protocol remains
+version 1. A case must acknowledge `case.start`, return normally after its body,
+and acknowledge `case.complete`. `std::exit(0)` is not successful completion.
+Caught transport or local serialization failures still fail the registered case.
+
+Equality sends the two JSON values as independent JSON texts. The host compares
+numeric decimal values without narrowing signed/unsigned 64-bit integers through
+JavaScript numbers, including nested values. Nonfinite numbers, binary/discarded
+JSON and excessive nesting are rejected before serialization. HTTP response text
+must be valid UTF-8. `post_json` uses the same strict serialization checks.
+
+Use `E2E_TEST_MAIN()` instead of a handwritten narrow `main` for portable Unicode
+case names. On Windows it selects `wmain` and converts UTF-16 arguments to UTF-8;
+`e2e::cpp` provides the MSVC UTF-8 option and MinGW Unicode entrypoint option.
+An application with its own entrypoint can call the corresponding `e2e::run`
+overload. Labels are optional: `session.expect_equal(actual, expected, "total")`
+and `locator.expect().message("total").to_have_text("4")` preserve useful report
+context. Labels are report content; do not put private application values in them.
+
+`E2E_TEST` records the source basename and registration line. Assertion failure
+messages identify that C++ case location; this is the case-definition line, not
+an assertion-level stack trace. Absolute compiler paths are not transmitted.

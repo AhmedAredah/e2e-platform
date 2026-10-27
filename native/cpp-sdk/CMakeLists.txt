@@ -6,6 +6,11 @@ add_library(e2e_cpp_sdk INTERFACE)
 add_library(e2e::cpp ALIAS e2e_cpp_sdk)
 set_target_properties(e2e_cpp_sdk PROPERTIES EXPORT_NAME cpp)
 target_compile_features(e2e_cpp_sdk INTERFACE cxx_std_17)
+if(MSVC)
+  target_compile_options(e2e_cpp_sdk INTERFACE /utf-8)
+elseif(MINGW)
+  target_link_options(e2e_cpp_sdk INTERFACE -municode)
+endif()
 target_include_directories(e2e_cpp_sdk INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party>
@@ -21,6 +26,8 @@ install(FILES LICENSE THIRD_PARTY.md DESTINATION ${CMAKE_INSTALL_DATADIR}/licens
 install(FILES third_party/nlohmann/LICENSE.MIT DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/e2eCpp/nlohmann)
 include(CTest)
 if(BUILD_TESTING)
+  add_executable(e2e_cpp_contract_cases tests/contract_cases.cpp)
+  target_link_libraries(e2e_cpp_contract_cases PRIVATE e2e::cpp)
   add_executable(e2e_cpp_protocol_tests tests/protocol_tests.cpp)
   target_link_libraries(e2e_cpp_protocol_tests PRIVATE e2e::cpp)
   add_test(NAME cpp-sdk-protocol COMMAND e2e_cpp_protocol_tests)

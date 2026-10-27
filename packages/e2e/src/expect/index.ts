@@ -16,12 +16,12 @@ import { createValueExpectation } from './values.ts';
  */
 const expectationSlot = realmSlot<object>(expectationBrand);
 
-function dispatch(actual: Locator): AsyncExpectation;
+function dispatch(actual: Locator, message?: string): AsyncExpectation;
 function dispatch<E extends object>(actual: Expectable<E>): E;
 function dispatch<T>(actual: T, message?: string): ValueExpectation<T>;
 function dispatch(actual: unknown, message?: string): AsyncExpectation | object | ValueExpectation<unknown> {
   const internals = locatorInternals(actual);
-  if (internals !== undefined) return createAsyncExpectation(internals);
+  if (internals !== undefined) return createAsyncExpectation(internals, message);
   const attached = expectationSlot.get(actual);
   if (attached !== undefined) return attached;
   return createValueExpectation(actual, message);

@@ -1,7 +1,7 @@
 import { createReadStream } from 'node:fs';
 import { TextDecoder } from 'node:util';
 import { positiveInteger } from '../internal/options.ts';
-import { validateJsonNumbers } from '../internal/decimal.ts';
+import { parseJson } from './json.ts';
 import type { JsonReadOptions } from '../types.ts';
 
 /** Reads JSON with a byte limit that still applies if the file grows during reading. */
@@ -18,7 +18,5 @@ export async function readJsonFile(path: string, maxBytes = 16 * 1024 * 1024, op
     chunks.push(bytes);
   }
   const text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, total));
-  validateJsonNumbers(text, options.unsafeIntegers, options.decimalPrecision);
-  const parsed: unknown = JSON.parse(text);
-  return parsed;
+  return parseJson(text, options);
 }

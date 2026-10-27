@@ -1,11 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runPackageManager } from './package-manager.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
+const evidence = join(root, '.e2e', 'cpp');
+rmSync(join(evidence, 'install-kit-smoke-summary.json'), { force: true });
 const cliArgs = process.argv.slice(2);
 if (cliArgs.length !== 0 && (cliArgs.length !== 2 || cliArgs[0] !== '--kit')) throw new Error('Usage: node scripts/native/install-kit-smoke.mjs [--kit directory]');
 const sourceKit = cliArgs.length === 0 ? undefined : resolve(cliArgs[1]);
@@ -67,7 +69,6 @@ try {
   const setupHelp = node('Read the installed terminal setup command help', [join(terminalDirectory, setupEntry), '--help'], project);
   if (!setupHelp.stdout.includes('Usage: e2e-platform-terminal-setup')) throw new Error('Installed terminal setup help has the wrong identity');
   const audit = runPackageManager('npm', ['audit', '--json'], { cwd: project, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 });
-  const evidence = join(root, '.e2e', 'cpp');
   mkdirSync(evidence, { recursive: true });
   writeFileSync(join(evidence, 'install-kit-audit.json'), audit.stdout ?? '');
   writeFileSync(join(evidence, 'installed-consumer-package-lock.json'), JSON.stringify(lock, null, 2) + '\n');
@@ -161,13 +162,18 @@ export { desktopConfig, CustomDesktopEngine, config, run, test, profiles, launch
   // npm's Windows cmd-shim 8.0.0 launcher uses unquoted SET dp0=%~dp0, so an
   // ampersand in its installation path is interpreted by cmd.exe. Keep the
   // complete direct-Node consumer proof above, then exercise the real npm
-  // executable from a conventional path using these same installed packages.
+  // executable from a conventional path using a fresh installation of the same checked package kit.
   executableDirectory = mkdtempSync(join(tmpdir(), 'e2e npm executable '));
   const executableProject = join(executableDirectory, 'consumer project');
   if (process.platform === 'win32' && executableProject.includes('&')) throw new Error('Windows npm executable smoke requires a temporary parent path without ampersands');
-  // Keep npm's saved relative tarball references valid after relocation.
-  renameSync(kit, join(executableDirectory, 'package kit & files'));
-  renameSync(project, executableProject);
+  // A second clean install avoids Windows file locks on previously loaded modules.
+  const executableKit = join(executableDirectory, 'package kit & files');
+  cpSync(kit, executableKit, { recursive: true });
+  mkdirSync(executableProject);
+  writeFileSync(join(executableProject, 'package.json'), JSON.stringify({ name: 'e2e-npm-executable-consumer', private: true, type: 'module' }));
+  node('Install the same verified kit in a fresh conventional path', [join(executableKit, 'install.mjs'), executableProject], executableProject);
+  cpSync(join(project, 'e2e.config.ts'), join(executableProject, 'e2e.config.ts'));
+  cpSync(join(project, 'tests'), join(executableProject, 'tests'), { recursive: true });
   if (process.platform === 'win32') writeFileSync(join(evidence, 'installed-npm-launcher.cmd'), readFileSync(join(executableProject, 'node_modules/.bin/e2e-platform.cmd')));
   const executableHelp = runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform', '--help'], { cwd: executableProject, env, encoding: 'utf8', timeout: 30_000 });
   requireSuccess('Read the npm-installed executable help from a conventional path', executableHelp);
@@ -175,7 +181,7 @@ export { desktopConfig, CustomDesktopEngine, config, run, test, profiles, launch
   const terminalSetupHelp = runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform-terminal-setup', '--help'], { cwd: executableProject, env, encoding: 'utf8', timeout: 30_000 });
   requireSuccess('Read the npm-installed terminal setup command help', terminalSetupHelp);
   if (!terminalSetupHelp.stdout.includes('Usage: e2e-platform-terminal-setup')) throw new Error('npm terminal setup help has the wrong identity');
-  rmSync(join(executableProject, '.e2e/report.json'));
+  rmSync(join(executableProject, '.e2e/report.json'), { force: true });
   requireSuccess('Run the installed TypeScript process test through npm exec', runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform', 'run', 'tests/installed.e2e.ts', '--no-model', '--workers', '1'], { cwd: executableProject, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 }));
   const executableDocument = readFileSync(join(executableProject, '.e2e/report.json'), 'utf8');
   writeFileSync(join(evidence, 'installed-npm-exec-positive.json'), executableDocument);

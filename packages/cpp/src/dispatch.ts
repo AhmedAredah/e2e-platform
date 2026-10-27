@@ -3,6 +3,7 @@ import { expect, type FixtureContext, type Locator, type Role, type Screen, type
 import type { ProcessFixture } from '@e2e-platform/process';
 import { createHttpClient } from '@e2e-platform/protocol';
 import { invalid, record, string, timeout, type Request } from './protocol.ts';
+import { assertionValue } from './value.ts';
 
 interface RecordedOperations {
   http(params: Record<string, unknown>): Promise<unknown>;
@@ -34,18 +35,21 @@ function locator(screen: Screen, input: unknown): Locator {
 
 /** Provides only explicitly supported operations to the owned C++ child. */
 export class CppDispatcher {
+  private source = '';
+  /** Accepts the registered case location after the host validates its bounded shape. */
+  setSource(source: string): void { this.source = source; }
   private readonly operations: RecordedOperations;
   constructor(private readonly fixtures: TestFixtures & { processes: ProcessFixture }, private readonly context: FixtureContext) {
     this.operations = context.fixture<RecordedOperations>('cpp', {
       http: params => this.http(params),
-      async equal(params) {
-        record(params, ['actual', 'expected']);
+      equal: async (params) => {
+        record(params, ['actual', 'expected', 'message']);
         if (!Object.hasOwn(params, 'actual') || !Object.hasOwn(params, 'expected')) invalid();
-        expect(isDeepStrictEqual(params.actual, params.expected), 'C++ equality assertion failed').toBe(true);
+        expect(isDeepStrictEqual(assertionValue(string(params.actual)), assertionValue(string(params.expected))), `${this.source}${params.message === undefined ? 'C++ equality assertion failed' : string(params.message)}`).toBe(true);
       },
-      async truth(params) {
+      truth: async (params) => {
         record(params, ['actual']);
-        expect(params.actual === true, 'C++ truth assertion failed').toBe(true);
+        expect(params.actual === true, `${this.source}C++ truth assertion failed`).toBe(true);
       },
     }, { http: { kind: 'resource', label: () => 'HTTP request' }, equal: { kind: 'assertion', label: () => 'C++ equality assertion' }, truth: { kind: 'assertion', label: () => 'C++ truth assertion' } });
   }
@@ -107,9 +111,9 @@ export class CppDispatcher {
 
   /** Uses the same polling assertions as TypeScript tests. */
   private async assert(p: Record<string, unknown>): Promise<null> {
-    record(p, ['selector', 'matcher', 'expected', 'negate', 'timeoutMs']);
+    record(p, ['selector', 'matcher', 'expected', 'negate', 'timeoutMs', 'message']);
     if (p.negate !== undefined && typeof p.negate !== 'boolean') invalid();
-    const target = expect(locator(this.fixtures.screen, p.selector));
+    const target = expect(locator(this.fixtures.screen, p.selector), `${this.source}${p.message === undefined ? '' : string(p.message)}` || undefined);
     const assertion = p.negate === true ? target.not : target;
     const options = p.timeoutMs === undefined ? {} : { timeout: timeout(p.timeoutMs, 5000) };
     switch (p.matcher) {
@@ -150,6 +154,6 @@ export class CppDispatcher {
     const headers = p.headers === undefined ? {} : Object.fromEntries(Object.entries(record(p.headers)).map(([key, value]) => [string(key, 1024), string(value, 16 * 1024)]));
     const client = createHttpClient({ baseUrl: string(p.url), maxResponseBytes: 128 * 1024, timeoutMs: timeout(p.timeoutMs, 30_000) });
     const response = await client.request(string(p.url), { method: p.method === undefined ? 'GET' : string(p.method, 32), headers, ...(p.body === undefined ? {} : { body: string(p.body) }), signal: this.context.signal });
-    return { status: response.status, headers: response.headers, body: response.text() };
+    return { status: response.status, headers: response.headers, body: new TextDecoder('utf-8', { fatal: true }).decode(response.bytes()) };
   }
 }

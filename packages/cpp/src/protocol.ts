@@ -26,15 +26,15 @@ export function timeout(value: unknown, fallback: number): number {
   return value;
 }
 
-export interface Request { readonly protocol: 1; readonly id: number; readonly method: string; readonly params: Record<string, unknown> }
+export interface Request { readonly protocol: 2; readonly id: number; readonly method: string; readonly params: Record<string, unknown> }
 
 /** Decodes UTF-8 strictly and bounds request shape before dispatch. */
 export function parseRequest(bytes: Buffer): Request {
   let raw: unknown;
   try { raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); } catch { invalid(); }
   const data = record(raw, ['protocol', 'id', 'method', 'params']);
-  if (data.protocol !== 1 || !Number.isSafeInteger(data.id) || (data.id as number) <= 0) invalid();
-  return { protocol: 1, id: data.id as number, method: string(data.method, 100), params: record(data.params) };
+  if (data.protocol !== 2 || !Number.isSafeInteger(data.id) || (data.id as number) <= 0) invalid();
+  return { protocol: 2, id: data.id as number, method: string(data.method, 100), params: record(data.params) };
 }
 
 /** Incremental byte framing with a strict limit before JSON allocation. */

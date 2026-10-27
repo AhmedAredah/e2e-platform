@@ -223,7 +223,6 @@ pub struct MacOsProvider {
     registry: IdentityRegistry,
     sensitive: HashSet<usize>,
     current_ids: HashSet<usize>,
-    visibility: HashMap<usize, Visibility>,
     deadline: Instant,
     viewport: (f64, f64),
     text_budget: ObservationBudget,
@@ -255,7 +254,6 @@ impl MacOsProvider {
             registry: IdentityRegistry::new(),
             sensitive: HashSet::new(),
             current_ids: HashSet::new(),
-            visibility: HashMap::new(),
             deadline: Instant::now(),
             viewport: (1.0, 1.0),
             text_budget: ObservationBudget::new(4 * 1024 * 1024),
@@ -468,7 +466,6 @@ impl MacOsProvider {
             rect,
             clip,
         );
-        self.visibility.insert(id, visibility);
         let canonical_role = if role == "AXRow" && parent_role == "AXList" {
             "option"
         } else if role == "AXRow" && parent_role == "AXOutline" {
@@ -669,6 +666,58 @@ impl MacOsProvider {
         }
         Ok(candidate)
     }
+    /// Re-evaluates the current ancestor geometry instead of trusting a prior snapshot.
+    fn current_visibility(&self, object: AxRef) -> Result<Visibility> {
+        let mut chain = vec![Cf::retain(object)?];
+        loop {
+            self.guard()?;
+            let current = chain.last().ok_or_else(DriverError::stale)?.0;
+            if self.text(current, "AXRole")?.as_deref() == Some("AXApplication") {
+                break;
+            }
+            if chain.len() > MAX_DEPTH {
+                return Ok(Visibility::Unknown);
+            }
+            let Some(parent) = self.get(current, "AXParent")? else {
+                break;
+            };
+            if unsafe { CFGetTypeID(parent.0) != AXUIElementGetTypeID() } {
+                return Ok(Visibility::Unknown);
+            }
+            let mut pid = 0;
+            ax_result(unsafe { AXUIElementGetPid(parent.0, &mut pid) })?;
+            if pid != self.pid {
+                return Ok(Visibility::Unknown);
+            }
+            chain.push(parent);
+        }
+        let app_hidden = self.boolean(self.application.0, "AXHidden")?;
+        let mut clip = None;
+        let mut minimized = None;
+        let mut parent_hidden = false;
+        let mut result = Visibility::Unknown;
+        for ancestor in chain.iter().rev() {
+            let role = self
+                .text(ancestor.0, "AXRole")?
+                .ok_or_else(DriverError::stale)?;
+            let rect = self.rect(ancestor.0)?;
+            if role == "AXWindow" {
+                clip = rect;
+                minimized = self.boolean(ancestor.0, "AXMinimized")?;
+            }
+            result = semantics::visibility(
+                self.boolean(ancestor.0, "AXHidden")?,
+                app_hidden,
+                minimized,
+                parent_hidden,
+                rect,
+                clip,
+            );
+            parent_hidden |= result == Visibility::Hidden;
+            clip = semantics::child_clip(&role, clip, rect);
+        }
+        Ok(result)
+    }
     fn resolve_action(&mut self, id: &str, action: &Action) -> Result<(AxRef, String)> {
         self.deadline = Instant::now() + Duration::from_secs(5);
         let index = id
@@ -703,12 +752,7 @@ impl MacOsProvider {
                 "accessible control is disabled",
             ));
         }
-        if !matches!(action, Action::ScrollIntoView)
-            && self
-                .visibility
-                .get(&index)
-                .is_none_or(|value| value.hidden())
-        {
+        if !matches!(action, Action::ScrollIntoView) && self.current_visibility(object)?.hidden() {
             return Err(DriverError::new(
                 "NOT_ACTIONABLE",
                 "control visibility is hidden or unverified",
@@ -779,7 +823,6 @@ impl AccessibleProvider for MacOsProvider {
         self.deadline = Instant::now() + Duration::from_secs(5);
         self.viewport = (1.0, 1.0);
         self.current_ids.clear();
-        self.visibility.clear();
         self.text_budget = ObservationBudget::new(4 * 1024 * 1024);
         let mut seen = HashSet::new();
         let mut truncated = false;

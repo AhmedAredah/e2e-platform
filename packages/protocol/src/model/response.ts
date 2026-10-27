@@ -1,4 +1,5 @@
 import { ProtocolError, type ProtocolSchema } from './types.ts';
+import { parseJson, type JsonReadOptions } from '@e2e-platform/checks';
 
 /** An immutable, bounded response. Failed HTTP status is still a response. */
 export class HttpResponse {
@@ -20,8 +21,8 @@ export class HttpResponse {
   get size(): number { return this.#body.byteLength; }
   bytes(): Uint8Array { return new Uint8Array(this.#body); }
   text(): string { return new TextDecoder().decode(this.#body); }
-  json(): unknown {
-    try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(this.#body)) as unknown; }
+  json(options: JsonReadOptions = {}): unknown {
+    try { return parseJson(new TextDecoder('utf-8', { fatal: true }).decode(this.#body), options); }
     // Native parser errors quote response data, including credentials, in their message.
     catch { throw new ProtocolError('INVALID_JSON', 'HTTP response is not valid JSON'); }
   }
@@ -32,15 +33,20 @@ export class HttpResponse {
     }
     return this;
   }
-  async validate<T>(schema: ProtocolSchema<T>): Promise<T> {
-    const data = this.json();
-    let result: Awaited<ReturnType<ProtocolSchema<T>['~standard']['validate']>>;
-    try { result = await schema['~standard'].validate(data); }
-    catch { throw new ProtocolError('SCHEMA_MISMATCH', 'HTTP schema validation failed'); }
-    if (result.issues !== undefined) {
-      // Validation issues can echo credentials or an entire response body.
-      throw new ProtocolError('SCHEMA_MISMATCH', `HTTP JSON failed schema validation (${result.issues.length} issues)`);
-    }
-    return result.value;
+  async validate<T>(schema: ProtocolSchema<T>, options: JsonReadOptions = {}): Promise<T> {
+    const data = this.json(options);
+    let count: number | undefined;
+    try {
+      const result = await schema['~standard'].validate(data);
+      if (result === null || typeof result !== 'object') throw new Error();
+      const issues = result.issues;
+      if (issues === undefined) {
+        if (!Object.hasOwn(result, 'value')) throw new Error();
+        return result.value;
+      }
+      if (!Array.isArray(issues)) throw new Error();
+      count = issues.length;
+    } catch { throw new ProtocolError('SCHEMA_MISMATCH', 'HTTP schema validation failed'); }
+    throw new ProtocolError('SCHEMA_MISMATCH', `HTTP JSON failed schema validation (${count} issues)`);
   }
 }

@@ -19,7 +19,7 @@ test('imports a project, edits its data, computes asynchronously, and exports', 
     await screen.getByTestId('currency').selectOption({ label: 'EUR' });
     await screen.getByTestId('tax').check();
     await screen.getByTestId('calculate').click();
-    await expect(screen.getByTestId('result')).toHaveText('Total: 82.50 EUR');
+    await expect(screen.getByTestId('result'), '[oracle:calculation]').toHaveText('Total: 82.50 EUR');
     await expect(screen.getByTestId('status')).toHaveText('Calculated');
     await screen.getByTestId('output-path').fill(output);
     await screen.getByTestId('export').click();

@@ -67,6 +67,7 @@ private:
 class Assertions final {
 public:
     explicit Assertions(Locator locator) : locator_(std::move(locator)) {}
+    Assertions message(std::string value) const { auto copy = *this; copy.message_ = std::move(value); return copy; }
     Assertions not_() const { auto copy = *this; copy.negate_ = !copy.negate_; return copy; }
     Assertions timeout_ms(std::uint32_t timeout) const { auto copy = *this; copy.timeout_ = timeout; return copy; }
     void to_be_visible() const { check("toBeVisible"); }
@@ -81,11 +82,13 @@ public:
 private:
     Locator locator_;
     bool negate_ = false;
+    std::string message_;
     std::optional<std::uint32_t> timeout_;
     void check(const char* matcher, std::optional<Json> expected = std::nullopt) const {
         Json params{{"selector", locator_.selector_}, {"matcher", matcher}, {"negate", negate_}};
         if (expected) params["expected"] = *expected;
         if (timeout_) params["timeoutMs"] = *timeout_;
+        if (!message_.empty()) params["message"] = message_;
         locator_.transport_.call_void("locator.assert", params);
     }
 };
@@ -169,7 +172,9 @@ public:
         } catch (...) { transport_.reject_result(); }
     }
     HttpResponse get(const std::string& url) const { return request(url); }
-    HttpResponse post_json(const std::string& url, const Json& body) const { return request(url, "POST", Json{{"content-type", "application/json"}}, body.dump()); }
+    HttpResponse post_json(const std::string& url, const Json& body) const {
+        return request(url, "POST", Json{{"content-type", "application/json"}}, transport_.encode_value(body));
+    }
 private:
     Transport& transport_;
 };
@@ -182,7 +187,11 @@ public:
     Locator screen() const { return Locator(transport_); }
     Processes processes() const { return Processes(transport_); }
     Http http() const { return Http(transport_); }
-    void expect_equal(const Json& actual, const Json& expected) const { transport_.call_void("expect.equal", Json{{"actual", actual}, {"expected", expected}}); }
+    void expect_equal(const Json& actual, const Json& expected, const std::string& message = "C++ equality assertion failed") const {
+        const auto actual_text = transport_.encode_value(actual);
+        const auto expected_text = transport_.encode_value(expected);
+        transport_.call_void("expect.equal", Json{{"actual", actual_text}, {"expected", expected_text}, {"message", message}});
+    }
     void expect_true(bool actual) const { transport_.call_void("expect.true", Json{{"actual", actual}}); }
 private:
     Transport& transport_;

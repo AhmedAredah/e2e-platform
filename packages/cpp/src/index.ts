@@ -19,7 +19,7 @@ export async function registerCppTests(options: CppTestOptions): Promise<void> {
   let raw: unknown;
   try { raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(result.stdout.bytes)); } catch { invalid(); }
   const manifest = record(raw, ['protocol', 'tests']);
-  if (manifest.protocol !== 1 || !Array.isArray(manifest.tests) || manifest.tests.length === 0 || manifest.tests.length > 10_000) invalid();
+  if (manifest.protocol !== 2 || !Array.isArray(manifest.tests) || manifest.tests.length === 0 || manifest.tests.length > 10_000) invalid();
   const names = manifest.tests.map(value => string(value, 1024));
   if (names.some(name => name.trim() !== name || name.length === 0 || [...name].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) || new Set(names).size !== names.length) invalid();
   const test = createProcessTest({ runner }).extend<{ cpp: CppTestHost }>({

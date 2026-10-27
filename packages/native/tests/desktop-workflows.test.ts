@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EngineError, type OperationContext } from '@e2e-platform/core/engine';
 import { run } from '@e2e-platform/core/runner';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { NativeEngine, NativeTransport, RpcNativeDriver } from '../src/index.ts';
 import { NativeActionability } from '../src/engine/actionability.ts';
 import { NativeActionTimeline } from '../src/engine/action-timeline.ts';
@@ -40,7 +40,9 @@ it('waits through read-only preflight and dispatches input exactly once', async 
 
 it('does not dispatch while the target never becomes ready', async () => {
   await withEngine(['--preflight-delay=60000'], async (engine, directory) => {
-    await expect(engine.perform(button, { kind: 'tap' }, { ...context, timeoutMs: 80 })).rejects.toMatchObject({ code: 'NOT_ACTIONABLE' });
+    const outcome = await engine.perform(button, { kind: 'tap' }, { ...context, timeoutMs: 80 }).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(EngineError);
+    expect(['NOT_ACTIONABLE', 'OPERATION_TIMEOUT']).toContain((outcome as EngineError).code);
     expect(await methods(directory)).not.toContain('perform');
   });
 });
@@ -185,4 +187,15 @@ test('switches windows', async ({ app, native, screen }) => {
     expect(text).not.toContain('private-user-text-486');
     expect(text).not.toContain('window-2');
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+it('classifies expiration after a read-only not-ready response deterministically', async () => {
+  const now = vi.spyOn(Date, 'now').mockReturnValueOnce(100).mockReturnValueOnce(100).mockReturnValue(200);
+  class UnreadyTransport extends NativeTransport {
+    override async request(): Promise<unknown> { throw new EngineError('NOT_ACTIONABLE', 'pending', { retryable: false }); }
+    override close(): void {}
+  }
+  try {
+    await expect(new NativeActionability().wait(new RpcNativeDriver(new UnreadyTransport()), button, { kind: 'tap' }, { signal, timeoutMs: 50 })).rejects.toMatchObject({ code: 'NOT_ACTIONABLE' });
+  } finally { now.mockRestore(); }
 });

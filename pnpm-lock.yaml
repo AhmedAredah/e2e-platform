@@ -625,6 +625,9 @@ importers:
 
   packages/protocol:
     devDependencies:
+      '@e2e-platform/checks':
+        specifier: workspace:*
+        version: link:../checks
       '@types/node':
         specifier: 26.6.2
         version: 26.6.2

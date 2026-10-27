@@ -44,7 +44,7 @@ async function build(source, buildDirectory, extra = []) {
 try {
   const prefix = join(directory, 'prefix');
   const sdkBuild = join(directory, 'sdk-build');
-  await build(join(root, 'native/cpp-sdk'), sdkBuild, ['-DBUILD_TESTING=ON', `-DCMAKE_INSTALL_PREFIX=${prefix}`]);
+  const sdkTargets = await build(join(root, 'native/cpp-sdk'), sdkBuild, ['-DBUILD_TESTING=ON', `-DCMAKE_INSTALL_PREFIX=${prefix}`]);
   await run('ctest', ['--test-dir', sdkBuild, '-C', 'Release', '--output-on-failure', '--output-junit', join(evidence, 'sdk-ctest.xml')]);
   await run('cmake', ['--install', sdkBuild, '--config', 'Release']);
   for (const [source, installed] of [
@@ -78,6 +78,10 @@ if (!executable) throw new Error('Missing compiled test executable');
 await registerCppTests({ executable });
 `);
   const profiles = [
+    { name: 'contract-equal', binary: requireExecutableTarget(sdkTargets, 'e2e_cpp_contract_cases'), contract: 'equal' },
+    { name: 'contract-different', binary: requireExecutableTarget(sdkTargets, 'e2e_cpp_contract_cases'), contract: 'different', negative: true, title: 'C++ contract café 漢字' },
+    { name: 'contract-nonfinite', binary: requireExecutableTarget(sdkTargets, 'e2e_cpp_contract_cases'), contract: 'nonfinite', incomplete: true },
+    { name: 'contract-exit', binary: requireExecutableTarget(sdkTargets, 'e2e_cpp_contract_cases'), contract: 'exit', incomplete: true },
     { name: 'installed-consumer', binary: requireExecutableTarget(consumerTargets, 'installed_cpp_consumer') },
     { name: 'cli-positive', binary: requireExecutableTarget(testTargets, 'e2e_cpp_cli_tests') },
     { name: 'cli-negative', binary: requireExecutableTarget(testTargets, 'e2e_cpp_negative_tests'), negative: true, title: 'C++ test rejects a planted wrong CLI result' },
@@ -99,6 +103,7 @@ await registerCppTests({ executable });
   const cli = join(project, 'node_modules/@e2e-platform/core/dist/cli/bin.js');
   for (const profile of profiles) {
     env.E2E_CPP_TEST_BINARY = profile.binary;
+    env.E2E_CPP_CONTRACT_CASE = profile.contract ?? 'equal';
     const target = profile.qtApp
       ? `engine: qt(), app: { appPath: ${JSON.stringify(profile.qtApp)}, launchArguments: ${JSON.stringify(profile.negative ? ['--bad-calculation'] : [])} }`
       : "platform: 'cpp-cli'";
@@ -125,8 +130,16 @@ await registerCppTests({ executable });
     let operationFailure;
     let cleanupFailure;
     try {
-      await run(process.execPath, [cli, 'run', '--no-model', '--artifacts', join(output, 'artifacts')], { cwd: project, accepted: [profile.negative ? 1 : 0] });
-      const report = validateNativeReport(JSON.parse(await readFile(join(output, 'report.json'), 'utf8')), { expected: profile.negative ? 'failed' : 'passed', minimumResults: 1, failureTitle: profile.title });
+      await run(process.execPath, [cli, 'run', '--no-model', '--artifacts', join(output, 'artifacts')], { cwd: project, accepted: [profile.negative || profile.incomplete ? 1 : 0] });
+      const document = JSON.parse(await readFile(join(output, 'report.json'), 'utf8'));
+      const report = profile.incomplete ? document.run : validateNativeReport(document, { expected: profile.negative ? 'failed' : 'passed', minimumResults: 1, failureTitle: profile.title, failureOracle: '[oracle:calculation]' });
+      if (profile.incomplete) {
+        const test = report.results?.[0]; const attempt = test?.attempts?.[0];
+        if (document.schemaVersion !== 'report-1' || report.status !== 'failed' || report.errors?.length
+          || report.results.length !== 1 || test.status !== 'failed' || test.titlePath.at(-1) !== 'C++ contract café 漢字'
+          || test.attempts.length !== 1 || attempt.cleanup !== 'complete' || attempt.secondaryErrors?.length
+          || !attempt.error?.message?.includes('exited before completing its registered body')) throw new Error('Compiled premature completion regression was not rejected as intended');
+      }
       service?.assertHealthy();
       results.push({ name: profile.name, status: report.status, cleanup: 'complete', assertionFailureRequired: Boolean(profile.negative), ...(profile.runtime ? { runtime: profile.runtime, inputFidelity: 'toolkit-events' } : {}) });
     } catch (error) { operationFailure = error; }

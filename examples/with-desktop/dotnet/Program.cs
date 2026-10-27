@@ -41,7 +41,12 @@ internal static class Program
         var childProcessId = new TextBlock { Text = child.Id.ToString() };
         AutomationProperties.SetAutomationId(childProcessId, "child-process-id");
         foreach (var control in new FrameworkElement[] { input, secret, result, check, choice, submit, transient, remove, readOnly, disabled, environment, processId, childProcessId }) panel.Children.Add(control);
-        try { application.Run(new Window { Title = "E2E Platform Accessible Demo", Content = panel, Width = 420, Height = 540 }); }
+        panel.Children.Add(new Border { Height = 900 });
+        var late = Named(new Button { Content = "Late control" }, "Late control", "late");
+        late.Click += (_, _) => result.Text = "scrolled";
+        panel.Children.Add(late);
+        var scroll = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+        try { application.Run(new Window { Title = "E2E Platform Accessible Demo", Content = scroll, Width = 420, Height = 540 }); }
         finally { if (!child.HasExited) { child.Kill(entireProcessTree: true); child.WaitForExit(5000); } }
     }
 

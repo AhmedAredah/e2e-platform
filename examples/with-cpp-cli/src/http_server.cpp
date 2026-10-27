@@ -1,3 +1,4 @@
+#include "calculator/number.h"
 // SPDX-License-Identifier: MIT
 #include "calculator/http_server.h"
 #include <chrono>
@@ -68,11 +69,8 @@ private:
 };
 
 bool parseNumber(const std::string& text, double& value) {
-    if (text.empty()) return false;
-    std::istringstream input(text);
-    input.imbue(std::locale::classic());
-    input >> std::noskipws >> value;
-    return !input.fail() && input.eof() && std::isfinite(value);
+    try { value = NumberParser{}.parse(text, false); return true; }
+    catch (const std::exception&) { return false; }
 }
 
 /** Reads no more than 8 KiB with a deadline covering the entire request header. */

@@ -32,7 +32,7 @@ command requests all use that same supervisor; launch failures never fall back.
 
 The protocol reserves stdin/stdout for UTF-8 newline-delimited JSON. The SDK routes
 ordinary `std::cout` diagnostics to stderr during a body. Requests have exactly
-`{ protocol: 1, id, method, params }`; responses contain the same protocol and ID
+`{ protocol: 2, id, method, params }`; responses contain the same protocol and ID
 and either `result` or `error: { message }`. IDs increase, only one request may be
 in flight, lines are limited to 1 MiB, and a case permits at most 10,000 requests.
 Malformed streams, transport failures, premature exit and deadlines fail the case.
@@ -58,3 +58,10 @@ controls. This SDK does not add a GUI backend, OS-wide input, custom-canvas reco
 embedded DOM access, or bindings for other test frameworks. Python, C# and Rust
 test-authoring SDKs remain separate work. Extend the C++ `Transport` abstraction for
 another host without duplicating the test runner.
+
+Protocol 2 requires matching rebuilt SDK headers and host packages. It adds
+explicit case start/completion and lossless JSON-text equality operands. A clean
+process exit without completion fails. Nonfinite local JSON values poison the
+SDK transport even when the test catches the error. Wide integers remain exact;
+`1` and `1.0` compare as the same numeric value. Optional assertion messages are
+recorded in the report. See the SDK migration section before upgrading binaries.

@@ -10,4 +10,4 @@ E2E_TEST("C++ test validates a real compiled CLI") {
     session.expect_equal(e2e::parse_json(result.stdout_text).at("sum"), 4);
     session.expect_true(!result.truncated && result.stderr_text.empty());
 }
-int main(int argc, char** argv) { return e2e::run(argc, argv); }
+E2E_TEST_MAIN()

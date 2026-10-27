@@ -9,6 +9,7 @@ export { NumericValidator } from './validators/numeric.ts';
 export { JsonValidator } from './validators/json.ts';
 export { CsvValidator, parseCsv } from './validators/csv.ts';
 export { readJsonFile } from './io/json-file.ts';
+export { parseJson } from './io/json.ts';
 
 const numeric = new NumericValidator();
 const json = new JsonValidator(numeric);

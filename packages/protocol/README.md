@@ -49,3 +49,14 @@ for leaked response data.
 
 Primary API references: [Node fetch](https://nodejs.org/api/globals.html#fetch),
 [Standard Schema](https://standardschema.dev/).
+
+JSON decoding validates numeric lexemes before conversion. The default rejects
+unsafe integers and decimals whose mathematical value would silently change.
+For intentional C++ `max_digits10` output use
+`response.json({ decimalPrecision: 'binary64' })` (or the second argument to
+`validate`). This accepts finite binary64 rounding but still rejects unsafe
+integers unless `unsafeIntegers: 'allow'` is explicitly selected. Serialize
+exact 64-bit identifiers as strings. Request JSON must consist of plain JSON
+values; nonfinite/unsafe integral numbers, cycles, holes, `undefined`, custom
+objects and serialization hooks are rejected rather than silently rewritten.
+Schema result shape and property-access failures are checked and sanitized.

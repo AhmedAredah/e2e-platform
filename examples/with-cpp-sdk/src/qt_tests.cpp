@@ -9,7 +9,7 @@ E2E_TEST("C++ test drives Qt accessible controls") {
     screen.get_by_test_id("tax").check();
     screen.get_by_test_id("currency").select_option("EUR");
     screen.get_by_test_id("calculate").click();
-    screen.get_by_test_id("result").expect().to_have_text("Total: 82.50 EUR");
+    screen.get_by_test_id("result").expect().message("[oracle:calculation]").to_have_text("Total: 82.50 EUR");
     screen.get_by_test_id("status").expect().to_have_text("Calculated");
 }
-int main(int argc, char** argv) { return e2e::run(argc, argv); }
+E2E_TEST_MAIN()

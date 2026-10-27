@@ -26,6 +26,7 @@ QString accessibleRole(QObject* object, const QString& fallback);
 QString accessibleValue(QObject* object);
 QString widgetRole(QWidget* widget);
 QPoint widgetPoint(QWidget* widget);
+void activateWidgetWindow(QWidget* widget);
 bool secureObject(QObject* object);
 /** Retain helper-owned secrecy until destruction, independently of application properties. */
 void markSensitiveObject(QObject* object);

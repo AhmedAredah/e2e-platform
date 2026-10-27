@@ -2,6 +2,7 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <cstdint>
+#include <cmath>
 #include <istream>
 #include <ostream>
 #include <stdexcept>
@@ -13,12 +14,21 @@ namespace e2e {
 using Json = nlohmann::json;
 inline constexpr std::size_t max_protocol_line = 1024 * 1024;
 inline constexpr std::uint64_t max_protocol_requests = 10000;
+inline constexpr int protocol_version = 2;
 
 /** A bounded diagnostic; never includes application values or remote exception text. */
 class Error : public std::runtime_error {
 public:
     explicit Error(const char* message) : std::runtime_error(message) {}
 };
+
+/** Rejects values JSON serialization would silently replace, before any wire operation. */
+inline void validate_json_value(const Json& value, std::size_t depth = 0) {
+    if (depth > 64) throw Error("JSON nesting exceeds the protocol limit");
+    if (value.is_number_float() && !std::isfinite(value.get<double>())) throw Error("Nonfinite JSON numbers are not supported");
+    if (value.is_discarded() || value.is_binary()) throw Error("Unsupported JSON value");
+    if (value.is_structured()) for (const auto& child : value) validate_json_value(child, depth + 1);
+}
 
 /** Parses bounded JSON with duplicate-key and excessive-nesting rejection. */
 inline Json parse_json(const std::string& text) {
@@ -51,6 +61,17 @@ public:
     bool failed() const noexcept { return failed_; }
     /** Typed clients poison a malformed result just as the wire poisons a malformed envelope. */
     [[noreturn]] void reject_result() { invalidate(); throw Error("Invalid test operation result"); }
+    /** Local validation failure must survive a test body catching its exception. */
+    [[noreturn]] void reject_value() { invalidate(); throw Error("Unsupported test value"); }
+    /** Encodes values losslessly or latches local validation/encoding failures. */
+    std::string encode_value(const Json& value) {
+        try {
+            validate_json_value(value);
+            auto text = value.dump();
+            if (text.size() > max_protocol_line) reject_value();
+            return text;
+        } catch (...) { reject_value(); }
+    }
 protected:
     void invalidate() noexcept { failed_ = true; }
 private:
@@ -63,11 +84,12 @@ public:
     StdioTransport(std::istream& input, std::ostream& output) : input_(input), output_(output) {}
     Json call(const std::string& method, const Json& params) override {
         if (failed()) throw Error("Protocol connection is unusable");
-        if (next_id_ > max_protocol_requests) throw Error("Protocol request limit reached");
-        if (method.empty() || !params.is_object()) throw Error("Invalid protocol request");
+        if (next_id_ > max_protocol_requests) { invalidate(); throw Error("Protocol request limit reached"); }
+        if (method.empty() || !params.is_object()) { invalidate(); throw Error("Invalid protocol request"); }
         const std::uint64_t id = next_id_++;
         try {
-            const std::string request = Json{{"protocol", 1}, {"id", id}, {"method", method}, {"params", params}}.dump();
+            validate_json_value(params);
+            const std::string request = Json{{"protocol", protocol_version}, {"id", id}, {"method", method}, {"params", params}}.dump();
             if (request.size() > max_protocol_line) throw Error("Protocol request is too large");
             output_ << request << '\n' << std::flush;
             if (!output_) throw Error("Protocol output failed");
@@ -80,7 +102,7 @@ public:
             }
             if (!input_ || byte != '\n') throw Error("Protocol response ended before its newline");
             Json response = parse_json(line);
-            if (!response.is_object() || response.size() != 3 || !response.contains("protocol") || !response["protocol"].is_number_integer() || response["protocol"] != 1
+            if (!response.is_object() || response.size() != 3 || !response.contains("protocol") || !response["protocol"].is_number_integer() || response["protocol"] != protocol_version
                 || !response.contains("id") || !response["id"].is_number_integer() || response["id"] != id
                 || (response.contains("result") == response.contains("error"))) throw Error("Protocol response identity is invalid");
             if (response.contains("error")) {

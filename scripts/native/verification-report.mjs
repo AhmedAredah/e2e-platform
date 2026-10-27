@@ -1,5 +1,5 @@
 /** Rejects skipped, broken-setup and incomplete-cleanup runs as qualification evidence. */
-export function validateNativeReport(document, { expected, minimumResults = 1, failureTitle }) {
+export function validateNativeReport(document, { expected, minimumResults = 1, failureTitle, failureOracle }) {
   const report = document.run;
   if (document.schemaVersion !== 'report-1' || report?.status !== expected || !Array.isArray(report.results)) {
     throw new Error('Native qualification report has an unexpected schema or verdict');
@@ -23,7 +23,9 @@ export function validateNativeReport(document, { expected, minimumResults = 1, f
       throw new Error('The planted defect must be the only failure, with no retry or skip');
     }
     const attempt = failed[0].attempts[0];
-    if (failed[0].titlePath.at(-1) !== failureTitle || attempt.error?.code !== 'ASSERTION_FAILED' || attempt.error.category !== 'test') {
+    if (failed[0].titlePath.at(-1) !== failureTitle || attempt.error?.code !== 'ASSERTION_FAILED' || attempt.error.category !== 'test'
+      || typeof failureOracle !== 'string' || !/^\[oracle:[a-z0-9-]+\]$/.test(failureOracle)
+      || !attempt.error.message?.includes(failureOracle)) {
       throw new Error('The intended planted-defect assertion did not fail');
     }
   } else {
