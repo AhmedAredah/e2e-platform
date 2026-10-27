@@ -2,7 +2,7 @@
 
 This repository contains the MIT upstream source snapshot, the reviewed extension
 port, desktop drivers, tests, examples and documentation. The reviewed candidate
-branch is `mit-main`. Select that branch explicitly when cloning, or use the
+branch is `main`. Select that branch explicitly when cloning, or use the
 reviewed full-repository archive. The base is commit
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`; later Apache-licensed upstream
 commits are not this fork's base. The canonical repository is
@@ -46,7 +46,7 @@ A GitHub source ZIP contains no Git history. For an offline checkout with histor
 clone while online, then keep the entire folder, including its `.git` directory:
 
 ```sh
-git clone --branch mit-main https://github.com/AhmedAredah/e2e-platform.git
+git clone --branch main https://github.com/AhmedAredah/e2e-platform.git
 ```
 
 Open `e2e-platform` in your editor. Git needs no network connection for these steps

@@ -3,7 +3,7 @@ name: native
 on:
   pull_request:
   push:
-    branches: [mit-main]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -3,7 +3,7 @@ name: spec
 on:
   pull_request:
   push:
-    branches: [mit-main]
+    branches: [main]
 
 # The repository's own runs are not usage: the CLI sends no telemetry from CI here.
 env:

@@ -8,7 +8,7 @@ on:
       - 'pnpm-lock.yaml'
       - '.github/workflows/docs.yml'
   push:
-    branches: [mit-main]
+    branches: [main]
     paths:
       - 'docs/**'
       - 'scripts/check-docs*'

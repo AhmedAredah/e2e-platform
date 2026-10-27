@@ -30,14 +30,14 @@ The current candidate must pass its own hosted checks.
 [AhmedAredah/e2e-platform](https://github.com/AhmedAredah/e2e-platform) was created
 as a real GitHub fork of TesterArmy e2e. Issues and private vulnerability reporting
 are enabled. The reviewed candidate source and default branch are
-[`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main).
-The separately retained `main` branch remains
-the original upstream Apache-licensed snapshot. **It is not this candidate.**
+[`main`](https://github.com/AhmedAredah/e2e-platform/tree/main).
+The reviewed MIT source is now on `main`; the former upstream Apache snapshot
+branch has been removed from this fork.
 No GitHub release, npm publication or registry namespace ownership is claimed.
 Hosted CI results are recorded in [GitHub Actions](https://github.com/AhmedAredah/e2e-platform/actions).
-Clone `mit-main` or use the reviewed full-repository archive.
-[Publishing instructions](docs/development/PUBLISHING.md) preserve upstream `main`
-and update `mit-main` without a force push.
+Clone `main` or use the reviewed full-repository archive.
+[Publishing instructions](docs/development/PUBLISHING.md) update the reviewed
+`main` branch without a force push.
 
 The selected MIT base remains
 `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. The review retained upstream and Pi

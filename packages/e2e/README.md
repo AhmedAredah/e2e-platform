@@ -70,7 +70,7 @@ ready. On every exit path the runner stops the app, then stops the services in
 reverse order, then runs their `teardown` commands in reverse order, so
 `docker compose down` runs after the migration step and the app are gone.
 Every service option is listed under
-[services](https://github.com/AhmedAredah/e2e-platform/blob/mit-main/docs/reference/config.mdx#services).
+[services](https://github.com/AhmedAredah/e2e-platform/blob/main/docs/reference/config.mdx#services).
 
 The runner spawns the command, waits until `readyUrl` (defaults to `url`)
 answers with a 200-499 status, and terminates it when the run finishes, fails,
@@ -84,7 +84,7 @@ secrets included, must be passed explicitly through `command.env`. If the app
 never becomes ready the run fails with `APP_UNREACHABLE` and `.e2e/report.json`
 is still written; set `command.log: '.e2e/logs/app.log'` to keep what the
 server printed, since its output is otherwise discarded. Every option is listed under
-[the app under test](https://github.com/AhmedAredah/e2e-platform/blob/mit-main/docs/reference/config.mdx#the-app-under-test).
+[the app under test](https://github.com/AhmedAredah/e2e-platform/blob/main/docs/reference/config.mdx#the-app-under-test).
 
 ```ts
 import { test } from '@e2e-platform/playwright';

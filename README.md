@@ -8,7 +8,7 @@ GUI coverage depends on the exposed controls and selected driver. Independent ou
 wrong results even when an application exits successfully or displays success.
 
 The current prerelease is **0.2.0-rc.6**. Its source branch is
-[`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main); a prepared
+[`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared
 full-repository archive also includes Git history and a local installation kit.
 Linux GTK3 reference controls have limited live qualification. Windows UIA and
 macOS AX remain experimental pending interactive desktop tests; portable tests
@@ -25,9 +25,10 @@ later Apache-licensed upstream tree was not relabeled. See the
 
 Maintained independently by [Ahmed Aredah](https://github.com/AhmedAredah).
 The GitHub fork relationship records source ancestry; it does not imply endorsement
-by TesterArmy. The reviewed branch is `mit-main`; the separately retained
-`main` branch is an upstream Apache snapshot and is not this release. The MIT declaration applies to this fork's selected source, with
-the separately licensed materials identified in the notices. It does not relicense
+by TesterArmy. The reviewed MIT source is on the default `main` branch. The former
+upstream Apache snapshot branch has been removed from this fork. The MIT declaration
+applies to this fork's selected source, with separately licensed materials
+identified in the notices. It does not relicense
 later upstream revisions or third-party dependencies.
 
 ## Install and run
@@ -39,7 +40,7 @@ installation kit from this checkout:
 
 ```sh
 npm install --global pnpm@12.3.4
-git clone --branch mit-main https://github.com/AhmedAredah/e2e-platform.git
+git clone --branch main https://github.com/AhmedAredah/e2e-platform.git
 cd e2e-platform
 pnpm install --frozen-lockfile
 pnpm pack:native

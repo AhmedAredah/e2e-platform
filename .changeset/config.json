@@ -6,7 +6,7 @@
   ],
   "commit": false,
   "access": "public",
-  "baseBranch": "mit-main",
+  "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "fixed": [],
   "linked": [],

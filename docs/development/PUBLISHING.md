@@ -1,12 +1,12 @@
 # Publishing the reviewed candidate
 
 The canonical repository is `AhmedAredah/e2e-platform`, a GitHub fork of
-`tester-army/e2e`. The reviewed candidate source and default branch are `mit-main`.
+`tester-army/e2e`. The reviewed candidate source and default branch are `main`.
 Source publication is separate from package publication and release qualification;
 no GitHub release has been published. The branch is rooted at MIT
-revision `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. Preserve the separately
-copied upstream `main` branch and its Apache terms. Do not merge that branch
-into the MIT line without reviewing every imported license obligation.
+revision `e9c2914c6d8f8d664d820b13a1fa454e9247e94b`. The former upstream Apache
+snapshot branch has been removed from this fork. Do not import later upstream
+changes into the MIT line without reviewing every imported license obligation.
 
 ## Source publication
 
@@ -17,11 +17,11 @@ git status --short
 git branch --show-current
 # Add origin only if this checkout does not already have it.
 git remote add origin https://github.com/AhmedAredah/e2e-platform.git
-git push --set-upstream origin mit-main
+git push --set-upstream origin main
 ```
 
 Review the destination if `origin` already exists. Do not use a force push.
-Select `mit-main` as the repository's default branch in GitHub Settings after
+Select `main` as the repository's default branch in GitHub Settings after
 the push succeeds. Verify that the published tree matches the reviewed local
 tree (`git rev-parse HEAD^{tree}`), that README and LICENSE are from this line,
 and that the fork relationship remains visible. Retain original attribution;
@@ -51,7 +51,7 @@ separate installation workflow in `INSTALL.md`. npm namespace ownership and
 registry publication remain separate actions; this repository does not claim
 that the package names are reserved or published.
 
-Create a GitHub prerelease only from the reviewed `mit-main` commit. State the
+Create a GitHub prerelease only from the reviewed `main` commit. State the
 source revision, actual checks, unqualified platforms and third-party license
 boundaries. A GitHub source ZIP excludes Git history and generated install kits;
 label any prepared full-history or binary bundle separately and verify its
