@@ -5,6 +5,7 @@ pub mod process;
 pub mod protocol;
 pub mod provider;
 pub mod server;
+pub mod startup;
 mod strict_json;
 
 #[cfg(any(target_os = "macos", feature = "check-macos", test))]

@@ -4,7 +4,8 @@ import { createEngineSession } from '../../src/engine/session.ts';
 import { expect as expectFixture } from '../../src/expect/index.ts';
 import { Deadline, withTimeout } from '../../src/internal/time.ts';
 import { LocatorEngine } from '../../src/locator/engine.ts';
-import { createScreen } from '../../src/locator/screen.ts';
+import { createScreen, locatorInternals } from '../../src/locator/screen.ts';
+import { TestError } from '../../src/internal/errors.ts';
 import { AttemptBudget } from '../../src/run/budget.ts';
 import { StepRecorder } from '../../src/run/steps.ts';
 import { snapshot } from '../helpers/snapshot.ts';
@@ -107,4 +108,28 @@ describe('locator assertion polling deadline', () => {
     await vi.advanceTimersByTimeAsync(400);
     await assertion;
   });
+  it.each([false, true])('preserves deadline mismatches across runner module copies (%s)', async (negated) => {
+    vi.useFakeTimers();
+    const locator = resultLocator(async () => [resultNode]);
+    const engine = locatorInternals(locator)!.context.engine;
+    let calls = 0;
+    vi.spyOn(engine, 'tryRead').mockImplementation(async (_expression, deadline) => {
+      if (++calls === 1) return { node: resultNode, count: 1 };
+      const foreign = new TestError('ACTION_FAILED', 'operation timed out', {
+        cause: new EngineError('OPERATION_TIMEOUT', 'final read exhausted its budget', { retryable: false }),
+      });
+      Object.setPrototypeOf(foreign, Error.prototype);
+      expect(foreign).not.toBeInstanceOf(TestError);
+      return new Promise<never>((_resolve, reject) => setTimeout(() => reject(foreign), deadline.remaining()));
+    });
+    const expectation = expectFixture(locator, '[oracle:calculation]');
+    const assertion = expect((negated ? expectation.not : expectation).toHaveText('82.50')).rejects.toMatchObject({
+      code: 'ASSERTION_FAILED', message: expect.stringContaining('[oracle:calculation]'),
+      details: { observed: 'text "83.50"', matches: 1 },
+    });
+    await vi.advanceTimersByTimeAsync(400);
+    await assertion;
+    expect(calls).toBe(2);
+  });
+
 });

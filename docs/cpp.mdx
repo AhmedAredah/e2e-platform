@@ -282,3 +282,8 @@ implementation fails explicitly. Requested combobox options are checked during
 read-only preflight. These are control-specific contracts, not universal toolkit
 certification. See `native/qt/README.md` for the matching installed Qt kit and
 CTest display-platform settings.
+
+Assertion deadline handling recognizes errors from separate installed runner module
+copies. A final read timeout preserves an already observed mismatch and its oracle
+label as an assertion failure. Initial read failures, earlier infrastructure
+failures and cancellation retain their original error classification.

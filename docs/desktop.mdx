@@ -19,6 +19,10 @@ Qt Widgets/Quick path.
 | `desktop({ backend: 'windows-uia', executable })` | Windows interactive desktop | Experimental; compile and run the WPF fixture on Windows. |
 | `desktop({ backend: 'macos-ax', executable })` | macOS with Accessibility permission | Experimental; compile and run the AppKit fixture on macOS. |
 
+The macOS sidecar waits for an observable application before announcing readiness,
+so a transient accessibility IPC failure during startup does not become the first
+locator action. Startup polling is read-only and bounded.
+
 The OS sidecar executable is configured separately from the application's `appPath`.
 It receives the target executable and arguments as literal argv, launches the target,
 and scopes inspection to its process. It does not attach to arbitrary running apps.

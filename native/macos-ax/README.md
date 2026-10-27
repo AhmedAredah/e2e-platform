@@ -25,6 +25,11 @@ uses the inherited GUI session environment and removes the native token/port
 from the application's environment. Target stdout/stderr are suppressed; use
 explicit application log files if required.
 
+Before announcing readiness, the sidecar waits up to 20 seconds for a successful
+nonempty accessibility observation of its owned application. Transient read
+timeouts/stale startup elements can be polled; permissions and other failures
+are terminal. This never retries a mutation or bypasses Accessibility permission.
+
 Grant Accessibility permission to the driver in macOS System Settings. A denied
 permission is `POLICY_DENIED` before application launch. The driver does not
 request, grant or bypass permissions. Headless CI without a logged-in GUI session

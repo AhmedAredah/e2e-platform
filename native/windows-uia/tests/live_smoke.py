@@ -190,9 +190,10 @@ def verify(driver, app, broken):
         session.perform("enabled", "uncheck")
         session.wait_for(lambda tree: not session.find(tree, "enabled")["states"]["checked"])
         checks += 3
-        session.perform("open-choice", "tap")
+        session.perform("toggle-choice", "tap")
         session.perform("choice", "selectOption", value={"label": "Beta"})
         session.wait_for(lambda tree: any(node.get("name") == "Beta" and node.get("states", {}).get("selected") for node in nodes(tree["root"])))
+        session.perform("toggle-choice", "tap")
         checks += 1
         delayed = session.find(session.snapshot(), "delayed-choice")
         for label in ("Later", "Disabled option", "Duplicate"):

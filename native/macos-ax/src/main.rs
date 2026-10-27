@@ -3,7 +3,7 @@
 fn run_macos() -> e2e_platform_macos_ax::error::Result<()> {
     use e2e_platform_macos_ax::{
         error::DriverError, platform::macos::MacOsProvider, process::OwnedApplication,
-        protocol::Session, server::serve,
+        protocol::Session, provider::AccessibleProvider, server::serve, startup::wait_for_ready,
     };
     use std::{
         io::Write,
@@ -87,7 +87,22 @@ fn run_macos() -> e2e_platform_macos_ax::error::Result<()> {
             }
         })),
     };
-    let provider = MacOsProvider::new(application.pid())?;
+    let mut provider = MacOsProvider::new(application.pid())?;
+    wait_for_ready(
+        Duration::from_secs(20),
+        || {
+            provider.snapshot().map(|snapshot| {
+                snapshot["root"]["children"]
+                    .as_array()
+                    .is_some_and(|children| !children.is_empty())
+            })
+        },
+        || {
+            !STOP.load(Ordering::Relaxed)
+                && unsafe { getppid() } == parent_pid
+                && application.is_running()
+        },
+    )?;
     let session = Session::new(provider, token)?;
     let listener = TcpListener::bind(("127.0.0.1", 0))
         .map_err(|_| DriverError::new("ENGINE_FAILURE", "could not bind loopback server"))?;

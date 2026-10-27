@@ -64,6 +64,21 @@ Node imports, initializer, deliberate-failure rejection and zero installed
 production dependency findings. The production workspace audit still contains
 three Expo-only findings (2 high, 1 moderate).
 
+## Hosted acceptance follow-up
+
+The first new hosted run passed Linux installed TypeScript/C++ positive and
+negative desktop consumers. It exposed two further integration defects: the WPF
+fixture closed its option popup before selection could be observed, and the AX
+sidecar announced readiness before the application could answer accessibility
+requests. WPF now explicitly opens and closes the popup around the observation.
+AX now polls bounded read-only startup observations before announcing readiness;
+permission errors remain terminal and mutations are never retried. The Qt planted
+negative also exposed an assertion deadline error crossing separate runner module
+copies. The existing structural error marker now preserves an observed mismatch
+at the deadline; new regressions fail before the correction and pass afterward.
+Initial or early backend failures still retain their original classification. Portable
+startup tests cover transient failures, empty trees, cancellation and timeout.
+
 ## Dependency and release boundaries
 
 The updated full-workspace audit reports 11 findings (8 high, 2 moderate, 1 low)

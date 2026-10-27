@@ -29,9 +29,8 @@ internal static class Program
         AutomationProperties.SetAutomationId(result, "result");
         var check = Named(new CheckBox { Content = "Enabled" }, "Enabled", "enabled");
         var choice = Named(new ComboBox { ItemsSource = new[] { "Alpha", "Beta", "Gamma" }, SelectedIndex = 0, Width = 200 }, "Choice", "choice");
-        var openChoice = Named(new Button { Content = "Open choices" }, "Open choices", "open-choice");
-        openChoice.Click += (_, _) => choice.IsDropDownOpen = true;
-        choice.SelectionChanged += (_, _) => choice.IsDropDownOpen = false;
+        var openChoice = Named(new Button { Content = "Toggle choices" }, "Toggle choices", "toggle-choice");
+        openChoice.Click += (_, _) => choice.IsDropDownOpen = !choice.IsDropDownOpen;
         var delayed = Named(new ListBox { Height = 60, Width = 200 }, "Delayed choices", "delayed-choice");
         VirtualizingStackPanel.SetIsVirtualizing(delayed, false);
         delayed.Items.Add(new ListBoxItem { Content = "Alpha", IsSelected = true });
