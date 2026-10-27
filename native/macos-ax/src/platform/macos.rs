@@ -963,9 +963,21 @@ fn ax_result(status: AxError) -> Result<()> {
     match status {
         0 => Ok(()),
         -25202 => Err(DriverError::stale()),
-        -25205 | -25206 | -25208 | -25212 => Err(DriverError::new(
+        -25205 => Err(DriverError::new(
             "UNSUPPORTED_CAPABILITY",
-            "platform does not support the accessibility operation",
+            "accessibility attribute is unsupported",
+        )),
+        -25206 => Err(DriverError::new(
+            "UNSUPPORTED_CAPABILITY",
+            "accessibility action is unsupported",
+        )),
+        -25208 => Err(DriverError::new(
+            "UNSUPPORTED_CAPABILITY",
+            "application accessibility API is not implemented",
+        )),
+        -25212 => Err(DriverError::new(
+            "UNSUPPORTED_CAPABILITY",
+            "accessibility value is unavailable",
         )),
         -25211 => Err(DriverError::new(
             "POLICY_DENIED",

@@ -79,6 +79,9 @@ unsafe extern "C" fn select(_: Id, _: Sel, children: Id) {
 unsafe extern "C" fn action_names(_: Id, _: Sel) -> Id {
     unsafe { items(&[text("AXScrollToVisible")]) }
 }
+unsafe extern "C" fn not_ignored(_: Id, _: Sel) -> i8 {
+    0
+}
 unsafe extern "C" fn action_description(_: Id, _: Sel, _: Id) -> Id {
     unsafe { text("Scroll to visible") }
 }
@@ -154,6 +157,14 @@ pub(super) unsafe fn install(content: Id) {
 
         let name = CString::new("E2EScrollableView").unwrap();
         let button_class = objc_allocateClassPair(class("NSView"), name.as_ptr(), 0);
+        // Keep the legacy action receiver explicitly unignored as required by
+        // the protocol, in addition to exposing its modern metadata below.
+        method(
+            button_class,
+            "accessibilityIsIgnored",
+            not_ignored as *const c_void,
+            "c@:",
+        );
         method(
             button_class,
             "accessibilityActionNames",
