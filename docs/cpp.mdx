@@ -248,6 +248,10 @@ contracts, qualification gates and primary-source references. Framework sources:
 
 ## Review hardening and migration
 
+The native TCP transport rechecks request deadlines when timer callbacks fire
+early. Expired reads fail, while sent mutations with uncertain outcomes are never
+replayed. A timer callback alone does not mean the declared budget has expired.
+
 The C++ authoring transport is now protocol 2. Rebuild SDK test binaries together
 with the host adapter; the native desktop wire stays version 1. Use
 `E2E_TEST_MAIN()` for Unicode case dispatch on Windows. Equality retains nested

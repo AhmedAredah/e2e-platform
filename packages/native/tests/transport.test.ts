@@ -58,6 +58,32 @@ describe('authenticated-bridge transport mechanics', () => {
     await expect(transport.request('snapshot', {}, context(25))).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
   });
 
+  it.each([false, true])('does not expire an early timer callback before the request deadline (mutation: %s)', async (mutates) => {
+    let received!: () => void;
+    const dispatched = new Promise<void>((resolve) => { received = resolve; });
+    let calls = 0;
+    const transport = await bridge(() => { calls++; received(); });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1000);
+    try {
+      let settled = false;
+      const result = transport.request(mutates ? 'perform' : 'snapshot', {}, context(25), mutates)
+        .then(() => { settled = true; return undefined; }, (error: unknown) => { settled = true; return error; });
+      await dispatched;
+      clock.mockReturnValue(1024);
+      await vi.advanceTimersByTimeAsync(25);
+      expect(settled).toBe(false);
+      clock.mockReturnValue(1025);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await result).toMatchObject({ code: mutates ? 'ACTION_MAY_HAVE_COMMITTED' : 'OPERATION_TIMEOUT' });
+      expect(calls).toBe(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      clock.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('does not send an already cancelled request', async () => {
     let calls = 0;
     const transport = await bridge(() => { calls++; });

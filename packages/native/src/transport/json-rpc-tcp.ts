@@ -68,7 +68,15 @@ export class JsonRpcTcpTransport extends NativeTransport {
         finish(error);
       };
       const abort = () => interrupted(true);
-      const timer = setTimeout(() => interrupted(false), Math.max(1, context.timeoutMs));
+      // Timer callbacks can run before the wall-clock deadline at millisecond
+      // boundaries. Recheck it so a final assertion read is not rejected early.
+      const expire = () => {
+        if (settled) return;
+        const remaining = deadline - Date.now();
+        if (remaining > 0) timer = setTimeout(expire, remaining);
+        else interrupted(false);
+      };
+      let timer = setTimeout(expire, Math.max(1, context.timeoutMs));
       context.signal.addEventListener('abort', abort, { once: true });
       const execute = async () => {
         if (settled) return;

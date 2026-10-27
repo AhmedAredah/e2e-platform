@@ -108,7 +108,10 @@ class ProjectEngine extends NativeEngine {
 const engine = new ProjectEngine({ screenshots: false }).handle();
 ```
 
-`NativeTransport` defines bounded serialized request/close operations;
+`NativeTransport` defines bounded serialized request/close operations. The TCP
+implementation rechecks its deadline when a timer callback fires early. Expired
+reads fail; an expired sent mutation has an uncertain outcome and is never replayed.
+Timer scheduling does not shorten the declared request budget.
 `JsonRpcTcpTransport` implements loopback JSON-RPC. `NativeDriver` defines
 typed application operations; `RpcNativeDriver` validates protocol responses.
 `NativeEngine` owns the e2e lifecycle, process supervision, and capabilities.
