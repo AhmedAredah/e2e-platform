@@ -347,7 +347,9 @@ private slots:
         const QJsonObject closeReply = action(find(dialog, "close-modal"), {{"kind", "tap"}});
         if (reconnectBeforeClosing) {
             QVERIFY(closeReply.contains("result"));
-            QCOMPARE(rpc("snapshot").value("error").toObject().value("data").toObject().value("code").toString(), QString("ACTION_MAY_HAVE_COMMITTED"));
+            // Cocoa can finish the native dialog-close event after the close
+            // acknowledgement. Observe the latched failure without replaying input.
+            QTRY_COMPARE(rpc("snapshot").value("error").toObject().value("data").toObject().value("code").toString(), QString("ACTION_MAY_HAVE_COMMITTED"));
             QCOMPARE(socket.state(), QAbstractSocket::ConnectedState);
         } else {
             if (socket.state() != QAbstractSocket::UnconnectedState) QVERIFY(socket.waitForDisconnected(5000));

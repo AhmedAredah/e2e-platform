@@ -170,8 +170,12 @@ def verify(driver, app, broken):
         snapshot = session.wait_for(lambda tree: session.find(tree, "result")["name"] != "idle")
         actual = session.find(snapshot, "result")["name"]
         if broken:
-            assert actual != "portable desktop", "Planted wrong output escaped detection"
-            return checks + 1
+            assert actual == "WRONG", "Fixture did not reach its planted wrong-output state"
+            try:
+                assert actual == "portable desktop", "Application output is wrong"
+            except AssertionError:
+                return checks + 1
+            raise AssertionError("Planted wrong output escaped detection")
         assert actual == "portable desktop", "Application output is wrong"
         checks += 1
         session.perform("input", "clear")
@@ -202,6 +206,8 @@ def verify(driver, app, broken):
         else:
             raise AssertionError("Stale node accepted")
         checks += 1
+        expect_error(session, "clipped", "tap", "NOT_ACTIONABLE")
+        expect_error(session, "clipped", "scrollIntoView", "UNSUPPORTED_CAPABILITY")
         late = session.find(session.snapshot(), "late")
         assert late is not None, "clipped fixture control must remain discoverable"
         try:

@@ -51,8 +51,10 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
                     byId[entry.Id] = entry;
                 }
                 var secure = sensitive.Observe(entry.Id, current.IsPassword);
+                var visibility = UiaVisibility.Read(element, processId);
                 var states = new Dictionary<string, bool> {
-                    ["disabled"] = !current.IsEnabled, ["hidden"] = current.IsOffscreen,
+                    ["disabled"] = !current.IsEnabled, ["hidden"] = visibility != ControlVisibility.Visible,
+                    ["visibilityKnown"] = visibility != ControlVisibility.Unknown,
                     ["focused"] = current.HasKeyboardFocus, ["secure"] = secure
                 };
                 var node = new Dictionary<string, object?> {
@@ -121,7 +123,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             var current = entry.Element.Current;
             if (current.ProcessId != processId) throw new DriverException("NODE_STALE");
             var kind = RequestValidator.String(action, "kind");
-            if (!current.IsEnabled || (kind != "scrollIntoView" && current.IsOffscreen)) throw new DriverException("NOT_ACTIONABLE");
+            if (!current.IsEnabled || (kind != "scrollIntoView" && UiaVisibility.Read(entry.Element, processId) != ControlVisibility.Visible)) throw new DriverException("NOT_ACTIONABLE");
             var adapter = controls.SingleOrDefault(control => control.Supports(kind)) ?? throw new DriverException("UNSUPPORTED_CAPABILITY");
             var mutation = new MutationGuard();
             var prepared = adapter.Prepare(entry.Element, kind, action, mutation);

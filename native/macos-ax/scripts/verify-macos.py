@@ -122,7 +122,7 @@ def scenario(args, wrong=False):
         checks.append('real AppKit controls and secure-source suppression')
         assert initialized.get('actionability') is True
         original = find(nodes, 'input')
-        assert request('actionability', dict(ref=original['ref'], action=dict(kind='fill', value='preflight-only'))) is None
+        assert request('actionability', dict(ref=original['ref'], action=dict(kind='fill', value='preflight-only', sensitive=False))) is None
         assert find(snapshot(), 'input').get('value') == original.get('value'), 'preflight mutated input'
         moving = find(snapshot(), 'moving')
         mover = find(snapshot(), 'move-control')
@@ -163,6 +163,22 @@ def scenario(args, wrong=False):
         perform('input', dict(kind='clear'))
         wait_for(lambda nodes: find(nodes, 'input').get('value') == '')
         checks.append('clear')
+        choices = find(snapshot(), 'choices')
+        select_beta = dict(kind='selectOption', value=dict(label='Beta'))
+        assert request('actionability', dict(ref=choices['ref'], action=select_beta)) is None
+        assert find(snapshot(), 'selection-result').get('value') == 'Alpha selected', 'selection preflight mutated the application'
+        for choice, expected in [(dict(label='Beta'), 'Beta selected'), (dict(index=0), 'Alpha selected'), (dict(value='beta'), 'Beta selected')]:
+            perform('choices', dict(kind='selectOption', value=choice))
+            wait_for(lambda nodes: find(nodes, 'selection-result').get('value') == expected)
+        checks.append('AXSelectedChildren by label, index and identifier with an independent application result')
+        late = find(snapshot(), 'late')
+        assert late['states']['hidden'], 'scroll fixture did not begin clipped'
+        assert request('actionability', dict(ref=late['ref'], action=dict(kind='scrollIntoView'))) is None
+        assert find(snapshot(), 'late')['states']['hidden'], 'scroll preflight moved the viewport'
+        perform('late', dict(kind='scrollIntoView'))
+        wait_for(lambda nodes: find(nodes, 'late')['states'].get('visibilityKnown') and not find(nodes, 'late')['states']['hidden'])
+        checks.append('advertised AXScrollToVisible changes the real NSScrollView viewport')
+
         assert request('shutdown', {}) is None
         process.wait(timeout=5)
         assert process.returncode == 0, 'driver exited unsuccessfully'

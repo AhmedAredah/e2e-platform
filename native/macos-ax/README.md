@@ -140,6 +140,12 @@ unqualified for release claims. Permission-denied and unsupported-platform runs
 must remain failures, not skipped successes.
 The verifier runs the fixture twice, including its deliberately broken `--wrong`
 mode, and requires the same expected-output assertion to reject that defect.
+The fixture also exposes application-owned selectable and scrollable controls;
+the verifier tests all eight advertised operations, including selection through
+three addressing forms and actual `NSScrollView` viewport changes. Read-only
+startup snapshots retry transient AX timeout/stale responses within a deadline;
+mutations are never retried. Each fill request includes the protocol's required
+`sensitive` Boolean, even for read-only actionability checks.
 
 ## Extension structure
 

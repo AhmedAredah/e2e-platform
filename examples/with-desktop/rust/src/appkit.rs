@@ -1,4 +1,5 @@
 #![allow(clashing_extern_declarations, dead_code)]
+mod accessible_controls;
 use std::ffi::{CString, c_char, c_void};
 use std::sync::atomic::{AtomicBool, Ordering};
 type Id = *mut c_void;
@@ -138,7 +139,7 @@ pub unsafe fn run() {
         let window = init_window(
             send0(class("NSWindow"), selector("alloc")),
             selector("initWithContentRect:styleMask:backing:defer:"),
-            rect(80., 80., 480., 300.),
+            rect(80., 80., 780., 300.),
             15,
             2,
             0,
@@ -223,11 +224,13 @@ pub unsafe fn run() {
             text("fixture-password"),
         );
         set_id(content, selector("addSubview:"), password);
+        accessible_controls::install(content);
         set_id(
             window,
             selector("makeKeyAndOrderFront:"),
             std::ptr::null_mut(),
         );
+        accessible_controls::reset_scroll();
         set_bool(app, selector("activateIgnoringOtherApps:"), 1);
         send0(app, selector("run"));
     }

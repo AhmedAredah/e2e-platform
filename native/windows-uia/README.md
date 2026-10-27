@@ -76,6 +76,19 @@ Scrolling does not realize missing virtualized objects. Locate an offscreen
 exposed control by a stable test ID before scrolling; role queries normally
 exclude hidden controls.
 
+Visibility combines `IsOffscreen` with current target bounds clipped by owned
+window and scroll-container bounds. Some WPF providers report `IsOffscreen=false`
+even when a control is outside a scroll viewport. Unknown geometry carries
+`visibilityKnown:false` and cannot authorize input or prove absence. This check
+does not establish physical occlusion or pixel hit testing. Snapshot traversal
+deduplicates completed subtree aliases; ancestor cycles still mark it truncated.
+
+The WPF fixture supplies small `ButtonAutomationPeer`/`TextBoxAutomationPeer`
+subclasses implementing `IScrollItemProvider` with `BringIntoView`. This is an
+application accessibility extension example: ordinary WPF buttons need not expose
+that pattern. Acceptance separately requires a clipped ordinary button to reject
+input and unsupported scrolling; it must not acknowledge a no-op.
+
 Control roles, accessible names, AutomationIds, values and states come from
 UIA Control View. Provider-supplied initial AutomationIds are trusted metadata
 and are frozen for each retained element. Password fields and fields filled

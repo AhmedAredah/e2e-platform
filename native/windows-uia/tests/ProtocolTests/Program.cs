@@ -100,6 +100,21 @@ Assert(ControlSemantics.Role(50028) == "grid" && ControlSemantics.Role(50036) ==
 Assert(ControlSemantics.Role(50034) == "group" && ControlSemantics.Role(50035) == "group",
     "header containers and unknown header orientation do not invent cell semantics");
 var previousCulture = System.Globalization.CultureInfo.CurrentCulture;
+var clipped = new ViewportVisibility(new(10, 800, 100, 20));
+clipped.Clip(new(0, 0, 200, 100), false);
+clipped.Clip(new(0, 0, 400, 900), true);
+Assert(clipped.Result == ControlVisibility.Hidden, "a window cannot restore a control clipped by a nested viewport");
+var partial = new ViewportVisibility(new(10, 90, 100, 20));
+partial.Clip(new(0, 0, 200, 100), false);
+Assert(partial.Result == ControlVisibility.Unknown, "scroll geometry alone does not establish an owned window");
+partial.Clip(new(0, 0, 400, 500), true);
+Assert(partial.Result == ControlVisibility.Visible, "positive viewport intersection is semantically visible");
+var missingBounds = new ViewportVisibility(new(double.NaN, 0, 10, 10));
+missingBounds.Clip(new(0, 0, 400, 500), true);
+Assert(missingBounds.Result == ControlVisibility.Unknown, "nonfinite provider bounds never prove visibility");
+var emptyBounds = new ViewportVisibility(new(0, 0, 10, 10));
+emptyBounds.Clip(new(0, 0, 0, 0), true);
+Assert(emptyBounds.Result == ControlVisibility.Unknown, "missing window geometry remains uncertain");
 try
 {
     System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("fr-FR");

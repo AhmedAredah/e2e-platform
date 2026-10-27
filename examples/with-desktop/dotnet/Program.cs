@@ -3,6 +3,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 
 namespace E2E.Platform.Examples;
 
@@ -21,7 +23,7 @@ internal static class Program
         using var child = Process.Start(childStart) ?? throw new InvalidOperationException("Could not launch owned child fixture");
         var application = new Application();
         var panel = new StackPanel { Margin = new Thickness(20) };
-        var input = Named(new TextBox { Width = 300 }, "Input", "input");
+        var input = Named(new ScrollableTextBox { Width = 300 }, "Input", "input");
         var secret = Named(new PasswordBox { Password = "fixture-secret-must-not-appear", Width = 300 }, "Password", "password");
         var result = new TextBlock { Text = "idle" };
         AutomationProperties.SetAutomationId(result, "result");
@@ -42,7 +44,8 @@ internal static class Program
         AutomationProperties.SetAutomationId(childProcessId, "child-process-id");
         foreach (var control in new FrameworkElement[] { input, secret, result, check, choice, submit, transient, remove, readOnly, disabled, environment, processId, childProcessId }) panel.Children.Add(control);
         panel.Children.Add(new Border { Height = 900 });
-        var late = Named(new Button { Content = "Late control" }, "Late control", "late");
+        panel.Children.Add(Named(new Button { Content = "Clipped ordinary button" }, "Clipped ordinary button", "clipped"));
+        var late = Named(new ScrollableButton { Content = "Late control" }, "Late control", "late");
         late.Click += (_, _) => result.Text = "scrolled";
         panel.Children.Add(late);
         var scroll = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
@@ -55,5 +58,28 @@ internal static class Program
         AutomationProperties.SetName(element, name);
         AutomationProperties.SetAutomationId(element, id);
         return element;
+    }
+}
+
+/// <summary>Application integration for semantic scrolling, which ordinary WPF buttons do not expose.</summary>
+internal sealed class ScrollableButton : Button
+{
+    protected override AutomationPeer OnCreateAutomationPeer() => new Peer(this);
+    private sealed class Peer(ScrollableButton owner) : ButtonAutomationPeer(owner), IScrollItemProvider
+    {
+        public override object GetPattern(PatternInterface patternInterface) =>
+            patternInterface == PatternInterface.ScrollItem ? this : base.GetPattern(patternInterface);
+        public void ScrollIntoView() => owner.BringIntoView();
+    }
+}
+
+internal sealed class ScrollableTextBox : TextBox
+{
+    protected override AutomationPeer OnCreateAutomationPeer() => new Peer(this);
+    private sealed class Peer(ScrollableTextBox owner) : TextBoxAutomationPeer(owner), IScrollItemProvider
+    {
+        public override object GetPattern(PatternInterface patternInterface) =>
+            patternInterface == PatternInterface.ScrollItem ? this : base.GetPattern(patternInterface);
+        public void ScrollIntoView() => owner.BringIntoView();
     }
 }
