@@ -37,7 +37,8 @@ internal static class Program
         delayed.Items.Add(new ListBoxItem { Content = "Disabled option", IsEnabled = false });
         delayed.Items.Add(new ListBoxItem { Content = "Duplicate" });
         delayed.Items.Add(new ListBoxItem { Content = "Duplicate" });
-        var selectionResult = Named(new TextBlock { Text = "Alpha" }, "Selection result", "selection-result");
+        var selectionResult = new TextBlock { Text = "Alpha" };
+        AutomationProperties.SetAutomationId(selectionResult, "selection-result");
         delayed.SelectionChanged += (_, _) => selectionResult.Text = (delayed.SelectedItem as ListBoxItem)?.Content?.ToString() ?? "none";
         var loadChoice = Named(new Button { Content = "Load option" }, "Load option", "load-choice");
         var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };

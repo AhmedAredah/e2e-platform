@@ -44,7 +44,7 @@ Qt 6.4.2 offscreen/software, .NET SDK 10.0.111 cross-compilation and Rust 1.99.1
 The installed SDK verifier and Qt runner both passed positive tests and rejected
 deliberately wrong application results. The Qt helper's four CTest suites passed.
 Linux provider tests passed 85 cases, portable UIA checks passed 81, and Rust
-portable tests passed 34. Windows driver/WPF builds and AX/AppKit FFI checks pass
+portable tests passed 38. Windows driver/WPF builds and AX/AppKit FFI checks pass
 locally; those are not Windows/macOS execution evidence.
 
 This workspace cannot open the D-Bus Unix sockets required for live GTK. Real
@@ -55,7 +55,7 @@ commits. Installation, source-quality and scheduler results do not substitute fo
 native platform acceptance.
 
 Final local checks also passed: source lint/dead-code/build/typechecks and 49
-documentation pages; 1,548 core unit tests (3 environment skips); 303 application
+documentation pages; 1,550 core unit tests (3 environment skips); 303 application
 boundary tests (7 platform skips); and 66 maintenance tests. A first overlapping
 build/test invocation invalidated temporary `dist` imports; rerunning the affected
 C++ and maintenance suites after the build completed passed. The installed
@@ -70,7 +70,9 @@ The first new hosted run passed Linux installed TypeScript/C++ positive and
 negative desktop consumers. It exposed two further integration defects: the WPF
 fixture closed its option popup before selection could be observed, and the AX
 sidecar announced readiness before the application could answer accessibility
-requests. WPF now explicitly opens and closes the popup around the observation.
+requests. WPF now explicitly opens and closes the popup around the observation. Its dynamic
+selection-result label uses its displayed text as the accessible name, while a
+stable AutomationId provides the locator; a fixed name must not mask that output.
 AX now polls bounded read-only startup observations before announcing readiness;
 permission errors remain terminal and mutations are never retried. The Qt planted
 negative also exposed an assertion deadline error crossing separate runner module

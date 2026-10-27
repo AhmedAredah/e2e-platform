@@ -75,7 +75,7 @@ test fixture responsibility. The optional Windows Job Object supervisor is a
 separate native component, not a silent upgrade to default taskkill behavior.
 
 Local follow-up OS-driver checks pass 85 Python tests, 81 portable UIA checks and
-34 Rust tests. Native hosted results above are separate from portable tests.
+38 Rust tests. Native hosted results above are separate from portable tests.
 The local seven-package kit passes manifest integrity, clean install/reinstall,
 plain Node imports, strict public types, initializer/first test, deliberate failure
 rejection, metacharacter paths and conventional npm launch paths. Its installed
