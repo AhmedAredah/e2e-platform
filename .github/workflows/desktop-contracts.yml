@@ -53,6 +53,8 @@ jobs:
       - run: dotnet run --project native/windows-uia/tests/ProtocolTests/E2E.Platform.Desktop.Protocol.Tests.csproj -c Release
       - run: dotnet build native/windows-uia/src/Driver/E2E.Platform.WindowsUia.csproj -c Release
       - run: dotnet build examples/with-desktop/dotnet/AccessibleDemo.csproj -c Release
+      - name: Exercise real WPF accessible controls and owned cleanup
+        run: python native/windows-uia/tests/live_smoke.py --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe
 
   rust-ax:
     strategy:
@@ -69,6 +71,11 @@ jobs:
       - run: cargo +1.99.1 test --locked --manifest-path native/macos-ax/Cargo.toml
       - if: runner.os == 'macOS'
         run: cargo +1.99.1 build --locked --manifest-path examples/with-desktop/rust/Cargo.toml
+      - if: runner.os == 'macOS'
+        run: cargo +1.99.1 build --locked --manifest-path native/macos-ax/Cargo.toml
+      - name: Exercise real AppKit accessibility with permission required
+        if: runner.os == 'macOS'
+        run: python3 native/macos-ax/scripts/verify-macos.py --driver native/macos-ax/target/debug/e2e-platform-macos-ax --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo
 
   windows-process:
     runs-on: windows-2022

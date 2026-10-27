@@ -306,10 +306,15 @@ class ProtocolTests(unittest.TestCase):
                 app.close()  # Idempotent: never signal a potentially reused process group.
                 self.assertLess(time.monotonic() - start, 0.5)
                 state = Path(f"/proc/{grandchild_pid}/stat")
+                def alive():
+                    try:
+                        return state.read_text().rsplit(")", 1)[1].split()[0] != "Z"
+                    except FileNotFoundError:
+                        return False
                 deadline = time.monotonic() + 1
-                while state.exists() and state.read_text().split()[2] != "Z" and time.monotonic() < deadline:
+                while alive() and time.monotonic() < deadline:
                     time.sleep(0.01)
-                self.assertTrue(not state.exists() or state.read_text().split()[2] == "Z")
+                self.assertFalse(alive())
             finally:
                 app.close()
 

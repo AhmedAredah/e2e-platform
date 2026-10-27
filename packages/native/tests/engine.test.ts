@@ -48,7 +48,7 @@ describe('native engine through the real e2e-platform runner', () => {
     const signal = new AbortController().signal;
     const context: OperationContext = { signal, timeoutMs: 3000, runId: 'run', attemptId: 'attempt', origin: 'test' };
     try {
-      await engine.init({ runId: 'run', targetName: 'mock', projectRoot: cwd, app: { appPath: process.execPath, launchArguments: [helper] }, env: process.env, headed: false, workerSlot: 0, signal });
+      await engine.init({ runId: 'run', targetName: 'mock', projectRoot: cwd, app: { appPath: process.execPath, launchArguments: [helper, '--ignore-shutdown'] }, env: process.env, headed: false, workerSlot: 0, signal });
       await engine.startAttempt({ attemptId: 'attempt', artifactsDir: cwd, signal, appLog: () => {}, environment: () => {} });
       await engine.launch(context);
       await expect(engine.stop(context)).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
@@ -57,6 +57,7 @@ describe('native engine through the real e2e-platform runner', () => {
       await expect(engine.startAttempt({ attemptId: 'next', artifactsDir: cwd, signal, appLog: () => {}, environment: () => {} })).rejects.toMatchObject({ code: 'INVALID_STATE' });
       await engine.stop(context);
       expect(stops).toBe(2); await expect(access(profile)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(() => process.kill(pid!, 0)).toThrow();
     } finally { await engine.stop(context); await rm(cwd, { recursive: true, force: true }); }
   });
 

@@ -9,7 +9,7 @@ if (process.platform !== 'darwin') throw new Error('Qt crash diagnostics require
 const executable = requireExecutableTarget(configuredExecutables(join(root, 'examples/with-qt/build')), 'e2e_qt_quick_controls_tests');
 const output = join(root, '.e2e/cpp/qt-crash');
 mkdirSync(output, { recursive: true });
-const result = spawnSync('lldb', ['--batch', '-o', 'run', '-o', 'thread backtrace all', '-o', 'quit', '--', executable, 'accessibleRolesAndFlickableScrollingUsePublicQtInterfaces'], {
+const result = spawnSync('lldb', ['--batch', '-o', 'run', '-k', 'thread backtrace all', '--', executable, 'accessibleRolesAndFlickableScrollingUsePublicQtInterfaces'], {
   env: process.env, encoding: 'utf8', timeout: 60_000, maxBuffer: 8 * 1024 * 1024,
 });
 writeFileSync(join(output, 'quick-lldb.txt'), `${result.stdout ?? ''}\n${result.stderr ?? ''}\nDebugger status: ${result.status}; signal: ${result.signal}; error: ${result.error?.code ?? 'none'}\n`);

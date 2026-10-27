@@ -38,9 +38,12 @@ A stale reference is not evidence that a node is absent. The runner resolves
 retryable stale reads again within the assertion's deadline; an unrecoverable
 or expired stale read fails instead of satisfying a hidden assertion.
 
-Polling stops before starting another observation after the deadline. A known
-mismatch remains `ASSERTION_FAILED`; a backend failure during an observation
-keeps its own error code and is not converted into an assertion mismatch.
+Polling stops before starting another observation after the deadline. If a final
+read consumes the remaining budget after an earlier observation, the assertion
+fails with `ASSERTION_FAILED` and retains that observation. A timed-out read never
+satisfies a negated assertion. An initial read timeout, a timeout before the
+assertion deadline, cancellation and other backend failures keep their own error
+codes.
 
 Screen-text and accessible-name comparisons normalize whitespace: leading and
 trailing whitespace is trimmed and each run collapses to one space. Input

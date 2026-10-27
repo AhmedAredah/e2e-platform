@@ -80,6 +80,7 @@ const server = net.createServer((socket) => {
         reply(null);
       } else if (method === 'keyboard.press') reply(null);
       else if (method === 'shutdown') {
+        if (process.argv.includes('--ignore-shutdown')) { reply(null); continue; }
         socket.write(JSON.stringify({ jsonrpc: '2.0', id, result: null }) + '\n', () => { server.close(); process.exit(0); });
       } else error('UNSUPPORTED_CAPABILITY');
     }

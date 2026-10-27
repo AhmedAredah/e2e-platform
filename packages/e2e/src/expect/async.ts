@@ -1,7 +1,7 @@
 /** Runner-owned polling locator assertions. */
 
 import type { SemanticNode } from '../engine/surface.ts';
-import { TestError } from '../internal/errors.ts';
+import { asEngineError, TestError } from '../internal/errors.ts';
 import { normalizeText, containsText, matchesText, toTextPattern, describePattern } from '../internal/text.ts';
 import { testPattern } from '../internal/regexp.ts';
 import { Deadline, pollCondition } from '../internal/time.ts';
@@ -110,13 +110,23 @@ class AsyncExpectationImpl implements AsyncExpectation {
     await this.internals.context.steps.run('assertion', api, this.label, async () => {
       const deadline = engine.deadline(timeout ?? engine.assertionTimeout);
       let lastSample: Sample = { count: 0, node: null };
+      let sampled = false;
       await pollCondition({
         deadline,
         signal: engine.signal,
         negated: this.negated,
         evaluate: async () => {
-          const sample = await this.sample(spec, deadline);
+          let sample: Sample;
+          try { sample = await this.sample(spec, deadline); }
+          catch (error) {
+            // A final read can consume the remaining assertion budget. Preserve
+            // the last observation as a failed assertion, never a negated pass.
+            if (sampled && deadline.expired() && !engine.signal.aborted && error instanceof TestError
+              && error.code === 'ACTION_FAILED' && asEngineError(error.cause)?.code === 'OPERATION_TIMEOUT') return undefined;
+            throw error;
+          }
           lastSample = sample;
+          sampled = true;
           if (!this.conditionEvaluable(spec, sample)) return undefined;
           return spec.predicate(sample);
         },

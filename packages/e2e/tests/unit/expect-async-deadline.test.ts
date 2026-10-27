@@ -64,4 +64,47 @@ describe('locator assertion polling deadline', () => {
       await assertion;
     },
   );
+
+  it.each([false, true])('retains a failed assertion when its final read exhausts the budget (negated: %s)', async (negated) => {
+    vi.useFakeTimers();
+    let calls = 0;
+    const locator = resultLocator(async (_expression, operation) => {
+      if (++calls === 1) return [resultNode];
+      return new Promise<never>((_resolve, reject) => setTimeout(() => reject(
+        new EngineError('OPERATION_TIMEOUT', 'read exhausted the remaining budget', { retryable: false }),
+      ), operation.timeoutMs));
+    });
+    const expectation = expectFixture(locator, '[oracle:calculation]');
+    const assertion = expect((negated ? expectation.not : expectation).toHaveText('82.50')).rejects.toMatchObject({
+      code: 'ASSERTION_FAILED', message: expect.stringContaining('[oracle:calculation]'),
+      details: { observed: 'text "83.50"', matches: 1 },
+    });
+    await vi.advanceTimersByTimeAsync(400);
+    await assertion;
+    expect(calls).toBe(2);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not replace an initial read timeout with an unobserved mismatch', async () => {
+    vi.useFakeTimers();
+    const locator = resultLocator(async (_expression, operation) => new Promise<never>((_resolve, reject) => {
+      setTimeout(() => reject(new EngineError('OPERATION_TIMEOUT', 'no observation', { retryable: false })), operation.timeoutMs);
+    }));
+    const assertion = expect(expectFixture(locator).toHaveText('82.50')).rejects.toMatchObject({ code: 'ACTION_FAILED' });
+    await vi.advanceTimersByTimeAsync(400);
+    await assertion;
+  });
+
+  it('preserves an engine failure even when it arrives at the assertion deadline', async () => {
+    vi.useFakeTimers();
+    const cause = new EngineError('ENGINE_FAILURE', 'engine disconnected', { retryable: false });
+    let calls = 0;
+    const locator = resultLocator(async (_expression, operation) => {
+      if (++calls === 1) return [resultNode];
+      return new Promise<never>((_resolve, reject) => setTimeout(() => reject(cause), operation.timeoutMs));
+    });
+    const assertion = expect(expectFixture(locator).toHaveText('82.50')).rejects.toMatchObject({ code: 'ENGINE_FAILURE', cause });
+    await vi.advanceTimersByTimeAsync(400);
+    await assertion;
+  });
 });

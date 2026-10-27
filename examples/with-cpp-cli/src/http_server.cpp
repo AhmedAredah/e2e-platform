@@ -80,7 +80,9 @@ std::string readHeader(SocketHandle socket) {
     while (request.find("\r\n\r\n") == std::string::npos) {
         const auto remaining = std::chrono::duration_cast<std::chrono::microseconds>(deadline - std::chrono::steady_clock::now()).count();
         if (remaining <= 0) throw std::runtime_error("request header deadline");
-        timeval wait{static_cast<long>(remaining / 1000000), static_cast<long>(remaining % 1000000)};
+        timeval wait{};
+        wait.tv_sec = static_cast<decltype(wait.tv_sec)>(remaining / 1000000);
+        wait.tv_usec = static_cast<decltype(wait.tv_usec)>(remaining % 1000000);
         fd_set readable;
         FD_ZERO(&readable);
         FD_SET(socket, &readable);
