@@ -1,5 +1,22 @@
 # @e2e-platform/native
 
+## 0.2.0-rc.7
+
+### Minor Changes
+
+- Add negotiated read-only actionability waiting, owned-window enumeration and activation, a typed native test fixture, optional attempt-owned profiles and sanitized action timeline attachments. Expand the Qt action profile and expose supported accessibility scrolling without retrying uncertain mutations.
+
+### Patch Changes
+
+- Coordinate the C++ and desktop qualification candidate and its seven-package local
+  installation kit. Add C++ test authoring, installed GUI consumer checks, C++ HTTP
+  fixtures and explicit platform qualification gates. Keep native platform and toolkit
+  limitations visible; this candidate does not establish blanket framework support.
+- Preserve unavailable desktop visibility with an optional semantic state. Visibility reads, filtered queries, waits and positive or negated assertions no longer treat unknown visibility as proof that a control is hidden or absent.
+- Updated dependencies
+- Updated dependencies
+  - @e2e-platform/process@0.2.0-rc.7
+
 ## 0.2.0-rc.6
 
 ### Patch Changes

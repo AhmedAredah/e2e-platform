@@ -13,6 +13,8 @@ BridgeSession Authorized(FakeBackend backend)
     var session = new BridgeSession(backend, token);
     var reply = Send(session, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":1,\"token\":\"" + token + "\"}}");
     Assert(reply.GetProperty("result").GetProperty("screenshots").GetBoolean() == false, "screenshots false");
+    Assert(reply.GetProperty("result").GetProperty("actionability").GetBoolean() == backend.SupportsActionability,
+        "readonly actionability is advertised only by an implementing provider");
     return session;
 }
 string Code(JsonElement reply) => reply.GetProperty("error").GetProperty("data").GetProperty("code").GetString()!;
@@ -87,16 +89,106 @@ var budget = new SnapshotBudget(1024);
 Assert(budget.TryNode(), "node budget available");
 Assert(budget.Text(new string('x', 60000)).StartsWith("[omitted:"), "oversized aggregate text omitted before serialization");
 Assert(budget.Truncated && !budget.TryNode(), "aggregate truncation cannot silently imply completeness");
+var fieldBudget = new SnapshotBudget();
+Assert(fieldBudget.Text(new string('x', 11), 10).StartsWith("[omitted:") && fieldBudget.Truncated,
+    "an individually omitted field cannot silently imply completeness");
+Assert(ControlSemantics.Role(50008) == "listbox" && ControlSemantics.Role(50007) == "option",
+    "selection controls use the shared native listbox/option contract");
+Assert(ControlSemantics.Role(50028) == "grid" && ControlSemantics.Role(50036) == "grid" &&
+    ControlSemantics.Role(50029, true) == "gridcell" && ControlSemantics.Role(50029) == "row",
+    "grid pattern distinguishes a cell from a row");
+Assert(ControlSemantics.Role(50034) == "group" && ControlSemantics.Role(50035) == "group",
+    "header containers and unknown header orientation do not invent cell semantics");
+var previousCulture = System.Globalization.CultureInfo.CurrentCulture;
+try
+{
+    System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("fr-FR");
+    Assert(ControlSemantics.NumericValue(12.5) == "12.5", "numeric observations are independent of host locale");
+    var invalidNumber = false;
+    try { ControlSemantics.NumericValue(double.NaN); } catch (DriverException error) { invalidNumber = error.Code == "ENGINE_FAILURE"; }
+    Assert(invalidNumber, "nonfinite provider values cannot become successful value assertions");
+}
+finally { System.Globalization.CultureInfo.CurrentCulture = previousCulture; }
+var preDispatch = new MutationGuard();
+var observation = new ObservedControls();
+observation.Complete(["original"]);
+Assert(observation.Contains("original"), "successful observation authorizes the returned control");
+observation.Invalidate();
+Assert(!observation.Contains("original"), "a failed or incomplete observation cannot retain old action authorization");
+observation.Complete(["replacement"]);
+Assert(!observation.Contains("original") && observation.Contains("replacement"), "replacement observation authorizes only its own controls");
+var preDispatchCode = "";
+try { preDispatch.Run(() => throw new DriverException("NOT_ACTIONABLE")); }
+catch (DriverException error) { preDispatchCode = error.Code; }
+Assert(preDispatchCode == "NOT_ACTIONABLE", "confirmed pre-dispatch rejection remains eligible for waiting");
+var mutations = 0;
+foreach (var throwsDuringDispatch in new[] { true, false })
+{
+    var mutation = new MutationGuard();
+    var uncertainCode = "";
+    try
+    {
+        mutation.Run(() =>
+        {
+            mutation.Dispatch(() =>
+            {
+                mutations++;
+                if (throwsDuringDispatch) throw new DriverException("NOT_ACTIONABLE");
+            });
+            throw new DriverException("NODE_STALE");
+        });
+    }
+    catch (DriverException error) { uncertainCode = error.Code; }
+    Assert(uncertainCode == "ACTION_MAY_HAVE_COMMITTED", "failure during or after mutation must never authorize retry");
+}
+Assert(mutations == 2, "uncertain platform calls are dispatched once each");
+var scrollBackend = new FakeBackend();
+var scrolling = Authorized(scrollBackend);
+Assert(Send(scrolling, "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"perform\",\"params\":{\"ref\":{\"id\":\"offscreen\",\"revision\":\"r1\"},\"action\":{\"kind\":\"scrollIntoView\"}}}").GetProperty("result").ValueKind == JsonValueKind.Null,
+    "scroll action has an explicit protocol route");
+Assert(scrollBackend.Mutations == 1 && scrollBackend.LastId == "offscreen", "scroll route preserves the selected owned reference");
+var badScroll = "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"perform\",\"params\":{\"ref\":{\"id\":\"offscreen\",\"revision\":\"r1\"},\"action\":{\"kind\":\"scrollIntoView\",\"x\":100}}}";
+Assert(Code(Send(scrolling, badScroll)) == "ENGINE_FAILURE" && scrollBackend.Mutations == 1,
+    "semantic scroll cannot silently accept coordinate input");
+var legacyPreflight = Authorized(new FakeBackend());
+const string readinessRequest = "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"actionability\",\"params\":{\"ref\":{\"id\":\"ready-control\",\"revision\":\"r1\"},\"action\":{\"kind\":\"tap\"}}}";
+Assert(Code(Send(legacyPreflight, readinessRequest)) == "UNSUPPORTED_CAPABILITY", "legacy provider does not silently claim readonly preflight");
+var readOnlyBackend = new PreflightBackend();
+var readOnly = Authorized(readOnlyBackend);
+Assert(Send(readOnly, readinessRequest).GetProperty("result").ValueKind == JsonValueKind.Null && readOnlyBackend.Probes == 1 && readOnlyBackend.Mutations == 0,
+    "preflight is routed separately and cannot dispatch a mutation");
+var retryableBackend = new PreflightBackend { Ready = false };
+var retryablePreflight = Authorized(retryableBackend);
+Assert(Code(Send(retryablePreflight, readinessRequest)) == "NOT_ACTIONABLE" && !retryablePreflight.CloseRequested && retryableBackend.Mutations == 0,
+    "unready preflight keeps the session available without mutating");
+retryableBackend.Ready = true;
+Assert(Send(retryablePreflight, readinessRequest.Replace("\"id\":2", "\"id\":3")).GetProperty("result").ValueKind == JsonValueKind.Null && retryableBackend.Probes == 2 && retryableBackend.Mutations == 0,
+    "a later readonly probe can observe readiness without repeating input");
+var malformedProbe = Authorized(readOnlyBackend);
+Assert(Code(Send(malformedProbe, readinessRequest.Replace("\"kind\":\"tap\"", "\"kind\":\"tap\",\"value\":\"extra\""))) == "ENGINE_FAILURE" && readOnlyBackend.Probes == 1,
+    "preflight shares closed action validation before provider access");
 Console.WriteLine(JsonSerializer.Serialize(new { suite = "windows-uia-portable-protocol", passed, failed = 0, platform = Environment.OSVersion.Platform.ToString(), windowsGuiVerified = false }));
 return 0;
 
-sealed class FakeBackend : AccessibilityBackend
+class FakeBackend : AccessibilityBackend
 {
     public int Snapshots, Mutations;
     public string? LastId;
     public override string Name => "test-provider";
-    public override IReadOnlyList<string> Actions => ["tap", "fill"];
+    public override IReadOnlyList<string> Actions => ["tap", "fill", "scrollIntoView"];
     public override object Snapshot() { Snapshots++; return new { root = new { @ref = new { id = "root", revision = "" } }, viewport = new { width = 1, height = 1 } }; }
     public override void Perform(string id, JsonElement action) { Mutations++; LastId = id; }
     public override void Dispose() { }
+}
+
+sealed class PreflightBackend : FakeBackend
+{
+    public int Probes;
+    public bool Ready = true;
+    public override bool SupportsActionability => true;
+    public override void Actionability(string id, JsonElement action)
+    {
+        Probes++;
+        if (!Ready) throw new DriverException("NOT_ACTIONABLE");
+    }
 }

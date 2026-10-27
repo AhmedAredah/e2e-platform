@@ -6,9 +6,33 @@
 #include <QSignalSpy>
 #include <QStandardItemModel>
 #include <QTest>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QTableView>
+#include <QListView>
+#include <QTreeView>
+#include <QMenu>
+#include <QMenuBar>
+#include <QTabBar>
+#include <QSlider>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QDialog>
+#include <QWidgetAction>
+#include <QJsonDocument>
+#include <QThread>
+#include <stdexcept>
 
 using namespace e2e::qt::detail;
 namespace {
+class KeyReleaseCapture final : public QObject {
+public:
+    QString text;
+    bool eventFilter(QObject*, QEvent* event) override {
+        if (event->type()==QEvent::KeyRelease) text += static_cast<QKeyEvent*>(event)->text();
+        return false;
+    }
+};
 QJsonObject find(const QJsonObject& node, const QString& id) {
     if (node.value("testId") == id) return node;
     for (const auto& child : node.value("children").toArray()) {
@@ -17,6 +41,37 @@ QJsonObject find(const QJsonObject& node, const QString& id) {
     }
     return {};
 }
+QJsonObject findText(const QJsonObject& node, const QString& text, const QString& role = {}) {
+    if (node.value("name") == text && (role.isEmpty() || node.value("role") == role)) return node;
+    for (const auto& child : node.value("children").toArray()) {
+        const auto result = findText(child.toObject(), text, role);
+        if (!result.isEmpty()) return result;
+    }
+    return {};
+}
+QJsonObject action(const QJsonObject& node, QJsonObject command) { return {{"ref", node.value("ref")}, {"action", command}}; }
+void expose(QWidget& window) { window.show(); window.activateWindow(); QApplication::processEvents(); }
+class ApplicationControlAdapter : public e2e::qt::ControlAdapter {
+public:
+    QString name() const override { return "application-control"; }
+    bool accepts(const QObject& object) const override { return object.objectName()=="custom"; }
+    e2e::qt::ControlSnapshot snapshot(const QObject&) const override {
+        e2e::qt::ControlSnapshot result; result.role="slider"; result.name="Custom volume"; result.value="42";
+        result.text="synthetic-custom-secret"; result.secure=secret; return result;
+    }
+    QStringList actions() const override { return {"fill","tap"}; }
+    bool ready(const QObject&, const QJsonObject&) const override { return available; }
+    void perform(QObject& object,const QJsonObject& action) override {
+        ++dispatches; onGuiThread=QThread::currentThread()==qApp->thread();
+        object.setProperty("received", action.value("value").toString());
+        if (fail) throw std::runtime_error("application action failed");
+    }
+    bool secret=false,available=true,fail=false,onGuiThread=false;
+    int dispatches=0;
+};
+class FutureControlAdapter final : public ApplicationControlAdapter {
+public: unsigned int interfaceVersion() const noexcept override { return 2; }
+};
 class WidgetFixture final {
 public:
     WidgetFixture() : combo(&window) {
@@ -36,6 +91,146 @@ public:
 class WidgetsControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void publicAdaptersAreVersionedRetainedAndDispatchedOnce() {
+        QWidget window; window.resize(320,180); QWidget custom(&window); custom.setObjectName("custom"); custom.setGeometry(10,10,180,50);
+        QLineEdit child(&custom); child.setText("private-child"); expose(window);
+        std::weak_ptr<ApplicationControlAdapter> lifetime;
+        {
+            Surface surface; QString error;
+            QVERIFY(!surface.addControlAdapter(std::make_shared<FutureControlAdapter>(),error));
+            auto adapter=std::make_shared<ApplicationControlAdapter>(); lifetime=adapter;
+            QVERIFY(surface.addControlAdapter(adapter,error)); QVERIFY(!surface.addControlAdapter(adapter,error));
+            auto node=find(surface.snapshot(false).value("root").toObject(),"custom");
+            QCOMPARE(node.value("role").toString(),QString("slider")); QCOMPARE(node.value("name").toString(),QString("Custom volume")); QVERIFY(!node.contains("children"));
+            adapter->available=false;
+            try { surface.perform(action(node,{{"kind","fill"},{"value","7"}})); QFAIL("unready adapter executed"); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+            QCOMPARE(adapter->dispatches,0); adapter->available=true;
+            surface.perform(action(node,{{"kind","fill"},{"value","7"}})); QCOMPARE(custom.property("received").toString(),QString("7")); QVERIFY(adapter->onGuiThread);
+            try { surface.perform(action(node,{{"kind","press"},{"key","Space"}})); QFAIL("undeclared action executed"); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
+            QCOMPARE(adapter->dispatches,1); adapter->fail=true;
+            try { surface.perform(action(node,{{"kind","tap"}})); QFAIL("partial adapter failure accepted"); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("ACTION_MAY_HAVE_COMMITTED")); }
+            QCOMPARE(adapter->dispatches,2); adapter->secret=true;
+            const auto tree=surface.snapshot(false).value("root").toObject();
+            QVERIFY(!QJsonDocument(tree).toJson().contains("synthetic-custom-secret")); QVERIFY(find(tree,"custom").value("states").toObject().value("secure").toBool());
+            try { surface.screenshot(); QFAIL("custom adapter screenshot masking assumed"); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
+            adapter.reset(); QVERIFY(!lifetime.expired());
+        }
+        QVERIFY(lifetime.expired());
+    }
+    void redirectedFocusStopsBeforeFurtherInput_data() {
+        QTest::addColumn<bool>("duringInput"); QTest::addColumn<QString>("text");
+        QTest::newRow("focus-ascii") << false << QString("secret");
+        QTest::newRow("focus-unicode") << false << QString::fromUtf8("秘密");
+        QTest::newRow("ascii-next") << true << QString("secret");
+        QTest::newRow("unicode-next") << true << QString::fromUtf8("a秘密");
+        QTest::newRow("unicode-first") << true << QString::fromUtf8("ésecret");
+    }
+    void redirectedFocusStopsBeforeFurtherInput() {
+        QFETCH(bool, duringInput); QFETCH(QString, text);
+        QWidget window; window.resize(400, 150);
+        QLineEdit target(&window), other(&window);
+        target.setObjectName("target"); target.setGeometry(10,10,180,40); other.setGeometry(10,60,180,40);
+        expose(window); other.setFocus();
+        if (duringInput) QObject::connect(&target, &QLineEdit::textChanged, &window, [&](const QString& value) { if (!value.isEmpty()) other.setFocus(); });
+        else QObject::connect(qApp, &QApplication::focusChanged, &window, [&](QWidget*, QWidget* now) { if (now == &target) other.setFocus(); });
+        KeyReleaseCapture releases; other.installEventFilter(&releases);
+        Surface surface;
+        const auto node = find(surface.snapshot(false).value("root").toObject(), "target");
+        try { surface.perform(action(node, {{"kind", "fill"}, {"value", text}, {"sensitive", true}})); QFAIL("redirect accepted"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("ACTION_MAY_HAVE_COMMITTED")); }
+        QCOMPARE(other.text(), QString());
+        QCOMPARE(releases.text, QString());
+    }
+    void modelItemsAreActionableAndKeepIdentityWhenRowsMove() {
+        QTableView table; table.resize(420, 230);
+        QStandardItemModel model(2,2); model.setItem(0,0,new QStandardItem("Alpha")); model.setItem(0,1,new QStandardItem("Beta"));
+        table.setModel(&model); expose(table); Surface surface;
+        auto node = findText(surface.snapshot(false).value("root").toObject(), "Alpha", "cell"); QVERIFY(!node.isEmpty());
+        const auto ref = node.value("ref");
+        surface.perform(action(node, {{"kind", "tap"}})); QCOMPARE(table.currentIndex(), model.index(0,0));
+        model.insertRow(0, {new QStandardItem("Before"), new QStandardItem("Before-two")});
+        node = findText(surface.snapshot(false).value("root").toObject(), "Alpha", "cell"); QCOMPARE(node.value("ref"), ref);
+        surface.perform(action(node, {{"kind", "tap"}})); QCOMPARE(table.currentIndex(), model.index(1,0));
+        model.removeRow(1);
+        try { surface.perform(action(node, {{"kind", "tap"}})); QFAIL("removed index acted on"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("NODE_STALE")); }
+    }
+    void modelCheckUsesTheDelegateInputPathAndDisabledItemsRefuseInput() {
+        QListView list; list.resize(400,180); QStandardItemModel model;
+        auto* item = new QStandardItem("Choice"); item->setCheckable(true); model.appendRow(item); list.setModel(&model); expose(list);
+        Surface surface; auto node = findText(surface.snapshot(false).value("root").toObject(), "Choice", "option");
+        surface.perform(action(node, {{"kind","check"}})); QCOMPARE(item->checkState(), Qt::Checked);
+        surface.perform(action(node, {{"kind","uncheck"}})); QCOMPARE(item->checkState(), Qt::Unchecked);
+        item->setEnabled(false);
+        try { surface.perform(action(node, {{"kind","tap"}})); QFAIL("disabled item clicked"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("NOT_ACTIONABLE")); }
+    }
+    void treeExpansionAndOffscreenModelScrolling() {
+        QTreeView tree; tree.resize(400,180); QStandardItemModel model;
+        auto* parent = new QStandardItem("Parent"); parent->appendRow(new QStandardItem("Nested")); model.appendRow(parent);
+        for (int row=0; row<40; ++row) model.appendRow(new QStandardItem(QString("Row-%1").arg(row)));
+        tree.setModel(&model); expose(tree); Surface surface;
+        auto snapshot = surface.snapshot(false).value("root").toObject();
+        auto parentNode = findText(snapshot,"Parent","treeitem");
+        QVERIFY(findText(snapshot,"Nested","treeitem").value("states").toObject().value("hidden").toBool());
+        surface.perform(action(parentNode, {{"kind","press"},{"key","ArrowRight"}})); QVERIFY(tree.isExpanded(model.index(0,0)));
+        auto last = findText(surface.snapshot(false).value("root").toObject(),"Row-39","treeitem");
+        try { surface.perform(action(last,{{"kind","tap"}})); QFAIL("offscreen item clicked"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code, QString("NOT_ACTIONABLE")); }
+        surface.perform(action(last,{{"kind","scrollIntoView"}})); surface.perform(action(last,{{"kind","tap"}}));
+        QCOMPARE(tree.currentIndex().data().toString(),QString("Row-39"));
+    }
+    void wheelScrollingUsesTheViewportEventPath() {
+        QListView list; list.resize(320,180); QStandardItemModel model;
+        for (int row=0; row<100; ++row) model.appendRow(new QStandardItem(QString::number(row)));
+        list.setModel(&model); expose(list); Surface surface;
+        const auto root=surface.snapshot(false).value("root").toObject();
+        surface.perform(action(root,{{"kind","swipe"},{"direction","down"}})); QVERIFY(list.verticalScrollBar()->value()>0);
+        try { surface.perform(action(root,{{"kind","swipe"},{"direction","down"},{"momentum","high"}})); QFAIL("momentum silently accepted"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("UNSUPPORTED_CAPABILITY")); }
+    }
+    void tabsMenusAndAccessibleValues() {
+        QWidget window; window.resize(440,240); QTabBar tabs(&window); tabs.setGeometry(10,10,350,35); tabs.addTab("First"); tabs.addTab("Second");
+        QSlider slider(Qt::Horizontal,&window); slider.setGeometry(10,65,300,30); slider.setObjectName("volume"); slider.setValue(37);
+        expose(window); Surface surface; auto snapshot = surface.snapshot(false).value("root").toObject();
+        auto second = findText(snapshot,"Second","tab"); QVERIFY(!second.isEmpty());
+        surface.perform(action(second,{{"kind","tap"}})); QCOMPARE(tabs.currentIndex(),1);
+        QCOMPARE(find(snapshot,"volume").value("role").toString(),QString("slider"));
+        QCOMPARE(find(snapshot,"volume").value("value").toString(),QString("37"));
+        tabs.insertTab(0,"Inserted");
+        try { surface.perform(action(second,{{"kind","tap"}})); QFAIL("changed tabs kept old identity"); }
+        catch (const Failure& failure) { QCOMPARE(failure.code,QString("NODE_STALE")); }
+        QMenu menu; auto* choice = menu.addAction("Menu choice"); choice->setCheckable(true);
+        menu.popup(window.mapToGlobal(QPoint(30,100))); QApplication::processEvents();
+        auto menuNode = findText(surface.snapshot(false).value("root").toObject(),"Menu choice","menuitemcheckbox"); QVERIFY(!menuNode.isEmpty());
+        surface.perform(action(menuNode,{{"kind","check"}})); QVERIFY(choice->isChecked());
+    }
+    void preflightWaitsForStableGeometryAndNeverMutates() {
+        WidgetFixture fixture; auto params = action(find(fixture.surface.snapshot(false).value("root").toObject(),"combo"),{{"kind","tap"}});
+        const auto pending = [&] { try { fixture.surface.actionability(params); return false; } catch (const Failure& error) { return error.code == "NOT_ACTIONABLE"; } };
+        QVERIFY(pending()); QTest::qWait(60); fixture.surface.actionability(params);
+        fixture.combo.move(30,30); QVERIFY(pending()); fixture.combo.setEnabled(false); QTest::qWait(60); QVERIFY(pending());
+        fixture.combo.setEnabled(true); fixture.surface.actionability(params); QCOMPARE(fixture.combo.currentIndex(),0);
+    }
+    void windowHandlesAreStableAndModalActivationIsGuarded() {
+        QWidget first, second; first.resize(200,120); second.resize(200,120); first.setWindowTitle("First"); second.setWindowTitle("Second");
+        expose(first); Surface surface; const auto firstRoot = surface.snapshot(false).value("root").toObject().value("ref"); expose(second);
+        QString firstId; for(const auto& entry:surface.windows()) if(entry.toObject().value("title")=="First") firstId=entry.toObject().value("id").toString();
+        QVERIFY(!firstId.isEmpty()); surface.activateWindow(firstId); QApplication::processEvents();
+        QCOMPARE(surface.snapshot(false).value("root").toObject().value("ref"),firstRoot);
+        expose(second); QVERIFY(surface.snapshot(false).value("root").toObject().value("ref") != firstRoot);
+        QDialog modal(&second); modal.setWindowModality(Qt::ApplicationModal); expose(modal);
+        try { surface.activateWindow(firstId); QFAIL("activated blocked window"); } catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+    }
+    void secureMenuActionsDoNotLeakTreeOrPixels() {
+        QMenu menu; auto* secret=menu.addAction("synthetic-menu-secret"); secret->setProperty("e2eSecure",true);
+        auto* customAction=new QWidgetAction(&menu); auto* editor=new QLineEdit("synthetic-custom-action-secret");
+        customAction->setDefaultWidget(editor); customAction->setProperty("e2eSecure",true); menu.addAction(customAction);
+        menu.popup(QPoint(40,40)); QApplication::processEvents(); Surface surface;
+        const auto snapshot=surface.snapshot(true); QVERIFY(!QJsonDocument(snapshot.value("root").toObject()).toJson().contains("synthetic-menu-secret"));
+        QVERIFY(!QJsonDocument(snapshot.value("root").toObject()).toJson().contains("synthetic-custom-action-secret"));
+        QVERIFY(snapshot.value("screenshot").toObject().value("maskedRegionCount").toInt()>0);
+    }
     void selectsExactOptionsThroughInput_data() {
         QTest::addColumn<QJsonValue>("option");
         QTest::newRow("string") << QJsonValue("Three");

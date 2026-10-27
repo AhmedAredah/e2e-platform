@@ -8,7 +8,7 @@ import type { CredentialConfig, Secret, SecretConfig } from './config/secrets.ts
 import type { Unique } from './params.ts';
 import type { StepExecutor } from './agent/executor.ts';
 import type { StepCacheInfo } from './run/steps.ts';
-import type { EngineHandle } from './engine/index.ts';
+import type { EngineFixtureContext, EngineHandle } from './engine/index.ts';
 import type { Momentum, ScrollDirection, SelectOption } from './engine/contract.ts';
 import type { TraceCacheStore } from './cache/store.ts';
 import type { RunEvent, RunExitCode, RunStatus } from './run/events.ts';
@@ -519,6 +519,16 @@ export type TestHookFn<Fixtures = TestFixtures> = (fixtures: Fixtures) => void |
 /** A `beforeAll` or `afterAll` body. */
 export type SuiteHookFn = (fixtures: SuiteFixtures) => void | Promise<void>;
 /**
+ * Attempt-scoped recording and cancellation for user-defined fixtures. Read
+ * signal/operation at call time so teardown receives its own live budget.
+ * Arguments are not recorded unless the fixture explicitly supplies a label.
+ */
+export interface FixtureContext extends Pick<EngineFixtureContext,
+  'targetName' | 'fixture' | 'timeouts' | 'signal' | 'operation' | 'attachArtifact'> {
+  /** Absolute directory for files produced by this attempt; register relative paths with attachArtifact. */
+  readonly artifactsDirectory: string;
+}
+/**
  * Defines one fixture: everything before `await use(value)` is its setup,
  * everything after is its teardown. The body, its hooks, and later fixtures
  * run while `use` is pending; it resolves once they are done, whether or not
@@ -527,6 +537,7 @@ export type SuiteHookFn = (fixtures: SuiteFixtures) => void | Promise<void>;
 export type FixtureFn<Fixtures, Value> = (
   fixtures: Fixtures,
   use: (value: Value) => Promise<void>,
+  context: FixtureContext,
 ) => Promise<void>;
 /**
  * One definition per fixture `test.extend()` adds. A definition sees the

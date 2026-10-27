@@ -3,6 +3,7 @@ packages:
   - apps/*
   - docs
   - examples/with-cpp-cli
+  - examples/with-cpp-sdk
   - examples/with-qt/e2e
   - examples/with-languages
 

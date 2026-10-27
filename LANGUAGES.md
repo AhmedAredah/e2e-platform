@@ -24,7 +24,7 @@ The existing C++ Qt helper is not a Python binding.
 
 ## Verify all three applications
 
-Install the repository's pinned Node/pnpm dependencies and build the six core
+Install the repository's pinned Node/pnpm dependencies and build the seven core
 boundary packages, then use installed Python 3.12+, a .NET 10 SDK, and a Rust
 compiler supporting edition 2024. The .NET app uses only the SDK's shared
 framework; the Rust app has no registry dependencies and builds with
@@ -106,8 +106,10 @@ which application's controls it can inspect. The Python AT-SPI driver can inspec
 accessible C++ GTK controls; the C# UIA driver can inspect accessible native Windows
 controls. Exact toolkit/OS combinations must still pass their live checks.
 
-These are application-control backends, not pytest, NUnit/xUnit, C++ or Cargo
-implementations of the full test runner. Native-language test-authoring SDKs remain
-future work. The runner, locators, assertions and reports stay in TypeScript.
+These are application-control backends, not pytest, NUnit/xUnit or Cargo
+implementations of the test runner. The new [C++17 SDK](native/cpp-sdk/README.md)
+supports C++ test bodies with a small TypeScript discovery file and the shared
+runner. Python, C# and Rust test-authoring SDKs remain future work. The runner,
+locator execution, assertion polling and reports stay shared.
 The existing C++ Qt helper remains the direct cooperative route for Qt; a Python
 Qt binding and hybrid DOM/native coordination are not included.

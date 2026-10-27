@@ -30,6 +30,44 @@ function visibilityEngine(locate: NonNullable<Engine['locate']> = async () => [v
 }
 
 describe('locator visibility reads and assertions', () => {
+  const unknownNode = { ...visibleNode, testId: 'unknown', states: { hidden: true, visibilityKnown: false } };
+  const unknownEngine = () => defineEngine({ name: 'unknown-visibility', version: '1', spiVersion: 1,
+    observe: async () => snapshot([unknownNode]), locate: async () => [unknownNode] });
+
+  it('rejects one-shot visibility reads and filtered counts when the platform cannot establish visibility', async () => {
+    const screen = visibilityScreen(unknownEngine());
+    await expect(screen.getByTestId('unknown').isVisible()).rejects.toMatchObject({ code: 'UNSUPPORTED_CAPABILITY' });
+    await expect(screen.getByRole('button').count()).rejects.toMatchObject({ code: 'UNSUPPORTED_CAPABILITY' });
+    await expect(screen.getByTestId('unknown').count()).resolves.toBe(1);
+  });
+
+  it.each(['toBeVisible', 'toBeHidden'] as const)('does not satisfy positive or negated %s from unknown visibility', async (matcher) => {
+    const locator = visibilityScreen(unknownEngine()).getByTestId('unknown');
+    await expect(expectFixture(locator)[matcher]({ timeout: 10 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(locator).not[matcher]({ timeout: 10 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+  });
+
+  it.each(['visible', 'hidden'] as const)('does not satisfy a %s wait from unknown visibility', async (state) => {
+    const locator = visibilityScreen(unknownEngine()).getByTestId('unknown');
+    await expect(locator.waitFor({ state, timeout: 10 })).rejects.toMatchObject({ code: 'LOCATOR_NOT_FOUND' });
+  });
+
+  const unknownStates = { ...visibleNode, testId: 'unknown-states', states: { disabled: true, enabledKnown: false, focusedKnown: false } };
+  const unknownStateEngine = () => defineEngine({ name: 'unknown-states', version: '1', spiVersion: 1,
+    observe: async () => snapshot([unknownStates]), locate: async () => [unknownStates] });
+
+  it('rejects enabled-state reads and role filters when the platform cannot establish enabled state', async () => {
+    const screen = visibilityScreen(unknownStateEngine());
+    await expect(screen.getByTestId('unknown-states').isEnabled()).rejects.toMatchObject({ code: 'UNSUPPORTED_CAPABILITY' });
+    for (const disabled of [true, false]) await expect(screen.getByRole('button', { disabled }).count()).rejects.toMatchObject({ code: 'UNSUPPORTED_CAPABILITY' });
+  });
+
+  it.each(['toBeEnabled', 'toBeDisabled', 'toBeFocused'] as const)('does not satisfy positive or negated %s from an unknown state', async (matcher) => {
+    const locator = visibilityScreen(unknownStateEngine()).getByTestId('unknown-states');
+    await expect(expectFixture(locator)[matcher]({ timeout: 10 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+    await expect(expectFixture(locator).not[matcher]({ timeout: 10 })).rejects.toMatchObject({ code: 'ASSERTION_FAILED' });
+  });
+
   it('does not pass a hidden assertion when a concurrent query supersedes a visible reference', async () => {
     const locator = visibilityScreen(visibilityEngine()).getByRole('button');
     const assertion = expectFixture(locator).toBeHidden({ timeout: 10 });

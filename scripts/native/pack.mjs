@@ -11,7 +11,7 @@ if (process.argv.length > 3) throw new Error('Usage: node scripts/native/pack.mj
 const output = process.argv[2] === undefined ? join(root, 'release-packages') : resolve(process.argv[2]);
 mkdirSync(output, { recursive: true });
 const packages = [];
-for (const directory of ['e2e', 'process', 'checks', 'protocol', 'native', 'terminal']) {
+for (const directory of ['e2e', 'process', 'checks', 'protocol', 'native', 'terminal', 'cpp']) {
   const cwd = join(root, 'packages', directory);
   const metadata = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8'));
   const check = spawnSync(process.execPath, [join(root, 'scripts/check-dist.ts')], { cwd, stdio: 'inherit' });

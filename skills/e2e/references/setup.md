@@ -60,12 +60,12 @@ the skill and registered MCP entries. The final message shows the run command.
 Without the wizard:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.6.tgz /path/to/e2e-platform-playwright-0.2.0-rc.6.tgz playwright@1.63.0 ai@^7
+npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.7.tgz /path/to/e2e-platform-playwright-0.2.0-rc.7.tgz playwright@1.63.0 ai@^7
 ```
 
 `ai` (the Vercel AI SDK, v7) is only needed for `agent.*` steps.
 
-The CLI preset works with the six-package local kit. Qt and OS desktop presets
+The CLI preset works with the seven-package local kit. Qt and OS desktop presets
 require a separately built helper/driver and an explicit application path. The
 OS drivers expose accessibility actions; screenshots and global keyboard input
 are not advertised. Verify a backend on its native OS before claiming support.

@@ -8,6 +8,7 @@ public sealed class SnapshotBudget(int maximum = 768 * 1024)
     public bool TryNode() => Consume(512);
     public string Text(string value, int maximumLength = 65536)
     {
+        if (value.Length > maximumLength) Truncated = true;
         var bounded = value.Length <= maximumLength ? value : "[omitted: text exceeds limit]";
         if (Consume(checked(bounded.Length * 6))) return bounded;
         const string omitted = "[omitted: snapshot byte limit]";

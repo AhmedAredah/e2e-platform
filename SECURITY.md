@@ -12,7 +12,7 @@ project's contact is not this fork's support team.
 
 ## Supported versions
 
-The reviewed candidate is 0.2.0-rc.6 on the default `main` branch.
+The reviewed candidate is 0.2.0-rc.7 on the default `main` branch.
 No registry release, response-time commitment or long-term maintenance window is
 established. Check [RELEASE_STATUS.md](RELEASE_STATUS.md)
 for tested environments and unresolved dependency findings.

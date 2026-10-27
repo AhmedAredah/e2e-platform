@@ -60,6 +60,9 @@ export interface SemanticQuery {
    * States a role query requires. A role query never matches a node whose
    * `states.hidden` is true, as a browser's role selector never does; there is
    * no state that widens it to hidden nodes.
+   * A candidate with `states.visibilityKnown:false` MUST fail the query
+   * with UNSUPPORTED_CAPABILITY rather than be counted as absent.
+   * A disabled-state filter likewise requires `enabledKnown` not to be false.
    */
   readonly states?: Readonly<
     Partial<Record<'checked' | 'disabled' | 'selected' | 'expanded' | 'pressed', boolean>>
@@ -72,6 +75,8 @@ export interface SemanticQuery {
    * query set the harness counts is the set `toBeVisible()` would accept. The
    * predicate applies wherever the query sits in an expression: under a
    * scope, inside a filter, or before an index.
+   * If a matching candidate reports `states.visibilityKnown:false`, the
+   * engine MUST fail with UNSUPPORTED_CAPABILITY instead of excluding it.
    */
   readonly visible?: boolean;
 }
@@ -148,11 +153,15 @@ export interface SemanticNode {
   /**
    * Boolean states the platform reports. `pressed` is a toggle button's
    * pressed state; `secure` marks a field whose value is never observed.
+   * `visibilityKnown:false` means visibility could not be established; no
+   * visible/hidden conclusion is valid. Omission retains legacy semantics.
+   * `enabledKnown:false` and `focusedKnown:false` similarly mark the disabled
+   * and focused states unavailable to reads, filters and assertions.
    */
   readonly states?: Readonly<
     Partial<
       Record<
-        'checked' | 'disabled' | 'selected' | 'expanded' | 'pressed' | 'focused' | 'hidden' | 'secure',
+        'checked' | 'disabled' | 'selected' | 'expanded' | 'pressed' | 'focused' | 'hidden' | 'secure' | 'visibilityKnown' | 'enabledKnown' | 'focusedKnown',
         boolean
       >
     >

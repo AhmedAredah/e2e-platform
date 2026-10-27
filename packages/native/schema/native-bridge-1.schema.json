@@ -424,6 +424,15 @@
             },
             "secure": {
               "type": "boolean"
+            },
+            "visibilityKnown": {
+              "type": "boolean"
+            },
+            "enabledKnown": {
+              "type": "boolean"
+            },
+            "focusedKnown": {
+              "type": "boolean"
             }
           },
           "required": [],
@@ -632,6 +641,12 @@
           "type": "boolean"
         },
         "screenshots": {
+          "type": "boolean"
+        },
+        "actionability": {
+          "type": "boolean"
+        },
+        "windows": {
           "type": "boolean"
         }
       },
@@ -936,6 +951,111 @@
             "params"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "actionability"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "$ref": "#/$defs/nodeRef"
+                },
+                "action": {
+                  "$ref": "#/$defs/action"
+                }
+              },
+              "required": [
+                "ref",
+                "action"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "windows"
+            },
+            "params": {
+              "type": "object",
+              "properties": {},
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "jsonrpc": {
+              "const": "2.0"
+            },
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "const": "window.activate"
+            },
+            "params": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "jsonrpc",
+            "id",
+            "method",
+            "params"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -965,6 +1085,9 @@
                 },
                 {
                   "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/windows"
                 }
               ]
             }
@@ -1053,6 +1176,44 @@
         "INVALID_STATE",
         "ENGINE_FAILURE"
       ]
+    },
+    "window": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "modal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "visible",
+        "active",
+        "modal"
+      ],
+      "additionalProperties": false
+    },
+    "windows": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/window"
+      }
     }
   }
 }

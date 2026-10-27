@@ -11,11 +11,15 @@ import {
 } from '@e2e-platform/core/engine';
 import { JsonRpcTcpTransport, cancelled, isRecord } from '../transport/json-rpc-tcp.ts';
 import type { NativeTransport, RequestContext } from '../transport/native-transport.ts';
-import { NativeDriver } from '../driver/native-driver.ts';
+import { NativeDriver, type NativeInitialization, type NativeWindow } from '../driver/native-driver.ts';
 import { RpcNativeDriver } from '../driver/rpc-native-driver.ts';
 import { validateNativeOptions, type NativeOptions } from '../options.ts';
 import { OutputLineReader } from './output-lines.ts';
 import type { NativeProcessLaunch } from './native-process.ts';
+import { NativeActionability } from './actionability.ts';
+import { NativeProfileWorkspace } from './profile-workspace.ts';
+import { NativeActionTimeline } from './action-timeline.ts';
+import { createNativeFixture } from '../fixtures/native-app.ts';
 
 const DEFAULT_MESSAGE_LIMIT = 16 * 1024 * 1024;
 const CLEANUP_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'EPERM', 'EACCES', 'ESRCH', 'EBADF',
@@ -49,6 +53,10 @@ export class NativeEngine {
   private launching: Promise<void> | undefined;
   private launchAbort: AbortController | undefined;
   private closing: Promise<void> | undefined;
+  private initialized: NativeInitialization | undefined;
+  private profile: NativeProfileWorkspace | undefined;
+  private timeline = new NativeActionTimeline();
+  private readonly actionability = new NativeActionability();
 
   protected readonly options: NativeOptions;
   protected readonly actions: readonly LocatorActionKind[];
@@ -94,18 +102,24 @@ export class NativeEngine {
         press: (key: string, context: OperationContext) => this.press(key, context),
       } }),
       ...(options.screenshots === false ? {} : { artifacts: { screenshot: (label: string | undefined, context: OperationContext) => this.screenshot(label, context) } }),
+      fixtures: { native: (context) => createNativeFixture(this, context) },
     });
   }
 
   init(info: EngineInitInfo): Promise<void> { this.info = info; return Promise.resolve(); }
-  startAttempt(context: EngineAttemptContext): Promise<void> {
-    if (this.process !== undefined || this.launching !== undefined || this.closing !== undefined) throw new EngineError('INVALID_STATE', 'native app from a previous attempt is still running or closing', { retryable: false });
+  async startAttempt(context: EngineAttemptContext): Promise<void> {
+    if (this.process !== undefined || this.launching !== undefined || this.closing !== undefined || this.profile !== undefined) throw new EngineError('INVALID_STATE', 'native app from a previous attempt is still running or closing', { retryable: false });
     this.attempt = context;
     this.rootId = undefined;
     this.screenshotCounter = 0;
     this.fault = undefined;
     this.faultedProcesses = new WeakSet<ProcessSession>();
-    return Promise.resolve();
+    this.timeline = new NativeActionTimeline();
+    if (this.options.isolateProfile === true) {
+      const profile = await NativeProfileWorkspace.create();
+      if (context.signal.aborted) { await profile.dispose(); throw cancelled(); }
+      this.profile = profile;
+    }
   }
   settle(): Promise<void> {
     if (this.fault !== undefined) { const message = this.fault; this.fault = undefined; return Promise.reject(new EngineError('ENGINE_FAILURE', message, { retryable: false })); }
@@ -116,7 +130,7 @@ export class NativeEngine {
     if (this.launching !== undefined || this.closing !== undefined) return Promise.reject(new EngineError('INVALID_STATE', 'native launch or cleanup is already in progress', { retryable: false }));
     const controller = new AbortController();
     this.launchAbort = controller;
-    const work = this.launchInternal({ ...context, signal: AbortSignal.any([context.signal, controller.signal]) });
+    const work = this.timeline.record('restart', undefined, () => this.launchInternal({ ...context, signal: AbortSignal.any([context.signal, controller.signal]) }));
     const settled = work.finally(() => {
       if (this.launching === settled) { this.launching = undefined; this.launchAbort = undefined; }
     });
@@ -141,7 +155,7 @@ export class NativeEngine {
         args: info.app.launchArguments ?? [],
         cwd: path.resolve(info.projectRoot, this.options.cwd ?? '.'),
         inheritEnv: false,
-        env: { ...info.env, E2E_NATIVE_TOKEN: token, E2E_NATIVE_PORT: '0' },
+        env: { ...info.env, ...this.profile?.env, E2E_NATIVE_TOKEN: token, E2E_NATIVE_PORT: '0' },
         signal: attempt.signal,
         maxOutputBytes: 1024 * 1024,
         killGraceMs: 200,
@@ -171,6 +185,7 @@ export class NativeEngine {
       const initialized = await this.driver.initialize(token, remaining());
       if (this.actions.some((kind) => !initialized.actions.includes(kind)) || (this.options.keyboard !== false && !initialized.keyboard) || (this.options.screenshots !== false && !initialized.screenshots)) throw new EngineError('UNSUPPORTED_CAPABILITY', 'native helper does not support the configured capabilities', { retryable: false });
       attempt.environment({ nativeHelper: `${initialized.name} ${initialized.version}` });
+      this.initialized = initialized;
     } catch (error) {
       try { await this.stopInternal({ signal: new AbortController().signal, timeoutMs: 2000 }); }
       catch (cleanup) { throw new AggregateError([error, cleanup], 'Native launch and cleanup failed', { cause: cleanup }); }
@@ -184,7 +199,15 @@ export class NativeEngine {
     const pending = this.launching;
     const work = (async () => {
       await pending?.catch(() => { /* launch cleans up its own partial acquisition */ });
-      await this.stopInternal(context);
+      const failures: unknown[] = [];
+      try { await this.stopInternal(context); } catch (error) { failures.push(error); }
+      const profile = this.profile;
+      try {
+        await profile?.dispose();
+        if (this.profile === profile) this.profile = undefined;
+      } catch (error) { failures.push(error); }
+      if (failures.length === 1) throw failures[0];
+      if (failures.length > 1) throw new EngineError('ENGINE_FAILURE', 'native process and profile cleanup failed', { retryable: false, cause: new AggregateError(failures) });
     })();
     const settled = work.finally(() => { if (this.closing === settled) this.closing = undefined; });
     this.closing = settled;
@@ -196,6 +219,7 @@ export class NativeEngine {
     const driver = this.driver;
     const child = this.process;
     this.driver = undefined;
+    this.initialized = undefined;
     this.process = undefined;
     const failures: unknown[] = [];
     const diagnostics: string[] = [];
@@ -226,7 +250,7 @@ export class NativeEngine {
   async snapshot(context: OperationContext, pixels: boolean, observed = true): Promise<EngineSnapshot> {
     const wantsPixels = pixels && this.options.screenshots !== false;
     const snapshot = await this.connection().snapshot(this.budget(context), wantsPixels, observed);
-    if (this.rootId !== undefined && snapshot.root.ref.id !== this.rootId) throw new EngineError('ENGINE_FAILURE', 'native helper changed the stable root id', { retryable: false });
+    if (this.initialized?.windows !== true && this.rootId !== undefined && snapshot.root.ref.id !== this.rootId) throw new EngineError('ENGINE_FAILURE', 'native helper changed the stable root id', { retryable: false });
     this.rootId = snapshot.root.ref.id;
     return snapshot;
   }
@@ -234,10 +258,32 @@ export class NativeEngine {
   async perform(ref: NodeRef, action: LocatorAction, context: OperationContext): Promise<void> {
     if (!this.actions.includes(action.kind)) throw new EngineError('UNSUPPORTED_CAPABILITY', `native action ${action.kind} is not declared`, { retryable: false });
     if ('modifiers' in action && action.modifiers !== undefined) throw new EngineError('UNSUPPORTED_CAPABILITY', 'native bridge does not declare click modifiers', { retryable: false });
-    await this.connection().perform(ref, action, this.budget(context));
+    await this.timeline.record('perform', action.kind, async () => {
+      const driver = this.connection();
+      const budget = this.budget(context);
+      const ready = this.initialized?.actionability === true ? await this.actionability.wait(driver, ref, action, budget) : budget;
+      // Preflight is read-only. The mutation is sent once even if its outcome is uncertain.
+      await driver.perform(ref, action, ready);
+    });
   }
-  async type(text: string, replace: boolean, context: OperationContext): Promise<void> { await this.connection().type(text, replace, this.budget(context)); }
-  async press(key: string, context: OperationContext): Promise<void> { await this.connection().press(key, this.budget(context)); }
+  async type(text: string, replace: boolean, context: OperationContext): Promise<void> { await this.timeline.record('keyboard.type', undefined, () => this.connection().type(text, replace, this.budget(context))); }
+  async press(key: string, context: OperationContext): Promise<void> { await this.timeline.record('keyboard.press', undefined, () => this.connection().press(key, this.budget(context))); }
+  get profileDirectory(): string | undefined { return this.profile?.directory; }
+  async windows(context: OperationContext): Promise<readonly NativeWindow[]> {
+    if (this.initialized?.windows !== true) throw new EngineError('UNSUPPORTED_CAPABILITY', 'native helper does not declare owned-window enumeration', { retryable: false });
+    return this.connection().windows(this.budget(context));
+  }
+  async activateWindow(id: string, context: OperationContext): Promise<void> {
+    if (this.initialized?.windows !== true) throw new EngineError('UNSUPPORTED_CAPABILITY', 'native helper does not declare owned-window activation', { retryable: false });
+    await this.timeline.record('window.activate', undefined, async () => {
+      try { await this.connection().activateWindow(id, this.budget(context)); }
+      finally { this.rootId = undefined; }
+    });
+  }
+  async writeTimeline(): Promise<string> {
+    if (this.attempt === undefined) throw new EngineError('INVALID_STATE', 'no native attempt', { retryable: false });
+    return this.timeline.write(this.attempt.artifactsDir);
+  }
   async screenshot(_label: string | undefined, context: OperationContext): Promise<string> {
     const attempt = this.attempt;
     if (attempt === undefined) throw new EngineError('INVALID_STATE', 'no native attempt', { retryable: false });

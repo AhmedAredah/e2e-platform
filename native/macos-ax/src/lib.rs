@@ -9,3 +9,6 @@ mod strict_json;
 
 #[cfg(any(target_os = "macos", feature = "check-macos", test))]
 mod budget;
+
+#[cfg(any(target_os = "macos", feature = "check-macos", test))]
+mod semantics;

@@ -23,13 +23,14 @@ export interface DesktopOptions {
   readonly maxMessageBytes?: number;
   /** Driver/application working directory, relative to the e2e project root. */
   readonly cwd?: string;
+  readonly isolateProfile?: boolean;
 }
 
-const COMMON_ACTIONS = ['tap', 'fill', 'clear', 'focus', 'check', 'uncheck'] as const;
+const COMMON_ACTIONS = ['tap', 'fill', 'clear', 'focus', 'check', 'uncheck', 'scrollIntoView'] as const;
 const BACKENDS: Readonly<Record<DesktopBackend, { platform: NodeJS.Platform; actions: readonly LocatorActionKind[] }>> = {
   'linux-atspi': { platform: 'linux', actions: [...COMMON_ACTIONS, 'selectOption'] },
   'windows-uia': { platform: 'win32', actions: [...COMMON_ACTIONS, 'selectOption'] },
-  'macos-ax': { platform: 'darwin', actions: COMMON_ACTIONS },
+  'macos-ax': { platform: 'darwin', actions: [...COMMON_ACTIONS, 'selectOption'] },
 };
 
 /**
@@ -76,7 +77,7 @@ export class DesktopEngine extends NativeEngine {
 /** Validate before selecting capabilities so malformed runtime JavaScript fails closed. */
 function validateDesktopOptions(options: DesktopOptions): { desktop: Readonly<DesktopOptions>; native: NativeOptions } {
   if (!isRecord(options)) throw new ConfigurationError('INVALID_CONFIG', 'desktop options must be an object');
-  const known = new Set(['backend', 'executable', 'args', 'actions', 'launchTimeout', 'requestTimeout', 'maxMessageBytes', 'cwd']);
+  const known = new Set(['backend', 'executable', 'args', 'actions', 'launchTimeout', 'requestTimeout', 'maxMessageBytes', 'cwd', 'isolateProfile']);
   for (const key of Object.keys(options)) if (!known.has(key)) throw new ConfigurationError('INVALID_CONFIG', `unknown desktop option ${key}`);
   if (typeof options.backend !== 'string' || !Object.hasOwn(BACKENDS, options.backend)) throw new ConfigurationError('INVALID_CONFIG', 'desktop.backend must be linux-atspi, windows-uia or macos-ax');
   if (typeof options.executable !== 'string' || options.executable.trim() === '' || options.executable.includes('\0')) throw new ConfigurationError('INVALID_CONFIG', 'desktop.executable must be a nonempty command without NUL characters');
@@ -88,6 +89,7 @@ function validateDesktopOptions(options: DesktopOptions): { desktop: Readonly<De
     actions: options.actions ?? available,
     keyboard: false,
     screenshots: false,
+    ...(options.isolateProfile === undefined ? {} : { isolateProfile: options.isolateProfile }),
     ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
     ...(options.launchTimeout === undefined ? {} : { launchTimeout: options.launchTimeout }),
     ...(options.requestTimeout === undefined ? {} : { requestTimeout: options.requestTimeout }),

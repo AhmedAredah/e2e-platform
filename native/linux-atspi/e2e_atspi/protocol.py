@@ -71,7 +71,8 @@ class ProtocolSession:
                 raise ValueError("authentication failed")
             self.authenticated = True
             result: Any = {"protocolVersion": 1, "name": "e2e-platform-atspi", "version": "0.1.0",
-                           "actions": list(ACTIONS), "keyboard": False, "screenshots": False}
+                           "actions": list(ACTIONS), "keyboard": False, "screenshots": False,
+                           "actionability": self._provider.supports_actionability}
         else:
             try:
                 result = self._invoke(method, params)
@@ -93,7 +94,7 @@ class ProtocolSession:
                 raise DriverError("ENGINE_FAILURE", "invalid pixels flag")
             # No pixels are captured or returned, even when explicitly requested.
             return self._provider.snapshot()
-        if method == "perform":
+        if method in ("perform", "actionability"):
             params = _shape(params, {"ref", "action"}, {"ref", "action"})
             ref = _shape(params["ref"], {"id", "revision"}, {"id", "revision"})
             node_id = _text(ref["id"], 512)
@@ -119,6 +120,9 @@ class ProtocolSession:
                         raise DriverError("ENGINE_FAILURE", "invalid option index")
                 else:
                     raise DriverError("UNSUPPORTED_CAPABILITY", "only one option can be selected")
+            if method == "actionability":
+                self._provider.preflight(node_id, action)
+                return None
             try:
                 self._provider.perform(node_id, action)
             except DriverError:

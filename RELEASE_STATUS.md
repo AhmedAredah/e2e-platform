@@ -1,9 +1,10 @@
-# e2e-platform 0.2.0-rc.6
+# e2e-platform 0.2.0-rc.7
 
-This is a reviewed **prerelease**, not a fully qualified stable release. The ten
-public JavaScript packages use `0.2.0-rc.6` and `@e2e-platform/*`; the executable
-and repository folder are `e2e-platform`. Tests are written in TypeScript or
-JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
+This is a reviewed **prerelease**, not a fully qualified stable release. The eleven
+public JavaScript packages use `0.2.0-rc.7` and `@e2e-platform/*`; the executable
+and repository folder are `e2e-platform`. Tests use TypeScript/JavaScript or the
+bounded C++ authoring bridge connected to the shared runner. Python, C# and Rust
+authoring SDKs are not included. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
 
 
@@ -24,6 +25,38 @@ command and separates direct Node verification in metacharacter paths from
 npm launcher verification in conventional paths. The documented Windows npm
 shim limitation remains; use the direct Node command for paths containing `&`.
 The current candidate must pass its own hosted checks.
+
+## Current implementation and evidence boundaries
+
+The current work adds scoped native locator composition, explicit state waits,
+readonly actionability preflight and custom fixture context. A mutating action is
+sent once; uncertain outcomes remain terminal for the attempt. OS providers add
+semantic scroll-to-visible operations, consistent common roles and safer state
+observation. AX selection is limited to writable AXSelectedChildren and unique
+direct children. Unknown AX visibility cannot prove visible, hidden or absence;
+unknown enabled/focused states cannot pass positive or negated assertions.
+
+Qt adds a public source-level custom-control adapter contract, selected Widgets
+model/view controls, menus/tabs/headers and owned-window enumeration/activation.
+Custom adapters disable screenshots until their masking/capture behavior can be
+qualified. C++ authored test bodies use the separately installed CMake SDK and
+`@e2e-platform/cpp`; the shared runner retains scheduling, lifecycle and reports.
+This bridge does not claim full TypeScript API parity or native pytest/xUnit/Cargo
+authoring support.
+
+Process fixtures add tracked asynchronous operations, safe run diagnostics and
+supervised services with explicit readiness. Application state reset remains a
+test fixture responsibility. The optional Windows Job Object supervisor is a
+separate native component, not a silent upgrade to default taskkill behavior.
+
+Local OS-driver checks against these changes passed **81 Python tests**, **76
+portable UIA checks** and **32 Rust tests**. The UIA driver cross-build completed
+without warnings/errors, and the AX `check-macos` FFI typecheck passed. These
+results do not run Windows UIA or macOS AX on an interactive desktop. New native
+Windows/macOS/Linux Qt profiles and the manual `qt-live` workflow are configured;
+they remain unqualified until their actual candidate runs and artifacts pass.
+Other candidate results must be recorded by exact source revision, separately
+from the historical checkpoints below.
 
 ## Publication state
 
@@ -68,8 +101,8 @@ are not declared MIT-only.
 
 The object-oriented driver, transport, process and control interfaces remain
 separate. OS sidecars are Python (Linux), C# (Windows), and Rust (macOS); the
-cooperative Qt bridge is C++. These are platform implementations, not four
-independent full test-runner SDKs.
+cooperative Qt bridge is C++. These are platform implementations. The separate
+C++ authoring bridge provides a bounded SDK, not four independent full runners.
 
 ## Recorded rc.3 checkpoint
 
@@ -156,8 +189,9 @@ runs are retained and clearly superseded by the qualified rc.2 reruns.
 | Source quality | Lint, dead-code gate, all ten builds, workspace typechecks, 76 error-code references, 7 embedded examples and 47 documentation pages passed. Dead-code tooling retains 12 advisory class-member warnings. |
 
 The historical validation summary links the exact rc.2 consumer-kit and browser
-reports. Prepared full-repository bundles contain tracked source and Git history
-plus a checksummed six-package JavaScript install kit. A normal GitHub source ZIP contains neither
+reports. The prepared rc.2 full-repository bundle contained tracked source and Git history
+plus a checksummed six-package JavaScript install kit. The current kit adds the
+C++ bridge as its seventh package. A normal GitHub source ZIP contains neither
 Git history nor the generated kit. SDKs, Qt, browser binaries, OS libraries and
 package-manager caches remain external prerequisites.
 
@@ -189,9 +223,21 @@ requires its own real-control test.
 
 Mobile simulators/hardware and live model-provider qualification remain open.
 The hosted browser/CDP pass and successful desktop-contracts jobs cover only the
-profiles and source checkpoints listed above; they do not qualify these other gates. Native-language
-full runner SDKs, generic custom-painted controls,
-global OS input, OS-driver screenshots and hybrid DOM/native switching are absent.
+profiles and source checkpoints listed above; they do not qualify these other gates.
+Generic custom-painted controls, global OS input, OS-driver screenshots, native
+video, visual-diff assertions and hybrid DOM/native switching are absent. The
+bounded C++ SDK does not remove the remaining authoring gaps for Python, C# and
+Rust or imply every TypeScript feature is exposed in C++.
+
+| Gate | Evidence needed before expanding the claim |
+| --- | --- |
+| Installable candidate | Checksummed seven-package kit, clean consumer install and reinstall, installed C++/Qt CMake consumers, positive runs and planted-defect failures for the exact artifact. |
+| Cross-platform Qt | Actual results for Linux offscreen/Xvfb, Windows and macOS Qt kits, followed by interactive QPA profiles. Cover new models, modal/window behavior, stale controls, custom adapters and negative tests. |
+| OS accessibility | Rerun Linux GTK reference acceptance after changes; complete interactive UIA/WPF and AX/AppKit acceptance with permissions. Add real C++ toolkit fixtures before advertising GTKmm, wxWidgets, JUCE, FLTK or Win32-family certification. |
+| Windows process ownership | Native Job Object tests proving suspended launch, assignment before execution, descendant termination after natural root exit, cancellation and broken supervisor cleanup. Default taskkill limitations remain documented. |
+| Language authoring | Qualify the C++ bridge's documented operations and failure paths. Design Python/C#/.NET/Rust authoring bindings separately if tests must be written in those languages. |
+| Retained browser/mobile | Run the retained engines at the new source checkpoint; qualify the intended browser/simulator/device profiles and live-provider paths separately. |
+| Distribution | Assess dependencies and notices for the exact source/binary bundle, verify namespace/publication rights and record release revision and checksums. |
 
 Before a stable release, complete the real platform gates, assess or resolve the
 remaining dependency findings for each shipped distribution, and verify publication

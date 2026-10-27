@@ -436,5 +436,179 @@
         "index": 0
       }
     }
+  },
+  {
+    "name": "actionability optional request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "method": "actionability",
+      "params": {
+        "ref": {
+          "id": "input",
+          "revision": "r1"
+        },
+        "action": {
+          "kind": "tap"
+        }
+      }
+    }
+  },
+  {
+    "name": "windows optional request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "method": "windows",
+      "params": {}
+    }
+  },
+  {
+    "name": "window.activate optional request",
+    "definition": "request",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 12,
+      "method": "window.activate",
+      "params": {
+        "id": "window-1"
+      }
+    }
+  },
+  {
+    "name": "owned window response",
+    "definition": "response",
+    "valid": true,
+    "value": {
+      "jsonrpc": "2.0",
+      "id": 13,
+      "result": [
+        {
+          "id": "window-1",
+          "title": "Calculator",
+          "visible": true,
+          "active": true,
+          "modal": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "missing window identity",
+    "definition": "window",
+    "valid": false,
+    "value": {
+      "title": "Calculator",
+      "visible": true,
+      "active": true,
+      "modal": false
+    }
+  },
+  {
+    "name": "invalid optional capability",
+    "definition": "initialization",
+    "valid": false,
+    "value": {
+      "protocolVersion": 1,
+      "name": "helper",
+      "version": "1",
+      "actions": [
+        "tap"
+      ],
+      "keyboard": false,
+      "screenshots": false,
+      "actionability": "yes"
+    }
+  },
+  {
+    "name": "accept unknown visibility state",
+    "definition": "node",
+    "valid": true,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "hidden": true,
+        "visibilityKnown": false
+      }
+    }
+  },
+  {
+    "name": "reject unknown visibility state",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "hidden": true,
+        "visibilityKnown": "false"
+      }
+    }
+  },
+  {
+    "name": "accept enabledKnown state",
+    "definition": "node",
+    "valid": true,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "enabledKnown": false
+      }
+    }
+  },
+  {
+    "name": "reject enabledKnown state",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "enabledKnown": "false"
+      }
+    }
+  },
+  {
+    "name": "accept focusedKnown state",
+    "definition": "node",
+    "valid": true,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "focusedKnown": false
+      }
+    }
+  },
+  {
+    "name": "reject focusedKnown state",
+    "definition": "node",
+    "valid": false,
+    "value": {
+      "ref": {
+        "id": "unknown",
+        "revision": ""
+      },
+      "states": {
+        "focusedKnown": "false"
+      }
+    }
   }
 ]

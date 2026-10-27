@@ -35,20 +35,46 @@ is not GUI qualification.
 - `tap`: `AXPress` on controls that expose that action.
 - `fill`/`clear`: writable `AXValue` on text fields, text areas and combo boxes.
   This is semantic value assignment, not simulated keystrokes or IME input.
-- `focus`: writable `AXFocused`.
-- `check`/`uncheck`: read Boolean `AXValue` on checkbox/switch controls and invoke
-  `AXPress` only if the requested state differs. Tests must assert resulting
-  state; dispatch acceptance is not business-logic completion.
+- `focus`: writable `AXFocused`, with a known-enabled and semantically visible target.
+- `scrollIntoView`: advertised `AXScrollToVisible` action, with no physical input fallback.
+- `selectOption`: writable `AXSelectedChildren`, selecting one exposed direct child
+  by exact accessible title/description, AXIdentifier (`value`) or zero-based index.
+  Ambiguous, disabled, foreign-process, secure and out-of-range candidates are rejected.
+  Popup-menu expansion and virtualized-item realization are not implemented.
+- `check`/`uncheck`: read Boolean `AXValue` on checkbox/switch/radio controls and invoke
+  `AXPress` only if the requested state differs. The driver confirms the transition
+  without repeating the action; an unconfirmed outcome ends the session. A selected
+  radio cannot be unchecked directly. Tests must still assert business outcomes.
 - Accessible roles, names, identifiers, values, checked/selected/expanded/focus
   and enabled states, with bounded child traversal and a stable synthetic root.
 - Secure text fields (`AXSecureTextField`) and explicit sensitive fills omit
   content, name, identifier, attributes and children before serialization.
 
-No `selectOption`, raw mouse input, keyboard events, screenshots, system-wide
+No raw mouse input, keyboard events, screenshots, system-wide
 root, cross-process dialogs, WebView DOM, attach-to-existing-PID or arbitrary
 method evaluation is exposed. Unsupported combinations return explicit errors.
 Custom painted or incorrectly labeled controls require application accessibility
-work. Names and values intentionally preserve full embedded-NUL strings so a
+work.
+
+Visibility is explicit. The driver combines the application's `AXHidden`, the
+window's `AXMinimized`, positive control geometry and ancestor/window clipping.
+Known hidden or clipped controls carry `hidden:true`. Missing required evidence
+carries `visibilityKnown:false`; it cannot prove either visibility or absence.
+This is semantic viewport visibility, not OS occlusion or pointer hit testing.
+Unknown `AXEnabled` is treated as non-actionable and carries `enabledKnown:false`.
+Unavailable `AXFocused` is omitted and carries `focusedKnown:false`. Unknown
+states cannot prove either a positive or a negated enabled/focused assertion.
+These state flags are also present on secure nodes. Names use title/description and
+an owned, nonsecure `AXTitleUIElement` label fallback. Canonical roles include
+`listbox`, `option`, `grid`, `gridcell`, `treeitem` and `img`; numeric values and
+provider-supplied placeholder text are bounded and omitted for secure controls.
+
+The optional `actionability` protocol probe performs only reads and checks for
+supported actions/settable attributes. The runner may poll an unready probe;
+`perform` repeats checks and dispatches a mutation once. The probe never fills,
+selects, focuses, scrolls or marks an element sensitive. All new control paths
+remain experimental until the interactive acceptance suite qualifies them.
+Names and values intentionally preserve full embedded-NUL strings so a
 partial secret is not accidentally disclosed. Oversized fields are omitted in
 full. `viewport` records the largest accessible window size, or 1×1 while no
 window exists; there are no screenshot coordinates or pixel visibility claims.

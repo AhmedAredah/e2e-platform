@@ -155,8 +155,8 @@ void (async () => {
     const result = await runProcess(node(`process.stdout.write(Buffer.alloc(${size},255));process.stderr.write(Buffer.alloc(${size},128))`, { cwd, maxOutputBytes: 17, stdoutPath: 'out.bin', stderrPath: 'err.bin' }));
     expect(result.stdout).toEqual({ bytes: Buffer.alloc(17, 255), totalBytes: size, truncated: true });
     expect(result.stderr).toEqual({ bytes: Buffer.alloc(17, 128), totalBytes: size, truncated: true });
-    expect(await readFile(join(cwd, 'out.bin'))).toEqual(Buffer.alloc(size, 255));
-    expect(await readFile(join(cwd, 'err.bin'))).toEqual(Buffer.alloc(size, 128));
+    expect((await readFile(join(cwd, 'out.bin'))).equals(Buffer.alloc(size, 255))).toBe(true);
+    expect((await readFile(join(cwd, 'err.bin'))).equals(Buffer.alloc(size, 128))).toBe(true);
   });
 
   it('will not overwrite an existing output log or launch when logging cannot start', async () => {
@@ -274,12 +274,60 @@ describe('extension and fixture ownership', () => {
     expect(() => workspace.run(node('process.exit(0)'))).toThrow('disposed');
   });
 
-  it('waits for unawaited finite commands during workspace disposal', async () => {
+  it('waits for a handled pending finite command during workspace disposal', async () => {
     const workspace = await ProcessWorkspace.create();
-    const running = workspace.run(node('setInterval(()=>{},100)', { killGraceMs: 10 }));
+    const running = workspace.run(node('setInterval(()=>{},100)', { killGraceMs: 10 })).catch((cause: unknown) => cause);
     await delay(50);
     await workspace.dispose();
-    await expect(running).rejects.toBeInstanceOf(ProcessError);
+    await expect(running).resolves.toBeInstanceOf(ProcessError);
+    await expect(access(workspace.directory)).rejects.toThrow();
+  });
+
+  it('reports a dropped failed command after cleaning its workspace', async () => {
+    class CompletionRunner extends LocalProcessRunner {
+      completion: Promise<ProcessResult> | undefined;
+      override run(options: RunProcessOptions): Promise<ProcessResult> {
+        this.completion = super.run(options);
+        return this.completion;
+      }
+    }
+    const runner = new CompletionRunner();
+    const workspace = await ProcessWorkspace.create(runner);
+    workspace.run(node('process.exit(7)'));
+    // Internal completion monitoring must not count as consuming the public workspace promise.
+    await runner.completion!.catch(() => undefined);
+    await expect(workspace.dispose()).rejects.toMatchObject({
+      message: 'Unobserved process operation failed; await or handle every process operation',
+      errors: [expect.objectContaining({ code: 'PROCESS_EXIT_FAILED', result: expect.objectContaining({ exitCode: 7 }) })],
+    });
+    await expect(access(workspace.directory)).rejects.toThrow();
+  });
+
+  it('allows intentionally awaited or caught failures and normal Promise chains', async () => {
+    const workspace = await ProcessWorkspace.create();
+    try {
+      const missing = join(workspace.directory, 'missing-executable');
+      await expect(workspace.run({ executable: missing })).rejects.toMatchObject({ code: 'PROCESS_SPAWN_FAILED' });
+      const caught = await workspace.run(node('process.exit(7)')).then(result => result.exitCode).catch((cause: unknown) => (cause as ProcessError).result?.exitCode);
+      expect(caught).toBe(7);
+      let finalized = false;
+      const final = await workspace.run(node('process.exit(8)')).finally(() => { finalized = true; }).catch((cause: unknown) => (cause as ProcessError).result?.exitCode);
+      expect(final).toBe(8);
+      expect(finalized).toBe(true);
+      const results = await Promise.all([
+        workspace.run(node('process.exit(0)')),
+        workspace.run({ ...node('process.exit(2)'), expectedExitCodes: [2] }),
+      ]);
+      expect(results.map(result => result.exitCode)).toEqual([0, 2]);
+    } finally { await workspace.dispose(); }
+  });
+
+  it('reports dropped startup failures without treating successful cleanup as handling', async () => {
+    const workspace = await ProcessWorkspace.create();
+    workspace.start({ executable: join(workspace.directory, 'missing-executable') });
+    await expect(workspace.dispose()).rejects.toMatchObject({
+      errors: [expect.objectContaining({ code: 'PROCESS_SPAWN_FAILED' })],
+    });
     await expect(access(workspace.directory)).rejects.toThrow();
   });
 });

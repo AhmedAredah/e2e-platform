@@ -2,7 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ProcessError } from '../error.ts';
+import { ObservedOperations } from '../internal/observed-operations.ts';
 import { LocalProcessRunner, type ProcessRunner } from '../process/runner.ts';
+import { ApplicationService, type ApplicationServiceOptions } from '../service/application.ts';
 import type { ProcessOptions, ProcessResult, ProcessSession, RunProcessOptions } from '../types.ts';
 
 /** Per-attempt process workspace. Children stop before temporary files are removed. */
@@ -10,6 +12,7 @@ export interface ProcessFixture {
   readonly directory: string;
   run(options: RunProcessOptions): Promise<ProcessResult>;
   start(options: ProcessOptions): Promise<ProcessSession>;
+  startService(options: ApplicationServiceOptions): Promise<ApplicationService>;
 }
 
 /** Owns process operations and an isolated directory, using an injectable supervisor. */
@@ -17,7 +20,9 @@ export class ProcessWorkspace implements ProcessFixture {
   private readonly controller = new AbortController();
   private readonly pending = new Set<Promise<unknown>>();
   private readonly sessions = new Set<ProcessSession>();
+  private readonly services = new Set<ApplicationService>();
   private readonly cleanupFailures: unknown[] = [];
+  private readonly observed = new ObservedOperations();
   private disposal: Promise<void> | undefined;
 
   private constructor(readonly directory: string, private readonly runner: ProcessRunner) {}
@@ -41,11 +46,19 @@ export class ProcessWorkspace implements ProcessFixture {
       if (cause instanceof ProcessError && (cause.code === 'PROCESS_CLEANUP_FAILED' || cause.result?.ioError !== undefined)) this.cleanupFailures.push(cause.result?.ioError ?? cause);
       else if (cause instanceof AggregateError) this.cleanupFailures.push(cause);
     });
-    return operation;
+    return this.observed.wrap(operation);
   }
 
   /** Runs a finite command in this workspace unless cwd is explicitly supplied. */
   run(options: RunProcessOptions): Promise<ProcessResult> { return this.track(this.runner.run(this.options(options))); }
+
+  /** Starts a service in this workspace and owns it through readiness and disposal. */
+  startService(options: ApplicationServiceOptions): Promise<ApplicationService> {
+    return this.track(ApplicationService.start({ ...options, process: this.options(options.process) }, this).then(service => {
+      this.services.add(service);
+      return service;
+    }));
+  }
 
   /** Starts a long-lived child owned by this workspace. */
   start(options: ProcessOptions): Promise<ProcessSession> {
@@ -65,7 +78,14 @@ export class ProcessWorkspace implements ProcessFixture {
       const results = await Promise.allSettled([...this.sessions].map((session) => session.stop()));
       const failures = [...this.cleanupFailures, ...results.flatMap((result) => result.status === 'rejected' ? [result.reason as unknown] : result.value.ioError === undefined ? [] : [result.value.ioError])];
       if (failures.length === 0) await rm(this.directory, { recursive: true, force: true });
-      if (failures.length > 0) throw new AggregateError(failures, 'Process workspace cleanup failed');
+      const unobserved = await this.observed.failures();
+      const serviceFailures: unknown[] = [];
+      for (const service of this.services) {
+        try { service.assertHealthy(); } catch (cause) { serviceFailures.push(cause); }
+      }
+      if (failures.length > 0) throw new AggregateError([...failures, ...serviceFailures, ...unobserved], 'Process workspace cleanup failed');
+      if (serviceFailures.length > 0) throw new AggregateError([...serviceFailures, ...unobserved], 'Application service failed before owned shutdown');
+      if (unobserved.length > 0) throw new AggregateError(unobserved, 'Unobserved process operation failed; await or handle every process operation');
     })();
     return this.disposal;
   }

@@ -77,14 +77,29 @@ function hasText(node: SemanticNode, pattern: TextPattern): boolean {
 
 /** Applies the MIT engine contract's visibility, role, state, and text rules. */
 function matchesQuery(node: SemanticNode, query: SemanticQuery): boolean {
-  if (query.visible === true && node.states?.hidden === true) return false;
+  if (!matchesQueryFields(node, query)) return false;
+  if (query.visible === true || query.kind === 'role') {
+    if (node.states?.visibilityKnown === false) {
+      throw new EngineError('UNSUPPORTED_CAPABILITY', 'visibility is unavailable for a matching control', { retryable: false });
+    }
+    if (node.states?.hidden === true) return false;
+  }
+  if (query.kind === 'role' && query.states?.disabled !== undefined && node.states?.enabledKnown === false) {
+    throw new EngineError('UNSUPPORTED_CAPABILITY', 'enabled state is unavailable for a matching control', { retryable: false });
+  }
+  return true;
+}
+
+/** Only matching candidates require a visibility conclusion. */
+function matchesQueryFields(node: SemanticNode, query: SemanticQuery): boolean {
   switch (query.kind) {
     case 'role': {
       if (query.value.kind !== 'string') throw malformed('role queries require a literal role');
-      if (node.role !== query.value.value || node.states?.hidden === true) return false;
+      if (node.role !== query.value.value) return false;
       if (query.name !== undefined && (node.name === undefined || !matchesText(node.name, query.name))) return false;
       for (const key of ['checked', 'disabled', 'selected', 'expanded', 'pressed'] as const) {
         const wanted = query.states?.[key];
+        if (key === 'disabled' && node.states?.enabledKnown === false) continue;
         if (wanted !== undefined && (node.states?.[key] ?? false) !== wanted) return false;
       }
       return query.level === undefined || query.level === node.level;

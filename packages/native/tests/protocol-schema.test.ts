@@ -47,8 +47,30 @@ describe('native protocol v1 canonical serialization', () => {
   });
 
   it('rejects every golden secure-node leak through the actual parser', () => {
-    for (const fixture of fixtures.filter((entry) => entry.definition === 'node' && !entry.valid)) {
+    for (const fixture of fixtures.filter((entry) => entry.definition === 'node' && !entry.valid &&
+      (entry.value as { states?: { secure?: boolean } } | null)?.states?.secure === true)) {
       expect(() => parseSnapshot({ root: fixture.value, viewport: { width: 1, height: 1 } }, false)).toThrow(/secure node/);
+    }
+  });
+
+  it('keeps all golden node states consistent with runtime validation', () => {
+    for (const fixture of fixtures.filter((entry) => entry.definition === 'node')) {
+      const parse = () => parseSnapshot({ root: fixture.value, viewport: { width: 1, height: 1 } }, false);
+      if (fixture.valid) expect(parse).not.toThrow();
+      else expect(parse).toThrow();
+    }
+  });
+
+  it('rejects ambiguous, unbounded or malformed owned-window enumeration', async () => {
+    const window = { id: 'one', title: 'Editor', visible: true, active: true, modal: false };
+    for (const value of [null, [window, window], Array.from({ length: 257 }, (_, index) => ({ ...window, id: String(index) })),
+      [{ ...window, title: 'x'.repeat(257) }], [{ ...window, active: 'true' }], [{ ...window, arbitrary: 'field' }]]) {
+      class WindowTransport extends NativeTransport {
+        async request(): Promise<unknown> { return value; }
+        close(): void {}
+      }
+      const driver = new RpcNativeDriver(new WindowTransport());
+      await expect(driver.windows({ signal: new AbortController().signal, timeoutMs: 100 })).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
     }
   });
 });

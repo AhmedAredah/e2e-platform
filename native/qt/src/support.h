@@ -6,6 +6,7 @@
 #include <QObject>
 class QWidget;
 #include <stdexcept>
+#include <functional>
 namespace e2e::qt::detail {
 inline constexpr int MaxMessage = 1024 * 1024;
 inline constexpr int MaxReply = 12 * 1024 * 1024;
@@ -21,6 +22,8 @@ QString clean(QString value, int limit = MaxText);
 QJsonObject rectJson(const QRectF& rect);
 QString requiredText(const QJsonObject& params, const char* key);
 QString accessibleName(QObject* object);
+QString accessibleRole(QObject* object, const QString& fallback);
+QString accessibleValue(QObject* object);
 QString widgetRole(QWidget* widget);
 QPoint widgetPoint(QWidget* widget);
 bool secureObject(QObject* object);
@@ -30,5 +33,5 @@ struct ParsedKey { Qt::Key key; Qt::KeyboardModifiers modifiers; QString text; }
 struct KeyboardPlatform { bool macos; bool dontSwapControlAndMeta; };
 ParsedKey parseKey(QString value);
 ParsedKey parseKey(QString value, KeyboardPlatform platform);
-void sendKeyPair(QObject* target, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text);
+void sendKeyPair(QObject* target, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text, const std::function<bool()>& retainsFocus);
 }

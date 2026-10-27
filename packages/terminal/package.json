@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/terminal",
-  "version": "0.2.0-rc.6",
+  "version": "0.2.0-rc.7",
   "description": "PTY-backed terminal engine with real VT screen reconstruction for e2e",
   "license": "MIT",
   "type": "module",

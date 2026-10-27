@@ -292,6 +292,12 @@ expect(response.status).toBe(201);
 
 ## Patterns that keep suites honest
 
+Custom fixtures may accept a third `context` argument. Wrap async methods with
+`context.fixture` to record resource or assertion steps without exposing their
+arguments. Read `context.signal` or `context.operation()` when an operation starts;
+teardown receives a fresh budget after a test timeout. Await process operations:
+an ignored failed command fails fixture teardown.
+
 - Find selectors in the source, not by guessing: read the component or
   template for labels, roles, and text. Add an `aria-label` or a heading
   where the app has no accessible name, rather than falling back to CSS.

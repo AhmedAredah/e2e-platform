@@ -56,9 +56,15 @@ jobs:
           node-version: 24.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare the optional macOS terminal peer
+        if: runner.os == 'macOS'
+        run: |
+          pnpm build:native
+          node packages/terminal/dist/cli/setup.js
       - run: pnpm test:native
       - run: pnpm test:scripts
       - run: node scripts/native/verify.mjs
+      - run: node scripts/native/verify-cpp-sdk.mjs
       - run: node scripts/native/install-kit-smoke.mjs
 
   qt-linux:
@@ -66,6 +72,8 @@ jobs:
     timeout-minutes: 45
     env:
       QT_QPA_PLATFORM: offscreen
+      E2E_REQUIRE_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -83,6 +91,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:native
       - run: node scripts/native/verify.mjs --qt-only --require-quick
+      - name: Run installed C++ authored Qt tests
+        run: node scripts/native/verify-cpp-sdk.mjs --qt
       - run: pnpm verify:qt:install
       - run: pnpm verify:qt:exports
 
@@ -102,7 +112,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm pack:native
-      # Validate the exact six tarballs that the next step uploads.
+      # Validate the exact seven tarballs that the next step uploads.
       - run: node scripts/native/install-kit-smoke.mjs --kit release-packages
       - run: git rev-parse HEAD > release-packages/source-revision.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

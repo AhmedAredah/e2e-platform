@@ -2,7 +2,7 @@
 
 > Fork installation: these package names are local release identities. Use the
 > core kit in [INSTALL.md](../../INSTALL.md), then build and pack this optional
-> module locally. The six-package kit excludes this engine. Registry availability
+> module locally. The seven-package kit excludes this engine. Registry availability
 > is not established.
 
 The mobile engine for [`@e2e-platform/core`](../e2e/README.md), built on
@@ -20,7 +20,7 @@ Install the core kit into your test project first. From that project's directory
 replace the tarball path below with the actual filename emitted by `pack`:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-agent-device-0.2.0-rc.6.tgz
+npm install --save-dev /path/to/e2e-platform-agent-device-0.2.0-rc.7.tgz
 ```
 
 `agent-device` needs Xcode with an iOS simulator runtime, or the Android SDK

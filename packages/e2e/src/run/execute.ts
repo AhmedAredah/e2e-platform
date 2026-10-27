@@ -895,7 +895,7 @@ export class TargetExecutor implements SerialHost {
               );
               context.staging.stage(name, state, snapshotProtection(sessionSecrecy(session, this.config.secrets)));
             };
-      const { fixtures } = createFixtures({
+      const { fixtures, fixtureContext } = createFixtures({
         config: this.config,
         target: this.target,
         session,
@@ -928,6 +928,7 @@ export class TargetExecutor implements SerialHost {
         registered.fixtures,
         fixtures,
         this.target.engine?.name ?? 'none',
+        fixtureContext,
       );
 
       const mainWork = async (): Promise<void> => {

@@ -100,8 +100,14 @@ and the package READMEs. Record design rationale with changes and validation.
 - `native/linux-atspi`, `native/windows-uia`, `native/macos-ax` — separately installed OS accessibility sidecars. Keep protocol, provider, control and process ownership modules separate; never mark portable tests as live OS qualification.
 - `native/qt` — C++17 Qt helper, control adapters, CMake export and native tests.
   New toolkit helpers belong in sibling directories; Qt internals are not an
-  installed ABI for third-party adapter plugins.
-- `examples/with-cpp-cli`, `examples/with-qt` — real compiled consumer fixtures,
+  installed ABI for third-party adapter plugins. The separate versioned public
+  `ControlAdapter` contract permits source-level registration before startup.
+- `native/cpp-sdk` and `packages/cpp` — C++17 test-authoring client and its bounded
+  runner host. Keep transport, semantic client, registration and host dispatch
+  separate. Never trust a child exit code to erase a failed host operation.
+- `native/windows-process` — optional Windows Job Object supervisor. Its protocol
+  and lifecycle tests are independent of interactive desktop qualification.
+- `examples/with-cpp-cli`, `examples/with-cpp-sdk`, `examples/with-qt` — real compiled consumer fixtures,
   including deliberate wrong-output scenarios that must remain detectable.
 - `scripts/native` — verification and checksummed local install-kit tooling.
   Generated evidence belongs in ignored build/output folders, not source.
@@ -280,7 +286,7 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
 - User-visible changes add a Changeset. Peer ranges point from engines to core,
   never the reverse. The local fork reset to 0.1.0 is intentional; future version
   updates should use Changesets so dependent packages stay coordinated.
-- Root `release` and `pack:native` create a checksummed six-package installation kit;
+- Root `release` and `pack:native` create a checksummed seven-package installation kit;
   neither publishes. The release workflow is manual and uploads that kit as an
   artifact. No fork namespace ownership or registry publication is established.
 - Each build stamps `dist/.build.json`; package `prepublishOnly` and kit packing
@@ -292,4 +298,4 @@ the fixture project (`tests/integration/agent-ai-trace.test.ts` shows how).
   is `e2e-platform-oauth`. Preserve the on-disk consumer skill name `e2e`.
 - Private applications are skipped by Changesets (`privatePackages: false`).
   Their dependencies and known audit findings remain visible and are distinct
-  from the six-package consumer kit.
+  from the seven-package consumer kit.

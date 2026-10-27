@@ -1,4 +1,4 @@
-# A C++ CLI tested through the built e2e runner
+# C++ CLI and HTTP applications tested through the e2e runner
 
 This C++17 calculator emits JSON on stdout and can export the same result to a
 file. Tests launch the real compiled executable, send stdin, preserve expected
@@ -24,7 +24,7 @@ node scripts/native/verify.mjs
 
 The script builds this executable, runs CTest, links the built local packages
 into this example, runs the three positive e2e tests, then requires the separate
-planted-defect suite to exit 1 with an `ASSERTION_FAILED` report. It does not
+planted-defect suite to exit 1 with an `ASSERTION_FAILED` report. It also builds a bounded C++ HTTP reference server and checks its arithmetic, HTTP status codes and malformed-input handling, then rejects a planted incorrect response despite status 200. It does not
 download packages or toolchains. It stops if prerequisite builds are missing.
 Use a clean example dependency directory; it will not overwrite an existing
 non-link package installation.
@@ -43,7 +43,7 @@ This example uses local `workspace:*` dependencies because the C++ extension
 packages are source additions, not published releases. Install them with pnpm
 from the repository root. The initial dependency install
 needs registry access or a populated package-manager cache. After setup, its
-verification workflow needs neither a network connection nor a model.
+verification workflow needs neither an external network connection nor a model.
 
 The separate command below is expected to fail. It demonstrates that wrong
 application output remains a failure; it is not part of the default suite:
@@ -56,6 +56,27 @@ Set `E2E_CPP_BINARY` to an absolute executable path to test another build of the
 same calculator contract. CMake writes the default executable to
 `build/bin/e2e_cpp_calculator` (`.exe` on Windows), including with multi-config
 generators.
+
+## HTTP reference fixture
+
+`e2e_cpp_http` listens only on an ephemeral `127.0.0.1` port. Its
+`LoopbackHttpServer` owns sockets and request deadlines; the injected
+`CalculatorHttpHandler` implements `HttpHandler` and uses `BinaryOperation`.
+It is a bounded local fixture, not a production HTTP server and not certification
+of Drogon, Crow, Boost.Beast or another framework. It supports only simple GET
+requests to `/health` and `/sum?a=<number>&b=<number>`, rejects unsupported methods
+and invalid/nonfinite/duplicate operands, caps headers at 8 KiB and closes each
+connection. The test owns readiness, HTTP requests and process cleanup.
+
+```sh
+pnpm test:http
+# Intentionally exits 1 with ASSERTION_FAILED:
+pnpm test:http:negative
+```
+
+`E2E_CPP_HTTP_BINARY` can select another build of this reference contract.
+The verifier discovers the configured executable through the CMake File API,
+so it does not guess single-config versus multi-config output paths.
 
 ## Evidence
 
@@ -86,8 +107,10 @@ receives these collaborators without inheriting process or test-runner code.
 The bundled writer deliberately accepts only the sum schema; another operation
 needs a suitable output writer/schema and independent expected values.
 
-Last checked for the MIT fork on 2026-10-24 on Linux x64 with GCC 13.3,
-CMake 3.28.3, Node 24.22.1 and the built `@e2e-platform/core` 0.1.0 packages.
-Three native CTests and three real runner tests passed. The separate planted
-wrong-output test exited 1 with `ASSERTION_FAILED`, with complete cleanup.
-Windows and macOS require separate execution.
+Qualification belongs to the exact source revision and selected toolchain. The
+verifier records CMake/compiler identity, platform and architecture in
+`.e2e/cpp/verification.json` at the repository root. HTTP reports are retained in
+`.e2e/http-positive/` and `.e2e/http-negative/`. CI executes these same checks on
+Linux, Windows and macOS; consult the completed run before declaring a profile
+qualified. An expected assertion failure counts only with complete cleanup and
+no setup/provider/secondary errors.

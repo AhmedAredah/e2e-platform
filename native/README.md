@@ -1,6 +1,7 @@
 # Native application extensions
 
-This directory contains application-side helpers. TypeScript packages under
+This directory contains application-side helpers, a C++ test-authoring SDK and
+optional platform process supervisors. TypeScript packages under
 `packages/` own the test runner integration, process lifetime, transports and
 validation. Keeping those responsibilities separate lets another toolkit
 reuse the runner and protocol without acquiring a dependency on Qt.
@@ -14,6 +15,7 @@ reuse the runner and protocol without acquiring a dependency on Qt.
 | Native semantic surface | `NativeDriver` | `RpcNativeDriver` |
 | Native request transport | `NativeTransport` | `JsonRpcTcpTransport` |
 | Qt toolkit surface | C++ `ObjectAdapter` | `WidgetsAdapter`, `QuickAdapter` |
+| Qt application extensions | Public C++ `ControlAdapter` | Application-provided control adapters registered with `Bridge` |
 | Output expectations | `OutputValidator<T, Options>` | Numeric, JSON and CSV validators |
 | Terminal I/O | `TerminalTransport` | `NodePtyTransport` |
 | HTTP I/O | `HttpTransport` | `FetchHttpTransport` |
@@ -59,9 +61,13 @@ Follow this sequence:
 
 `qt/include/` is the installed consumer API; `qt/src/adapters/` implements toolkit
 surfaces; `qt/src/protocol/` owns the authenticated service; `qt/tests/` exercises
-the compiled helper. `ObjectAdapter` and its derived classes are internal helper
-seams, not a third-party binary plugin SDK. Static and shared builds export the
-`Bridge` API. `pnpm verify:qt:install` builds independent
+the compiled helper. `ObjectAdapter` and its derived classes remain internal helper
+seams. Public `<e2e/qt/control_adapter.h>` provides a source-level `ControlAdapter`
+contract, registered with `Bridge::registerControlAdapter` before startup on the
+GUI thread. Build custom adapters with the same Qt/compiler kit; this is not a
+cross-version binary plugin ABI. Custom adapters disable helper screenshots until
+their capture and masking behavior can be qualified. Static and shared builds export
+the `Bridge` API. `pnpm verify:qt:install` builds independent
 `find_package(e2eQtBridge CONFIG REQUIRED)` consumers of both installed variants.
 
 The helper has its own [MIT license](qt/LICENSE) and
@@ -84,3 +90,10 @@ runner's scheduler or reports. Read [DESKTOP.md](../DESKTOP.md) for prerequisite
 capabilities and experimental status. Portable tests do not establish live OS
 behavior. Dedicated custom-control, scene-engine and embedded adapters remain
 future integrations; see [SUPPORT_MATRIX.md](../SUPPORT_MATRIX.md).
+
+`cpp-sdk/` is the C++ authoring surface used by `@e2e-platform/cpp`. It connects
+compiled test bodies to the shared runner rather than introducing another
+scheduler or report format. `windows-process/` is the optional Job Object
+supervisor for process tests; it is independent of the UIA accessibility sidecar.
+Both require separate native builds. Their package documentation defines the
+supported calls, installation and runtime qualification limits.

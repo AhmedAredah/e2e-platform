@@ -4,6 +4,9 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configuredExecutables, requireExecutableTarget } from './cmake-targets.mjs';
 import { VerificationCompletionGuard } from './completion-guard.mjs';
+import { validateNativeReport } from './verification-report.mjs';
+import { readBuildQualification } from './build-qualification.mjs';
+import { verifyBuild } from '../dist-integrity.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const cliExample = join(root, 'examples', 'with-cpp-cli');
@@ -18,6 +21,7 @@ if (options.has('--require-quick') && !options.has('--qt') && !options.has('--qt
 if (!existsSync(cli) || !existsSync(join(root, 'packages', 'process', 'dist', 'index.js'))) {
   throw new Error('build the e2e and extension workspace packages before native verification');
 }
+for (const name of ['e2e', 'process']) verifyBuild(join(root, 'packages', name));
 const { runProcess } = await import('../../packages/process/dist/index.js');
 const env = { ...process.env, E2E_TELEMETRY_DISABLED: '1', DO_NOT_TRACK: '1' };
 
@@ -47,6 +51,7 @@ function linkPackages(example, packages) {
   for (const name of packages) {
     const source = join(root, 'packages', name === '@e2e-platform/core' ? 'e2e' : name.slice('@e2e-platform/'.length));
     if (!existsSync(join(source, 'dist', 'index.js'))) throw new Error(`build ${name} before verification (missing ${source}/dist/index.js)`);
+    verifyBuild(source);
     const destination = join(example, 'node_modules', name);
     mkdirSync(dirname(destination), { recursive: true });
     let entry;
@@ -62,29 +67,7 @@ function linkPackages(example, packages) {
 
 /** Requires complete cleanup and the intended assertion failure, never a broken setup or skipped test. */
 function verifyReport(reportPath, expected, minimumResults, failureTitle) {
-  const document = JSON.parse(readFileSync(reportPath, 'utf8'));
-  const report = document.run;
-  if (document.schemaVersion !== 'report-1' || report?.status !== expected || !Array.isArray(report.results)) throw new Error(`unexpected report at ${reportPath}`);
-  if (report.errors?.length) throw new Error('unexpected run-level errors in native verification report');
-  const selected = report.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered');
-  if (selected.length < minimumResults) throw new Error(`expected at least ${minimumResults} selected results in ${reportPath}`);
-  for (const result of selected) {
-    if (!result.attempts.length) throw new Error('an intended verification test did not execute');
-    for (const attempt of result.attempts) {
-      if (attempt.cleanup !== 'complete' || attempt.secondaryErrors?.length) throw new Error('verification encountered failed or incomplete cleanup');
-    }
-  }
-  if (expected === 'passed') {
-    if (selected.some((result) => result.status !== 'passed')) throw new Error('positive example contained a non-passing result');
-  } else {
-    const failed = selected.filter((result) => result.status !== 'passed');
-    if (failed.length !== 1 || failed[0].status !== 'failed' || failed[0].attempts.length !== 1) throw new Error('the planted defect must be the only failed test, with no retry or skip');
-    const attempt = failed[0].attempts[0];
-    if (failed[0].titlePath.at(-1) !== failureTitle || attempt.error?.code !== 'ASSERTION_FAILED' || attempt.error.category !== 'test') {
-      throw new Error('the intended planted-defect assertion did not fail');
-    }
-  }
-  return report;
+  return validateNativeReport(JSON.parse(readFileSync(reportPath, 'utf8')), { expected, minimumResults, failureTitle });
 }
 
 /** Finds retained evidence without assuming the test's Unicode subdirectory name. */
@@ -111,9 +94,9 @@ async function build(source, buildDirectory) {
   return configuredExecutables(buildDirectory);
 }
 
-const summary = { platform: process.platform, architecture: process.arch, node: process.version, cli: null, qt: null };
+const summary = { schemaVersion: 2, recordedAt: new Date().toISOString(), sourceCommit: process.env.GITHUB_SHA ?? null, buildConfiguration: 'Release', platform: process.platform, architecture: process.arch, node: process.version, cli: null, qt: null };
 if (!options.has('--qt-only')) {
-  linkPackages(cliExample, ['@e2e-platform/core', '@e2e-platform/process', '@e2e-platform/checks']);
+  linkPackages(cliExample, ['@e2e-platform/core', '@e2e-platform/process', '@e2e-platform/checks', '@e2e-platform/protocol']);
   const targets = await build(cliExample, join(cliExample, 'build'));
   env.E2E_CPP_BINARY = requireExecutableTarget(targets, 'e2e_cpp_calculator');
   const retainedEvidence = join(cliExample, '.e2e', 'cpp-evidence');
@@ -129,7 +112,14 @@ if (!options.has('--qt-only')) {
   if (directories.length !== 1) throw new Error('expected exactly one planted-defect export directory');
   const badPath = findFile(join(evidenceRoot, directories[0]), 'result.json');
   if (!badPath || JSON.parse(readFileSync(badPath, 'utf8')).sum !== 5) throw new Error('the planted wrong-output executable path was not exercised');
-  summary.cli = { passedTests: positive.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered').length, plantedDefectRejected: true, evidence: 'examples/with-cpp-cli/.e2e/', exportEvidence: relative(root, evidenceRoot).split('\\').join('/') };
+  env.E2E_CPP_HTTP_BINARY = requireExecutableTarget(targets, 'e2e_cpp_http');
+  for (const negative of [false, true]) {
+    const name = negative ? 'http-negative' : 'http-positive';
+    rmSync(join(cliExample, '.e2e', name), { recursive: true, force: true });
+    await run(process.execPath, [cli, 'run', '--config', negative ? 'e2e.http.negative.config.ts' : 'e2e.http.config.ts', '--no-model', '--artifacts', `.e2e/${name}/artifacts`], cliExample, [negative ? 1 : 0]);
+    verifyReport(join(cliExample, '.e2e', name, 'report.json'), negative ? 'failed' : 'passed', 1, 'rejects the planted wrong C++ HTTP result despite status 200');
+  }
+  summary.cli = { http: { referenceServer: true, positivePassed: true, plantedDefectRejected: true, frameworkCertification: false }, toolchain: readBuildQualification(join(cliExample, 'build')), passedTests: positive.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered').length, plantedDefectRejected: true, evidence: 'examples/with-cpp-cli/.e2e/', exportEvidence: relative(root, evidenceRoot).split('\\').join('/') };
 }
 
 if (options.has('--qt') || options.has('--qt-only')) {
@@ -138,13 +128,17 @@ if (options.has('--qt') || options.has('--qt-only')) {
   linkPackages(project, ['@e2e-platform/core', '@e2e-platform/native', '@e2e-platform/checks']);
   const targets = await build(example, join(example, 'build'));
   env.E2E_QT_DEMO = requireExecutableTarget(targets, 'e2e_qt_demo');
-  for (const name of ['verification-widgets', 'verification-negative', 'verification-quick']) rmSync(join(project, '.e2e', name), { recursive: true, force: true });
+  const runtimeResult = await run(env.E2E_QT_DEMO, ['--describe-runtime'], root);
+  const runtime = JSON.parse(runtimeResult.stdout.bytes.toString('utf8'));
+  if (typeof runtime.qt !== 'string' || typeof runtime.platform !== 'string' || typeof runtime.architecture !== 'string') throw new Error('Qt runtime identity is missing');
+  if (env.E2E_REQUIRE_QPA_PLATFORM && runtime.platform !== env.E2E_REQUIRE_QPA_PLATFORM) throw new Error(`Expected Qt QPA ${env.E2E_REQUIRE_QPA_PLATFORM}, received ${runtime.platform}`);
+  for (const name of ['verification-widgets', 'verification-negative', 'verification-quick', 'verification-quick-negative']) rmSync(join(project, '.e2e', name), { recursive: true, force: true });
   await run(process.execPath, [cli, 'run', '--no-model', '--artifacts', '.e2e/verification-widgets/artifacts'], project);
-  const widgets = verifyReport(join(project, '.e2e', 'verification-widgets', 'report.json'), 'passed', 2);
+  const widgets = verifyReport(join(project, '.e2e', 'verification-widgets', 'report.json'), 'passed', 3);
   env.E2E_QT_BAD_CALCULATION = '1';
   try {
     await run(process.execPath, [cli, 'run', '--no-model', '--artifacts', '.e2e/verification-negative/artifacts'], project, [1]);
-    verifyReport(join(project, '.e2e', 'verification-negative', 'report.json'), 'failed', 2, 'imports a project, edits its data, computes asynchronously, and exports');
+    verifyReport(join(project, '.e2e', 'verification-negative', 'report.json'), 'failed', 3, 'imports a project, edits its data, computes asynchronously, and exports');
   } finally {
     delete env.E2E_QT_BAD_CALCULATION;
   }
@@ -155,12 +149,19 @@ if (options.has('--qt') || options.has('--qt-only')) {
     await run(process.execPath, [cli, 'run', '--config', 'e2e.quick.config.ts', '--no-model', '--artifacts', '.e2e/verification-quick/artifacts'], project);
     const quickReport = verifyReport(join(project, '.e2e', 'verification-quick', 'report.json'), 'passed', 1);
     quickTests = quickReport.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered').length;
+    env.E2E_QT_BAD_CALCULATION = '1';
+    try {
+      await run(process.execPath, [cli, 'run', '--config', 'e2e.quick.config.ts', '--no-model', '--artifacts', '.e2e/verification-quick-negative/artifacts'], project, [1]);
+      verifyReport(join(project, '.e2e', 'verification-quick-negative', 'report.json'), 'failed', 1, 'drives a Qt Quick calculation through the visual tree');
+    } finally {
+      delete env.E2E_QT_BAD_CALCULATION;
+    }
   } else if (options.has('--require-quick')) {
     throw new Error('Qt Quick was required but is not part of the current CMake configuration');
   } else {
     process.stdout.write('Qt Quick was not built; no Quick runtime qualification is recorded.\n');
   }
-  summary.qt = { widgetsPassed: true, widgetsTests: widgets.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered').length, plantedDefectRejected: true, quickPassed: Boolean(quick), quickTests, inputFidelity: 'toolkit-events', displayPlatform: env.QT_QPA_PLATFORM ?? 'native-default', evidence: 'examples/with-qt/e2e/.e2e/' };
+  summary.qt = { runtime, toolchain: readBuildQualification(join(example, 'build')), quickPlantedDefectRejected: Boolean(quick), widgetsPassed: true, widgetsTests: widgets.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered').length, plantedDefectRejected: true, quickPassed: Boolean(quick), quickTests, inputFidelity: 'toolkit-events', displayPlatform: env.QT_QPA_PLATFORM ?? 'native-default', evidence: 'examples/with-qt/e2e/.e2e/' };
 }
 
 const summaryDirectory = join(root, '.e2e', 'cpp');

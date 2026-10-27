@@ -1,7 +1,7 @@
 # Application and platform support
 
-This branch adds process, native-bridge, terminal, protocol and output-checking
-modules to the existing e2e runner. It does not infer a GUI automation API from
+This branch adds process, native-bridge, terminal, protocol, C++ authoring and
+output-checking modules to the existing e2e runner. It does not infer a GUI automation API from
 the fact that an application was written in C++, Python, C# or Rust. The application boundary and
 its exposed capabilities determine which module applies.
 
@@ -18,13 +18,14 @@ accessibility permissions. Complete those prerequisites before an offline run.
 
 | Module | Included behavior | Boundary |
 | --- | --- | --- |
-| `@e2e-platform/process` | Direct executable/argument invocation, streaming stdin, separate bounded stdout/stderr capture, optional full binary log files, deadlines, cancellation, exit contracts and owned-process cleanup | A pipe is not a terminal. Windows cleanup uses taskkill, not Job Objects; descendants cannot be guaranteed after a root process exits naturally. No OS sandbox or automatic result validation. |
+| `@e2e-platform/process` | Direct executable/argument invocation, bounded streams, deadlines, cancellation, exit contracts, supervised services with explicit readiness, runner diagnostics and owned-process cleanup | A pipe is not a terminal. Default Windows cleanup uses taskkill and cannot guarantee descendants after natural root exit. The optional separately built Job Object supervisor requires explicit configuration and native qualification. No OS sandbox or automatic database/service reset. |
+| `@e2e-platform/cpp`, `native/cpp-sdk` | C++ authored test bodies connected to the shared runner through a bounded protocol | The C++ bridge supports its documented API; it does not imply every TypeScript fixture, browser command or third-party test framework is available from C++. Python, C# and Rust authoring SDKs remain absent. |
 | `@e2e-platform/checks` | Explicit numerical tolerances, structural JSON and keyed CSV comparison, bounded mismatch reports | The application or test author supplies independent expected values. No automatic tolerance widening or golden-output acceptance. |
-| `@e2e-platform/native` | A native e2e engine over an authenticated loopback protocol, semantic locators, declared actions and optional helper screenshots | Requires a compatible helper or separately installed OS sidecar; the TypeScript package alone does not install system drivers. |
-| `native/linux-atspi`, `windows-uia`, `macos-ax` | Python AT-SPI, C# UIA, Rust AX accessibility providers | Linux GTK3 reference controls have limited D-Bus/Xvfb qualification; Windows/macOS GUI acceptance remains unrun. No OS screenshots or global keyboard injection. |
-| `native/qt` | Cooperative Qt helper and demonstration applications | Toolkit event injection is not OS-wide input. Qualify Widgets/Quick controls and each selected Qt kit; custom-painted content needs application semantics or separate image checks. |
+| `@e2e-platform/native` | Authenticated native engine, scoped semantic locators, explicit state waits, optional readonly actionability preflight, capability-negotiated actions and helper screenshots | Requires a compatible helper or separately installed OS sidecar. Mutation is dispatched once; uncertain outcomes are never retried. Unsupported or unknown observations cannot prove absence or visibility. |
+| `native/linux-atspi`, `windows-uia`, `macos-ax` | Python AT-SPI, C# UIA, Rust AX providers; semantic actions, readonly preflight and supported scroll-to-visible operations | Historical Linux GTK3 reference controls have limited D-Bus/Xvfb qualification; the changed source needs new live results. Windows/macOS GUI acceptance remains unrun. No OS screenshots or global keyboard injection. |
+| `native/qt` | Cooperative Widgets/Quick helper, Qt-owned window APIs, selected model/view items and public custom-control adapter registration | Toolkit event injection is not OS-wide input. Model-item behavior and virtualized controls are bounded by their adapters. Custom adapters use the existing action vocabulary and disable screenshots; qualify each control/kit/OS combination. |
 | `@e2e-platform/terminal` | VT screen state and terminal sessions over a transport, with optional real PTY integration | Optional node-pty must be installed and compiled separately. Semantic terminal text and keyboard input are supported; no invented buttons, clicks, screenshots or universal graphics support. |
-| `@e2e-platform/protocol` | Bounded HTTP requests, status checks, JSON and Standard Schema validation | An RPC transport extension point does not implement gRPC or WebSocket support. Service launch/reset and domain assertions remain fixtures. |
+| `@e2e-platform/protocol` | Bounded HTTP requests, status checks, JSON and Standard Schema validation | An RPC transport extension point does not implement gRPC or WebSocket support. Use the process service fixture for launch/readiness; domain reset and expected outcomes remain application-specific. |
 | Core `modelPolicy: 'forbid'` / `--no-model` | Explicitly prevents model use instead of relying on replay-cache availability | Cache replay does not replace fresh result assertions. Model-dependent operations must fail rather than silently call a provider. |
 
 Qt Widgets and Quick share the bridge protocol but expose different trees and
@@ -32,6 +33,10 @@ control behavior. The reference apps demonstrate specific controls, not blanket
 coverage of every Qt component. Native file dialogs, IME, OS clipboard control,
 complex drag/drop, touch and multiple desktop sessions
 are separate capabilities, not implied by common locator support.
+Native video recording, visual-diff baselines, download/upload workflows and
+Qt WebEngine/CEF DOM-to-native context switching are not implemented. Qt-owned
+windows are distinct from foreign-process OS dialogs; OS sidecars may observe
+multiple windows in the launched PID but do not advertise the Qt window API.
 
 The same process module can test CLI11, Boost.Program_options, cxxopts or another
 parser without parser-specific drivers. Wt and other C++ web applications can use
@@ -48,15 +53,17 @@ result is inferred from Linux tests or from workflow configuration.
 | Application family | Current route | Status of dedicated support |
 | --- | --- | --- |
 | CLI11, Boost.Program_options, cxxopts or other CLI parsers | Generic real-process fixture and output checks | Included; no parser-specific driver required. |
-| Qt Widgets / Qt Quick | Cooperative helper and native engine | Included, experimental across kit/OS combinations; selected reference controls only. |
+| Qt Widgets / Qt Quick | Cooperative helper, model/view adapters and registered custom controls | Implemented for the documented control subset; candidate OS/kit qualification is required. An adapter extension point is not universal custom-control support. |
 | ncurses, FTXUI, notcurses | Generic VT/PTY terminal engine | Experimental keyboard/text route; no toolkit object tree or universal terminal graphics. |
 | Wt or another C++ application serving browser content | Existing web engine plus server fixture | Browser route included; not a new native framework driver. |
 | Drogon, Crow, oat++, Pistache, Boost.Beast HTTP services | HTTP protocol client plus service fixture | Included HTTP contracts; no framework-specific reset/discovery. |
 | gRPC, WebSocket or custom RPC | Caller-provided transport | Not implemented by the HTTP module. |
-| GTK/gtkmm, wxWidgets, Win32/MFC/WTL/WinUI, AppKit | AT-SPI, UIA or AX sidecar where the toolkit exposes controls | Implemented OS backends are experimental; qualify actual toolkit/control/OS versions. |
+| GTK/gtkmm, wxWidgets, Win32/MFC/WTL/WinUI, AppKit | AT-SPI, UIA or AX sidecar where the toolkit exposes controls | Conditional OS-backend route, not toolkit certification. Qualify the exact toolkit/control/OS versions using real applications. |
 | Python GTK, WPF/WinForms, Rust AppKit | Real reference GUI fixtures with native driver acceptance scripts | Python GTK3 reference acceptance passed on Ubuntu 24.04 under D-Bus/Xvfb. WPF and Rust AppKit built on their native OSes; interactive GUI acceptance remains unrun. WinForms requires separate qualification. |
 | PySide/PyQt, Tkinter, wxPython, Kivy, Avalonia/MAUI, Slint/egui/iced/Tauri | An eligible OS accessibility backend or a future specific adapter | No blanket toolkit certification; Qt Python binding, custom painting and hybrid DOM/native coordination remain separate work. |
-| JUCE, FLTK, Dear ImGui | Future framework-specific helper/test-engine integration | Not implemented; licenses and control coverage need separate review. |
+| JUCE, FLTK | Eligible OS accessibility controls where the application exposes them; otherwise a future helper | No dedicated or qualified toolkit adapter. Accessibility exposure depends on framework/version/application behavior. |
+| Dear ImGui | Future registered semantic tree or toolkit test-engine integration | No dedicated adapter or automatic control-tree extraction included; review integration licenses separately. |
+| Qt WebEngine, CEF, Tauri and other native/web hybrids | Separately selected native controls or browser surface | No integrated native/DOM context switching or automatic embedded-browser attach. |
 | SDL, SFML, GLFW, raylib, Unreal, Godot | Future scene/frame/input adapter or exposed process/protocol interface | No game/scene adapter included. |
 | VTK/ParaView, OpenCV, Eigen and scientific libraries | Existing process, linked test harness, data checks; optional qualified host UI | No automatic renderer/library introspection. |
 | LVGL, embedded Qt, QNX and physical devices | Future target-specific helper/transport | No hardware qualification or dedicated device backend included. |
@@ -68,6 +75,7 @@ e2e-platform/
   packages/
     e2e/                 Existing runner, agent policy, fixtures and reports
     process/src/         Process supervisor, capture and fixture modules
+    cpp/src/             C++ authored-test protocol and runner bridge
     native/src/
       engine/            Engine lifecycle and capability negotiation
       driver/            Semantic native-driver contracts and RPC driver
@@ -76,8 +84,10 @@ e2e-platform/
     terminal/src/        Terminal session and transport modules
     protocol/src/        HTTP and caller-provided RPC transport modules
   native/qt/             C++ Qt helper library and helper tests
+  native/cpp-sdk/        Installed C++ test-authoring API
   native/linux-atspi/    Python AT-SPI driver
   native/windows-uia/    C# UIA driver
+  native/windows-process/ Optional Windows Job Object supervisor
   native/macos-ax/       Rust AX driver
   examples/
     with-cpp-cli/        C++17 calculator; CMake, CTest and e2e tests
@@ -207,9 +217,10 @@ in its `cpp-evidence/` subdirectory. CTest emits `build/ctest-results.xml`.
 A machine-readable verification summary is written to `.e2e/cpp/verification.json`.
 Qt example reports are under `examples/with-qt/e2e/.e2e/`.
 
-The workflow configures Windows, macOS and Linux CLI jobs and a Linux Qt job on
-standard GitHub runners. A workflow definition is not evidence those remote jobs
-have run: retain the actual reports for each OS/architecture/toolchain/Qt kit.
+The workflows configure Windows, macOS and Linux command/Qt jobs, Linux Xvfb
+coverage and separate manual interactive desktop profiles. A workflow definition
+is not evidence those jobs have run: retain the actual reports for each
+OS/architecture/toolchain/Qt kit and each source revision.
 The rc.4 [`languages` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659168)
 qualified the Python/C#/Rust CLI/HTTP reference scenarios on all three operating
 systems at commit `50e3a377f0299f73a0472a012f85a893f7cb8c5d`. This does not

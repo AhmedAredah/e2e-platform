@@ -35,7 +35,7 @@ public sealed class BridgeSession(AccessibilityBackend backend, string token)
                 if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(token), Encoding.UTF8.GetBytes(candidate)))
                     throw new DriverException("ENGINE_FAILURE");
                 authenticated = true;
-                result = new { protocolVersion = 1, name = backend.Name, version = backend.Version, actions = backend.Actions, keyboard = false, screenshots = false };
+                result = new { protocolVersion = 1, name = backend.Name, version = backend.Version, actions = backend.Actions, actionability = backend.SupportsActionability, keyboard = false, screenshots = false };
             }
             else
             {
@@ -47,6 +47,7 @@ public sealed class BridgeSession(AccessibilityBackend backend, string token)
                             throw new DriverException("ENGINE_FAILURE");
                         result = backend.Snapshot(); break;
                     case "perform":
+                    case "actionability":
                         RequestValidator.Object(parameters, "ref", "action");
                         if (!parameters.TryGetProperty("ref", out var reference) || !parameters.TryGetProperty("action", out var action))
                             throw new DriverException("ENGINE_FAILURE");
@@ -56,7 +57,13 @@ public sealed class BridgeSession(AccessibilityBackend backend, string token)
                         if (nodeId.Length == 0) throw new DriverException("ENGINE_FAILURE");
                         RequestValidator.Action(action);
                         if (!backend.Actions.Contains(RequestValidator.String(action, "kind"), StringComparer.Ordinal)) throw new DriverException("UNSUPPORTED_CAPABILITY");
-                        backend.Perform(nodeId, action); result = null; break;
+                        if (method == "actionability")
+                        {
+                            if (!backend.SupportsActionability) throw new DriverException("UNSUPPORTED_CAPABILITY");
+                            backend.Actionability(nodeId, action);
+                        }
+                        else backend.Perform(nodeId, action);
+                        result = null; break;
                     case "shutdown":
                         RequestValidator.Object(parameters); CloseRequested = true; result = null; break;
                     case "initialize": throw new DriverException("INVALID_STATE");

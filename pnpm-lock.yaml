@@ -324,6 +324,33 @@ importers:
       '@e2e-platform/process':
         specifier: workspace:*
         version: link:../../packages/process
+      '@e2e-platform/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  examples/with-cpp-sdk:
+    devDependencies:
+      '@e2e-platform/core':
+        specifier: workspace:*
+        version: link:../../packages/e2e
+      '@e2e-platform/cpp':
+        specifier: workspace:*
+        version: link:../../packages/cpp
+      '@e2e-platform/native':
+        specifier: workspace:*
+        version: link:../../packages/native
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   examples/with-languages:
     devDependencies:
@@ -400,6 +427,27 @@ importers:
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@types/node@26.6.2)(vite@8.1.6(@types/node@26.6.2)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+
+  packages/cpp:
+    devDependencies:
+      '@e2e-platform/core':
+        specifier: workspace:*
+        version: link:../e2e
+      '@e2e-platform/process':
+        specifier: workspace:*
+        version: link:../process
+      '@e2e-platform/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@26.4.1)(vite@8.1.6(@types/node@26.4.1)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
 
   packages/e2e:
     dependencies:

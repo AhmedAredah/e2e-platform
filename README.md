@@ -3,11 +3,13 @@
 An extensible MIT-based fork of [TesterArmy e2e](https://github.com/tester-army/e2e)
 for testing command-line programs, terminal applications, HTTP services,
 desktop controls, web and mobile applications with one TypeScript runner.
+Tests can use TypeScript/JavaScript or the bounded C++ authoring bridge; Python,
+C# and Rust applications currently use the shared runner's test API.
 Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
 
-The current prerelease is **0.2.0-rc.6**. Its source branch is
+The current prerelease is **0.2.0-rc.7**. Its source branch is
 [`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared
 full-repository archive also includes Git history and a local installation kit.
 Linux GTK3 reference controls have limited live qualification. Windows UIA and
@@ -54,14 +56,15 @@ repository archive with `release-packages/`, use its included kit directly:
 node release-packages/install.mjs /absolute/path/to/your-project
 ```
 
-The kit installs `@e2e-platform/core` and the five boundary packages. External
+The kit installs `@e2e-platform/core`, the five boundary packages and
+`@e2e-platform/cpp`. External
 JavaScript dependencies require network access or a populated npm cache. CMake,
 compilers, Qt and optional terminal native dependencies are separate prerequisites.
 Follow [INSTALL.md](INSTALL.md) for a complete first test, Qt integration
 and consumer installation instructions.
 
 Browser and mobile engines are separate optional packages. A Git clone includes
-their source; the six-package kit does not include their tarballs. Follow
+their source; the seven-package kit does not include their tarballs. Follow
 [the optional-engine installation steps](INSTALL.md#browser-and-mobile-applications)
 to build and pack them locally, install them beside the kit, and prepare browsers
 or simulators before running tests.
@@ -89,10 +92,11 @@ provider. The fork disables the inherited upstream telemetry transport.
 | --- | --- |
 | `@e2e-platform/core` | Test SDK, engine contract, runner, reports and `e2e-platform` CLI |
 | `@e2e-platform/process` | Bounded subprocess execution, streams, cancellation and cleanup |
+| `@e2e-platform/cpp`, `native/cpp-sdk` | C++ authored test bodies connected to the shared runner; installed CMake SDK |
 | `@e2e-platform/checks` | Independent numeric, JSON and keyed CSV comparisons |
 | `@e2e-platform/native` | Native engine, authenticated sidecar profiles, driver and transport abstractions |
 | `native/linux-atspi`, `windows-uia`, `macos-ax` | Separately installed Python, C# and Rust accessibility drivers for their respective operating systems |
-| `native/qt` | C++ Qt Widgets/Quick bridge, internal control adapters and installed CMake package |
+| `native/qt` | C++ Qt Widgets/Quick bridge, model-item adapters, public custom-control contract and installed CMake package |
 | `@e2e-platform/terminal` | Terminal engine, VT state and injectable transport; optional `node-pty` |
 | `@e2e-platform/protocol` | Bounded HTTP transport, JSON/status/schema validation |
 | `@e2e-platform/playwright`, `agent-device`, `github`, `oauth` | Retained MIT-baseline browser/mobile, reporter and provider integrations |
@@ -106,6 +110,14 @@ instead of introducing toolkit-specific branches into the runner. See [DESKTOP.m
 [support matrix](SUPPORT_MATRIX.md) identifies implemented capabilities and the work
 required for GTK, wxWidgets, JUCE, FLTK, ImGui and other frameworks. They do not
 currently have dedicated native drivers.
+
+Native locators support scoped composition, state waits and readonly actionability
+checks where the backend advertises them. Qt additionally exposes owned-window
+selection and toolkit input. OS accessibility backends perform supported semantic
+actions and scrolling; they do not provide OS keyboard input or screenshots.
+Neither route implies arbitrary canvas controls, Qt WebEngine DOM switching,
+native video or visual-regression comparison. See the [release gates](RELEASE_STATUS.md#remaining-release-gates)
+for the remaining qualification work.
 
 ## Source development
 

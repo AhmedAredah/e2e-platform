@@ -28,7 +28,7 @@ public static class RequestValidator
         var kind = String(action, "kind", 64);
         switch (kind)
         {
-            case "tap": case "clear": case "focus": case "check": case "uncheck":
+            case "tap": case "clear": case "focus": case "check": case "uncheck": case "scrollIntoView":
                 Object(action, "kind"); break;
             case "fill":
                 Object(action, "kind", "value", "sensitive");

@@ -8,10 +8,15 @@
 #include <QJsonArray>
 #include <QLabel>
 #include <QLineEdit>
+#include <QInputMethodEvent>
 #include <QPlainTextEdit>
+#include <QScrollArea>
+#include <QWheelEvent>
 #include <QTest>
 #include <QTextEdit>
 #include <QWindow>
+#include <QMenu>
+#include <QMenuBar>
 #include <cmath>
 
 namespace e2e::qt::detail {
@@ -20,10 +25,15 @@ QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth
     auto* root = qobject_cast<QWidget*>(rootObject);
         if (!registry.visit(depth)) return {};
         QJsonObject node = registry.node(widget, isRoot);
+        const auto custom = custom_ ? custom_->snapshot(widget) : std::optional<ControlSnapshot>{};
+        // QWidgetAction may render through descendants unrelated to the
+        // QAction's ownership. Classify the containing menu conservatively.
+        if (qobject_cast<QMenu*>(widget) || qobject_cast<QMenuBar*>(widget))
+            for (QAction* action : widget->actions()) if (secureObject(action)) markSensitiveObject(widget);
         const bool secure = secureObject(widget);
         const bool hidden = !widget->isVisibleTo(root) || !widget->isVisible();
         QJsonObject states{{"hidden", hidden}, {"disabled", !widget->isEnabled()}, {"focused", widget->hasFocus()}};
-        node["role"] = widgetRole(widget);
+        node["role"] = accessibleRole(widget, widgetRole(widget));
         QString name = clean(widget->accessibleName(), 256);
         if (name.isEmpty()) name = accessibleName(widget);
         if (isRoot) name = clean(widget->windowTitle(), 256);
@@ -34,6 +44,8 @@ QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth
             name = clean(widget->accessibleName(), 256);
         } else {
             node["attributes"] = QJsonObject{{"class", clean(widget->metaObject()->className(), 256)}};
+            const QString numericValue = accessibleValue(widget);
+            if (!numericValue.isEmpty()) node["value"] = numericValue;
             if (auto* button = qobject_cast<QAbstractButton*>(widget)) {
                 const QString text = clean(button->text());
                 node["text"] = text;
@@ -50,8 +62,9 @@ QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth
         if (!name.isEmpty()) node["name"] = name;
         node["states"] = states;
         node["rect"] = rectJson(QRect(widget->mapTo(root, QPoint()), widget->size()));
+        if (custom) ControlAdapters::apply(node, *custom);
         if (!registry.reserveNode(node)) return {};
-        if (secure) return node;
+        if (secure || (custom && custom->omitChildren)) return node;
         QJsonArray children;
         for (QObject* child : widget->children()) {
             QWidget* childWidget = qobject_cast<QWidget*>(child);
@@ -59,6 +72,10 @@ QJsonObject WidgetsAdapter::node(QObject* object, QObject* rootObject, int depth
             const QJsonObject childNode = this->node(childWidget, root, depth + 1, registry, false);
             if (!childNode.isEmpty()) children.append(childNode);
             if (registry.truncated) break;
+        }
+        if (!registry.truncated) {
+            const auto controls = targets_.children(widget, root, registry, depth + 1);
+            for (const auto& control : controls) children.append(control);
         }
         if (!children.isEmpty()) node["children"] = children;
         return node;
@@ -73,24 +90,82 @@ QObject* WidgetsAdapter::root() const {
         if (widget->isVisible() && widget->windowType() != Qt::ToolTip) return widget;
     return nullptr;
 }
-bool WidgetsAdapter::accepts(QObject* object) const { return qobject_cast<QWidget*>(object); }
+bool WidgetsAdapter::accepts(QObject* object) const { return qobject_cast<QWidget*>(object) || dynamic_cast<WidgetTarget*>(object); }
 QSize WidgetsAdapter::size(QObject* root) const { return static_cast<QWidget*>(root)->size(); }
 QJsonObject WidgetsAdapter::snapshot(QObject* root, ObjectRegistry& registry) {
-    QJsonObject tree = node(root, root, 0, registry, true);
+    targets_.begin();
+    QJsonObject tree;
+    try { tree = node(root, root, 0, registry, true); }
+    catch (...) { targets_.finish(); throw; }
+    targets_.finish();
     const QSize viewport = size(root);
     return {{"root", tree}, {"viewport", QJsonObject{{"width", viewport.width()}, {"height", viewport.height()}}}, {"location", "qt:view"}, {"truncated", registry.truncated}};
 }
 void WidgetsAdapter::actionable(QObject* object, QObject* rootObject) const {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->ready(static_cast<QWidget*>(rootObject), false); return; }
     auto* widget = qobject_cast<QWidget*>(object);
     auto* root = qobject_cast<QWidget*>(rootObject);
     if (!widget || !root || !widget->isVisible() || !widget->isEnabled() || widget->width() <= 0 || widget->height() <= 0 || widget->window() != root)
         throw Failure("NOT_ACTIONABLE", "Qt widget is hidden, disabled, empty, or outside active window");
     const QPoint point = widgetPoint(widget);
-    if (!widget->visibleRegion().contains(point)) throw Failure("NOT_ACTIONABLE", "Qt target is clipped");
+    QWidget* recipient = widget->childAt(point);
+    if (!recipient) recipient = widget;
+    if (!recipient->visibleRegion().contains(recipient->mapFrom(widget, point))) throw Failure("NOT_ACTIONABLE", "Qt target is clipped");
     QWidget* hit = root->childAt(widget->mapTo(root, point));
     if (widget != root && hit && hit != widget && !widget->isAncestorOf(hit)) throw Failure("NOT_ACTIONABLE", "Qt target is covered by another widget");
 }
+QRectF WidgetsAdapter::rectangle(QObject* object, QObject* root) const {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) {
+        const QRect rect = target->rectangle();
+        return QRectF(target->owner()->mapTo(static_cast<QWidget*>(root), rect.topLeft()), rect.size());
+    }
+    auto* widget = qobject_cast<QWidget*>(object);
+    if (!widget) throw Failure("NODE_STALE", "Qt widget target no longer exists");
+    return QRectF(widget->mapTo(static_cast<QWidget*>(root), QPoint()), widget->size());
+}
+void WidgetsAdapter::ready(QObject* object, QObject* root, const QJsonObject& action) const {
+    const QString kind = requiredText(action, "kind");
+    if (kind == "scrollIntoView") {
+        if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->ready(static_cast<QWidget*>(root), true); return; }
+        auto* widget = qobject_cast<QWidget*>(object);
+        if (!widget || !widget->isVisible() || widget->window() != root) throw Failure("NOT_ACTIONABLE", "Qt scroll target is hidden or outside the active window");
+        return;
+    }
+    actionable(object, root);
+    if ((kind == "fill" || kind == "clear") && !(custom_ && custom_->handles(object)) && !editable(object)) throw Failure("NOT_ACTIONABLE", "Qt target is not editable");
+    if (kind == "swipe") {
+        const QString direction = requiredText(action, "direction");
+        if (direction != "up" && direction != "down" && direction != "left" && direction != "right") throw Failure("INVALID_STATE", "invalid scroll direction");
+        if (action.contains("momentum") && action.value("momentum") != "none") throw Failure("UNSUPPORTED_CAPABILITY", "Qt wheel input does not implement kinetic momentum");
+    }
+}
+void WidgetsAdapter::scrollIntoView(QObject* object, QObject* root) {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->scrollIntoView(); return; }
+    auto* widget = static_cast<QWidget*>(object);
+    QPointer<QWidget> target(widget);
+    for (QWidget* parent = widget->parentWidget(); parent; parent = parent->parentWidget()) {
+        if (auto* scroll = qobject_cast<QScrollArea*>(parent)) {
+            QPointer<QWidget> container(parent);
+            scroll->ensureWidgetVisible(target, 8, 8);
+            if (!target || !container) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt scroll target was destroyed");
+        }
+        if (parent == root) break;
+    }
+}
+void WidgetsAdapter::swipe(QObject* object, QObject*, const QString& direction) {
+    auto* virtualTarget = dynamic_cast<WidgetTarget*>(object);
+    auto* widget = virtualTarget ? virtualTarget->owner() : static_cast<QWidget*>(object);
+    const QPoint point = virtualTarget ? virtualTarget->rectangle().center() : widgetPoint(widget);
+    const QPoint delta = direction == "up" ? QPoint(0, 240) : direction == "down" ? QPoint(0, -240)
+        : direction == "left" ? QPoint(240, 0) : QPoint(-240, 0);
+    QWidget* receiver = widget->childAt(point);
+    if (!receiver) receiver = widget;
+    QWheelEvent event(receiver->mapFrom(widget, point), widget->mapToGlobal(point), {}, delta,
+        Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+    QCoreApplication::sendEvent(receiver, &event);
+}
 void WidgetsAdapter::click(QObject* object, Qt::MouseButton button, bool twice, bool hover) {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->click(button, twice, hover); return; }
     auto* widget = static_cast<QWidget*>(object);
     QPointer<QWindow> window(widget->window()->windowHandle());
     if (!window) throw Failure("NOT_ACTIONABLE", "Qt window is not exposed");
@@ -101,12 +176,33 @@ void WidgetsAdapter::click(QObject* object, Qt::MouseButton button, bool twice, 
     if (!window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window was destroyed during pointer input");
     QTest::mouseRelease(window, button, Qt::NoModifier, point);
 }
-void WidgetsAdapter::focus(QObject* object) { static_cast<QWidget*>(object)->setFocus(Qt::OtherFocusReason); }
+QWidget* WidgetsAdapter::keyboardTarget(QObject* object) const {
+    auto* virtualTarget = dynamic_cast<WidgetTarget*>(object);
+    auto* widget = virtualTarget ? virtualTarget->owner() : qobject_cast<QWidget*>(object);
+    QWidget* focused = QApplication::focusWidget();
+    if (!widget || !focused || focused != widget || !widget->window()->windowHandle())
+        throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt widget no longer holds keyboard focus");
+    return focused;
+}
+void WidgetsAdapter::focus(QObject* object) {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->focus(); return; }
+    QPointer<QWidget> target(static_cast<QWidget*>(object));
+    target->setFocus(Qt::OtherFocusReason);
+    if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt widget was destroyed during focus");
+    keyboardTarget(target);
+}
 void WidgetsAdapter::key(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text) {
-    sendKeyPair(object, key, modifiers, text);
+    QPointer<QWidget> target(keyboardTarget(object));
+    sendKeyPair(target->window()->windowHandle(), key, modifiers, text, [target] { return target && QApplication::focusWidget() == target; });
 }
 void WidgetsAdapter::typeCharacter(QObject* object, char character) {
-    sendKeyPair(object, static_cast<Qt::Key>(QChar::fromLatin1(character).toUpper().unicode()), Qt::NoModifier, QString(QChar::fromLatin1(character)));
+    key(object, static_cast<Qt::Key>(QChar::fromLatin1(character).toUpper().unicode()), Qt::NoModifier, QString(QChar::fromLatin1(character)));
+}
+void WidgetsAdapter::commitText(QObject* object, const QString& text) {
+    QWidget* target = keyboardTarget(object);
+    QInputMethodEvent event;
+    event.setCommitString(text);
+    QCoreApplication::sendEvent(target, &event);
 }
 bool WidgetsAdapter::editable(QObject* object) const {
     if (auto* edit = qobject_cast<QLineEdit*>(object)) return !edit->isReadOnly();
@@ -114,7 +210,18 @@ bool WidgetsAdapter::editable(QObject* object) const {
     if (auto* edit = qobject_cast<QPlainTextEdit*>(object)) return !edit->isReadOnly();
     return false;
 }
-bool WidgetsAdapter::checkable(QObject* object) const { auto* button = qobject_cast<QAbstractButton*>(object); return button && button->isCheckable(); }
+bool WidgetsAdapter::checkable(QObject* object) const {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) return target->checkable();
+    auto* button = qobject_cast<QAbstractButton*>(object); return button && button->isCheckable();
+}
+bool WidgetsAdapter::checked(QObject* object) const {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) return target->checked();
+    auto* button = qobject_cast<QAbstractButton*>(object); return button && button->isChecked();
+}
+void WidgetsAdapter::setChecked(QObject* object, bool value) {
+    if (auto* target = dynamic_cast<WidgetTarget*>(object)) { target->setChecked(value); return; }
+    if (checked(object) != value) click(object, Qt::LeftButton, false, false);
+}
 QObject* WidgetsAdapter::focused(QObject*) const { return QApplication::focusWidget(); }
 void WidgetsAdapter::selectOption(QObject* object, const QJsonValue& option) {
     auto* combo = qobject_cast<QComboBox*>(object);
@@ -182,9 +289,17 @@ void WidgetsAdapter::secureRegions(QObject* rootObject, QList<QRectF>& regions, 
     QList<QWidget*> all = root->findChildren<QWidget*>();
     if (all.size() > MaxNodes) throw Failure("POLICY_DENIED", "cannot prove screenshot masking for oversized widget tree");
     all.prepend(root);
-    for (QWidget* child : all) if (secureObject(child)) {
-        ++count;
-        if (child->isVisibleTo(root)) regions.append(QRectF(child->mapTo(root, QPoint()), child->size()));
+    for (QWidget* child : all) {
+        bool secure = secureObject(child);
+        // Menu actions may be owned outside the visible QObject subtree. Mask
+        // the whole menu when any action is sensitive; CaptureGuard watches
+        // the actions themselves and their owning ancestors as well.
+        if (qobject_cast<QMenu*>(child) || qobject_cast<QMenuBar*>(child))
+            for (QAction* action : child->actions()) secure |= secureObject(action);
+        if (secure) {
+            ++count;
+            if (child->isVisibleTo(root)) regions.append(QRectF(child->mapTo(root, QPoint()), child->size()));
+        }
     }
 }
 }

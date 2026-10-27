@@ -1,5 +1,5 @@
 import net from 'node:net';
-import { writeFileSync } from 'node:fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
 
 const pidFile = process.argv.find((argument) => argument.startsWith('--pid-file='));
 if (pidFile !== undefined) writeFileSync(pidFile.slice('--pid-file='.length), String(process.pid));
@@ -8,11 +8,18 @@ const actions = ['tap', 'fill', 'clear', 'focus', 'press', 'check', 'uncheck', '
 let value = '';
 let status = 'Ready';
 let focused = false;
+let activeWindow = 'window-1';
+let initializedAt = 0;
+const argument = (prefix) => process.argv.find((item) => item.startsWith(prefix))?.slice(prefix.length);
+const preflightDelay = argument('--preflight-delay=');
+const requestFile = argument('--record-requests=');
+const profileFile = argument('--profile-file=');
+if (profileFile) writeFileSync(profileFile, JSON.stringify({ profile: process.env.E2E_NATIVE_PROFILE_DIR, config: process.env.XDG_CONFIG_HOME, data: process.env.XDG_DATA_HOME, cache: process.env.XDG_CACHE_HOME, roaming: process.env.APPDATA, local: process.env.LOCALAPPDATA }));
 const node = (id, role, name, fields = {}) => ({ ref: { id, revision: '' }, role, name, ...fields });
 const snapshot = () => ({
   truncated: process.argv.includes('--truncated'),
   location: 'Mock native application', viewport: { width: 500, height: 400 },
-  root: node('root', 'window', 'Mock native application', { children: [
+  root: node(process.argv.includes('--windows') || process.argv.includes('--changing-root') ? activeWindow : 'root', 'window', 'Mock native application', { children: [
     node('name', 'textbox', 'Name', { testId: 'name', value, rect: { x: 0, y: 0, width: 100, height: 30 } }),
     node('submit', 'button', 'Greet', { testId: 'submit', rect: { x: 0, y: 40, width: 100, height: 30 } }),
     ...(process.argv.includes('--truncated') ? [] : [node('status', 'status', status, { text: status, testId: 'status' })]),
@@ -32,14 +39,28 @@ const server = net.createServer((socket) => {
       buffer = buffer.slice(end + 1);
       const request = JSON.parse(raw);
       const { id, method, params } = request;
+      if (requestFile) appendFileSync(requestFile, method + '\n');
       const reply = (result) => socket.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n');
       const error = (code) => socket.write(JSON.stringify({ jsonrpc: '2.0', id, error: { code: -32000, message: code, data: { code } } }) + '\n');
       if (method === 'initialize') {
         if (params.token !== process.env.E2E_NATIVE_TOKEN || params.protocolVersion !== 1) { error('ENGINE_FAILURE'); socket.end(); continue; }
         authenticated = true;
-        reply({ protocolVersion: 1, name: 'mock-helper', version: '1.0.0', actions: process.argv.includes('--missing-action') ? ['tap'] : actions, keyboard: true, screenshots: false });
+        initializedAt = Date.now();
+        reply({ protocolVersion: 1, name: 'mock-helper', version: '1.0.0', actions: process.argv.includes('--missing-action') ? ['tap'] : actions, keyboard: true, screenshots: false,
+          ...(preflightDelay === undefined ? {} : { actionability: true }), ...(process.argv.includes('--windows') ? { windows: true } : {}) });
       } else if (!authenticated) { error('ENGINE_FAILURE'); socket.end(); }
       else if (method === 'snapshot') reply(snapshot());
+      else if (method === 'actionability') {
+        if (Date.now() - initializedAt < Number(preflightDelay)) error('NOT_ACTIONABLE');
+        else if (process.argv.includes('--malformed-preflight')) reply({ ready: true });
+        else reply(null);
+      }
+      else if (method === 'windows') reply(['window-1', 'window-2'].map((id, index) => ({ id, title: ['Editor', 'Settings'][index], visible: true, active: id === activeWindow, modal: false })));
+      else if (method === 'window.activate') {
+        if (!['window-1', 'window-2'].includes(params.id)) { error('NODE_STALE'); continue; }
+        activeWindow = params.id;
+        reply(null);
+      }
       else if (method === 'perform') {
         if (process.argv.includes('--exit-on-perform')) { process.exit(22); }
         if (process.argv.includes('--disconnect-perform')) { socket.destroy(); continue; }
@@ -49,6 +70,7 @@ const server = net.createServer((socket) => {
         else if (params.action.kind === 'tap' && params.ref.id === 'submit') status = process.argv.includes('--bug') ? 'Wrong greeting' : `Hello ${value}`;
         else if (params.action.kind === 'clear' && params.ref.id === 'name') value = '';
         else { error('UNSUPPORTED_CAPABILITY'); continue; }
+        if (process.argv.includes('--changing-root')) activeWindow = 'window-2';
         if (process.argv.includes('--extra-reply')) {
           socket.write(JSON.stringify({ jsonrpc: '2.0', id, result: null }) + '\n' + JSON.stringify({ jsonrpc: '2.0', id: id + 1000, result: null }) + '\n');
         } else reply(null);

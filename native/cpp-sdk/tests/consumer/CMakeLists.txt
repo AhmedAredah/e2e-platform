@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.21)
+project(e2e_cpp_installed_consumer LANGUAGES CXX)
+find_package(e2eCpp CONFIG REQUIRED)
+add_executable(installed_cpp_consumer main.cpp)
+target_link_libraries(installed_cpp_consumer PRIVATE e2e::cpp)
+enable_testing()
+add_test(NAME installed-cpp-discovery COMMAND installed_cpp_consumer --e2e-list)
+set_tests_properties(installed-cpp-discovery PROPERTIES PASS_REGULAR_EXPRESSION "installed C.. SDK consumer" TIMEOUT 10)

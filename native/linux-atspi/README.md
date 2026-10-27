@@ -65,8 +65,9 @@ available without pip or a virtual environment.
 | Observe | AT-SPI names, roles, states, text, accessible ID and geometry | Only the launched PID; bounded tree with explicit truncation |
 | Tap | Recognized Action click/press/activate/toggle/jump/select | Requires that semantic action; no coordinate click fallback |
 | Fill / clear | EditableText `set_text_contents` | Requires editable state; this is semantic replacement, not physical key events |
-| Focus | Component `grab_focus` | Requires focus support from the toolkit/session |
-| Check / uncheck | Checked-state read plus at most one semantic action | Idempotent; rejects controls that fail to reach the requested state |
+| Focus | Component `grab_focus` | Requires `FOCUSABLE` state and focus support from the toolkit/session |
+| Scroll into view | Component `scroll_to(ANYWHERE)` | Exposed controls only; no virtualized-item realization or pointer fallback |
+| Check / uncheck | Checked-state read plus at most one semantic action | Idempotent; selected radio uncheck is unsupported; unconfirmed transitions are uncertain mutations |
 | Select option | Selection `select_child` | One direct child by unique accessible label or zero-based index; HTML `value` and multi-select unsupported |
 | Global keyboard / screenshots | Unavailable | Never advertised, captured or fabricated |
 
@@ -78,7 +79,8 @@ additionally marks that
 object secure for the rest of its lifetime. Providers must expose custom secret
 controls correctly; this does not infer unknown secrets from arbitrary UI text.
 No pixel capture is available, so unsupported screenshot masking cannot leak
-unmasked pixels. The synthetic root is stable; object IDs are monotonic and
+unmasked pixels. Canonical selection/grid roles are `listbox`, `option`, `grid`, `row` and `gridcell`.
+The synthetic root is stable; object IDs are monotonic and
 retained for live proxies, and stale/defunct objects cannot receive new actions.
 A 900,000-byte aggregate metadata budget counts escaped Unicode before retaining
 nodes, in addition to depth, node and per-field limits. Exhaustion marks the
@@ -96,6 +98,14 @@ protocol failure or termination signal. Linux parent-death handling covers the
 direct child if the driver is killed abruptly. This is **not** cgroup containment:
 processes that deliberately daemonize or escape the owned process group require
 external isolation. Forked GUI worker PIDs and unrelated apps are not enumerated.
+
+The driver negotiates a read-only `actionability` probe. It checks current owned
+identity, `ENABLED`/`VISIBLE`/`SHOWING` state and the required interface without
+executing the action. The actual dispatch repeats these checks. An unready probe
+can be polled; a dispatched mutation is never replayed. `scrollIntoView` may
+address an exposed offscreen node by test ID; role locators exclude hidden nodes.
+Snapshots expose provider-supplied placeholder metadata and finite numeric
+range values where supported. Secure controls never expose these fields.
 
 The driver uses GNOME semantic accessibility calls. It does not claim native
 pointer input, IME/keyboard fidelity, WebView DOM access, every GUI toolkit,

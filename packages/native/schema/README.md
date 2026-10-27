@@ -2,12 +2,12 @@
 
 `native-bridge-1.schema.json` describes the canonical JSON frames in
 [`PROTOCOL.md`](../PROTOCOL.md). Its `$defs` expose readiness, request, response,
-initialization, semantic node/snapshot, screenshot, action and error vocabulary.
+initialization, semantic node/snapshot, screenshot, owned windows, action and error vocabulary.
 The readiness definition is the JSON payload after `E2E_NATIVE_READY `; it is
 not itself a TCP request. Frames still use one UTF-8 JSON value followed by LF.
 
 The golden conformance fixture contains positive and negative cases for all
-seven methods, negotiated capabilities, mutation acknowledgements and secure
+seven baseline methods and the optional actionability/window methods, negotiated capabilities, mutation acknowledgements and secure
 source data. Tests run them through JSON Schema and exercise the actual native
 driver/parser with initialization, masked pixels and rejected secure-node leaks.
 The schema's action and error enums are checked against the public engine API.

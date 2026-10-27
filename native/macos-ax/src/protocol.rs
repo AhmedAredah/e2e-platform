@@ -1,7 +1,7 @@
 //! Strict JSON-RPC native-v1 dispatch with an authenticated session boundary.
 use crate::{
     error::{DriverError, Result},
-    provider::{ACTIONS, AccessibleProvider, Action},
+    provider::{ACTIONS, AccessibleProvider, Action, SelectionChoice},
 };
 use serde_json::{Value, json};
 
@@ -100,7 +100,7 @@ impl<P: AccessibleProvider> Session<P> {
             self.token.fill(0);
             return Some(success(
                 id,
-                json!({"protocolVersion":1,"name":"e2e-platform-macos-ax","version":env!("CARGO_PKG_VERSION"),"actions":ACTIONS,"keyboard":false,"screenshots":false}),
+                json!({"protocolVersion":1,"name":"e2e-platform-macos-ax","version":env!("CARGO_PKG_VERSION"),"actions":ACTIONS,"keyboard":false,"screenshots":false,"actionability":self.provider.supports_actionability()}),
             ));
         }
         let result = match method {
@@ -110,6 +110,9 @@ impl<P: AccessibleProvider> Session<P> {
             {
                 self.provider.snapshot()
             }
+            "actionability" => parse_perform(params)
+                .and_then(|(id, action)| self.provider.preflight(id, &action))
+                .map(|()| Value::Null),
             "perform" => parse_perform(params)
                 .and_then(|(id, action)| self.provider.perform(id, &action))
                 .map(|()| Value::Null),
@@ -193,6 +196,36 @@ fn parse_perform(params: &Value) -> Result<(&str, Action)> {
         let sensitive = raw["sensitive"].as_bool().ok_or_else(invalid)?;
         return Ok((id, Action::Fill { value, sensitive }));
     }
+    if kind == "selectOption" {
+        if !keys(raw, &["kind", "value"], &["kind", "value"]) {
+            return Err(invalid());
+        }
+        let raw_choice = &raw["value"];
+        let text = |value: &Value| {
+            value
+                .as_str()
+                .filter(|value| value.len() <= MAX_TEXT_BYTES)
+                .map(str::to_owned)
+                .ok_or_else(invalid)
+        };
+        let choice = if raw_choice.is_string() {
+            SelectionChoice::Label(text(raw_choice)?)
+        } else if keys(raw_choice, &["label"], &["label"]) {
+            SelectionChoice::Label(text(&raw_choice["label"])?)
+        } else if keys(raw_choice, &["value"], &["value"]) {
+            SelectionChoice::Value(text(&raw_choice["value"])?)
+        } else if keys(raw_choice, &["index"], &["index"]) {
+            SelectionChoice::Index(
+                raw_choice["index"]
+                    .as_u64()
+                    .filter(|index| *index < 10000)
+                    .ok_or_else(invalid)? as usize,
+            )
+        } else {
+            return Err(invalid());
+        };
+        return Ok((id, Action::SelectOption(choice)));
+    }
     if !keys(raw, &["kind"], &["kind"]) {
         return Err(invalid());
     }
@@ -202,6 +235,7 @@ fn parse_perform(params: &Value) -> Result<(&str, Action)> {
         "focus" => Action::Focus,
         "check" => Action::Check,
         "uncheck" => Action::Uncheck,
+        "scrollIntoView" => Action::ScrollIntoView,
         _ => return Err(DriverError::unsupported()),
     };
     Ok((id, action))

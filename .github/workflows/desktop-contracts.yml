@@ -69,3 +69,36 @@ jobs:
       - run: cargo +1.99.1 test --locked --manifest-path native/macos-ax/Cargo.toml
       - if: runner.os == 'macOS'
         run: cargo +1.99.1 build --locked --manifest-path examples/with-desktop/rust/Cargo.toml
+
+  windows-process:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          dotnet-version: '10.0.402'
+      - name: Check strict supervisor protocol
+        run: dotnet run --project native/windows-process/tests/ProtocolTests/E2E.Platform.WindowsProcess.Protocol.Tests.csproj -c Release
+      - name: Build supervisor and adversarial process fixture
+        run: |
+          dotnet publish native/windows-process/src/Driver/E2E.Platform.WindowsProcess.csproj -c Release -r win-x64 --self-contained false -o build/windows-process
+          dotnet publish native/windows-process/tests/ProcessFixture/E2E.Platform.WindowsProcess.Fixture.csproj -c Release -r win-x64 --self-contained false -o build/windows-process-fixture
+      - name: Verify actual Windows Job Object lifecycle
+        run: python native/windows-process/tests/live_smoke.py --helper build/windows-process/E2E.Platform.WindowsProcess.exe --fixture build/windows-process-fixture/E2E.Platform.WindowsProcess.Fixture.exe
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @e2e-platform/core run build
+      - run: pnpm --filter @e2e-platform/process run build
+      - name: Verify TypeScript client against the actual Windows supervisor
+        shell: pwsh
+        run: |
+          $env:E2E_WINDOWS_JOB_HELPER = (Resolve-Path build/windows-process/E2E.Platform.WindowsProcess.exe).Path
+          $env:E2E_WINDOWS_JOB_FIXTURE = (Resolve-Path build/windows-process-fixture/E2E.Platform.WindowsProcess.Fixture.exe).Path
+          pnpm --filter @e2e-platform/process exec vitest run tests/integration/windows-job.native.test.ts

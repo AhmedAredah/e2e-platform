@@ -23,6 +23,9 @@ import type { AttemptBudget } from '../run/budget.ts';
 
 /** Canonical visibility predicate over a semantic node snapshot. */
 export function isNodeVisible(node: SemanticNode | null): boolean {
+  if (node?.states?.visibilityKnown === false) {
+    throw new ConfigurationError('UNSUPPORTED_CAPABILITY', 'the target does not expose known control visibility');
+  }
   return node !== null && node.states?.hidden !== true;
 }
 

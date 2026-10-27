@@ -267,6 +267,17 @@ up afterward, including after a failure. In each fixture function, code before
 `await use(value)` sets up the resource. The test receives `value`, and code
 after `use` tears it down.
 
+An optional third parameter, `context`, exposes the attempt's recording and
+cancellation facilities. Declare async operations with
+`context.fixture('name', resource, { method: { kind: 'resource' } })` to record
+them as steps. Argument values are omitted unless you explicitly provide a
+label; avoid putting credentials or arbitrary application output in labels.
+Read `context.signal` or call `context.operation()` for each operation, because
+teardown has a fresh cancellation budget after a body timeout. Write artifacts
+under `context.artifactsDirectory` and register their relative paths with
+`context.attachArtifact(kind, relativePath)` while the producing step is active.
+Existing fixture functions that accept only two parameters continue to work.
+
 ```ts
 import { test as base } from '@e2e-platform/playwright';
 
@@ -294,6 +305,7 @@ test('renames the workspace', async ({ workspace, screen }) => {
 export type FixtureFn<Fixtures, Value> = (
   fixtures: Fixtures,
   use: (value: Value) => Promise<void>,
+  context: FixtureContext,
 ) => Promise<void>;
 
 /**

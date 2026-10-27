@@ -365,6 +365,7 @@ class LocatorImpl extends ScreenImpl implements Locator {
 
   async isEnabled(): Promise<boolean> {
     const node = await this.readGuarded(false);
+    if (node.states?.enabledKnown === false) throw new ConfigurationError('UNSUPPORTED_CAPABILITY', 'the target does not expose a known enabled state');
     return node.states?.disabled !== true;
   }
 
@@ -394,6 +395,7 @@ class LocatorImpl extends ScreenImpl implements Locator {
         negated: false,
         evaluate: async () => {
           const { node } = await engine.tryRead(this.expression, deadline);
+          if (node?.states?.visibilityKnown === false) return undefined;
           const visible = isNodeVisible(node);
           return state === 'visible' ? visible : !visible;
         },

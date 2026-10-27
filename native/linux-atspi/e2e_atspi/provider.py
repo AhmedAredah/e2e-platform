@@ -1,6 +1,7 @@
 """Real GNOME AT-SPI implementation; imported only on supported Linux hosts."""
 import time
 import json
+import math
 from collections.abc import Callable
 from typing import Any
 from .contracts import AccessibilityProvider, DriverError
@@ -20,14 +21,16 @@ ROLES = {
     "combo box": "combobox", "list": "listbox", "list box": "listbox", "list item": "option",
     "menu": "menu", "menu bar": "menubar", "menu item": "menuitem", "separator": "separator",
     "page tab": "tab", "page tab list": "tablist", "table": "grid", "table cell": "gridcell",
-    "table column header": "columnheader", "table row header": "rowheader", "tree": "tree",
+    "table row": "row", "table column header": "columnheader", "table row header": "rowheader", "tree": "tree",
     "tree item": "treeitem", "slider": "slider", "spin button": "spinbutton",
-    "progress bar": "progressbar", "link": "link", "image": "img", "scroll pane": "region",
+    "progress bar": "progressbar", "scroll bar": "scrollbar", "link": "link", "image": "img", "scroll pane": "region",
 }
 
 
 class AtspiProvider(AccessibilityProvider):
     """Query only the launched PID, using AT-SPI semantic APIs, never global input."""
+
+    supports_actionability = True
 
     def __init__(self, process_id: int, *, atspi: Any = None):
         if atspi is None:
@@ -92,7 +95,7 @@ class AtspiProvider(AccessibilityProvider):
             attributes = obj.get_attributes() or {}
             secure = role_name == "password text" or attributes.get("e2e-secure") == "true" or identity in self._secure_ids
             states = {"secure": secure, "disabled": not self._state(obj, "ENABLED"),
-                      "focused": self._state(obj, "FOCUSED"), "hidden": role_name != "application" and not self._state(obj, "SHOWING"),
+                      "focused": self._state(obj, "FOCUSED"), "hidden": role_name != "application" and (not self._state(obj, "SHOWING") or not self._state(obj, "VISIBLE")),
                       "selected": self._state(obj, "SELECTED")}
             if role_name in ("check box", "check menu item", "radio button", "radio menu item", "toggle button"):
                 states["checked"] = self._state(obj, "CHECKED")
@@ -130,6 +133,21 @@ class AtspiProvider(AccessibilityProvider):
                         truncated = True
                     content = self.api.Text.get_text(text, 0, count) if 0 <= count <= MAX_TEXT else "[omitted: text exceeds limit]"
                     node["value" if node["role"] == "textbox" else "text"] = content or ""
+            if not secure:
+                placeholder = attributes.get("placeholder-text", attributes.get("placeholder"))
+                if isinstance(placeholder, str):
+                    if len(placeholder) <= 4096:
+                        node["attributes"] = {"placeholder": placeholder}
+                    else:
+                        truncated = True
+                if node["role"] in ("slider", "spinbutton", "progressbar", "scrollbar"):
+                    value_interface = obj.get_value_iface()
+                    if value_interface is not None:
+                        numeric = self.api.Value.get_current_value(value_interface)
+                        if math.isfinite(numeric):
+                            node["value"] = format(numeric, ".17g")
+                        else:
+                            truncated = True
             # Charge each node before retention, including worst-case escaped Unicode.
             # Children add their own metadata cost; the allowance covers array syntax.
             cost = len(json.dumps(node, ensure_ascii=True, separators=(",", ":"))) + 32
@@ -214,15 +232,59 @@ class AtspiProvider(AccessibilityProvider):
                 return
         raise DriverError("UNSUPPORTED_CAPABILITY", "control has no supported semantic action")
 
-    def perform(self, node_id: str, action: dict[str, Any]) -> None:
-        """Resolve current owned objects, then use their actual AT-SPI interfaces."""
+    def preflight(self, node_id: str, action: dict[str, Any]) -> None:
+        """Check current owned state and interfaces without dispatching any action."""
         if node_id not in self._last_seen or node_id not in self._objects:
             raise DriverError("NODE_STALE", "reference was not present in the latest snapshot")
         obj = self._objects[node_id]
         self._alive(obj)
-        if not self._state(obj, "ENABLED") or not self._state(obj, "SHOWING"):
-            raise DriverError("NOT_ACTIONABLE", "control is disabled or hidden")
         kind = action["kind"]
+        if kind != "scrollIntoView" and (not self._state(obj, "ENABLED") or not self._state(obj, "SHOWING") or not self._state(obj, "VISIBLE")):
+            raise DriverError("NOT_ACTIONABLE", "control is disabled or hidden")
+        if kind == "scrollIntoView":
+            if not callable(getattr(obj.get_component_iface(), "scroll_to", None)):
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control has no scroll-to-visible interface")
+        elif kind in ("fill", "clear"):
+            if obj.get_editable_text_iface() is None or not self._state(obj, "EDITABLE"):
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control is not editable")
+        elif kind == "focus":
+            if not self._state(obj, "FOCUSABLE"):
+                raise DriverError("NOT_ACTIONABLE", "control is not keyboard focusable")
+            if obj.get_component_iface() is None:
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control has no focus interface")
+        elif kind == "selectOption":
+            self._selection_candidate(obj, action["value"])
+        elif kind in ("tap", "check", "uncheck"):
+            if kind != "tap":
+                if obj.get_role_name() not in ("check box", "check menu item", "radio button", "radio menu item", "toggle button"):
+                    raise DriverError("UNSUPPORTED_CAPABILITY", "control has no checked state")
+                if self._state(obj, "CHECKED") == (kind == "check"):
+                    return
+                if kind == "uncheck" and obj.get_role_name() in ("radio button", "radio menu item"):
+                    raise DriverError("UNSUPPORTED_CAPABILITY", "a selected radio control cannot be unchecked directly")
+            interface = obj.get_action_iface()
+            if interface is None or not any(interface.get_action_name(index).lower() in ("click", "press", "activate", "toggle", "jump", "select") for index in range(min(interface.get_n_actions(), 32))):
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control has no supported semantic action")
+        else:
+            raise DriverError("UNSUPPORTED_CAPABILITY", "action is unavailable")
+
+    def perform(self, node_id: str, action: dict[str, Any]) -> None:
+        """Resolve current owned objects, then use their actual AT-SPI interfaces."""
+        self.preflight(node_id, action)
+        if node_id not in self._last_seen or node_id not in self._objects:
+            raise DriverError("NODE_STALE", "reference was not present in the latest snapshot")
+        obj = self._objects[node_id]
+        self._alive(obj)
+        kind = action["kind"]
+        if kind != "scrollIntoView" and (not self._state(obj, "ENABLED") or not self._state(obj, "SHOWING") or not self._state(obj, "VISIBLE")):
+            raise DriverError("NOT_ACTIONABLE", "control is disabled or hidden")
+        if kind == "scrollIntoView":
+            component = obj.get_component_iface()
+            scroll = getattr(component, "scroll_to", None)
+            if not callable(scroll):
+                raise DriverError("UNSUPPORTED_CAPABILITY", "control has no scroll-to-visible interface")
+            self._mutate(lambda: scroll(self.api.ScrollType.ANYWHERE))
+            return
         if kind == "tap":
             self._invoke_action(obj)
         elif kind in ("fill", "clear"):
@@ -234,6 +296,8 @@ class AtspiProvider(AccessibilityProvider):
                 self._secure_ids.add(node_id)
             self._mutate(lambda: editable.set_text_contents(action["value"] if kind == "fill" else ""))
         elif kind == "focus":
+            if not self._state(obj, "FOCUSABLE"):
+                raise DriverError("NOT_ACTIONABLE", "control is not keyboard focusable")
             component = obj.get_component_iface()
             if component is None:
                 raise DriverError("UNSUPPORTED_CAPABILITY", "control has no focus interface")
@@ -260,7 +324,7 @@ class AtspiProvider(AccessibilityProvider):
         else:
             raise DriverError("UNSUPPORTED_CAPABILITY", "action is unavailable")
 
-    def _select(self, obj: Any, choice: Any) -> None:
+    def _selection_candidate(self, obj: Any, choice: Any) -> tuple[Any, int]:
         interface = obj.get_selection_iface()
         if interface is None:
             raise DriverError("UNSUPPORTED_CAPABILITY", "control has no selection interface")
@@ -273,14 +337,26 @@ class AtspiProvider(AccessibilityProvider):
             indices = [choice["index"]] if choice["index"] < count else []
         else:
             label = choice if isinstance(choice, str) else choice["label"]
-            indices = [index for index in range(count) if obj.get_child_at_index(index).get_name() == label]
+            indices = []
+            for index in range(count):
+                candidate = obj.get_child_at_index(index)
+                self._alive(candidate)
+                attributes = candidate.get_attributes() or {}
+                if candidate.get_role_name() == "password text" or attributes.get("e2e-secure") == "true" or self._ids.get(candidate) in self._secure_ids:
+                    continue
+                if candidate.get_name() == label:
+                    indices.append(index)
         if len(indices) != 1:
             raise DriverError("NOT_ACTIONABLE", "option is absent or ambiguous")
         candidate = obj.get_child_at_index(indices[0])
         self._alive(candidate)
         if not self._state(candidate, "ENABLED"):
             raise DriverError("NOT_ACTIONABLE", "option is disabled")
-        self._mutate(lambda: interface.select_child(indices[0]))
+        return interface, indices[0]
+
+    def _select(self, obj: Any, choice: Any) -> None:
+        interface, index = self._selection_candidate(obj, choice)
+        self._mutate(lambda: interface.select_child(index))
 
     def close(self) -> None:
         """Drop owned proxy references and release the client connection."""

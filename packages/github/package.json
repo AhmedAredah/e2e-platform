@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/github",
-  "version": "0.2.0-rc.6",
+  "version": "0.2.0-rc.7",
   "description": "GitHub reporter for e2e: one pull request comment per run, from GitHub Actions",
   "keywords": [
     "@e2e-platform/core",

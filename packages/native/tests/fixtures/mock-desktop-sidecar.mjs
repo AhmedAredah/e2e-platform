@@ -41,7 +41,7 @@ const server = net.createServer((socket) => {
       const reply = (result) => socket.write(JSON.stringify({ jsonrpc: '2.0', id: frame.id, result }) + '\n');
       if (frame.method === 'initialize' && frame.params.token === token && frame.params.protocolVersion === 1) {
         authenticated = true;
-        reply({ protocolVersion: 1, name: 'mock-desktop', version: '1', actions: args.includes('--missing-action') ? ['tap'] : ['tap', 'fill', 'clear', 'focus', 'check', 'uncheck', 'selectOption'], keyboard: false, screenshots: false });
+        reply({ protocolVersion: 1, name: 'mock-desktop', version: '1', actions: args.includes('--missing-action') ? ['tap'] : ['tap', 'fill', 'clear', 'focus', 'check', 'uncheck', 'selectOption', 'scrollIntoView'], keyboard: false, screenshots: false });
       } else if (!authenticated) { socket.destroy(); }
       else if (frame.method === 'snapshot') reply({ root: { ref: { id: 'root', revision: '' }, role: 'application', name: 'Mock desktop' }, viewport: { width: 1, height: 1 } });
       else if (frame.method === 'shutdown') { reply(null); void stop(); }

@@ -9,6 +9,8 @@ export interface NativeOptions {
   readonly actions?: readonly LocatorActionKind[];
   readonly keyboard?: boolean;
   readonly screenshots?: boolean;
+  /** Provide a fresh explicit profile directory and platform directory variables for every attempt. */
+  readonly isolateProfile?: boolean;
   readonly launchTimeout?: number;
   readonly requestTimeout?: number;
   readonly maxMessageBytes?: number;
@@ -17,10 +19,10 @@ export interface NativeOptions {
 }
 
 export function validateNativeOptions(options: NativeOptions): readonly LocatorActionKind[] {
-  const known = new Set(['platform', 'actions', 'keyboard', 'screenshots', 'launchTimeout', 'requestTimeout', 'maxMessageBytes', 'cwd']);
+  const known = new Set(['platform', 'actions', 'keyboard', 'screenshots', 'isolateProfile', 'launchTimeout', 'requestTimeout', 'maxMessageBytes', 'cwd']);
   if (!isRecord(options)) throw new ConfigurationError('INVALID_CONFIG', 'native options must be an object');
   for (const key of Object.keys(options)) if (!known.has(key)) throw new ConfigurationError('INVALID_CONFIG', `unknown native option ${key}`);
-  for (const key of ['keyboard', 'screenshots'] as const) if (options[key] !== undefined && typeof options[key] !== 'boolean') throw new ConfigurationError('INVALID_CONFIG', `native.${key} must be boolean`);
+  for (const key of ['keyboard', 'screenshots', 'isolateProfile'] as const) if (options[key] !== undefined && typeof options[key] !== 'boolean') throw new ConfigurationError('INVALID_CONFIG', `native.${key} must be boolean`);
   for (const key of ['launchTimeout', 'requestTimeout', 'maxMessageBytes'] as const) {
     const value = options[key];
     if (value !== undefined && (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0 || value > 2 ** 30)) throw new ConfigurationError('INVALID_CONFIG', `native.${key} must be a positive bounded integer`);

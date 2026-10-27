@@ -2,6 +2,7 @@
 
 import type { FixtureDefinition } from '../collect/registry.ts';
 import { ConfigurationError } from '../internal/errors.ts';
+import type { FixtureContext } from '../types.ts';
 
 /** One set-up fixture's teardown: the rest of its function after `use`. */
 export interface FixtureTeardown {
@@ -47,6 +48,7 @@ export function createExtendedFixtures(
   definitions: readonly FixtureDefinition[],
   fixtures: object,
   engineName: string,
+  context: FixtureContext,
 ): ExtendedFixtures {
   const active: FixtureState[] = [];
   let abandoned = false;
@@ -98,7 +100,7 @@ export function createExtendedFixtures(
       return released;
     };
     const run = Promise.resolve()
-      .then(() => definition.fn(fixtures, use))
+      .then(() => definition.fn(fixtures, use, context))
       .then(
         () => {
           if (!used) {

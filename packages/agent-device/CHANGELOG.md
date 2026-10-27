@@ -1,5 +1,14 @@
 # @e2e-platform/agent-device
 
+## 0.2.0-rc.7
+
+### Patch Changes
+
+- Coordinate the C++ and desktop qualification candidate and its seven-package local
+  installation kit. Add C++ test authoring, installed GUI consumer checks, C++ HTTP
+  fixtures and explicit platform qualification gates. Keep native platform and toolkit
+  limitations visible; this candidate does not establish blanket framework support.
+
 ## 0.2.0-rc.6
 
 ### Patch Changes

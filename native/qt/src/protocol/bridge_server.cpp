@@ -13,6 +13,11 @@ namespace e2e::qt::detail {
 BridgeServer::BridgeServer(QObject* parent) : QObject(parent), server(this) {
     QObject::connect(&server, &QTcpServer::newConnection, this, [this] { accept(); });
 }
+bool BridgeServer::addControlAdapter(std::shared_ptr<ControlAdapter> adapter) {
+    if (server.isListening()) { error = "control adapters must be registered before the bridge starts"; return false; }
+    try { return surface.addControlAdapter(std::move(adapter), error); }
+    catch (...) { error = "control adapter registration failed"; return false; }
+}
 bool BridgeServer::start() {
         if (server.isListening()) return true;
         token = qgetenv("E2E_NATIVE_TOKEN");
@@ -164,8 +169,9 @@ void BridgeServer::dispatch(const QByteArray& line, const ConnectionTarget& targ
                 }
                 authenticated = true;
                 reply(target, id, QJsonObject{{"protocolVersion", 1}, {"name", "e2e-qt"}, {"version", "0.1.0"},
-                    {"actions", QJsonArray{"tap", "doubleTap", "secondaryTap", "hover", "fill", "clear", "focus", "press", "check", "uncheck", "selectOption"}},
-                    {"keyboard", true}, {"screenshots", true}});
+                    {"actions", QJsonArray{"tap", "doubleTap", "secondaryTap", "hover", "fill", "clear", "focus", "press", "check", "uncheck", "selectOption", "scrollIntoView", "swipe"}},
+                    {"actionability", true}, {"windows", true},
+                    {"keyboard", true}, {"screenshots", !surface.hasCustomAdapters()}});
                 return;
             }
             if (!current(target) || !authenticated) throw Failure("POLICY_DENIED", "initialize required");
@@ -176,6 +182,12 @@ void BridgeServer::dispatch(const QByteArray& line, const ConnectionTarget& targ
                 reply(target, id, capture);
             }
             else if (method == "perform") mutation(target, id, [this, &params] { surface.perform(params); });
+            else if (method == "actionability") { surface.actionability(params); reply(target, id, QJsonValue::Null); }
+            else if (method == "windows") reply(target, id, surface.windows());
+            else if (method == "window.activate") {
+                const QString windowId = requiredText(params, "id");
+                mutation(target, id, [this, &windowId] { surface.activateWindow(windowId); });
+            }
             else if (method == "keyboard.type") {
                 const QString text = requiredText(params, "text");
                 mutation(target, id, [this, &params, &text] { surface.typeFocused(text, params.value("replace").toBool()); });

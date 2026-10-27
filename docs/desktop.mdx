@@ -32,10 +32,28 @@ explicit unsupported-capability error. Observe and assert the state after action
 an accepted invocation does not establish business success. Password values are
 suppressed before serialization. Bounded trees declare truncation.
 
+OS providers support readonly actionability preflight and `scrollIntoView` for
+controls exposing the required platform interface. Preflight can be polled;
+mutating actions are dispatched once and are not replayed after an uncertain
+outcome. AX selection requires writable `AXSelectedChildren` and one matching
+direct child. AX nodes with unknown visibility cannot satisfy positive or negated
+visibility assertions. These semantic checks do not prove screen occlusion.
+Missing AX enabled/focused state is also explicitly unknown and cannot satisfy
+positive or negated assertions for that state.
+
+Qt adds owned-window enumeration/activation, selected model/view item mappings
+and a public C++ `ControlAdapter` source extension. Custom adapters disable helper
+screenshots and require `qt({ screenshots: false })`. They must be rebuilt and
+qualified with the application's Qt/compiler kit.
+
 The new OS backends do not advertise screenshots or global keyboard input. They
 also do not promise clipboard, drag/drop, IME, custom-painted controls, native/DOM
 context switching or every toolkit version. A fake-provider contract test does not
-count as native desktop qualification. Check `RELEASE_STATUS.md` before release.
+count as native desktop qualification. Native video, visual-diff assertions and
+arbitrary custom canvases remain absent. New Windows/macOS/Linux Qt workflow
+definitions do not establish completed qualification. Check `RELEASE_STATUS.md`
+before release.
 
-Tests remain TypeScript for applications written in Python, C#, Rust and C++.
-Native-language test-authoring SDKs are a separate extension.
+Tests use TypeScript/JavaScript or the documented C++ authoring bridge connected
+to the shared runner. Python, C# and Rust authoring SDKs are not included;
+applications in those languages use the shared TypeScript test API.

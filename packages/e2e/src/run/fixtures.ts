@@ -28,7 +28,7 @@ import {
   type SecretResolver,
 } from '../locator/screen.ts';
 import type { ResolvedConfig, ResolvedTarget } from '../config/resolve.ts';
-import type { Agent, App, Expectable, SetupSession, TestFixtures } from '../types.ts';
+import type { Agent, App, Expectable, FixtureContext, SetupSession, TestFixtures } from '../types.ts';
 import type { ArtifactRecord } from './records.ts';
 import type { StepRecord, StepRecorder } from './steps.ts';
 
@@ -86,6 +86,7 @@ export interface AttemptEnvironment {
 /** Builds the lazy fixture graph for one attempt. */
 export interface AttemptFixtures {
   readonly fixtures: TestFixtures & { readonly session: SetupSession };
+  readonly fixtureContext: FixtureContext;
   /** The runtime behind `fixtures.agent`, for a host that opens steps itself (`e2e mcp`). */
   readonly agentRuntime: AgentContext;
 }
@@ -237,7 +238,17 @@ export function createFixtures(environment: AttemptEnvironment): AttemptFixtures
     Object.getOwnPropertyDescriptors(contributedFixtures(environment, engine, screenContext)),
   );
 
-  return { fixtures: gateUnknownFixtures(fixtures, environment), agentRuntime };
+  const recorded = fixtureContext(environment, engine, screenContext, new FixtureRecorder(environment));
+  const extensionContext: FixtureContext = {
+    targetName: recorded.targetName,
+    fixture: recorded.fixture,
+    timeouts: recorded.timeouts,
+    get signal() { return recorded.signal; },
+    operation: recorded.operation,
+    attachArtifact: recorded.attachArtifact,
+    artifactsDirectory: environment.artifacts.dir,
+  };
+  return { fixtures: gateUnknownFixtures(fixtures, environment), agentRuntime, fixtureContext: extensionContext };
 }
 
 /** Keys a test body may probe without meaning a fixture. */

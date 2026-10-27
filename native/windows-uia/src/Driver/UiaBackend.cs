@@ -12,13 +12,15 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
     private readonly Dictionary<string, Entry> byId = [];
     private readonly ControlSensitivity sensitive = new();
     private long sequence;
-    private HashSet<string> lastObserved = [];
-    private readonly ControlAdapter[] controls = [new FocusControlAdapter(), new InvokeControlAdapter(), new ValueControlAdapter(), new ToggleControlAdapter(), new SelectionControlAdapter()];
+    private readonly ObservedControls lastObserved = new();
+    private readonly ControlAdapter[] controls = [new FocusControlAdapter(), new InvokeControlAdapter(), new ValueControlAdapter(), new ToggleControlAdapter(), new SelectionControlAdapter(), new ScrollControlAdapter()];
     public override string Name => "e2e-platform-windows-uia";
-    public override IReadOnlyList<string> Actions => ["tap", "fill", "clear", "focus", "check", "uncheck", "selectOption"];
+    public override IReadOnlyList<string> Actions => ["tap", "fill", "clear", "focus", "check", "uncheck", "selectOption", "scrollIntoView"];
+    public override bool SupportsActionability => true;
 
     public override object Snapshot()
     {
+        lastObserved.Invalidate();
         var observed = new HashSet<string>();
         var count = 0;
         var truncated = false;
@@ -44,7 +46,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
                 ["focused"] = current.HasKeyboardFocus, ["secure"] = secure
             };
             var node = new Dictionary<string, object?> {
-                ["ref"] = new { id = entry.Id, revision = "" }, ["role"] = Role(current.ControlType),
+                ["ref"] = new { id = entry.Id, revision = "" }, ["role"] = ControlSemantics.Role(current.ControlType.Id, element.TryGetCurrentPattern(GridItemPattern.Pattern, out _)),
                 ["name"] = secure ? "" : budget.Text(current.Name), ["states"] = states
             };
             if (!string.IsNullOrEmpty(entry.TestId)) node["testId"] = budget.Text(entry.TestId, 1024);
@@ -62,6 +64,7 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
             if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out var expanded))
                 states["expanded"] = ((ExpandCollapsePattern)expanded).Current.ExpandCollapseState == ExpandCollapseState.Expanded;
             if (element.TryGetCurrentPattern(ValuePattern.Pattern, out var value)) node["value"] = budget.Text(((ValuePattern)value).Current.Value);
+            else if (element.TryGetCurrentPattern(RangeValuePattern.Pattern, out var range)) node["value"] = budget.Text(ControlSemantics.NumericValue(((RangeValuePattern)range).Current.Value));
             else if (current.ControlType == ControlType.Text) node["text"] = budget.Text(current.Name);
             var children = new List<object>();
             for (var child = TreeWalker.ControlViewWalker.GetFirstChild(element); child != null; child = TreeWalker.ControlViewWalker.GetNextSibling(child))
@@ -84,36 +87,42 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
                 var built = Visit(window, 1);
                 if (built != null) windows.Add(built);
             }
-            lastObserved = observed.Select(key => byRuntime[key].Id).ToHashSet(StringComparer.Ordinal);
             foreach (var key in byRuntime.Keys.Where(key => !observed.Contains(key) && !IsAlive(byRuntime[key].Element)).ToArray())
             {
                 byId.Remove(byRuntime[key].Id); sensitive.Forget(byRuntime[key].Id); byRuntime.Remove(key);
             }
+            lastObserved.Complete(observed.Select(key => byRuntime[key].Id));
             // Geometry is deliberately absent: this backend promises semantic control only.
             return new { root = new { @ref = new { id = "desktop-root", revision = "" }, role = "application", name = "Owned application", children = windows }, viewport = new { width = 1, height = 1 }, truncated = truncated || budget.Truncated };
         }
         catch (ElementNotAvailableException) { throw new DriverException("NODE_STALE"); }
     }
 
-    public override void Perform(string id, JsonElement action)
+    public override void Actionability(string id, JsonElement action) => PrepareAction(id, action, false);
+    public override void Perform(string id, JsonElement action) => PrepareAction(id, action, true);
+
+    private void PrepareAction(string id, JsonElement action, bool execute)
     {
         if (!lastObserved.Contains(id) || !byId.TryGetValue(id, out var entry)) throw new DriverException("NODE_STALE");
-        var entered = false;
         try
         {
             var current = entry.Element.Current;
             if (current.ProcessId != processId) throw new DriverException("NODE_STALE");
-            if (!current.IsEnabled || current.IsOffscreen) throw new DriverException("NOT_ACTIONABLE");
             var kind = RequestValidator.String(action, "kind");
-            if (kind == "fill" && action.TryGetProperty("sensitive", out var secret) && secret.GetBoolean()) sensitive.Observe(id, true);
+            if (!current.IsEnabled || (kind != "scrollIntoView" && current.IsOffscreen)) throw new DriverException("NOT_ACTIONABLE");
             var adapter = controls.SingleOrDefault(control => control.Supports(kind)) ?? throw new DriverException("UNSUPPORTED_CAPABILITY");
-            entered = true;
-            adapter.Perform(entry.Element, kind, action);
+            var mutation = new MutationGuard();
+            var prepared = adapter.Prepare(entry.Element, kind, action, mutation);
+            if (execute)
+            {
+                if (kind == "fill" && action.TryGetProperty("sensitive", out var secret) && secret.GetBoolean()) sensitive.Observe(id, true);
+                mutation.Run(prepared);
+            }
         }
-        catch (ElementNotAvailableException) { throw new DriverException(entered ? "ACTION_MAY_HAVE_COMMITTED" : "NODE_STALE"); }
-        catch (ElementNotEnabledException) { throw new DriverException(entered ? "ACTION_MAY_HAVE_COMMITTED" : "NOT_ACTIONABLE"); }
+        catch (ElementNotAvailableException) { throw new DriverException("NODE_STALE"); }
+        catch (ElementNotEnabledException) { throw new DriverException("NOT_ACTIONABLE"); }
         catch (DriverException) { throw; }
-        catch { throw new DriverException("ACTION_MAY_HAVE_COMMITTED"); }
+        catch { throw new DriverException("ENGINE_FAILURE"); }
     }
 
     private bool IsAlive(AutomationElement element)
@@ -122,15 +131,5 @@ public sealed class UiaBackend(int processId) : AccessibilityBackend
         catch (ElementNotAvailableException) { return false; }
     }
     private static string Bounded(string value, int maximum = 65536) => value.Length <= maximum ? value : "[omitted: text exceeds limit]";
-    private static string Role(ControlType type) => type.Id switch {
-        50000 => "button", 50002 => "checkbox", 50003 => "combobox", 50004 => "textbox",
-        50005 => "link", 50006 => "img", 50007 => "listitem", 50008 => "list", 50009 => "menu",
-        50010 => "menubar", 50011 => "menuitem", 50012 => "progressbar", 50013 => "radio",
-        50014 => "scrollbar", 50015 => "slider", 50016 => "spinbutton", 50018 => "tablist",
-        50019 => "tab", 50020 => "text", 50021 => "toolbar", 50022 => "tooltip",
-        50023 => "tree", 50024 => "treeitem", 50026 => "group", 50028 => "grid",
-        50029 => "row", 50030 => "document", 50032 => "window", 50036 => "table",
-        _ => "group"
-    };
-    public override void Dispose() { byId.Clear(); byRuntime.Clear(); sensitive.Clear(); lastObserved.Clear(); }
+    public override void Dispose() { byId.Clear(); byRuntime.Clear(); sensitive.Clear(); lastObserved.Invalidate(); }
 }

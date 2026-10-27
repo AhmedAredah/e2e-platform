@@ -7,6 +7,7 @@
 #include <memory>
 
 namespace e2e::qt {
+class ControlAdapter;
 
 /** Test-build-only loopback automation bridge. Construct after QApplication. */
 class E2E_QT_BRIDGE_EXPORT Bridge final : public QObject {
@@ -19,6 +20,8 @@ public:
     /** Start only when E2E_NATIVE_TOKEN is set. No listener is created otherwise. */
     bool start();
     QString errorString() const;
+    /** Register on the GUI thread before start(). Registration order sets precedence. */
+    bool registerControlAdapter(std::shared_ptr<ControlAdapter> adapter);
 
 private:
     class Impl;

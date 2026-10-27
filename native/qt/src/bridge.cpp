@@ -16,4 +16,8 @@ bool Bridge::start() {
     return impl_->server.start();
 }
 QString Bridge::errorString() const { return impl_->server.errorString(); }
+bool Bridge::registerControlAdapter(std::shared_ptr<ControlAdapter> adapter) {
+    if (!QCoreApplication::instance() || QThread::currentThread() != QCoreApplication::instance()->thread() || thread() != QThread::currentThread()) return false;
+    return impl_->server.addControlAdapter(std::move(adapter));
+}
 }

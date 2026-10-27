@@ -51,6 +51,7 @@ to the directly launched PID; child-process windows are not merged into its tree
 | `focus` | Keyboard-focusable element |
 | `check`, `uncheck` | TogglePattern; check also supports radio SelectionItemPattern |
 | `selectOption` | SelectionPattern plus matching descendant SelectionItemPattern |
+| `scrollIntoView` | ScrollItemPattern on an already exposed element, including an offscreen element |
 
 `selectOption` accepts an exact label string, `{label}`, a child AutomationId
 via `{value}`, or an index in the currently realized option list. Virtualized
@@ -60,6 +61,20 @@ Failures after expansion report an uncertain mutation outcome. Unchecking a
 selected radio is unsupported unless its provider exposes TogglePattern.
 Toggle transitions are observed before any next transition, and an uncertain
 transition is never replayed.
+All platform mutations share an explicit dispatch guard. A failure before dispatch
+can be reported as `NOT_ACTIONABLE`; a failure during or after a dispatched call
+is `ACTION_MAY_HAVE_COMMITTED`, including failures while observing the resulting
+state. This prevents actionability waiting from repeating an uncertain input.
+Initialization advertises `actionability:true`. The readonly `actionability`
+request accepts the same reference/action shape as `perform`, validates current
+ownership, enabled/visible state and the required UIA pattern, and returns null
+when the control is ready. It never expands, selects, fills or scrolls a control.
+The actual action repeats these checks immediately before dispatch. Selection
+preflight verifies the container pattern; options revealed only by expansion are
+resolved during the single mutation, not by a supposedly readonly probe.
+Scrolling does not realize missing virtualized objects. Locate an offscreen
+exposed control by a stable test ID before scrolling; role queries normally
+exclude hidden controls.
 
 Control roles, accessible names, AutomationIds, values and states come from
 UIA Control View. Provider-supplied initial AutomationIds are trusted metadata
@@ -71,6 +86,13 @@ flag, including reveal-password controls. Provider labels elsewhere in the appli
 are the application's responsibility; a malicious provider is not a sandbox.
 Selection containers do not copy selected descendants' text into their own
 value, avoiding a second route for sensitive content.
+Lists and list items use the shared `listbox` and `option` roles. Tables/data grids
+use `grid`; a DataItem exposing GridItemPattern uses `gridcell`, otherwise `row`.
+RangeValuePattern observations use finite, locale-independent numeric strings.
+Document TextPattern content, provider help text and placeholder heuristics are
+not copied into snapshots: aggregate document text can include sensitive descendants,
+and help text is not a reliable placeholder contract. A failed snapshot invalidates
+all previous action references until another snapshot succeeds.
 
 The synthetic root uses a 1×1 semantic viewport. There are no pixel rectangles,
 keyboard injection, screenshot capture, coordinate clicks, clipboard, IME,

@@ -1,0 +1,14 @@
+{
+  "name": "e2e-example-with-cpp-sdk",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": { "test:e2e": "e2e-platform run --no-model", "test:qt": "e2e-platform run --config e2e.qt.config.ts --no-model", "typecheck": "tsc --noEmit" },
+  "devDependencies": {
+    "@e2e-platform/core": "workspace:*",
+    "@e2e-platform/cpp": "workspace:*",
+    "@e2e-platform/native": "workspace:*",
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2"
+  }
+}

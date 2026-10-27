@@ -87,7 +87,13 @@ fn capabilities_are_semantic_only() {
     assert_eq!(r["result"]["keyboard"], false);
     assert_eq!(r["result"]["screenshots"], false);
     assert!(
-        !r["result"]["actions"]
+        r["result"]["actions"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("scrollIntoView"))
+    );
+    assert!(
+        r["result"]["actions"]
             .as_array()
             .unwrap()
             .contains(&json!("selectOption"))
@@ -242,4 +248,143 @@ fn shutdown_acknowledges_and_closes() {
         Value::Null
     );
     assert!(s.should_close());
+}
+
+#[test]
+fn scroll_is_semantic_and_rejects_unexpected_input() {
+    let provider = FakeProvider::default();
+    let calls = provider.actions.clone();
+    let mut s = Session::new(provider, token()).unwrap();
+    authenticate(&mut s);
+    let response = s
+        .handle(&request(
+            2,
+            "perform",
+            perform(json!({"kind":"scrollIntoView"})),
+        ))
+        .unwrap();
+    assert!(response["result"].is_null());
+    assert_eq!(*calls.lock().unwrap(), vec!["ScrollIntoView"]);
+    let response = s
+        .handle(&request(
+            3,
+            "perform",
+            perform(json!({"kind":"scrollIntoView","value":"x"})),
+        ))
+        .unwrap();
+    assert_eq!(code(&response), "UNSUPPORTED_CAPABILITY");
+    assert_eq!(calls.lock().unwrap().len(), 1);
+}
+
+#[test]
+fn readonly_actionability_negotiates_and_never_dispatches_mutation() {
+    struct Probe {
+        probes: usize,
+        mutations: usize,
+    }
+    impl AccessibleProvider for Probe {
+        fn snapshot(&mut self) -> Result<Value> {
+            Ok(json!({}))
+        }
+        fn supports_actionability(&self) -> bool {
+            true
+        }
+        fn preflight(&mut self, _id: &str, _action: &Action) -> Result<()> {
+            self.probes += 1;
+            if self.probes == 1 {
+                Err(DriverError::new("NOT_ACTIONABLE", "not ready"))
+            } else {
+                Ok(())
+            }
+        }
+        fn perform(&mut self, _id: &str, _action: &Action) -> Result<()> {
+            self.mutations += 1;
+            assert_eq!(self.mutations, 1);
+            assert_eq!(self.probes, 2);
+            Ok(())
+        }
+    }
+    let mut session = Session::new(
+        Probe {
+            probes: 0,
+            mutations: 0,
+        },
+        token(),
+    )
+    .unwrap();
+    let init = session
+        .handle(&request(
+            1,
+            "initialize",
+            json!({"protocolVersion":1,"token":token()}),
+        ))
+        .unwrap();
+    assert_eq!(init["result"]["actionability"], true);
+    let first = session
+        .handle(&request(2, "actionability", perform(json!({"kind":"tap"}))))
+        .unwrap();
+    assert_eq!(code(&first), "NOT_ACTIONABLE");
+    let second = session
+        .handle(&request(3, "actionability", perform(json!({"kind":"tap"}))))
+        .unwrap();
+    assert_eq!(second["result"], Value::Null);
+    let action = session
+        .handle(&request(4, "perform", perform(json!({"kind":"tap"}))))
+        .unwrap();
+    assert_eq!(action["result"], Value::Null);
+}
+#[test]
+fn legacy_provider_does_not_advertise_actionability() {
+    let mut session = new_session();
+    assert_eq!(authenticate(&mut session)["result"]["actionability"], false);
+    let result = session
+        .handle(&request(2, "actionability", perform(json!({"kind":"tap"}))))
+        .unwrap();
+    assert_eq!(code(&result), "UNSUPPORTED_CAPABILITY");
+}
+
+#[test]
+fn selection_is_typed_bounded_and_dispatched_once() {
+    for choice in [
+        json!("Alpha"),
+        json!({"label":"Alpha"}),
+        json!({"value":"item-id"}),
+        json!({"index":2}),
+    ] {
+        let provider = FakeProvider::default();
+        let calls = provider.actions.clone();
+        let mut session = Session::new(provider, token()).unwrap();
+        authenticate(&mut session);
+        let response = session
+            .handle(&request(
+                2,
+                "perform",
+                perform(json!({"kind":"selectOption","value":choice})),
+            ))
+            .unwrap();
+        assert_eq!(response["result"], Value::Null);
+        assert_eq!(calls.lock().unwrap().len(), 1);
+    }
+    for choice in [
+        json!(-1),
+        json!({"index":-1}),
+        json!({"index":10000}),
+        json!({"index":true}),
+        json!({"label":"a","value":"b"}),
+        json!(["a"]),
+    ] {
+        let provider = FakeProvider::default();
+        let calls = provider.actions.clone();
+        let mut session = Session::new(provider, token()).unwrap();
+        authenticate(&mut session);
+        let response = session
+            .handle(&request(
+                2,
+                "perform",
+                perform(json!({"kind":"selectOption","value":choice})),
+            ))
+            .unwrap();
+        assert_eq!(code(&response), "UNSUPPORTED_CAPABILITY");
+        assert!(calls.lock().unwrap().is_empty());
+    }
 }

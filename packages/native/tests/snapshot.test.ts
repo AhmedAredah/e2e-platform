@@ -5,6 +5,12 @@ const root = { ref: { id: 'root', revision: '' }, role: 'window' };
 const base = { root, viewport: { width: 500, height: 400 } };
 
 describe('native source-data validation', () => {
+  it('preserves unknown visibility even for secure nodes and rejects malformed visibility states', () => {
+    const states = { secure: true, hidden: true, visibilityKnown: false, enabledKnown: false, focusedKnown: false };
+    expect(parseSnapshot({ ...base, root: { ...root, states } }, true).snapshot.root.states).toEqual(states);
+    for (const state of ['visibilityKnown', 'enabledKnown', 'focusedKnown']) expect(() => parseSnapshot({ ...base, root: { ...root, states: { [state]: 'false' } } }, true)).toThrow();
+  });
+
   it('rejects secure values, attributes and descendants rather than forwarding them', () => {
     for (const payload of [{ value: 'secret' }, { attributes: { content: 'secret' } }, { children: [{ ref: { id: 'child' }, text: 'secret' }] }]) {
       expect(() => parseSnapshot({ ...base, root: { ...root, states: { secure: true }, ...payload } }, true)).toThrow(/secure node/);

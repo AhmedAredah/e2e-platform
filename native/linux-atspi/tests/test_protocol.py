@@ -379,3 +379,25 @@ raise SystemExit(Host().run(sys.argv[2:]))
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ActionabilityProtocolTests(unittest.TestCase):
+    def test_negotiated_probe_is_read_only(self):
+        class Provider(FakeProvider):
+            supports_actionability = True
+            probes = 0
+            def preflight(self, node_id, action):
+                self.probes += 1
+                if self.probes == 1:
+                    raise DriverError("NOT_ACTIONABLE", "not ready")
+        provider = Provider()
+        session = ProtocolSession(TOKEN, provider)
+        def call(identity, method, params):
+            return session.dispatch(json.dumps({"jsonrpc":"2.0", "id":identity, "method":method, "params":params}).encode())
+        self.assertTrue(call(1, "initialize", {"protocolVersion":1,"token":TOKEN})["result"]["actionability"])
+        params = {"ref":{"id":"x","revision":""},"action":{"kind":"fill","value":"private","sensitive":True}}
+        self.assertEqual(call(2, "actionability", params)["error"]["data"]["code"], "NOT_ACTIONABLE")
+        self.assertIsNone(call(3, "actionability", params)["result"])
+        self.assertEqual(provider.actions, [])
+        self.assertIsNone(call(4, "perform", params)["result"])
+        self.assertEqual(len(provider.actions), 1)

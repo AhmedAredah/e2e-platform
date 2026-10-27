@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-ACTIONS = ("tap", "fill", "clear", "focus", "check", "uncheck", "selectOption")
+ACTIONS = ("tap", "fill", "clear", "focus", "check", "uncheck", "selectOption", "scrollIntoView")
 
 
 class DriverError(Exception):
@@ -15,6 +15,12 @@ class DriverError(Exception):
 
 class AccessibilityProvider(ABC):
     """One owned application's semantic tree and declared control operations."""
+
+    supports_actionability = False
+
+    def preflight(self, node_id: str, action: dict[str, Any]) -> None:
+        """Read-only validation, only advertised by implementations that supply it."""
+        raise DriverError("UNSUPPORTED_CAPABILITY", "actionability is unavailable")
 
     @abstractmethod
     def snapshot(self) -> dict[str, Any]:

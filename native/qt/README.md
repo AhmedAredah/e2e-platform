@@ -51,12 +51,14 @@ application's OS permissions, not a security sandbox.
 
 | Module | Responsibility |
 | --- | --- |
-| `Bridge` | Small public application-lifetime wrapper |
+| `Bridge` | Public application-lifetime wrapper and adapter registration |
+| `ControlAdapter` / `ControlSnapshot` | Versioned public custom-control source contract |
 | `protocol/BridgeServer` | Authentication, bounded newline JSON-RPC and connection lifetime |
 | `Surface` | Session policy, object actions, keyboard input and screenshot encoding |
 | `ObjectRegistry` | Stable opaque IDs, QPointer lifetime checks and traversal limits |
 | `adapters/ObjectAdapter` | Abstract toolkit surface contract |
 | `adapters/WidgetsAdapter` | QWidget tree, control state, input and capture |
+| `adapters/WidgetTargets` | Lifetime-checked model indexes, actions, tabs and headers |
 | `adapters/QuickAdapter` | QQuickItem visual tree and window input/capture |
 
 The wire protocol is independent of Qt, so future wxWidgets/JUCE/other helpers
@@ -67,9 +69,20 @@ Qt implementation seam, not a claim of existing support for those toolkits.
 
 - Set `objectName` to a stable test ID and accessible labels for meaningful
   role/name queries. IDs must be unique within the scope queried by the test.
-- The semantic root is the current modal/active window; root ID is always
-  `root`. Other IDs remain stable only while their object exists. The helper
-  rejects stale IDs and objects outside the current observed view.
+- The semantic root is the current Qt popup, modal or active window. Every
+  window has a lifetime-stable opaque root ID; references from an old root are
+  invalid after a new observation. `windows` lists at most 256 Qt-owned windows
+  with opaque handles, titles, visibility, active and modal state.
+  `window.activate` requests activation of an enumerated visible window and
+  refuses activation behind another modal window. Activation is a request to Qt;
+  assert the active window after the platform processes it. Neither RPC controls
+  other processes or enumerates native OS dialogs.
+- The helper advertises read-only `actionability` checks. The runner polls them
+  within the operation deadline before dispatching input once. Checks include
+  visibility, enabled state, clipping, toolkit hit testing and an unchanged
+  target rectangle over at least 50 ms. Geometry stability is a bounded sample,
+  not a guarantee that application animations or asynchronous work finished.
+  Mutations that may already have run are never retried by this readiness path.
 - Widget pointer input goes through the top-level QWindow's Qt event path
   after visibility, enabled-state, clipping and widget-overlap checks. It does
   not reproduce physical OS input, window-manager focus or native compositor
@@ -109,9 +122,38 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   popups are refused before selection input. Editable ComboBoxes and custom
   delegate input semantics require separate adapters. Model changes or rejected
   navigation after dispatch report an uncertain action, never a silent success.
-  Model/view virtual cells, custom canvases,
-  clipboard, drag/drop, native dialogs and embedded WebEngine DOMs need
-  additional adapters; this helper does not manufacture their semantics.
+- Standard QWidget item views expose list options, table cells and tree items
+  with text, edit-role values, selected/checked/expanded state and zero-based
+  row/column attributes. QPersistentModelIndex keeps references attached to the
+  same item across supported row moves/insertion; model resets, removal and
+  replacement make old references stale. Tap selects through the viewport input
+  path; `press` targets the current index (for example ArrowRight/ArrowLeft to
+  expand/collapse a tree). `scrollIntoView` calls the view's public `scrollTo`.
+  Check/uncheck uses the standard QStyledItemDelegate checkbox input rectangle;
+  custom delegates require an application adapter. The helper does not call
+  `setData` to fake user editing. Open an editor with the application's normal
+  input and locate that editor separately. Lazy model rows must be loaded by the
+  application; the helper does not call `fetchMore`.
+- QMenu/QMenuBar actions, QTabBar tabs and header sections have separate
+  semantic nodes. Tap follows their Qt pointer event path. Checkable menu
+  actions support check/uncheck, and tabs expose selected state. Tab additions,
+  removals or changed labels/data conservatively invalidate old tab references.
+  Header tapping follows the application's sorting/click handlers. Hidden,
+  collapsed, disabled and offscreen virtual controls are refused before input.
+  These adapters expose public widget/model semantics, not arbitrary pixels from
+  a delegate or canvas.
+- QAccessible roles and numeric value interfaces enrich both toolkit trees,
+  including sliders, spin buttons, progress bars and custom Quick Accessible
+  roles. This does not manufacture unsupported operations such as an absolute
+  set-value action. Use keyboard input where the application supports it, or a
+  custom adapter for application-specific actions.
+- `scrollIntoView` also supports QScrollArea child widgets and existing items
+  inside Qt Quick Flickable containers through public scroll-position APIs.
+  Quick model views expose instantiated visual delegates, not offscreen model
+  rows. `swipe` sends a discrete Qt wheel event in the requested direction;
+  momentum other than `none` is rejected. It is not a kinetic touch gesture.
+  Custom canvases, clipboard, drag/drop, native dialogs and embedded WebEngine
+  DOMs still require additional drivers or application adapters.
 - Password/no-echo editors and objects marked `e2eSecure=true` are redacted
   before serialization; their descendants are omitted and screenshot regions
   are painted black. Detected password/secure controls and sensitive-fill targets
@@ -119,11 +161,18 @@ Qt implementation seam, not a claim of existing support for those toolkits.
   after a password-reveal toggle, when an application declares a
   constant/read-only marker, rejects property writes, or later clears its own
   marker. Destroying the object releases that state; replacement objects do
-  not inherit it. Quick input checks that the intended control retains keyboard
-  focus before each key so redirected focus cannot receive subsequent secret
-  text. Mark custom secret controls explicitly. The runner also applies its
+  not inherit it. Widgets and Quick input check that the intended control
+  retains keyboard focus before every key pair and Unicode commit segment, so
+  redirected focus cannot receive subsequent secret text. A character-bearing
+  key release is also stopped if the press handler redirected focus. Mark custom
+  secret controls explicitly. The runner also applies its
   own secret policy. App-owned logs/files and arbitrary rendering of secrets
   elsewhere are not discovered automatically.
+  Mark an entire model view `e2eSecure=true` when its model/delegates contain
+  secrets; no general per-cell secret role is inferred. A sensitive QAction
+  classifies its whole containing menu/menu bar as secure, hiding that subtree
+  and masking its pixels, including QWidgetAction children and actions owned
+  outside the visible QObject subtree.
   Captures monitor declared security properties and Quick transforms, then
   compare the secure-region geometry and count again after rendering. A changed
   frame is discarded and retried; a surface that keeps changing is refused.
@@ -143,6 +192,50 @@ Qt implementation seam, not a claim of existing support for those toolkits.
 - `snapshot({pixels:true})` captures tree and masked image in the same
   GUI-thread operation. Offscreen captures test Qt rendering; use real desktop
   sessions for platform integration and GPU/native behavior.
+
+## Application control adapters
+
+Include `<e2e/qt/control_adapter.h>` and derive from `e2e::qt::ControlAdapter`.
+Register a `std::shared_ptr` with `bridge.registerControlAdapter(adapter)` on
+the GUI thread, before `bridge.start()`. Check its boolean result and
+`bridge.errorString()`; duplicate names, unsupported interface versions, invalid
+or duplicate actions, more than 64 registrations, registration after listening,
+and registration from another thread are refused. Adapters are matched in
+registration order, before default semantic handling, for QWidget/QQuickItem
+objects. The bridge retains the shared pointer for its lifetime.
+
+The version-one contract separates these responsibilities:
+
+| Method | Contract |
+| --- | --- |
+| `interfaceVersion()` | Return 1; rebuild together with the Qt helper/compiler kit |
+| `name()` | Unique bounded adapter name |
+| `accepts(const QObject&)` | Read-only match for an application control |
+| `snapshot(const QObject&)` | Return `ControlSnapshot` role, optional label/text/value/attributes and states |
+| `actions()` | Explicit subset of the helper's documented action vocabulary |
+| `ready(const QObject&, action)` | Read-only readiness; false triggers bounded waiting |
+| `perform(QObject&, action)` | Dispatch exactly once through the application's intended control semantics |
+
+Keep callbacks short and on the GUI thread. Retained object pointers must use
+QPointer; a callback must not destroy a control while inspecting it. Do not throw
+to request retries after mutation: exceptions from `perform` report
+`ACTION_MAY_HAVE_COMMITTED`. An adapter is trusted application code, with the
+same privileges as the application; the bridge cannot prove the semantics of
+its callbacks. `ControlSnapshot::omitChildren` defaults to true; `secure=true`
+makes the target and descendants permanently sensitive for that object's
+lifetime. Set an explicit non-secret label; do not copy the secret into `name`.
+
+The helper still applies Qt visibility, hit-testing, lifetime and observation
+bounds around custom actions. Custom snapshots cannot supply arbitrary object
+IDs, geometry or JavaScript. Registering an adapter disables screenshot capability
+for the session because custom rendering does not establish a masking contract.
+Use `qt({ screenshots: false })` for that application. Custom screenshot masking
+and dynamically loaded binary plugins are not part of version one.
+
+The [installed consumer](tests/consumer/main.cpp) compiles the public contract,
+registers a concrete adapter and checks duplicate/thread rejection without
+including private implementation headers. `ControlAdapter` is a source-level
+extension point, separate from the internal toolkit `ObjectAdapter` ABI.
 
 See [the protocol](../../packages/native/PROTOCOL.md) and the
 [working examples](../../examples/with-qt/README.md). The helper source is under

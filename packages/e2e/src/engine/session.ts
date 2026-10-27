@@ -254,11 +254,16 @@ export function createEngineSession(options: EngineSessionOptions): TargetSessio
       // An engine answers `visible` inside scopes, filters, and indices, where
       // only it can; the harness holds a top-level query to the same predicate
       // so a direct query never resolves to a node its own state calls hidden.
-      const nodes = (await locateRaw(expression, operation)).filter(
-        (node) =>
-          !(expression.kind === 'query' && expression.query.visible === true) ||
-          node.states?.hidden !== true,
-      );
+      const nodes = (await locateRaw(expression, operation)).filter((node) => {
+        if (expression.kind !== 'query') return true;
+        if ((expression.query.visible === true || expression.query.kind === 'role') && node.states?.visibilityKnown === false) {
+          throw new EngineError('UNSUPPORTED_CAPABILITY', 'visibility is unavailable for a matching control', { retryable: false });
+        }
+        if (expression.query.kind === 'role' && expression.query.states?.disabled !== undefined && node.states?.enabledKnown === false) {
+          throw new EngineError('UNSUPPORTED_CAPABILITY', 'enabled state is unavailable for a matching control', { retryable: false });
+        }
+        return expression.query.visible !== true || node.states?.hidden !== true;
+      });
       locateRevision += 1;
       const locateRev = `${LOCATE_REVISION_PREFIX}${locateRevision}`;
       const refs: NodeRef[] = [];

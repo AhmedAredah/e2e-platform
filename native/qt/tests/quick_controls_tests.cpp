@@ -9,10 +9,19 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTest>
+#include <QKeyEvent>
 
 using namespace e2e::qt::detail;
 
 namespace {
+class KeyReleaseCapture final : public QObject {
+public:
+    QString text;
+    bool eventFilter(QObject*, QEvent* event) override {
+        if (event->type()==QEvent::KeyRelease) text += static_cast<QKeyEvent*>(event)->text();
+        return false;
+    }
+};
 QJsonObject find(const QJsonObject& node, const QString& testId) {
     if (node.value("testId") == testId) return node;
     for (const auto& child : node.value("children").toArray()) {
@@ -51,13 +60,36 @@ public:
 class QuickControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void accessibleRolesAndFlickableScrollingUsePublicQtInterfaces() {
+        QQmlEngine engine; QQuickWindow window; window.resize(400,200); QQmlComponent component(&engine);
+        component.setData("import QtQuick\nimport QtQuick.Controls\nFlickable { objectName: 'scroller'; width:400; height:200; contentWidth:400; contentHeight:900; clip:true; Rectangle { objectName:'semantic'; width:80; height:40; Accessible.role: Accessible.Slider; Accessible.name:'Volume' } Button { objectName:'late'; x:10; y:700; width:120; height:40; text:'Late' } }",QUrl());
+        auto* root=qobject_cast<QQuickItem*>(component.create()); QVERIFY2(root,qPrintable(component.errorString()));
+        root->setParent(window.contentItem()); root->setParentItem(window.contentItem()); window.show(); window.requestActivate(); QApplication::processEvents();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        QTRY_VERIFY(window.isSceneGraphInitialized());
+        Surface surface; auto tree=surface.snapshot(false).value("root").toObject();
+        QCOMPARE(find(tree,"semantic").value("role").toString(),QString("slider"));
+        const auto late=find(tree,"late").value("ref");
+        try { surface.perform({{"ref",late},{"action",QJsonObject{{"kind","tap"}}}}); QFAIL("clipped Quick control clicked"); }
+        catch(const Failure& failure) { QCOMPARE(failure.code,QString("NOT_ACTIONABLE")); }
+        surface.perform({{"ref",late},{"action",QJsonObject{{"kind","scrollIntoView"}}}});
+        QVERIFY(root->property("contentY").toDouble()>500); surface.perform({{"ref",late},{"action",QJsonObject{{"kind","tap"}}}});
+        const double before=root->property("contentY").toDouble();
+        surface.perform({{"ref",find(tree,"scroller").value("ref")},{"action",QJsonObject{{"kind","swipe"},{"direction","up"}}}});
+        QTRY_VERIFY(root->property("contentY").toDouble()<before);
+    }
     void redirectedFocusCannotReceiveSensitiveInput_data() {
         QTest::addColumn<bool>("duringInput");
-        QTest::newRow("during-focus") << false;
-        QTest::newRow("during-typing") << true;
+        QTest::addColumn<QString>("text");
+        QTest::newRow("during-focus") << false << QString("synthetic-secret");
+        QTest::newRow("during-typing") << true << QString("synthetic-secret");
+        QTest::newRow("unicode-after-focus") << false << QString::fromUtf8("秘密");
+        QTest::newRow("unicode-after-ascii") << true << QString::fromUtf8("a秘密");
+        QTest::newRow("ascii-after-unicode") << true << QString::fromUtf8("ésecret");
     }
     void redirectedFocusCannotReceiveSensitiveInput() {
         QFETCH(bool, duringInput);
+        QFETCH(QString, text);
         QQmlEngine engine;
         QQuickWindow window;
         window.resize(480, 240);
@@ -70,11 +102,13 @@ private slots:
         QVERIFY2(root, qPrintable(component.errorString()));
         root->setParent(window.contentItem()); root->setParentItem(window.contentItem());
         window.show(); window.requestActivate(); QApplication::processEvents();
+        KeyReleaseCapture releases; root->findChild<QObject*>("other")->installEventFilter(&releases);
         Surface surface;
         const auto ref = find(surface.snapshot(false).value("root").toObject(), "target").value("ref").toObject();
-        try { surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "fill"}, {"value", "synthetic-secret"}, {"sensitive", true}}}}); QFAIL("redirected focus accepted sensitive input"); }
+        try { surface.perform({{"ref", ref}, {"action", QJsonObject{{"kind", "fill"}, {"value", text}, {"sensitive", true}}}}); QFAIL("redirected focus accepted sensitive input"); }
         catch (const Failure& failure) { QCOMPARE(failure.code, QString("ACTION_MAY_HAVE_COMMITTED")); }
         QCOMPARE(root->findChild<QObject*>("other")->property("text").toString(), QString());
+        QCOMPARE(releases.text, QString());
     }
     void selectsPublicModelOptions_data() {
         QTest::addColumn<QJsonValue>("option");

@@ -1,7 +1,7 @@
 import { EngineError, OBSERVED_NAME_LIMIT, OBSERVED_TEXT_LIMIT, type EngineSnapshot, type ObservationPixels, type SemanticNode } from '@e2e-platform/core/engine';
 import { isRecord } from '../transport/json-rpc-tcp.ts';
 
-const STATES = ['checked', 'disabled', 'selected', 'expanded', 'pressed', 'focused', 'hidden', 'secure'] as const;
+const STATES = ['checked', 'disabled', 'selected', 'expanded', 'pressed', 'focused', 'hidden', 'secure', 'visibilityKnown', 'enabledKnown', 'focusedKnown'] as const;
 const PURPOSES = ['username', 'password', 'one-time-code', 'generic-secret', 'none'] as const;
 const MAX_NODES = 20_000;
 const MAX_DEPTH = 64;

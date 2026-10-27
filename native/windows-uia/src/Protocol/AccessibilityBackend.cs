@@ -8,7 +8,9 @@ public abstract class AccessibilityBackend : IDisposable
     public abstract string Name { get; }
     public virtual string Version => "0.1.0";
     public abstract IReadOnlyList<string> Actions { get; }
+    public virtual bool SupportsActionability => false;
     public abstract object Snapshot();
+    public virtual void Actionability(string id, JsonElement action) => throw new DriverException("UNSUPPORTED_CAPABILITY");
     public abstract void Perform(string id, JsonElement action);
     public abstract void Dispose();
 }

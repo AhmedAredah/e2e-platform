@@ -25,12 +25,70 @@ or back-navigation capability is claimed. Each attempt owns its process tree.
 
 `native(options)` defaults to platform `desktop`; `qt(options)` defaults to
 `qt`. Options are `actions`, `keyboard`, `screenshots`, `launchTimeout`,
-`requestTimeout`, `maxMessageBytes`, `platform`, and `cwd`. The declared action
-subset must be supported by the helper. Defaults: the nine basic Qt actions
-listed in the protocol, keyboard/screenshots enabled, a 30-second launch
+`requestTimeout`, `maxMessageBytes`, `platform`, `cwd` and `isolateProfile`. The declared action
+subset must be supported by the helper. `native()` defaults to nine basic actions;
+`qt()` adds double-click, secondary-click, scroll-into-view and swipe. Other defaults are
+keyboard/screenshots enabled, a 30-second launch
 timeout, a 10-second request timeout, a 16 MiB frame bound, and one worker.
 Supply `appPath` and optional `launchArguments`; `app.command`, URL, bundle ID
 and permission provisioning are not a native launch interface here.
+
+## Readiness, windows and diagnostics
+
+Helpers that negotiate `actionability:true` receive a read-only readiness check
+before a locator mutation. The engine polls this check within the operation
+budget, then sends input once. It never retries an uncertain mutation. The Qt
+helper checks geometry stability and applicable input conditions; a helper
+without this optional capability retains the original behavior. Polling for a
+locator to exist and polling an assertion remain runner features for all helpers.
+
+Import the typed fixture entry for helper-specific desktop workflows:
+
+```ts
+import { test, expect } from '@e2e-platform/native/test';
+
+test.afterEach(async ({ native }) => {
+  await native.attachTimeline();
+});
+
+test('opens settings', async ({ app, native, screen }) => {
+  await app.open();
+  const window = (await native.windows()).find(candidate => candidate.title === 'Settings');
+  expect(window).toBeDefined();
+  await native.activateWindow(window!.id);
+  await expect.poll(async () => (await native.windows()).find(candidate => candidate.id === window!.id)?.active).toBe(true);
+  await expect(screen.getByRole('button', { name: 'Save' })).toBeVisible();
+});
+```
+
+Window enumeration/activation requires `windows:true`; unsupported helpers
+fail explicitly. Qt covers its own windows, including modality restrictions.
+Activation is a request, so the example separately verifies active state.
+This does not provide unrestricted OS focus, cross-process dialogs or webview DOM access.
+
+`native.attachTimeline()` attaches a JSON action history captured so far as a log
+artifact. It retains at most 1,000 operations and reports the omitted count.
+Entries contain only operation/action kinds, elapsed time, duration, outcome
+and standardized error code. Node IDs, titles, paths, typed values, key strings
+and raw exceptions are excluded. A successful entry means the helper accepted
+the operation; assertions still establish the business result. This diagnostic
+history is not video, a screenshot timeline, or a manual interaction recorder.
+
+## Attempt-owned profiles
+
+Enable `qt({ isolateProfile: true })` or `desktop({ ..., isolateProfile: true })`
+to create a fresh profile directory for each attempt. The child receives
+`E2E_NATIVE_PROFILE_DIR`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_CACHE_HOME`,
+`APPDATA` and `LOCALAPPDATA`; the original process environment is unchanged.
+`native.profileDirectory` exposes the directory to test code. The profile
+survives `app.restart()` within one attempt and is removed after owned process
+cleanup. Retries receive a fresh directory. The default is false.
+
+Applications must honor the explicit profile path or these platform variables.
+This does not reset Windows Registry entries, macOS preferences, arbitrary
+absolute paths or external databases. Configure an application-specific test
+profile for those resources. `app.clearState()` and saved-session restoration
+remain unsupported; restarting an application does not automatically erase its state.
 
 The layers can be extended by inheritance:
 
@@ -88,9 +146,9 @@ export default {
 
 | Backend | Driver implementation and command | Declared semantic actions |
 | --- | --- | --- |
-| `linux-atspi` | Python: `/usr/bin/python3` with `args: ['/absolute/native/linux-atspi/driver.py']` | tap, fill, clear, focus, check, uncheck, selectOption |
-| `windows-uia` | C#: published driver executable, or `dotnet` with `args: ['C:/absolute/E2E.Platform.WindowsUia.dll']` | tap, fill, clear, focus, check, uncheck, selectOption |
-| `macos-ax` | Rust: `/absolute/e2e-platform-macos-ax` | tap, fill, clear, focus, check, uncheck |
+| `linux-atspi` | Python: `/usr/bin/python3` with `args: ['/absolute/native/linux-atspi/driver.py']` | tap, fill, clear, focus, check, uncheck, selectOption, scrollIntoView |
+| `windows-uia` | C#: published driver executable, or `dotnet` with `args: ['C:/absolute/E2E.Platform.WindowsUia.dll']` | tap, fill, clear, focus, check, uncheck, selectOption, scrollIntoView |
+| `macos-ax` | Rust: `/absolute/e2e-platform-macos-ax` | tap, fill, clear, focus, check, uncheck, selectOption, scrollIntoView |
 
 See each source directory's README for build/install instructions, OS permission
 requirements, supported controls, and actual verification status. The npm package
@@ -110,12 +168,22 @@ use their compiled executable. The selected toolkit must expose accessible
 controls to the selected OS API; language alone does not guarantee coverage.
 
 Optional engine options are `actions` (a nonempty subset), `cwd`, `launchTimeout`,
-`requestTimeout`, and `maxMessageBytes`. Unsupported control/pattern combinations
+`requestTimeout`, `maxMessageBytes` and `isolateProfile`. Unsupported control/pattern combinations
 fail explicitly. All three OS profiles disable raw keyboard and screenshots;
 semantic `fill` and `tap` are accessibility actions, not physical input. They do
 not claim secure global screenshot masking, IME, clipboard, arbitrary drawing,
 embedded web content, or OS dialogs outside the owned process. Qt remains the
 profile with cooperative masked screenshots and event-based keyboard input.
+
+macOS `selectOption` requires a writable `AXSelectedChildren` container and one
+enabled, nonsecure direct child matching the requested index, label or
+identifier. It does not open menus or fall back to keyboard input. A control
+whose visibility cannot be established reports `visibilityKnown:false`;
+visibility assertions cannot pass for either visible or hidden states, and
+visibility-filtered queries fail instead of claiming the control is absent.
+The same rule applies to unknown enabled/focused states through
+`enabledKnown:false` and `focusedKnown:false`: negative state assertions cannot
+turn unavailable platform data into a passing result.
 
 The engine passes the runner-resolved environment without inheriting additional
 ambient variables. Supply the desktop session environment required by the OS

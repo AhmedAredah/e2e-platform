@@ -179,7 +179,7 @@ private slots:
         QVERIFY(login());
         QJsonObject first = rpc("snapshot", {{"pixels", true}}).value("result").toObject();
         const QJsonObject root = first.value("root").toObject();
-        QCOMPARE(root.value("ref").toObject().value("id").toString(), QString("root"));
+        QVERIFY(root.value("ref").toObject().value("id").toString().startsWith("root-"));
         const QJsonObject secret = find(root, "secret");
         QVERIFY(!secret.isEmpty());
         QVERIFY(secret.value("states").toObject().value("secure").toBool());

@@ -1,6 +1,7 @@
 # Desktop applications
 
-`e2e-platform` uses one TypeScript test runner. Choose a driver by the application's
+`e2e-platform` uses one TypeScript test runner, with a bounded C++ test-authoring
+bridge for the documented native API. Choose a driver by the application's
 control surface and operating system, independently of its implementation language.
 The desktop backends are explicitly installed components; the CLI/HTTP installation
 kit does not require Qt, a graphical session, Python, .NET or Rust.
@@ -83,6 +84,30 @@ The new OS profiles do not advertise screenshots, global keyboard typing, hover,
 drag/drop, clipboard, IME, touch, embedded browser DOM or system-wide dialogs.
 These are separate future capabilities, not implied by basic accessibility support.
 
+All three OS providers advertise readonly actionability preflight and semantic
+`scrollIntoView` when the specific control exposes the platform operation. The
+runner can poll preflight safely before dispatching an action once. It never
+replays a mutation whose result is uncertain. UIA uses ScrollItemPattern, AT-SPI
+uses Component.scroll_to, and AX requires AXScrollToVisible. Scrolling does not
+imply arbitrary pointer-wheel injection or virtualized-item realization.
+
+AX selection supports writable AXSelectedChildren with a unique direct child
+selected by label, AXIdentifier or zero-based index. A popup that requires menu
+expansion is unsupported. AX visibility uses explicit application/window state
+and viewport geometry; missing evidence is `visibilityKnown: false` and cannot
+satisfy either a visible or a hidden assertion. Geometry does not prove physical
+occlusion or pointer hit-testing. Missing AX enabled/focus state carries explicit
+unknown flags and cannot satisfy positive or negated assertions for that state.
+OS providers retain platform-specific limits;
+see their READMEs before choosing a control.
+
+Qt additionally supplies owned-window enumeration/activation, supported model/view
+items and the public `ControlAdapter` source extension. Register custom adapters
+before `Bridge::start` on the GUI thread and use `qt({ screenshots: false })`;
+custom adapters currently disable helper capture. Qt input remains toolkit event
+delivery. Native video, visual-diff assertions, arbitrary canvases and embedded
+WebEngine/CEF DOM switching are separate unimplemented capabilities.
+
 Secure controls omit their value, text, descendants and arbitrary attributes before
 serialization. The OS sidecars intentionally withhold pixels because generic secure
 region masking has not been qualified. A stale or destroyed object must fail rather
@@ -113,5 +138,9 @@ passed the Linux GTK3 reference-controls acceptance test under D-Bus/Xvfb.
 Windows UIA and macOS AX have native build and portable-test evidence, but their
 interactive desktop acceptance tests remain unrun. These are prerelease backends;
 the Linux reference result does not qualify other toolkits or display sessions.
-Native-language pytest/xUnit/Cargo/C++ test-authoring SDKs are not included: applications
-in those languages use the shared TypeScript tests.
+The bounded C++ authoring bridge is included separately from application drivers.
+It shares the runner's lifecycle and reports and supports its documented calls;
+it is not full TypeScript API parity. pytest, xUnit and Cargo authoring adapters
+are not included. Python, C# and Rust applications use the TypeScript/JavaScript
+test API. New Qt OS/kit workflows and the interactive `qt-live` workflow are
+qualification plans until their exact candidate runs complete successfully.

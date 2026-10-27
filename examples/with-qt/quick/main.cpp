@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include <e2e/qt/bridge.h>
+#include "../runtime_metadata.h"
 #include <QApplication>
 #include <QCoreApplication>
 #include <QQmlApplicationEngine>
@@ -8,6 +9,7 @@
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
+    if (printRuntimeMetadataIfRequested(app)) return 0;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("badCalculation", app.arguments().contains("--bad-calculation"));
     engine.load(QUrl::fromLocalFile(QCoreApplication::applicationDirPath() + "/Main.qml"));

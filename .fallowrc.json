@@ -28,7 +28,10 @@
     "examples/with-languages/tests/**/*.ts",
     "scripts/languages/verify.mjs",
     "scripts/languages/build.mjs",
-    "packages/process/tests/types/launch-profiles.ts"
+    "packages/process/tests/types/launch-profiles.ts",
+    "examples/with-cpp-sdk/e2e*.config.ts",
+    "examples/with-cpp-sdk/tests/**/*.ts",
+    "scripts/native/verify-cpp-sdk.mjs"
   ],
   "ignorePatterns": [
     "docs/**",

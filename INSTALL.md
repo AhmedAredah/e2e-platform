@@ -1,7 +1,7 @@
 # Install this candidate in another project
 
 Use Node.js 22.22.3 or newer in the 22.x line, or Node.js 24.8.0 or newer.
-A prepared full-repository bundle can include `release-packages/` with six built
+A prepared full-repository bundle can include `release-packages/` with seven built
 npm tarballs, a checksum manifest and an installer. A Git clone or GitHub source ZIP
 contains source only: run `pnpm install --frozen-lockfile` and `pnpm pack:native`
 first. These are candidate builds; they have not been published to the fork namespace.
@@ -24,12 +24,12 @@ node release-packages/install.mjs /absolute/path/to/your-project
 
 Quote paths containing spaces. The installer checks every tarball before running
 `npm install --save-dev`. It installs `@e2e-platform/core` and the process, checks, native,
-terminal and protocol modules. npm resolves their external dependencies online
+terminal, protocol and C++ test-adapter modules. npm resolves their external dependencies online
 or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.6. Coordinated versions and changelogs use Changesets prerelease mode.
+`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.7. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -161,7 +161,7 @@ business results. gRPC and WebSocket clients are not included.
 
 ## Browser and mobile applications
 
-The six-package kit excludes `@e2e-platform/playwright` and
+The seven-package kit excludes `@e2e-platform/playwright` and
 `@e2e-platform/agent-device`. Their MIT-baseline source remains in the checkout.
 After `pnpm install --frozen-lockfile`, run these commands from the repository
 root to build the optional modules and pack the ones you need. Choose an existing
@@ -179,11 +179,11 @@ candidate). Either engine can be installed independently:
 
 ```sh
 # Browser engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.6.tgz playwright@1.63.0
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.7.tgz playwright@1.63.0
 npx --no-install playwright install chromium
 
 # Mobile engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.6.tgz
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.7.tgz
 npx --no-install agent-device doctor
 ```
 
@@ -209,13 +209,15 @@ Subclass `ApplicationLaunchProfile`, `ProcessRunner`, `NativeDriver`, `NativeTra
 implementation in its own module. The engine factories inject those implementations.
 New backends must honor deadlines, cancellation, cleanup, declared capabilities
 and complete observation semantics. `native/README.md` describes the GUI helper
-extension path. Qt's internal adapters are not an installed binary plugin API.
+extension path. Qt exposes a versioned public `ControlAdapter` interface registered
+before `Bridge.start()`; its internal object adapters remain private.
 
 See [LANGUAGES.md](LANGUAGES.md) and `examples/with-languages/` for real Python,
 C# and Rust CLI/HTTP applications. `PythonLaunchProfile`, `DotnetLaunchProfile`
 and `ExecutableLaunchProfile` keep executable arguments separate from logical
-application identity. Tests continue to use TypeScript/JavaScript; language-native
-authoring SDKs and further GUI bindings are not included.
+application identity. The [C++17 SDK](native/cpp-sdk/README.md) now supports C++ test
+bodies through `@e2e-platform/cpp` and a small TypeScript discovery file. Python,
+C# and Rust test-authoring SDKs and additional toolkit bindings are not included.
 
 ## Qualification and publication
 

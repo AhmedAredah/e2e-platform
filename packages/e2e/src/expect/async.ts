@@ -23,6 +23,9 @@ interface MatcherSpec {
   readonly evaluableWithoutNode?: boolean;
   /** A withheld text field is unknown, even when the matcher is negated. */
   readonly requiredField?: 'text' | 'value' | 'name';
+  /** Unknown visibility must not satisfy positive or negated assertions. */
+  readonly requiresVisibility?: boolean;
+  readonly requiredKnownState?: 'enabledKnown' | 'focusedKnown';
   readonly predicate: (sample: Sample) => boolean;
   readonly describeExpected: string;
   readonly observed: (sample: Sample) => string;
@@ -142,6 +145,8 @@ class AsyncExpectationImpl implements AsyncExpectation {
    * means anything; visibility matchers also accept zero matches.
    */
   private conditionEvaluable(spec: MatcherSpec, sample: Sample): boolean {
+    if (spec.requiresVisibility === true && sample.node?.states?.visibilityKnown === false) return false;
+    if (spec.requiredKnownState !== undefined && sample.node?.states?.[spec.requiredKnownState] === false) return false;
     if (spec.requiredField !== undefined && sample.node?.[spec.requiredField] === undefined) return false;
     return spec.wholeSet === true || sample.node !== null || spec.evaluableWithoutNode === true;
   }
@@ -158,13 +163,16 @@ class AsyncExpectationImpl implements AsyncExpectation {
 
   private stateMatcher(name: keyof typeof STATE_MATCHERS, timeout: number | undefined): Promise<void> {
     const def = STATE_MATCHERS[name];
+    const requiredKnownState = def.key === 'disabled' ? 'enabledKnown' : def.key === 'focused' ? 'focusedKnown' : undefined;
     return this.poll(
       {
         name,
+        ...(requiredKnownState === undefined ? {} : { requiredKnownState }),
         predicate: (sample) =>
           sample.node !== null && (sample.node.states?.[def.key] === true) === def.expected,
         describeExpected: def.describeExpected,
-        observed: observedState,
+        observed: (sample) => requiredKnownState !== undefined && sample.node?.states?.[requiredKnownState] === false
+          ? `${def.key === 'disabled' ? 'enabled' : 'focused'} state unavailable` : observedState(sample),
       },
       timeout,
     );
@@ -201,6 +209,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
     return this.poll(
       {
         name: 'toBeVisible',
+        requiresVisibility: true,
         evaluableWithoutNode: true,
         predicate: (sample) => isNodeVisible(sample.node),
         describeExpected: 'visible',
@@ -214,6 +223,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
     return this.poll(
       {
         name: 'toBeHidden',
+        requiresVisibility: true,
         evaluableWithoutNode: true,
         predicate: (sample) => !isNodeVisible(sample.node),
         describeExpected: 'hidden or absent',
@@ -318,6 +328,7 @@ class AsyncExpectationImpl implements AsyncExpectation {
 function observedState(sample: Sample): string {
   if (sample.node === null) return 'no node';
   const states = sample.node.states ?? {};
+  if (states.visibilityKnown === false) return 'visibility unavailable';
   const active = Object.entries(states)
     .filter(([, value]) => value === true)
     .map(([key]) => key);

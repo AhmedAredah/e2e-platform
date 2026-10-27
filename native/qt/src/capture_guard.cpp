@@ -5,6 +5,8 @@
 #include <QEvent>
 #include <QMetaProperty>
 #include <QMetaMethod>
+#include <QWidget>
+#include <QAction>
 #ifdef E2E_QT_HAS_QUICK
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -35,6 +37,17 @@ void CaptureGuard::watch(QObject* object, int depth) {
     connect(object, &QObject::destroyed, this, [this] { changed_ = true; });
     watchProperty(object, "e2eSecure");
     watchProperty(object, "echoMode");
+    if (auto* widget = qobject_cast<QWidget*>(object)) for (QAction* action : widget->actions()) {
+        watch(action, depth + 1);
+        connect(action, &QAction::changed, this, [this] { changed_ = true; });
+        for (QObject* owner = action->parent(); owner; owner = owner->parent()) {
+            if (objects_.contains(owner)) continue;
+            if (objects_.size() >= MaxNodes) throw Failure("POLICY_DENIED", "capture action owners exceed masking guard limit");
+            objects_.insert(owner);
+            watchProperty(owner, "e2eSecure");
+            connect(owner, &QObject::destroyed, this, [this] { changed_ = true; });
+        }
+    }
 #ifdef E2E_QT_HAS_QUICK
     if (auto* window = qobject_cast<QQuickWindow*>(object)) watch(window->contentItem(), depth + 1);
     if (auto* item = qobject_cast<QQuickItem*>(object)) {
@@ -68,6 +81,7 @@ bool CaptureGuard::eventFilter(QObject* object, QEvent* event) {
     case QEvent::Show: case QEvent::Hide: case QEvent::Move: case QEvent::Resize:
     case QEvent::ParentChange: case QEvent::ChildAdded: case QEvent::ChildRemoved:
     case QEvent::ZOrderChange: case QEvent::DynamicPropertyChange:
+    case QEvent::ActionAdded: case QEvent::ActionRemoved: case QEvent::ActionChanged:
     case QEvent::LayoutRequest: case QEvent::UpdateRequest:
         changed_ = true;
         break;

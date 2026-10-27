@@ -2,7 +2,8 @@
 use crate::{
     budget::ObservationBudget,
     error::{DriverError, Result},
-    provider::{AccessibleProvider, Action},
+    provider::{AccessibleProvider, Action, SelectionChoice},
+    semantics::{self, Rect, Visibility},
 };
 use serde_json::{Value, json};
 use std::{
@@ -51,6 +52,7 @@ unsafe extern "C" {
     ) -> AxError;
     fn AXUIElementSetAttributeValue(element: AxRef, attribute: CfRef, value: CfRef) -> AxError;
     fn AXUIElementPerformAction(element: AxRef, action: CfRef) -> AxError;
+    fn AXUIElementCopyActionNames(element: AxRef, names: *mut CfRef) -> AxError;
     fn AXUIElementSetMessagingTimeout(element: AxRef, timeout: f32) -> AxError;
     fn AXUIElementGetPid(element: AxRef, pid: *mut i32) -> AxError;
     fn AXUIElementGetTypeID() -> usize;
@@ -80,6 +82,12 @@ unsafe extern "C" {
     fn CFNumberGetTypeID() -> usize;
     fn CFNumberGetValue(value: CfRef, kind: i32, output: *mut c_void) -> u8;
     fn CFArrayGetTypeID() -> usize;
+    fn CFArrayCreate(
+        allocator: CfRef,
+        values: *const CfRef,
+        count: isize,
+        callbacks: CfRef,
+    ) -> CfRef;
     fn CFArrayGetCount(value: CfRef) -> isize;
     fn CFArrayGetValueAtIndex(value: CfRef, index: isize) -> CfRef;
     static kCFBooleanTrue: CfRef;
@@ -139,6 +147,15 @@ impl Cf {
             return Some((String::new(), true));
         }
         Some((text, false))
+    }
+    fn number(&self) -> Option<f64> {
+        if unsafe { CFGetTypeID(self.0) != CFNumberGetTypeID() } {
+            return None;
+        }
+        let mut number: f64 = 0.0;
+        (unsafe { CFNumberGetValue(self.0, 13, (&mut number as *mut f64).cast()) } != 0
+            && number.is_finite())
+        .then_some(number)
     }
     fn boolean(&self) -> Option<bool> {
         let type_id = unsafe { CFGetTypeID(self.0) };
@@ -206,6 +223,7 @@ pub struct MacOsProvider {
     registry: IdentityRegistry,
     sensitive: HashSet<usize>,
     current_ids: HashSet<usize>,
+    visibility: HashMap<usize, Visibility>,
     deadline: Instant,
     viewport: (f64, f64),
     text_budget: ObservationBudget,
@@ -237,6 +255,7 @@ impl MacOsProvider {
             registry: IdentityRegistry::new(),
             sensitive: HashSet::new(),
             current_ids: HashSet::new(),
+            visibility: HashMap::new(),
             deadline: Instant::now(),
             viewport: (1.0, 1.0),
             text_budget: ObservationBudget::new(4 * 1024 * 1024),
@@ -282,6 +301,48 @@ impl MacOsProvider {
                 self.text_budget.accept(text)
             }
         }))
+    }
+    fn observed_value(&mut self, object: AxRef) -> Result<Option<String>> {
+        let Some(value) = self.get(object, "AXValue")? else {
+            return Ok(None);
+        };
+        if let Some((text, omitted)) = value.text() {
+            if omitted {
+                self.text_budget.omit();
+                return Ok(None);
+            }
+            return Ok(self.text_budget.accept(text));
+        }
+        Ok(value
+            .number()
+            .and_then(|number| self.text_budget.accept(number.to_string())))
+    }
+    fn label_name(&mut self, object: AxRef) -> Result<Option<String>> {
+        let Some(label) = self.get(object, "AXTitleUIElement")? else {
+            return Ok(None);
+        };
+        if unsafe { CFGetTypeID(label.0) != AXUIElementGetTypeID() } {
+            return Ok(None);
+        }
+        let mut pid = 0;
+        ax_result(unsafe { AXUIElementGetPid(label.0, &mut pid) })?;
+        if pid != self.pid {
+            return Ok(None);
+        }
+        let identity = self.registry.id(label.0)?;
+        if self.sensitive.contains(&identity)
+            || self.text(label.0, "AXSubrole")?.as_deref() == Some("AXSecureTextField")
+        {
+            return Ok(None);
+        }
+        let title = self.observed_text(label.0, "AXTitle")?;
+        if title.as_ref().is_some_and(|title| !title.is_empty()) {
+            return Ok(title);
+        }
+        if self.text(label.0, "AXRole")?.as_deref() == Some("AXStaticText") {
+            return self.observed_text(label.0, "AXValue");
+        }
+        Ok(None)
     }
     fn boolean(&self, object: AxRef, name: &str) -> Result<Option<bool>> {
         Ok(self.get(object, name)?.and_then(|value| value.boolean()))
@@ -363,6 +424,10 @@ impl MacOsProvider {
         depth: usize,
         seen: &mut HashSet<usize>,
         truncated: &mut bool,
+        clip: Option<Rect>,
+        parent_hidden: bool,
+        parent_minimized: Option<bool>,
+        parent_role: &str,
     ) -> Result<Option<Value>> {
         self.guard()?;
         if seen.len() >= MAX_NODES - 1 || depth > MAX_DEPTH {
@@ -386,11 +451,36 @@ impl MacOsProvider {
             .ok_or_else(DriverError::stale)?;
         let secure = self.sensitive.contains(&id)
             || self.text(object, "AXSubrole")?.as_deref() == Some("AXSecureTextField");
-        let disabled = self
-            .boolean(object, "AXEnabled")?
-            .is_some_and(|enabled| !enabled);
-        let focused = self.boolean(object, "AXFocused")?.unwrap_or(false);
-        let mut node = json!({"ref":{"id":format!("ax-{id}"),"revision":""},"role":semantic_role(&role),"states":{"disabled":disabled,"focused":focused,"secure":secure}});
+        let enabled = self.boolean(object, "AXEnabled")?;
+        let disabled = enabled != Some(true);
+        let rect = self.rect(object)?;
+        let minimized = if role == "AXWindow" {
+            self.boolean(object, "AXMinimized")?
+        } else {
+            parent_minimized
+        };
+        let clip = if role == "AXWindow" { rect } else { clip };
+        let visibility = semantics::visibility(
+            self.boolean(object, "AXHidden")?,
+            self.boolean(self.application.0, "AXHidden")?,
+            minimized,
+            parent_hidden,
+            rect,
+            clip,
+        );
+        self.visibility.insert(id, visibility);
+        let canonical_role = if role == "AXRow" && parent_role == "AXList" {
+            "option"
+        } else if role == "AXRow" && parent_role == "AXOutline" {
+            "treeitem"
+        } else {
+            semantics::role(&role)
+        };
+        let focused = self.boolean(object, "AXFocused")?;
+        let mut node = json!({"ref":{"id":format!("ax-{id}"),"revision":""},"role":canonical_role,"states":{"disabled":disabled,"enabledKnown":enabled.is_some(),"focusedKnown":focused.is_some(),"hidden":visibility.hidden(),"visibilityKnown":visibility != Visibility::Unknown,"secure":secure}});
+        if let Some(focused) = focused {
+            node["states"]["focused"] = json!(focused);
+        }
         if secure {
             node["inputPurpose"] = json!(if self.sensitive.contains(&id) {
                 "generic-secret"
@@ -399,9 +489,24 @@ impl MacOsProvider {
             });
             return Ok(Some(node));
         }
+        node["attributes"] = json!({"visibility":visibility.label()});
+        if let Some(placeholder) = self.observed_text(object, "AXPlaceholderValue")? {
+            if placeholder.len() <= 4096 {
+                node["attributes"]["placeholder"] = json!(placeholder);
+            } else {
+                self.text_budget.omit();
+            }
+        }
         let title = self.observed_text(object, "AXTitle")?;
         let description = self.observed_text(object, "AXDescription")?;
-        if let Some(name) = title.filter(|text| !text.is_empty()).or(description) {
+        let direct_name = title
+            .filter(|text| !text.is_empty())
+            .or(description.filter(|text| !text.is_empty()));
+        let name = match direct_name {
+            Some(name) => Some(name),
+            None => self.label_name(object)?,
+        };
+        if let Some(name) = name {
             node["name"] = json!(name);
         }
         if let Some(test_id) = self.observed_text(object, "AXIdentifier")? {
@@ -411,13 +516,13 @@ impl MacOsProvider {
                 self.text_budget.omit();
             }
         }
-        if let Some(value) = self.observed_text(object, "AXValue")? {
+        if let Some(value) = self.observed_value(object)? {
             node["value"] = json!(&value);
             if role == "AXStaticText" {
                 node["text"] = json!(value);
             }
         }
-        if role == "AXCheckBox" || role == "AXSwitch" {
+        if ["AXCheckBox", "AXSwitch", "AXRadioButton"].contains(&role.as_str()) {
             if let Some(checked) = self.boolean(object, "AXValue")? {
                 node["states"]["checked"] = json!(checked);
             }
@@ -433,7 +538,17 @@ impl MacOsProvider {
         let children = self.children(object, MAX_NODES - seen.len(), truncated)?;
         let mut nodes = Vec::new();
         for child in children {
-            if let Some(value) = self.node(child.0, depth + 1, seen, truncated)? {
+            let child_clip = semantics::child_clip(&role, clip, rect);
+            if let Some(value) = self.node(
+                child.0,
+                depth + 1,
+                seen,
+                truncated,
+                child_clip,
+                visibility == Visibility::Hidden,
+                minimized,
+                &role,
+            )? {
                 nodes.push(value);
             }
         }
@@ -441,6 +556,196 @@ impl MacOsProvider {
             node["children"] = json!(nodes);
         }
         Ok(Some(node))
+    }
+    fn rect(&self, object: AxRef) -> Result<Option<Rect>> {
+        #[repr(C)]
+        struct Pair {
+            first: f64,
+            second: f64,
+        }
+        let read = |name: &str, kind: u32| -> Result<Option<Pair>> {
+            let Some(value) = self.get(object, name)? else {
+                return Ok(None);
+            };
+            if unsafe {
+                CFGetTypeID(value.0) != AXValueGetTypeID() || AXValueGetType(value.0) != kind
+            } {
+                return Ok(None);
+            }
+            let mut pair = Pair {
+                first: 0.0,
+                second: 0.0,
+            };
+            if unsafe { AXValueGetValue(value.0, kind, (&mut pair as *mut Pair).cast()) } == 0 {
+                return Ok(None);
+            }
+            Ok(Some(pair))
+        };
+        let (Some(position), Some(size)) = (read("AXPosition", 1)?, read("AXSize", 2)?) else {
+            return Ok(None);
+        };
+        let rect = Rect {
+            x: position.first,
+            y: position.second,
+            width: size.first,
+            height: size.second,
+        };
+        Ok(rect.valid().then_some(rect))
+    }
+    fn supported_action(&self, object: AxRef, name: &str) -> Result<Cf> {
+        self.guard()?;
+        let mut names = ptr::null();
+        ax_result(unsafe { AXUIElementCopyActionNames(object, &mut names) })?;
+        let names = Cf::owned(names)?;
+        if unsafe { CFGetTypeID(names.0) != CFArrayGetTypeID() } {
+            return Err(DriverError::unsupported());
+        }
+        let count = unsafe { CFArrayGetCount(names.0) };
+        if !(0..=128).contains(&count) {
+            return Err(DriverError::unsupported());
+        }
+        for index in 0..count {
+            let candidate = Cf::retain(unsafe { CFArrayGetValueAtIndex(names.0, index) })?;
+            if candidate
+                .text()
+                .is_some_and(|(text, omitted)| !omitted && text == name)
+            {
+                return Cf::string(name);
+            }
+        }
+        Err(DriverError::unsupported())
+    }
+    fn selection_candidate(&mut self, object: AxRef, choice: &SelectionChoice) -> Result<Cf> {
+        self.require_settable(object, "AXSelectedChildren")?;
+        let mut truncated = false;
+        let candidates = self.children(object, 10000, &mut truncated)?;
+        if truncated {
+            return Err(DriverError::unsupported());
+        }
+        let mut matches = Vec::new();
+        for (index, candidate) in candidates.into_iter().enumerate() {
+            let mut pid = 0;
+            ax_result(unsafe { AXUIElementGetPid(candidate.0, &mut pid) })?;
+            if pid != self.pid {
+                return Err(DriverError::stale());
+            }
+            let identity = self.registry.id(candidate.0)?;
+            if self.sensitive.contains(&identity)
+                || self.text(candidate.0, "AXSubrole")?.as_deref() == Some("AXSecureTextField")
+            {
+                continue;
+            }
+            let selected = match choice {
+                SelectionChoice::Index(expected) => index == *expected,
+                SelectionChoice::Value(expected) => {
+                    self.text(candidate.0, "AXIdentifier")?.as_ref() == Some(expected)
+                }
+                SelectionChoice::Label(expected) => {
+                    let title = self
+                        .text(candidate.0, "AXTitle")?
+                        .filter(|text| !text.is_empty());
+                    let description = self
+                        .text(candidate.0, "AXDescription")?
+                        .filter(|text| !text.is_empty());
+                    title.or(description).as_ref() == Some(expected)
+                }
+            };
+            if selected {
+                matches.push(candidate);
+            }
+        }
+        if matches.len() != 1 {
+            return Err(DriverError::new(
+                "NOT_ACTIONABLE",
+                "option is absent or ambiguous",
+            ));
+        }
+        let candidate = matches.pop().expect("exactly one option");
+        if self.boolean(candidate.0, "AXEnabled")? != Some(true) {
+            return Err(DriverError::new(
+                "NOT_ACTIONABLE",
+                "option enabled state is false or unknown",
+            ));
+        }
+        Ok(candidate)
+    }
+    fn resolve_action(&mut self, id: &str, action: &Action) -> Result<(AxRef, String)> {
+        self.deadline = Instant::now() + Duration::from_secs(5);
+        let index = id
+            .strip_prefix("ax-")
+            .and_then(|value| value.parse::<usize>().ok())
+            .ok_or_else(DriverError::stale)?;
+        if !self.current_ids.contains(&index) {
+            return Err(DriverError::stale());
+        }
+        let object = self
+            .registry
+            .objects
+            .get(index)
+            .ok_or_else(DriverError::stale)?
+            .0;
+        ax_result(unsafe { AXUIElementSetMessagingTimeout(object, 0.5) })?;
+        let mut pid = 0;
+        ax_result(unsafe { AXUIElementGetPid(object, &mut pid) })?;
+        if pid != self.pid {
+            return Err(DriverError::stale());
+        }
+        let role = self
+            .text(object, "AXRole")?
+            .ok_or_else(DriverError::stale)?;
+        if !matches!(action, Action::ScrollIntoView)
+            && self
+                .boolean(object, "AXEnabled")?
+                .is_none_or(|value| !value)
+        {
+            return Err(DriverError::new(
+                "NOT_ACTIONABLE",
+                "accessible control is disabled",
+            ));
+        }
+        if !matches!(action, Action::ScrollIntoView)
+            && self
+                .visibility
+                .get(&index)
+                .is_none_or(|value| value.hidden())
+        {
+            return Err(DriverError::new(
+                "NOT_ACTIONABLE",
+                "control visibility is hidden or unverified",
+            ));
+        }
+        if !matches!(action, Action::ScrollIntoView) {
+            if self.boolean(object, "AXHidden")? == Some(true)
+                || self.boolean(self.application.0, "AXHidden")? != Some(false)
+            {
+                return Err(DriverError::new(
+                    "NOT_ACTIONABLE",
+                    "control or application is hidden or unverified",
+                ));
+            }
+            if let Some(window) = self.get(object, "AXWindow")? {
+                if unsafe { CFGetTypeID(window.0) != AXUIElementGetTypeID() }
+                    || self.boolean(window.0, "AXMinimized")? != Some(false)
+                {
+                    return Err(DriverError::new(
+                        "NOT_ACTIONABLE",
+                        "window visibility is hidden or unverified",
+                    ));
+                }
+            }
+        }
+        Ok((object, role))
+    }
+    fn require_settable(&self, object: AxRef, name: &str) -> Result<()> {
+        self.guard()?;
+        let key = Cf::string(name)?;
+        let mut settable = 0;
+        ax_result(unsafe { AXUIElementIsAttributeSettable(object, key.0, &mut settable) })?;
+        if settable == 0 {
+            Err(DriverError::unsupported())
+        } else {
+            Ok(())
+        }
     }
     fn window_size(&mut self, object: AxRef) -> Result<()> {
         #[repr(C)]
@@ -474,53 +779,85 @@ impl AccessibleProvider for MacOsProvider {
         self.deadline = Instant::now() + Duration::from_secs(5);
         self.viewport = (1.0, 1.0);
         self.current_ids.clear();
+        self.visibility.clear();
         self.text_budget = ObservationBudget::new(4 * 1024 * 1024);
         let mut seen = HashSet::new();
         let mut truncated = false;
         let application = Cf::retain(self.application.0)?;
-        let child = self.node(application.0, 0, &mut seen, &mut truncated)?;
+        let child = self.node(
+            application.0,
+            0,
+            &mut seen,
+            &mut truncated,
+            None,
+            false,
+            None,
+            "",
+        )?;
         truncated |= self.text_budget.exhausted();
         self.current_ids = seen;
         Ok(
             json!({"root":{"ref":{"id":"desktop-root","revision":""},"role":"application","children":child.into_iter().collect::<Vec<_>>()},"viewport":{"width":self.viewport.0,"height":self.viewport.1},"truncated":truncated}),
         )
     }
-    fn perform(&mut self, id: &str, action: &Action) -> Result<()> {
-        self.deadline = Instant::now() + Duration::from_secs(5);
-        let index = id
-            .strip_prefix("ax-")
-            .and_then(|value| value.parse::<usize>().ok())
-            .ok_or_else(DriverError::stale)?;
-        if !self.current_ids.contains(&index) {
-            return Err(DriverError::stale());
-        }
-        let object = self
-            .registry
-            .objects
-            .get(index)
-            .ok_or_else(DriverError::stale)?
-            .0;
-        ax_result(unsafe { AXUIElementSetMessagingTimeout(object, 0.5) })?;
-        let mut pid = 0;
-        ax_result(unsafe { AXUIElementGetPid(object, &mut pid) })?;
-        if pid != self.pid {
-            return Err(DriverError::stale());
-        }
-        let role = self
-            .text(object, "AXRole")?
-            .ok_or_else(DriverError::stale)?;
-        if self
-            .boolean(object, "AXEnabled")?
-            .is_some_and(|value| !value)
-        {
-            return Err(DriverError::new(
-                "NOT_ACTIONABLE",
-                "accessible control is disabled",
-            ));
-        }
+    fn supports_actionability(&self) -> bool {
+        true
+    }
+    fn preflight(&mut self, id: &str, action: &Action) -> Result<()> {
+        let (object, role) = self.resolve_action(id, action)?;
         match action {
+            Action::SelectOption(choice) => {
+                self.selection_candidate(object, choice)?;
+            }
             Action::Tap => {
-                let press = Cf::string("AXPress")?;
+                self.supported_action(object, "AXPress")?;
+            }
+            Action::ScrollIntoView => {
+                self.supported_action(object, "AXScrollToVisible")?;
+            }
+            Action::Fill { .. } | Action::Clear => {
+                if !["AXTextField", "AXTextArea", "AXComboBox"].contains(&role.as_str()) {
+                    return Err(DriverError::unsupported());
+                }
+                self.require_settable(object, "AXValue")?;
+            }
+            Action::Focus => self.require_settable(object, "AXFocused")?,
+            Action::Check | Action::Uncheck => {
+                if !["AXCheckBox", "AXSwitch", "AXRadioButton"].contains(&role.as_str()) {
+                    return Err(DriverError::unsupported());
+                }
+                let desired = matches!(action, Action::Check);
+                let checked = self
+                    .boolean(object, "AXValue")?
+                    .ok_or_else(DriverError::unsupported)?;
+                if checked != desired {
+                    if role == "AXRadioButton" && !desired {
+                        return Err(DriverError::unsupported());
+                    }
+                    self.supported_action(object, "AXPress")?;
+                }
+            }
+        }
+        Ok(())
+    }
+    fn perform(&mut self, id: &str, action: &Action) -> Result<()> {
+        let (object, role) = self.resolve_action(id, action)?;
+        match action {
+            Action::SelectOption(choice) => {
+                let candidate = self.selection_candidate(object, choice)?;
+                let values = [candidate.0];
+                // The retained candidate outlives this synchronous AX call; the array never owns it.
+                let array = Cf::owned(unsafe {
+                    CFArrayCreate(ptr::null(), values.as_ptr(), 1, ptr::null())
+                })?;
+                self.set(object, "AXSelectedChildren", array.0)
+            }
+            Action::ScrollIntoView => {
+                let scroll = self.supported_action(object, "AXScrollToVisible")?;
+                ax_mutation_result(unsafe { AXUIElementPerformAction(object, scroll.0) })
+            }
+            Action::Tap => {
+                let press = self.supported_action(object, "AXPress")?;
                 ax_mutation_result(unsafe { AXUIElementPerformAction(object, press.0) })
             }
             Action::Fill { value, sensitive } => {
@@ -528,7 +865,8 @@ impl AccessibleProvider for MacOsProvider {
                     return Err(DriverError::unsupported());
                 }
                 if *sensitive {
-                    self.sensitive.insert(index);
+                    let identity = self.registry.id(object)?;
+                    self.sensitive.insert(identity);
                 }
                 let value = Cf::string(value)?;
                 self.set(object, "AXValue", value.0)
@@ -542,7 +880,7 @@ impl AccessibleProvider for MacOsProvider {
             }
             Action::Focus => self.set(object, "AXFocused", unsafe { kCFBooleanTrue }),
             Action::Check | Action::Uncheck => {
-                if role != "AXCheckBox" && role != "AXSwitch" {
+                if !["AXCheckBox", "AXSwitch", "AXRadioButton"].contains(&role.as_str()) {
                     return Err(DriverError::unsupported());
                 }
                 let checked = self
@@ -552,34 +890,27 @@ impl AccessibleProvider for MacOsProvider {
                 if checked == desired {
                     return Ok(());
                 }
-                let press = Cf::string("AXPress")?;
-                ax_mutation_result(unsafe { AXUIElementPerformAction(object, press.0) })
+                if role == "AXRadioButton" && !desired {
+                    return Err(DriverError::unsupported());
+                }
+                let press = self.supported_action(object, "AXPress")?;
+                ax_mutation_result(unsafe { AXUIElementPerformAction(object, press.0) })?;
+                // Never repeat a toggle whose state transition has not been observed.
+                let deadline = Instant::now() + Duration::from_millis(500);
+                loop {
+                    if self.boolean(object, "AXValue").ok().flatten() == Some(desired) {
+                        return Ok(());
+                    }
+                    if Instant::now() >= deadline {
+                        return Err(DriverError::new(
+                            "ACTION_MAY_HAVE_COMMITTED",
+                            "checked state was not confirmed after mutation",
+                        ));
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
             }
         }
-    }
-}
-fn semantic_role(role: &str) -> &str {
-    match role {
-        "AXApplication" => "application",
-        "AXWindow" => "window",
-        "AXButton" => "button",
-        "AXCheckBox" => "checkbox",
-        "AXSwitch" => "switch",
-        "AXRadioButton" => "radio",
-        "AXTextField" | "AXTextArea" => "textbox",
-        "AXStaticText" => "text",
-        "AXComboBox" | "AXPopUpButton" => "combobox",
-        "AXMenu" => "menu",
-        "AXMenuItem" => "menuitem",
-        "AXTable" => "table",
-        "AXRow" => "row",
-        "AXCell" => "cell",
-        "AXList" => "list",
-        "AXSlider" => "slider",
-        "AXLink" => "link",
-        "AXImage" => "image",
-        "AXTabGroup" => "tablist",
-        _ => "group",
     }
 }
 fn ax_result(status: AxError) -> Result<()> {

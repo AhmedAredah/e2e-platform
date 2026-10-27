@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "candidate": "0.2.0-rc.6",
+  "candidate": "0.2.0-rc.7",
   "evidenceSourceCommit": "3baeb8d6bd90b799f7784e67e24c9922d5e27b2f",
   "desktopEvidence": {
     "candidate": "0.2.0-rc.3",
@@ -9,7 +9,7 @@
     "conclusion": "success",
     "scope": "Desktop contract tests, Linux GTK3 reference acceptance and native Windows/macOS builds; not an all-CI pass"
   },
-  "testLanguage": "TypeScript/JavaScript",
+  "testLanguage": "TypeScript/JavaScript; bounded C++ authoring bridge",
   "applicationLanguages": [
     "Python",
     "C#/.NET",
@@ -30,7 +30,8 @@
         "check",
         "uncheck",
         "selectOption",
-        "hover"
+        "hover",
+        "scrollIntoView"
       ],
       "keyboard": true,
       "screenshots": "source-masked Qt helper capture",
@@ -45,7 +46,16 @@
           "No Windows/macOS result",
           "Quick selectOption requires supported non-editable closed-popup ComboBox"
         ]
-      }
+      },
+      "actionability": true,
+      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "windowManagement": "Qt-owned visible windows; modal guards",
+      "customControls": "public source-level ControlAdapter; registration disables helper screenshots",
+      "configuredWorkflows": [
+        "native.yml qt-linux offscreen/x11",
+        "native.yml qt-desktop-kits Windows/macOS Qt 6.8.3 offscreen",
+        "qt-live.yml manual interactive QPA profiles"
+      ]
     },
     {
       "backend": "linux-atspi",
@@ -58,7 +68,8 @@
         "focus",
         "check",
         "uncheck",
-        "selectOption"
+        "selectOption",
+        "scrollIntoView"
       ],
       "keyboard": false,
       "screenshots": false,
@@ -75,7 +86,10 @@
           "Other toolkits, controls and display backends require separate qualification",
           "The earlier local AF_UNIX restriction is not the hosted run result"
         ]
-      }
+      },
+      "actionability": true,
+      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "localPortableChecks": 81
     },
     {
       "backend": "windows-uia",
@@ -88,7 +102,8 @@
         "focus",
         "check",
         "uncheck",
-        "selectOption"
+        "selectOption",
+        "scrollIntoView"
       ],
       "keyboard": false,
       "screenshots": false,
@@ -99,7 +114,11 @@
         "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506975",
         "liveStatus": "not-run",
         "reason": "Requires interactive Windows host"
-      }
+      },
+      "actionability": true,
+      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "localPortableChecks": 76,
+      "localCompileStatus": "Windows-target cross-build passed; no interactive Windows run"
     },
     {
       "backend": "macos-ax",
@@ -111,7 +130,9 @@
         "clear",
         "focus",
         "check",
-        "uncheck"
+        "uncheck",
+        "scrollIntoView",
+        "selectOption"
       ],
       "keyboard": false,
       "screenshots": false,
@@ -122,14 +143,30 @@
         "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430/job/121943506918",
         "liveStatus": "not-run",
         "reason": "Requires macOS, SDK and Accessibility permission"
-      }
+      },
+      "actionability": true,
+      "currentCandidateQualification": "pending exact-source native platform runs; qualification evidence below is historical",
+      "selection": "writable AXSelectedChildren; unique direct child label/AXIdentifier/index",
+      "visibility": "explicit known/unknown flag; unknown cannot prove visible, hidden or absence",
+      "localPortableChecks": 32,
+      "stateKnowledge": "visibilityKnown, enabledKnown, focusedKnown; unknown cannot satisfy positive or negated assertions"
     }
   ],
   "rules": [
     "A driver action still requires a supported control interface",
     "Application language alone does not qualify a toolkit",
     "A source workflow is not a recorded platform pass",
-    "No foreign-language full runner SDKs are included"
+    "C++ authoring is a bounded bridge; Python/C#/Rust authoring SDKs are not included",
+    "Unknown visibility cannot satisfy visible or hidden assertions",
+    "Readonly preflight can be retried; uncertain mutations cannot be replayed",
+    "No OS sidecar keyboard input, screenshots, native video or hybrid DOM switching"
   ],
-  "candidateVerificationSource": "GitHub Actions runs for the exact source commit and the accompanying validation bundle"
+  "candidateVerificationSource": "GitHub Actions runs for the exact source commit and the accompanying validation bundle",
+  "testAuthoring": {
+    "typescript": "shared runner API",
+    "cpp": "bounded native/cpp-sdk and @e2e-platform/cpp bridge; documented operations only",
+    "python": "not implemented",
+    "csharp": "not implemented",
+    "rust": "not implemented"
+  }
 }

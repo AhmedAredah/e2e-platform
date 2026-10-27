@@ -99,3 +99,12 @@ SDKs are not relicensed by the root MIT notice and are not bundled in the source
 archive. Selected Cargo dependencies use their MIT or Boost Software License 1.0 options;
 see the driver's dependency table and preserve their notices when distributing binaries. This statement does not
 assert that every optional repository dependency has an MIT-only license.
+
+## C++ authoring SDK and Windows process supervisor
+
+The independently implemented C++ SDK and Windows Job Object supervisor are MIT.
+The C++ SDK vendors JSON for Modern C++ v3.12.0 by Niels Lohmann and contributors
+under MIT, retaining its complete header and license notices. Its pinned source
+and SHA-256 are recorded in `native/cpp-sdk/THIRD_PARTY.md`; CMake installs those
+notices with the SDK. The Windows supervisor uses the separately installed .NET
+runtime and Windows system APIs. Their own licenses continue to apply.

@@ -17,7 +17,7 @@ class StateSet:
 class FakeObject:
     def __init__(self, name, role, children=(), *, secure=False, pid=10):
         self.name, self.role, self.children, self.pid = name, role, list(children), pid
-        self.flags = {"ENABLED", "SHOWING", "EDITABLE"}
+        self.flags = {"ENABLED", "SHOWING", "VISIBLE", "FOCUSABLE", "EDITABLE"}
         self.value = "fixture-secret" if secure else ""
         self.attributes = {"e2e-secure": "true"} if secure else {}
         self.edits = 0
@@ -32,6 +32,7 @@ class FakeObject:
     def get_name(self): return self.name
     def get_accessible_id(self): return self.name.lower()
     def get_component_iface(self): return None
+    def get_value_iface(self): return None
     def get_text_iface(self): return self
     def get_character_count(self): return len(self.value)
     # Accessible.get_text is a deprecated interface accessor, not Text.get_text.
@@ -73,6 +74,8 @@ class TextInterface:
 
 
 class Api:
+    ScrollType = type("ScrollTypes", (), {"ANYWHERE": 6})
+    Value = type("ValueInterface", (), {"get_current_value": staticmethod(lambda obj: obj.numeric)})
     StateType = StateTypes()
     Text = TextInterface
     def __init__(self, app): self.desktop = FakeObject("Desktop", "desktop", [app])
@@ -134,6 +137,32 @@ class ProviderTests(unittest.TestCase):
         with self.assertRaises(DriverError):
             self.perform(self.list, kind="selectOption", value={"index": 1})
         self.assertNotIn("SELECTED", self.list.children[1].flags)
+
+    def test_foreign_option_name_is_never_read(self):
+        candidate = self.list.children[1]
+        candidate.pid = 20
+        candidate.get_name = lambda: self.fail("foreign option metadata was read")
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.list, kind="selectOption", value={"label": "Beta"})
+        self.assertEqual(result.exception.code, "NODE_STALE")
+
+    def test_secure_option_name_is_never_read(self):
+        candidate = self.list.children[1]
+        candidate.attributes["e2e-secure"] = "true"
+        candidate.get_name = lambda: self.fail("secure option metadata was read")
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.list, kind="selectOption", value={"label": "Beta"})
+        self.assertEqual(result.exception.code, "NOT_ACTIONABLE")
+
+    def test_selected_radio_uncheck_is_rejected_before_dispatch(self):
+        self.check.role = "radio button"
+        self.check.flags.add("CHECKED")
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.check, kind="uncheck")
+        self.assertEqual(result.exception.code, "UNSUPPORTED_CAPABILITY")
+        self.assertEqual(self.check.actions, 0)
+        self.perform(self.check, kind="check")
+        self.assertEqual(self.check.actions, 0)
 
     def test_fill_and_clear(self):
         self.perform(self.entry, kind="fill", value="Ada")
@@ -276,3 +305,83 @@ class ProviderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExtendedControlTests(unittest.TestCase):
+    setUp = ProviderTests.setUp
+    perform = ProviderTests.perform
+    def test_offscreen_control_can_be_scrolled_without_activating(self):
+        self.entry.flags.discard("SHOWING")
+        calls = []
+        class Component:
+            def scroll_to(self, destination):
+                calls.append(destination)
+                return True
+        self.entry.get_component_iface = lambda: Component()
+        self.perform(self.entry, kind="scrollIntoView")
+        self.assertEqual(calls, [6])
+        self.assertEqual(self.entry.edits, 0)
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="fill", value="x")
+        self.assertEqual(result.exception.code, "NOT_ACTIONABLE")
+
+    def test_unsupported_scroll_does_not_fall_back_to_input(self):
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="scrollIntoView")
+        self.assertEqual(result.exception.code, "UNSUPPORTED_CAPABILITY")
+        self.assertEqual(self.entry.actions, 0)
+
+    def test_failed_scroll_is_never_retryable(self):
+        class Component:
+            def scroll_to(self, destination): return False
+        self.entry.get_component_iface = lambda: Component()
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="scrollIntoView")
+        self.assertEqual(result.exception.code, "ACTION_MAY_HAVE_COMMITTED")
+
+    def test_visible_state_is_required_even_if_provider_says_showing(self):
+        self.entry.flags.discard("VISIBLE")
+        node = self.provider.snapshot()["root"]["children"][0]["children"][0]
+        self.assertTrue(node["states"]["hidden"])
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="fill", value="x")
+        self.assertEqual(result.exception.code, "NOT_ACTIONABLE")
+
+    def test_placeholder_does_not_leak_from_secure_control(self):
+        self.entry.attributes["placeholder-text"] = "Your name"
+        self.password.attributes["placeholder-text"] = "private secret"
+        nodes = self.provider.snapshot()["root"]["children"][0]["children"]
+        self.assertEqual(nodes[0]["attributes"]["placeholder"], "Your name")
+        self.assertNotIn("attributes", nodes[1])
+
+    def test_numeric_range_value_is_observable(self):
+        slider = FakeObject("Volume", "slider")
+        slider.numeric = 0.5
+        slider.get_value_iface = lambda: slider
+        self.app.children.append(slider)
+        node = self.provider.snapshot()["root"]["children"][0]["children"][-1]
+        self.assertEqual(node["value"], "0.5")
+
+    def test_nonfocusable_control_is_rejected_before_focus(self):
+        self.entry.flags.discard("FOCUSABLE")
+        with self.assertRaises(DriverError) as result:
+            self.perform(self.entry, kind="focus")
+        self.assertEqual(result.exception.code, "NOT_ACTIONABLE")
+
+
+class ActionabilityTests(unittest.TestCase):
+    setUp = ProviderTests.setUp
+    def test_preflight_is_read_only_and_rechecks_disabled_state(self):
+        identity = self.provider._ids[self.entry]
+        self.provider.preflight(identity, {"kind":"fill", "value":"private", "sensitive":True})
+        self.assertEqual(self.entry.edits, 0)
+        self.assertNotIn(identity, self.provider._secure_ids)
+        self.entry.flags.discard("ENABLED")
+        with self.assertRaises(DriverError) as result:
+            self.provider.preflight(identity, {"kind":"fill", "value":"x"})
+        self.assertEqual(result.exception.code, "NOT_ACTIONABLE")
+        self.assertEqual(self.entry.edits, 0)
+
+    def test_selection_preflight_does_not_select(self):
+        self.provider.preflight(self.provider._ids[self.list], {"kind":"selectOption", "value":"Beta"})
+        self.assertNotIn("SELECTED", self.list.children[1].flags)

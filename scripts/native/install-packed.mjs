@@ -10,8 +10,8 @@ if (process.argv.length !== 3 || !project) throw new Error('Usage: node release-
 const cwd = resolve(project);
 if (!existsSync(join(cwd, 'package.json'))) throw new Error('Create your project package.json first, for example with npm init -y');
 const manifest = JSON.parse(readFileSync(join(directory, 'manifest.json'), 'utf8'));
-if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.packages) || manifest.packages.length !== 6) throw new Error('Invalid install manifest');
-const packageNames = new Set(['core', 'process', 'checks', 'protocol', 'native', 'terminal'].map((name) => `@e2e-platform/${name}`));
+if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.packages) || manifest.packages.length !== 7) throw new Error('Invalid install manifest');
+const packageNames = new Set(['core', 'process', 'checks', 'protocol', 'native', 'terminal', 'cpp'].map((name) => `@e2e-platform/${name}`));
 const supportNames = new Set(['install.mjs', 'package-manager.mjs']);
 if (!Array.isArray(manifest.supportFiles) || manifest.supportFiles.length !== supportNames.size) throw new Error('Invalid installer file manifest');
 for (const entry of manifest.supportFiles) {
@@ -30,4 +30,4 @@ const files = manifest.packages.map((entry) => {
 const { runPackageManager } = await import('./package-manager.mjs');
 const result = runPackageManager('npm', ['install', '--save-dev', ...files], { cwd, stdio: 'inherit' });
 if (result.status !== 0) throw new Error('npm install failed');
-process.stdout.write('Installed @e2e-platform/core and the five application-boundary modules. For real PTYs, separately install the optional node-pty peer and its native build prerequisites.\n');
+process.stdout.write('Installed @e2e-platform/core, five application-boundary modules and the C++ test adapter. The C++17 SDK and native helpers install separately through CMake or their OS toolchains. For real PTYs, separately install the optional node-pty peer and its native build prerequisites.\n');

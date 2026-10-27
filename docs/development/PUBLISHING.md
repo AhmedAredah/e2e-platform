@@ -44,7 +44,9 @@ machines with credentials or broad host access.
 
 ## Packages and release files
 
-`pnpm pack:native` builds a checksummed six-package consumer kit. Run
+`pnpm pack:native` builds a checksummed seven-package consumer kit, including the
+C++ authoring bridge. Native SDKs, Qt helpers, OS sidecars and the optional Windows
+Job Object supervisor have separate build/install steps. Run
 `node scripts/native/install-kit-smoke.mjs --kit release-packages` against the
 exact files being distributed. Optional browser and mobile packages have the
 separate installation workflow in `INSTALL.md`. npm namespace ownership and

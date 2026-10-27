@@ -4,7 +4,10 @@ export { ExecutableLaunchProfile, type ExecutableLaunchOptions } from './launch/
 export { PythonLaunchProfile, type PythonLaunchOptions } from './launch/python.ts';
 export { DotnetLaunchProfile, type DotnetLaunchOptions } from './launch/dotnet.ts';
 export { LocalProcessRunner, ProcessRunner, runProcess, startProcess } from './process/runner.ts';
+export { WindowsJobProcessRunner, type WindowsJobRunnerOptions } from './process/windows-job.ts';
 export { terminateProcessTree } from './tree.ts';
 export { ProcessWorkspace } from './fixtures/workspace.ts';
 export type { ProcessFixture } from './fixtures/workspace.ts';
+export { ApplicationService, ServiceReadiness, PredicateReadiness } from './service/application.ts';
+export type { ApplicationServiceOptions, ServiceReadinessContext } from './service/application.ts';
 export type { ProcessCapture, ProcessErrorCode, ProcessOptions, ProcessOutput, ProcessResult, ProcessSession, ProcessStatus, RunProcessOptions } from './types.ts';

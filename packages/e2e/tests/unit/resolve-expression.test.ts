@@ -37,10 +37,30 @@ describe('semantic tree locator resolution', () => {
     expect(ids({ kind: 'query', query: { ...query, name: { kind: 'regexp', source: '^$', flags: '' } } }, roots)).toEqual(['empty']);
   });
 
+  it('does not turn unknown visibility into an absent match or block unrelated known controls', () => {
+    const roots = [node('unknown', { role: 'button', name: 'Unknown', states: { hidden: true, visibilityKnown: false } }),
+      node('known', { role: 'button', name: 'Known', states: { hidden: false } })];
+    const role = { kind: 'role' as const, value: literal('button') };
+    expect(() => ids({ kind: 'query', query: role }, roots)).toThrow(/visibility is unavailable/);
+    expect(() => ids({ kind: 'query', query: { kind: 'testId', value: literal('unknown'), visible: true } }, roots)).toThrow(/visibility is unavailable/);
+    expect(ids({ kind: 'query', query: { ...role, name: literal('Known') } }, roots)).toEqual(['known']);
+    expect(ids(byId('unknown'), roots)).toEqual(['unknown']);
+    expect(ids(byId('absent'), roots)).toEqual([]);
+  });
+
   it('refuses unsupported selectors and malformed forests', () => {
     expect(() => resolveExpression({ kind: 'selector', selector: '.button' }, [])).toThrow(/native selector/);
     expect(() => resolveExpression({ kind: 'frame', selector: 'iframe', source: byId('x') }, [])).toThrow(/nested documents/);
     const shared = node('x');
     expect(() => resolveExpression(byId('x'), [shared, shared])).toThrow(/cyclic, shared/);
+  });
+
+  it('does not treat unknown enabled state as either matching or absent in disabled-state filters', () => {
+    const roots = [node('unknown', { role: 'button', name: 'Unknown', states: { disabled: true, enabledKnown: false } }),
+      node('known', { role: 'button', name: 'Known', states: { disabled: false } })];
+    const query = { kind: 'role' as const, value: literal('button') };
+    for (const disabled of [true, false]) expect(() => ids({ kind: 'query', query: { ...query, states: { disabled } } }, roots)).toThrow(/enabled state is unavailable/);
+    expect(ids({ kind: 'query', query }, roots)).toEqual(['unknown', 'known']);
+    expect(ids({ kind: 'query', query: { ...query, name: literal('Known'), states: { disabled: false } } }, roots)).toEqual(['known']);
   });
 });

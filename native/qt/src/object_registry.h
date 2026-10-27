@@ -42,12 +42,11 @@ private:
     QHash<QString, QPointer<QObject>> objects;
     QSet<QString> currentIds;
     QString identify(QObject* object, bool root = false) {
-        if (root) { objects["root"] = object; currentIds.insert("root"); return "root"; }
         auto found = reverse.constFind(object);
         QString id;
         if (found == reverse.cend()) {
             if (objects.size() > MaxNodes * 4) throw Failure("ENGINE_FAILURE", "object registry capacity exceeded");
-            id = QStringLiteral("qt-%1").arg(nextId++);
+            id = (root ? QStringLiteral("root-%1") : QStringLiteral("qt-%1")).arg(nextId++);
             reverse.insert(object, id);
             objects.insert(id, object);
             QObject::connect(object, &QObject::destroyed, this, [this, object, id] { reverse.remove(object); objects.remove(id); currentIds.remove(id); });

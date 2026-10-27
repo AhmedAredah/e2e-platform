@@ -15,14 +15,76 @@
 
 namespace e2e::qt::detail {
 Surface::Surface() {
-    adapters_.push_back(std::make_unique<WidgetsAdapter>());
+    clock_.start();
+    adapters_.push_back(std::make_unique<WidgetsAdapter>(&custom_));
 #ifdef E2E_QT_HAS_QUICK
-    adapters_.push_back(std::make_unique<QuickAdapter>());
+    adapters_.push_back(std::make_unique<QuickAdapter>(&custom_));
 #endif
+}
+QJsonArray Surface::windows() {
+    for (auto it = windows_.begin(); it != windows_.end();) {
+        if (!it.value()) it = windows_.erase(it); else ++it;
+    }
+    QJsonArray result;
+    QObject* activeObject = nullptr;
+    try { activeObject = active().first; } catch (const Failure&) { }
+    for (QWindow* window : QGuiApplication::topLevelWindows()) {
+        QObject* object = window;
+        if (qobject_cast<QApplication*>(QCoreApplication::instance()))
+            for (QWidget* widget : QApplication::topLevelWidgets())
+                if (widget->windowHandle() == window) { object = widget; break; }
+        bool supported = false;
+        for (const auto& adapter : adapters_) if (adapter->accepts(object)) { supported = true; break; }
+        if (!supported) continue;
+        QString id;
+        for (auto it = windows_.cbegin(); it != windows_.cend(); ++it) if (it.value() == object) { id = it.key(); break; }
+        if (id.isEmpty()) {
+            if (windows_.size() >= 256) throw Failure("ENGINE_FAILURE", "Qt window limit exceeded");
+            id = QStringLiteral("window-%1").arg(nextWindow_++);
+            windows_.insert(id, object);
+        }
+        result.append(QJsonObject{{"id", id}, {"title", secureObject(object) ? QString() : clean(window->title(), 256)},
+            {"visible", window->isVisible()}, {"active", object == activeObject}, {"modal", window->modality() != Qt::NonModal}});
+    }
+    return result;
+}
+void Surface::activateWindow(const QString& id) {
+    QPointer<QObject> object = windows_.value(id);
+    if (!object) throw Failure("NODE_STALE", "Qt window handle is stale or was not enumerated");
+    QPointer<QWindow> window = qobject_cast<QWindow*>(object);
+    if (auto* widget = qobject_cast<QWidget*>(object)) window = widget->windowHandle();
+    if (!window || !window->isVisible()) throw Failure("NOT_ACTIONABLE", "Qt window is not visible");
+    QWindow* modal = QGuiApplication::modalWindow();
+    if (modal && modal != window) throw Failure("NOT_ACTIONABLE", "another Qt modal window blocks activation");
+    window->raise();
+    if (!object || !window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt window was destroyed during activation");
+    window->requestActivate();
+    root_.clear(); adapter_ = nullptr; registry_.begin(); stable_.clear();
+}
+void Surface::actionability(const QJsonObject& params) {
+    ensureRoot();
+    const QString id = requiredText(params.value("ref").toObject(), "id");
+    QObject* object = registry_.resolve(id);
+    const QJsonObject action = params.value("action").toObject();
+    requiredText(action, "kind");
+    if (!adapter_->accepts(object)) throw Failure("UNSUPPORTED_CAPABILITY", "Qt adapter cannot inspect this target");
+    adapter_->ready(object, root_, action);
+    if (custom_.handles(object)) custom_.ready(object, action);
+    const QRectF rect = adapter_->rectangle(object, root_);
+    auto it = stable_.find(id);
+    if (it == stable_.end() || it->rect != rect || it->root != root_) {
+        if (stable_.size() >= MaxNodes) stable_.clear();
+        stable_.insert(id, StableGeometry{rect, root_, clock_.elapsed()});
+        throw Failure("NOT_ACTIONABLE", "Qt target geometry has not settled");
+    }
+    if (clock_.elapsed() - it->since < 50) throw Failure("NOT_ACTIONABLE", "Qt target geometry has not settled");
 }
 std::pair<QObject*, ObjectAdapter*> Surface::active() const {
     // Select globally before choosing an adapter. A background widget must not
     // displace a focused or modal Quick window in a mixed application.
+    if (qobject_cast<QApplication*>(QCoreApplication::instance()))
+        if (auto* popup = QApplication::activePopupWidget())
+            for (const auto& adapter : adapters_) if (adapter->accepts(popup)) return {popup, adapter.get()};
     QWindow* window = QGuiApplication::modalWindow();
     if (!window) window = QGuiApplication::focusWindow();
     if (window) {
@@ -49,6 +111,7 @@ QJsonObject Surface::snapshot(bool pixels) {
     ensureRoot();
     registry_.begin();
     QJsonObject result = adapter_->snapshot(root_, registry_);
+    ensureRoot();
     if (pixels) result["screenshot"] = pixelsResult;
     return result;
 }
@@ -74,9 +137,7 @@ void Surface::type(QObject* object, const QString& text, bool replace, ObjectAda
             // Non-ASCII text follows Qt's input-method commit path, preserving Unicode.
             qsizetype end = index + 1;
             while (end < text.size() && (text.at(end).unicode() < 32 || text.at(end).unicode() > 126)) ++end;
-            QInputMethodEvent event;
-            event.setCommitString(text.mid(index, end - index));
-            QCoreApplication::sendEvent(target, &event);
+            adapter.commitText(target, text.mid(index, end - index));
             index = end;
         }
     }
@@ -107,8 +168,15 @@ void Surface::perform(const QJsonObject& params) {
     const QJsonObject action = params.value("action").toObject();
     const QString kind = requiredText(action, "kind");
     QPointer<QObject> target(object);
-    adapter.actionable(object, root);
-    if (kind == "tap" || kind == "doubleTap" || kind == "secondaryTap" || kind == "hover")
+    adapter.ready(object, root, action);
+    if (custom_.handles(object)) {
+        if (kind == "fill" && action.value("sensitive").toBool()) markSensitiveObject(object);
+        custom_.perform(object, action);
+        return;
+    }
+    if (kind == "scrollIntoView") adapter.scrollIntoView(object, root);
+    else if (kind == "swipe") adapter.swipe(object, root, requiredText(action, "direction"));
+    else if (kind == "tap" || kind == "doubleTap" || kind == "secondaryTap" || kind == "hover")
         adapter.click(object, kind == "secondaryTap" ? Qt::RightButton : Qt::LeftButton, kind == "doubleTap", kind == "hover");
     else if (kind == "focus") adapter.focus(object);
     else if (kind == "fill" || kind == "clear") {
@@ -124,12 +192,15 @@ void Surface::perform(const QJsonObject& params) {
     else if (kind == "check" || kind == "uncheck") {
         const bool desired = kind == "check";
         if (!adapter.checkable(object)) throw Failure("UNSUPPORTED_CAPABILITY", "target is not checkable");
-        if (object->property("checked").toBool() != desired) adapter.click(object, Qt::LeftButton, false, false);
-        if (!target || target->property("checked").toBool() != desired) throw Failure("ACTION_MAY_HAVE_COMMITTED", "control did not reach requested checked state");
+        adapter.setChecked(object, desired);
+        bool reached = false;
+        try { reached = target && adapter.checked(target) == desired; } catch (const Failure&) { }
+        if (!reached) throw Failure("ACTION_MAY_HAVE_COMMITTED", "control did not reach requested checked state");
     } else if (kind == "selectOption") adapter.selectOption(object, action.value("value"));
     else throw Failure("UNSUPPORTED_CAPABILITY", "action is not supported");
 }
 QJsonObject Surface::screenshot() {
+    if (!custom_.empty()) throw Failure("UNSUPPORTED_CAPABILITY", "custom control adapters do not establish screenshot masking; disable screenshots for this profile");
     const auto target = active();
     if (root_ && target.first != root_) throw Failure("NODE_STALE", "active Qt window changed before screenshot");
     QPointer<QObject> capturedRoot(target.first);

@@ -25,11 +25,14 @@
 #endif
 
 namespace e2e::qt::detail {
-void sendKeyPair(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text) {
+void sendKeyPair(QObject* object, Qt::Key key, Qt::KeyboardModifiers modifiers, const QString& text, const std::function<bool()>& retainsFocus) {
     QPointer<QObject> target(object);
     QKeyEvent press(QEvent::KeyPress, key, modifiers, text);
     QCoreApplication::sendEvent(target, &press);
     if (!target) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during key input");
+    // A character-bearing release must not reveal text to a control that
+    // acquired focus in the press handler. Navigation keys may move focus.
+    if (!text.isEmpty() && !retainsFocus()) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt keyboard focus changed during character input");
     QKeyEvent release(QEvent::KeyRelease, key, modifiers, text);
     QCoreApplication::sendEvent(target, &release);
 }
@@ -56,6 +59,40 @@ QString accessibleName(QObject* object) {
     return accessible ? clean(accessible->text(QAccessible::Name), 256) : QString();
 }
 
+QString accessibleRole(QObject* object, const QString& fallback) {
+    auto* interface = QAccessible::queryAccessibleInterface(object);
+    if (!interface) return fallback;
+    switch (interface->role()) {
+    case QAccessible::Button: return "button";
+    case QAccessible::CheckBox: return "checkbox";
+    case QAccessible::RadioButton: return "radio";
+    case QAccessible::ComboBox: return "combobox";
+    case QAccessible::EditableText: return "textbox";
+    case QAccessible::StaticText: return "text";
+    case QAccessible::List: return "listbox";
+    case QAccessible::Tree: return "tree";
+    case QAccessible::Table: return "grid";
+    case QAccessible::PageTab: return "tab";
+    case QAccessible::PageTabList: return "tablist";
+    case QAccessible::MenuBar: return "menubar";
+    case QAccessible::PopupMenu: return "menu";
+    case QAccessible::MenuItem: return "menuitem";
+    case QAccessible::Slider: return "slider";
+    case QAccessible::SpinBox: return "spinbutton";
+    case QAccessible::ProgressBar: return "progressbar";
+    case QAccessible::ScrollBar: return "scrollbar";
+    case QAccessible::ToolBar: return "toolbar";
+    case QAccessible::Dialog: return "dialog";
+    case QAccessible::Window: return "window";
+    default: return fallback;
+    }
+}
+QString accessibleValue(QObject* object) {
+    auto* interface = QAccessible::queryAccessibleInterface(object);
+    if (!interface) return {};
+    if (auto* value = interface->valueInterface()) return clean(value->currentValue().toString());
+    return {};
+}
 QString widgetRole(QWidget* widget) {
     if (qobject_cast<QRadioButton*>(widget)) return "radio";
     if (qobject_cast<QCheckBox*>(widget)) return "checkbox";
@@ -122,6 +159,7 @@ void markSensitiveObject(QObject* object) { sensitiveObjects().mark(object); }
 
 bool secureObject(QObject* object) {
     bool detected = false;
+    if (auto* interface = QAccessible::queryAccessibleInterface(object)) detected = interface->state().passwordEdit;
     for (QObject* ancestor = object; ancestor; ancestor = ancestor->parent())
         if (secureMarker(ancestor)) { detected = true; break; }
     if (auto* edit = qobject_cast<QLineEdit*>(object)) detected |= edit->echoMode() != QLineEdit::Normal;

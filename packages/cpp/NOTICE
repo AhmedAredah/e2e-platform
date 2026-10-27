@@ -1,0 +1,5 @@
+e2e-platform C++ test adapter
+
+Original extension work is distributed under the MIT license in LICENSE.
+The upstream testing runner is separately attributed to TesterArmy, Inc.
+The separately installed C++ SDK includes nlohmann/json under its MIT license.

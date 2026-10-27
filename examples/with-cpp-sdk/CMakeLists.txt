@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.21)
+project(e2e_cpp_sdk_examples LANGUAGES CXX)
+find_package(e2eCpp CONFIG REQUIRED)
+foreach(kind cli negative http qt)
+  add_executable(e2e_cpp_${kind}_tests src/${kind}_tests.cpp)
+  target_link_libraries(e2e_cpp_${kind}_tests PRIVATE e2e::cpp)
+endforeach()

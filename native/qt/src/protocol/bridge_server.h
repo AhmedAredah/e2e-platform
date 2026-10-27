@@ -11,6 +11,7 @@ public:
     explicit BridgeServer(QObject* parent);
     bool start();
     QString errorString() const { return error; }
+    bool addControlAdapter(std::shared_ptr<ControlAdapter> adapter);
 private:
     /** A request owns its connection even while application code runs a nested event loop. */
     struct ConnectionTarget {

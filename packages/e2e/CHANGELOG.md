@@ -1,5 +1,19 @@
 # @e2e-platform/core
 
+## 0.2.0-rc.7
+
+### Minor Changes
+
+- Expose an attempt-scoped context as the third custom fixture argument. Extensions can record operations, attach artifacts, and obtain current cancellation budgets without importing runner internals. Existing two-argument fixtures remain compatible.
+
+### Patch Changes
+
+- Coordinate the C++ and desktop qualification candidate and its seven-package local
+  installation kit. Add C++ test authoring, installed GUI consumer checks, C++ HTTP
+  fixtures and explicit platform qualification gates. Keep native platform and toolkit
+  limitations visible; this candidate does not establish blanket framework support.
+- Preserve unavailable desktop visibility with an optional semantic state. Visibility reads, filtered queries, waits and positive or negated assertions no longer treat unknown visibility as proof that a control is hidden or absent.
+
 ## 0.2.0-rc.6
 
 ### Patch Changes

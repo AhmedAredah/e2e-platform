@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/checks",
-  "version": "0.2.0-rc.6",
+  "version": "0.2.0-rc.7",
   "description": "Deterministic numerical, JSON and CSV checks for native application outputs",
   "type": "module",
   "license": "MIT",

@@ -116,7 +116,7 @@ describe('desktop accessibility sidecar integration', () => {
     for (const invalid of [null, [], { ...base, backend: '__proto__' }, { ...base, executable: '' }, { ...base, executable: 'a\0b' }, { ...base, args: 'script' }, { ...base, args: ['--'] }, { ...base, args: ['a\0b'] }, { ...base, screenshots: true }, { ...base, keyboard: true }, { ...base, actions: ['hover'] }, { ...base, actions: ['tap', 'tap'] }, { ...base, launchTimeout: -1 }]) {
       expect(() => desktop(invalid as unknown as DesktopOptions)).toThrow();
     }
-    expect(() => desktop({ backend: 'macos-ax', executable: process.execPath, actions: ['selectOption'] })).toThrow();
+    expect(() => desktop({ backend: 'macos-ax', executable: process.execPath, actions: ['selectOption'] })).not.toThrow();
     expect(() => desktop({ ...base, actions: [] })).toThrow();
     expect(() => desktop({ ...base, actions: ['tap'] })).not.toThrow();
   });
