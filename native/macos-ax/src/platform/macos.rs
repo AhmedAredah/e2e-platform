@@ -610,7 +610,10 @@ impl MacOsProvider {
                 return Cf::string(name);
             }
         }
-        Err(DriverError::unsupported())
+        Err(DriverError::new(
+            "UNSUPPORTED_CAPABILITY",
+            "requested accessibility action is not advertised",
+        ))
     }
     fn selection_candidate(&mut self, object: AxRef, choice: &SelectionChoice) -> Result<Cf> {
         self.require_settable(object, "AXSelectedChildren")?;
@@ -960,7 +963,10 @@ fn ax_result(status: AxError) -> Result<()> {
     match status {
         0 => Ok(()),
         -25202 => Err(DriverError::stale()),
-        -25205 | -25206 | -25208 | -25212 => Err(DriverError::unsupported()),
+        -25205 | -25206 | -25208 | -25212 => Err(DriverError::new(
+            "UNSUPPORTED_CAPABILITY",
+            "platform does not support the accessibility operation",
+        )),
         -25211 => Err(DriverError::new(
             "POLICY_DENIED",
             "macOS accessibility is disabled",

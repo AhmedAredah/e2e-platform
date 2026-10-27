@@ -79,6 +79,9 @@ unsafe extern "C" fn select(_: Id, _: Sel, children: Id) {
 unsafe extern "C" fn action_names(_: Id, _: Sel) -> Id {
     unsafe { items(&[text("AXScrollToVisible")]) }
 }
+unsafe extern "C" fn action_description(_: Id, _: Sel, _: Id) -> Id {
+    unsafe { text("Scroll to visible") }
+}
 unsafe extern "C" fn perform_action(object: Id, _: Sel, action: Id) {
     unsafe {
         if equal(
@@ -162,6 +165,12 @@ pub(super) unsafe fn install(content: Id) {
             "accessibilityPerformAction:",
             perform_action as *const c_void,
             "v@:@",
+        );
+        method(
+            button_class,
+            "accessibilityActionDescription:",
+            action_description as *const c_void,
+            "@@:@",
         );
         objc_registerClassPair(button_class);
         SCROLL = control(

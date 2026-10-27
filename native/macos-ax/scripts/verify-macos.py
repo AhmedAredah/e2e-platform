@@ -16,9 +16,10 @@ import time
 
 
 class RpcError(AssertionError):
-    def __init__(self, code):
+    def __init__(self, code, message):
         self.code = code
-        super().__init__('native operation failed: ' + code)
+        # The owned driver supplies constant, content-free error messages.
+        super().__init__('native operation failed: ' + code + ': ' + message)
 
 
 def descendants(pid):
@@ -75,7 +76,7 @@ def scenario(args, wrong=False):
             response = json.loads(line)
             assert response.get('id') == next_id and response.get('jsonrpc') == '2.0'
             if 'error' in response:
-                raise RpcError(response['error'].get('data', {}).get('code', 'unknown'))
+                raise RpcError(response['error'].get('data', {}).get('code', 'unknown'), response['error'].get('message', ''))
             return response['result']
 
         def snapshot():
