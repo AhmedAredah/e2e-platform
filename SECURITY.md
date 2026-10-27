@@ -12,7 +12,7 @@ project's contact is not this fork's support team.
 
 ## Supported versions
 
-The reviewed candidate is 0.2.0-rc.5 on `mit-main`; the preserved upstream `main`
+The reviewed candidate is 0.2.0-rc.6 on `mit-main`; the preserved upstream `main`
 branch is not this candidate. No registry release, response-time commitment or
 long-term maintenance window is established. Check [RELEASE_STATUS.md](RELEASE_STATUS.md)
 for tested environments and unresolved dependency findings.

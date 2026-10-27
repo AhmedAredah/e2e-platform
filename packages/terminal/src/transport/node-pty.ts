@@ -1,6 +1,7 @@
 import { terminateProcessTree } from '@e2e-platform/process';
 import { boundedInteger, TerminalError, type TerminalCommand, type TerminalDimensions, type TerminalExit } from '../model/types.ts';
 import { TerminalTransport } from './base.ts';
+import { NodePtyInstallation } from './installation.ts';
 import type { IPty } from 'node-pty';
 
 /** Owns one forkpty/ConPTY child. The optional native module loads only here. */
@@ -24,6 +25,7 @@ export class NodePtyTransport extends TerminalTransport {
     let native: typeof import('node-pty');
     try { native = await import('node-pty'); }
     catch (cause) { throw new TerminalError('DEPENDENCY_MISSING', 'Install the optional node-pty peer with its native binary to launch a PTY', { cause }); }
+    NodePtyInstallation.loaded()?.assertReady();
     const environment: Record<string, string> = {};
     for (const [name, value] of Object.entries(process.env)) if (value !== undefined) environment[name] = value;
     for (const [name, value] of Object.entries(command.env ?? {})) {

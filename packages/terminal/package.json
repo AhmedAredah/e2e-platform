@@ -1,9 +1,12 @@
 {
   "name": "@e2e-platform/terminal",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "description": "PTY-backed terminal engine with real VT screen reconstruction for e2e",
   "license": "MIT",
   "type": "module",
+  "bin": {
+    "e2e-platform-terminal-setup": "./dist/cli/setup.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

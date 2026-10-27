@@ -29,6 +29,12 @@ The project must already contain `package.json`. The installer verifies package
 checksums and installs the runner plus all five extensions through npm.
 Third-party dependencies need registry access or a populated local cache.
 Real terminal processes also need the optional `node-pty` peer and native build prerequisites.
+Install `node-pty@1.1.0`, allow its native build scripts, then run
+`npx --no-install e2e-platform-terminal-setup` in the test project. On macOS this
+explicit command repairs the upstream 1.1.0 helper's missing executable permissions
+without changing shared package-store files. It makes no helper changes on other
+platforms. Repeat setup after reinstalling dependencies. Terminal startup itself
+is read-only and reports `DEPENDENCY_MISSING` if the helper remains unusable.
 
 ## Choose an interface
 

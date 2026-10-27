@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/protocol",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "description": "Bounded HTTP protocol fixtures for e2e tests",
   "license": "MIT",
   "type": "module",

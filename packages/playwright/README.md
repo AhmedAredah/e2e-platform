@@ -22,7 +22,7 @@ Install the core kit into your test project first. From that project's directory
 replace the tarball path below with the actual filename emitted by `pack`:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-playwright-0.2.0-rc.5.tgz playwright@1.63.0
+npm install --save-dev /path/to/e2e-platform-playwright-0.2.0-rc.6.tgz playwright@1.63.0
 npx --no-install playwright install chromium
 ```
 

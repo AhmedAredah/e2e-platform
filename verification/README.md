@@ -81,7 +81,7 @@ needed to review a release in its separate evidence bundle.
 
 ## Desktop accessibility drivers
 
-The current candidate is `e2e-platform` 0.2.0-rc.5. Start with
+The current candidate is `e2e-platform` 0.2.0-rc.6. Start with
 [DESKTOP.md](../DESKTOP.md) and the [declared profiles](../docs/development/support-profiles.json).
 Driver tests and native acceptance instructions live with each implementation:
 Python [AT-SPI](../native/linux-atspi/README.md), C# [UIA](../native/windows-uia/README.md),

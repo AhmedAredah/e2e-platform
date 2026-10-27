@@ -1,7 +1,7 @@
-# e2e-platform 0.2.0-rc.5
+# e2e-platform 0.2.0-rc.6
 
 This is a reviewed **prerelease**, not a fully qualified stable release. The ten
-public JavaScript packages use `0.2.0-rc.5` and `@e2e-platform/*`; the executable
+public JavaScript packages use `0.2.0-rc.6` and `@e2e-platform/*`; the executable
 and repository folder are `e2e-platform`. Tests are written in TypeScript or
 JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
@@ -19,7 +19,11 @@ The rc.4 changes address supervised native termination, redacted log drainage,
 macOS environment assertions and unnecessary Python HTTP hostname resolution.
 The rc.5 changes add bounded macOS process-group reaping retries, safe pnpm 12
 Windows launcher resolution, native cleanup categories and a synchronized terminal
-overflow fixture. The current candidate must pass its own hosted checks.
+overflow fixture. The rc.6 candidate adds an explicit macOS terminal setup
+command and separates direct Node verification in metacharacter paths from
+npm launcher verification in conventional paths. The documented Windows npm
+shim limitation remains; use the direct Node command for paths containing `&`.
+The current candidate must pass its own hosted checks.
 
 ## Publication state
 

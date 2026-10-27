@@ -29,6 +29,27 @@ test('accepts a name', async ({ terminal, screen }) => {
 Install the optional `node-pty` peer to use the default transport. It is a native
 dependency with platform build/prebuilt requirements. A `TerminalTransport`
 subclass can supply another actual terminal connection without loading node-pty.
+
+```sh
+npm install --save-dev node-pty@1.1.0
+npx --no-install e2e-platform-terminal-setup
+```
+
+Allow the peer's native build scripts through your package manager's approval
+mechanism. On macOS, node-pty 1.1.0 ships a prebuilt `spawn-helper` without execute
+permissions ([upstream issue](https://github.com/microsoft/node-pty/issues/850)).
+The explicit setup command repairs only that version's loaded helper. It preserves
+the bytes and existing read/write permissions and replaces the file atomically,
+so a hard-linked package-manager store copy is unchanged. Run it again after
+reinstalling dependencies. Other platforms need no helper changes.
+
+Terminal startup checks the helper without changing installed files and reports
+`DEPENDENCY_MISSING` with the setup command when the helper is unusable. Missing,
+symlinked, unsupported or read-only installations require reinstalling the peer
+in a writable project; setup does not download binaries or repair arbitrary files.
+For source builds, install Xcode's development tools and Python on macOS, then
+run `npm_config_build_from_source=true npm rebuild node-pty` in the test project.
+
 The executable and arguments are launched directly; a shell runs only when you
 explicitly choose a shell executable. `appPath` and `cwd` resolve relative to the
 config directory. Each attempt launches a new process; files, services and

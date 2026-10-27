@@ -29,7 +29,7 @@ or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.5. Coordinated versions and changelogs use Changesets prerelease mode.
+`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.6. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -62,6 +62,22 @@ test('prints the expected version', async ({ processes }) => {
 Run `npx --no-install e2e-platform run --no-model`. For the bundled C++ calculator, use the reference
 tests under `examples/with-cpp-cli/`. The test must compare output with independently
 chosen expectations; a successful exit is only one part of the assertion.
+
+On Windows, npm versions using `cmd-shim` 8.0.0 generate a `.cmd` launcher with an
+unquoted directory assignment. An ampersand (`&`) in the project path can break
+`npx` or `npm exec`, even when installation succeeds. Use a project path without
+ampersands for those launchers, or invoke the installed JavaScript entry directly
+from your project; this bypasses the npm batch launcher:
+
+```sh
+node "./node_modules/@e2e-platform/core/dist/cli/bin.js" run --no-model
+```
+
+The installation smoke test verifies installation, generated tests, positive and
+negative process tests, and typechecking in a path containing spaces and
+ampersands. It then verifies the real npm executable and an installed TypeScript
+test from a conventional path. The launcher limitation is in
+[npm's generated command shim](https://github.com/nodejs/node/blob/v24.22.1/deps/npm/node_modules/cmd-shim/lib/index.js).
 
 Read C++ JSON using `readJsonFile(path, byteLimit, { decimalPrecision: 'binary64' })`
 when the producer uses `max_digits10` for `double`. The default is exact decimal
@@ -126,6 +142,19 @@ approval mechanism; pnpm 11/12 users may need `pnpm approve-builds`. A custom
 `TerminalTransport` can operate without that peer. See `packages/terminal/README.md`
 for a full TUI test and platform containment limits.
 
+On macOS, finish the peer installation with:
+
+```sh
+npx --no-install e2e-platform-terminal-setup
+```
+
+This explicit setup repairs the non-executable `spawn-helper` shipped by
+`node-pty` 1.1.0, replacing the installed file without changing shared package-store
+copies. Repeat setup after reinstalling the peer. Normal terminal startup checks
+the helper without modifying it and reports `DEPENDENCY_MISSING` when setup is
+required. If the peer directory is read-only, reinstall it in a writable project,
+then run setup.
+
 HTTP services can use `createHttpClient` from `@e2e-platform/protocol`. Launch the
 service with a process fixture, check readiness, then assert status, schema and
 business results. gRPC and WebSocket clients are not included.
@@ -150,11 +179,11 @@ candidate). Either engine can be installed independently:
 
 ```sh
 # Browser engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.5.tgz playwright@1.63.0
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.6.tgz playwright@1.63.0
 npx --no-install playwright install chromium
 
 # Mobile engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.5.tgz
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.6.tgz
 npx --no-install agent-device doctor
 ```
 

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +13,7 @@ const directory = mkdtempSync(join(tmpdir(), 'e2e kit with spaces & '));
 const kit = join(directory, 'package kit & files');
 const project = join(directory, 'consumer project & tests');
 const env = { ...process.env, E2E_TELEMETRY_DISABLED: '1', DO_NOT_TRACK: '1' };
+let executableDirectory;
 
 /** Checks the real command outcome and prints its captured diagnostics on failure. */
 function requireSuccess(label, result) {
@@ -22,7 +23,9 @@ function requireSuccess(label, result) {
 
 /** Runs an actual Node entry without a command shell. */
 function node(label, args, cwd = root) {
-  requireSuccess(label, spawnSync(process.execPath, args, { cwd, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 }));
+  const result = spawnSync(process.execPath, args, { cwd, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 });
+  requireSuccess(label, result);
+  return result;
 }
 
 try {
@@ -57,6 +60,12 @@ try {
   if (nativeSchema.$schema !== 'https://json-schema.org/draft/2020-12/schema' || nativeSchema.$id !== 'urn:e2e-platform:native-bridge:1' || nativeSchema.$defs?.initialization?.properties?.protocolVersion?.const !== 1 || initializeRequest?.properties?.params?.properties?.protocolVersion?.const !== 1) throw new Error('Installed native schema does not describe protocol version 1');
   if (!Array.isArray(nativeFixtures) || !nativeFixtures.some((fixture) => fixture.valid === false) || !nativeFixtures.some((fixture) => fixture.valid === true && fixture.value?.method === 'initialize' && fixture.value.params?.protocolVersion === 1) || !nativeFixtures.some((fixture) => fixture.valid === true && fixture.value?.result?.protocolVersion === 1)) throw new Error('Installed native conformance fixtures do not contain the protocol-v1 request/response and negative cases');
   process.stdout.write('Installed native protocol-v1 schema and conformance fixtures: passed\n');
+  const terminalDirectory = join(project, 'node_modules/@e2e-platform/terminal');
+  const terminalMetadata = JSON.parse(readFileSync(join(terminalDirectory, 'package.json'), 'utf8'));
+  const setupEntry = terminalMetadata.bin?.['e2e-platform-terminal-setup'];
+  if (typeof setupEntry !== 'string' || setupEntry.replace(/^\.\//, '') !== 'dist/cli/setup.js') throw new Error('Installed terminal setup executable metadata is missing or unexpected');
+  const setupHelp = node('Read the installed terminal setup command help', [join(terminalDirectory, setupEntry), '--help'], project);
+  if (!setupHelp.stdout.includes('Usage: e2e-platform-terminal-setup')) throw new Error('Installed terminal setup help has the wrong identity');
   const audit = runPackageManager('npm', ['audit', '--json'], { cwd: project, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 });
   const evidence = join(root, '.e2e', 'cpp');
   mkdirSync(evidence, { recursive: true });
@@ -94,8 +103,7 @@ test('installed process fixture owns a real child', async ({ processes }) => {
   expect(child.stdout.bytes.toString()).toBe('installed kit');
 });\n`);
   node('Run a TypeScript test through the installed CLI', [join(project, 'node_modules/@e2e-platform/core/dist/cli/bin.js'), 'run', '--no-model', '--workers', '1'], project);
-  const help = runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform', '--help'], { cwd: project, env, encoding: 'utf8', timeout: 30_000 });
-  requireSuccess('Read the installed executable help', help);
+  const help = node('Read installed CLI help from a path containing spaces and ampersands', [installedCli, '--help'], project);
   if (!help.stdout.includes('e2e-platform')) throw new Error('Installed help does not identify the fork executable');
   const positiveDocument = readFileSync(join(project, '.e2e/report.json'), 'utf8');
   writeFileSync(join(evidence, 'installed-consumer-positive.json'), positiveDocument);
@@ -149,6 +157,35 @@ export { desktopConfig, CustomDesktopEngine, config, run, test, profiles, launch
   writeFileSync(join(project, 'tsconfig.json'), JSON.stringify({ compilerOptions: { noEmit: true, strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', types: ['node'] }, include: ['consumer-types.ts', 'tests/*.ts'] }));
   node('Typecheck the installed public APIs and real tests', [join(project, 'node_modules/typescript/bin/tsc'), '--project', join(project, 'tsconfig.json')], project);
   writeFileSync(join(evidence, 'installed-consumer-typecheck-lock.json'), readFileSync(join(project, 'package-lock.json')));
-  writeFileSync(join(evidence, 'install-kit-smoke-summary.json'), JSON.stringify({ passed: true, timestamp: new Date().toISOString(), node: process.version, platform: process.platform, architecture: process.arch, packages: manifest.packages, audit: auditReport.metadata, checks: ['default init and generated CLI example', 'desktop API imports and strict types', 'report source paths with spaces', 'checksum validation', 'npm install', 'npm ci', 'MIT license and metadata', 'native protocol-v1 schema and conformance fixtures', 'no upstream e2e package', 'plain Node imports and launch-profile inheritance', 'positive process test', 'CLI help identity', 'planted assertion failure with cleanup', 'strict public API, launch-profile and native-engine subclass TypeScript compilation'] }, null, 2) + '\n');
-} finally { rmSync(directory, { recursive: true, force: true }); }
-process.stdout.write('Packed npm kit works from paths containing spaces and ampersands.\n');
+
+  // npm's Windows cmd-shim 8.0.0 launcher uses unquoted SET dp0=%~dp0, so an
+  // ampersand in its installation path is interpreted by cmd.exe. Keep the
+  // complete direct-Node consumer proof above, then exercise the real npm
+  // executable from a conventional path using these same installed packages.
+  executableDirectory = mkdtempSync(join(tmpdir(), 'e2e npm executable '));
+  const executableProject = join(executableDirectory, 'consumer project');
+  if (process.platform === 'win32' && executableProject.includes('&')) throw new Error('Windows npm executable smoke requires a temporary parent path without ampersands');
+  // Keep npm's saved relative tarball references valid after relocation.
+  renameSync(kit, join(executableDirectory, 'package kit & files'));
+  renameSync(project, executableProject);
+  if (process.platform === 'win32') writeFileSync(join(evidence, 'installed-npm-launcher.cmd'), readFileSync(join(executableProject, 'node_modules/.bin/e2e-platform.cmd')));
+  const executableHelp = runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform', '--help'], { cwd: executableProject, env, encoding: 'utf8', timeout: 30_000 });
+  requireSuccess('Read the npm-installed executable help from a conventional path', executableHelp);
+  if (!executableHelp.stdout.includes('e2e-platform')) throw new Error('npm executable help does not identify the fork executable');
+  const terminalSetupHelp = runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform-terminal-setup', '--help'], { cwd: executableProject, env, encoding: 'utf8', timeout: 30_000 });
+  requireSuccess('Read the npm-installed terminal setup command help', terminalSetupHelp);
+  if (!terminalSetupHelp.stdout.includes('Usage: e2e-platform-terminal-setup')) throw new Error('npm terminal setup help has the wrong identity');
+  rmSync(join(executableProject, '.e2e/report.json'));
+  requireSuccess('Run the installed TypeScript process test through npm exec', runPackageManager('npm', ['exec', '--offline', '--', 'e2e-platform', 'run', 'tests/installed.e2e.ts', '--no-model', '--workers', '1'], { cwd: executableProject, env, encoding: 'utf8', timeout: 180_000, maxBuffer: 8 * 1024 * 1024 }));
+  const executableDocument = readFileSync(join(executableProject, '.e2e/report.json'), 'utf8');
+  writeFileSync(join(evidence, 'installed-npm-exec-positive.json'), executableDocument);
+  const executableRun = JSON.parse(executableDocument).run;
+  const executableTests = executableRun.results.filter((result) => result.kind === 'test' && result.skip?.cause !== 'filtered');
+  const executableAttempt = executableTests[0]?.attempts[0];
+  if (executableRun.runner?.name !== '@e2e-platform/core' || executableRun.runner?.version !== manifest.packages.find(({ name }) => name === '@e2e-platform/core')?.version || executableRun.status !== 'passed' || executableRun.errors?.length || executableTests.length !== 1 || executableTests[0].file !== 'tests/installed.e2e.ts' || executableTests[0].status !== 'passed' || executableTests[0].attempts.length !== 1 || executableAttempt?.cleanup !== 'complete' || executableAttempt?.error || executableAttempt?.secondaryErrors?.length) throw new Error('npm executable did not run the installed consumer test with complete cleanup');
+  writeFileSync(join(evidence, 'install-kit-smoke-summary.json'), JSON.stringify({ passed: true, timestamp: new Date().toISOString(), node: process.version, platform: process.platform, architecture: process.arch, packages: manifest.packages, audit: auditReport.metadata, consumerPaths: { installationAndDirectNode: 'spaces and ampersands', npmExecutable: 'spaces; no ampersands required on Windows' }, checks: ['default init and generated CLI example', 'desktop API imports and strict types', 'report source paths with spaces', 'checksum validation', 'npm install', 'npm ci', 'MIT license and metadata', 'native protocol-v1 schema and conformance fixtures', 'installed terminal setup command metadata and help through Node and npm exec', 'no upstream e2e package', 'plain Node imports and launch-profile inheritance', 'positive process test', 'direct Node CLI help identity in metacharacter path', 'npm executable help and TypeScript process test in conventional path', 'planted assertion failure with cleanup', 'strict public API, launch-profile and native-engine subclass TypeScript compilation'] }, null, 2) + '\n');
+} finally {
+  rmSync(directory, { recursive: true, force: true });
+  if (executableDirectory !== undefined) rmSync(executableDirectory, { recursive: true, force: true });
+}
+process.stdout.write('Packed kit installation and direct Node checks passed in paths with spaces and ampersands; npm executable checks passed in a conventional consumer path.\n');
