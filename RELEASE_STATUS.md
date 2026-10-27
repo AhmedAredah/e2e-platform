@@ -1,7 +1,7 @@
-# e2e-platform 0.2.0-rc.4
+# e2e-platform 0.2.0-rc.5
 
 This is a reviewed **prerelease**, not a fully qualified stable release. The ten
-public JavaScript packages use `0.2.0-rc.4` and `@e2e-platform/*`; the executable
+public JavaScript packages use `0.2.0-rc.5` and `@e2e-platform/*`; the executable
 and repository folder are `e2e-platform`. Tests are written in TypeScript or
 JavaScript. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
@@ -12,11 +12,14 @@ SystemRoot bootstrap exception), qualified AT-SPI text-interface dispatch, sanit
 Linux startup diagnostics, portable path comparisons and deterministic negative
 verification. The detailed original review evidence below was recorded for rc.2;
 unchanged source trees remain traceable through the publication history. Hosted
-checks below identify the exact rc.3 commit that was tested. Current candidate
+checks below identify the exact source checkpoints that were tested. Current candidate
 results are recorded per source commit in GitHub Actions and the accompanying
 validation bundle; the previous checkpoint's passes do not qualify later changes.
 The rc.4 changes address supervised native termination, redacted log drainage,
 macOS environment assertions and unnecessary Python HTTP hostname resolution.
+The rc.5 changes add bounded macOS process-group reaping retries, safe pnpm 12
+Windows launcher resolution, native cleanup categories and a synchronized terminal
+overflow fixture. The current candidate must pass its own hosted checks.
 
 ## Publication state
 
@@ -100,6 +103,30 @@ failed on Node 24 because startup diagnostics could be read before redacted
 output finished draining; Node 22 and source-quality jobs passed. The rc.4
 changes address these failures. Later source changes require their own recorded results.
 
+## Recorded rc.4 checkpoint
+
+On 2026-10-27, source checkpoint
+[`50e3a377f0299f73a0472a012f85a893f7cb8c5d`](https://github.com/AhmedAredah/e2e-platform/commit/50e3a377f0299f73a0472a012f85a893f7cb8c5d)
+passed the hosted
+[`spec` run 40431659284](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659284)
+on Ubuntu 24.04 with Node 22.22.3 and 24.22.1. Each Node job passed all 260
+Playwright tests across 28 files, including all 3 CDP attach and 15 CDP recovery
+tests. This resolves the earlier local CDP socket blocker for that hosted profile;
+it does not qualify every browser or operating system.
+
+The same checkpoint passed
+[`languages` run 40431659168](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659168)
+on Ubuntu 24.04, Windows Server 2022 and macOS 15: each platform passed nine
+Python/C#/Rust CLI/HTTP scenarios and rejected all six planted defects. Its
+[`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659315),
+[`docs` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659217)
+and [`benchmark` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659286)
+also passed, with the same interactive UIA/AX and live-provider limits above.
+This was not an all-CI pass:
+[`native` run 40431659232](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659232)
+failed in the Windows and macOS package tests; its Linux command and Qt jobs
+passed. Follow-up source changes require their own completed qualification.
+
 ## Historical rc.2 verification baseline
 
 The following detailed review ran against **0.2.0-rc.2**, before the rc.3 changes,
@@ -156,9 +183,9 @@ live acceptance tests. Portable tests and successful native builds do not qualif
 GUI behavior. Each additional framework, toolkit version and display backend
 requires its own real-control test.
 
-Full browser CDP attach/recovery, mobile simulators/hardware and live model-provider
-qualification remain open. The successful desktop-contracts jobs cover only the
-profiles listed above; they do not qualify these other gates. Native-language
+Mobile simulators/hardware and live model-provider qualification remain open.
+The hosted browser/CDP pass and successful desktop-contracts jobs cover only the
+profiles and source checkpoints listed above; they do not qualify these other gates. Native-language
 full runner SDKs, generic custom-painted controls,
 global OS input, OS-driver screenshots and hybrid DOM/native switching are absent.
 

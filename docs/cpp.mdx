@@ -50,6 +50,9 @@ as application data. Errors omit the malformed payload from diagnostics.
 Native cleanup failures identify the lifecycle stage and recognized system error
 codes, such as `process-io:ECONNRESET`. Arbitrary extension error messages and
 unrecognized codes are withheld; an unknown code is reported as `unclassified`.
+On macOS, process-group shutdown retries a transient `EPERM` for up to ten
+10 ms delays per signal so exited children can be reaped. Persistent permission
+errors still fail cleanup; only a successful signal or an absent group completes it.
 
 ## Build the source example
 

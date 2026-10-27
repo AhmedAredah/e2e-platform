@@ -60,7 +60,7 @@ the skill and registered MCP entries. The final message shows the run command.
 Without the wizard:
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.4.tgz /path/to/e2e-platform-playwright-0.2.0-rc.4.tgz playwright@1.63.0 ai@^7
+npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.5.tgz /path/to/e2e-platform-playwright-0.2.0-rc.5.tgz playwright@1.63.0 ai@^7
 ```
 
 `ai` (the Vercel AI SDK, v7) is only needed for `agent.*` steps.

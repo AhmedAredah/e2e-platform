@@ -38,6 +38,65 @@ for (const extension of ['cjs', 'mjs']) test(`Windows pnpm .bin shim resolves it
   assert.deepEqual(JSON.parse(result.stdout), { marker: 'pnpm', args: argumentsWithSyntax });
 }));
 
+/** Models pnpm 12's native bin and its supported JavaScript compatibility entry. */
+function nativePnpm(directory) {
+  entry(join(directory, 'bin/pnpm.mjs'), 'pnpm-native-wrapper');
+  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name: 'pnpm', bin: { pnpm: 'pnpm.exe' } }));
+  // These must never be passed to Node or interpreted as shell scripts.
+  writeFileSync(join(directory, 'pnpm'), 'not JavaScript or a shell command');
+  writeFileSync(join(directory, 'pnpm.exe'), 'not JavaScript or an executable');
+}
+
+for (const layout of ['local', 'global']) for (const target of ['pnpm', 'pnpm.exe']) {
+  test(`Windows pnpm 12 ${layout} shim targeting ${target} preserves argument boundaries`, () => fixture((directory) => {
+    const bin = layout === 'local' ? join(directory, 'node_modules/.bin') : directory;
+    const relativePackage = layout === 'local' ? '..\\pnpm' : 'node_modules\\pnpm';
+    const prefix = layout === 'local' ? '%~dp0' : '%dp0%';
+    mkdirSync(bin, { recursive: true });
+    nativePnpm(join(directory, 'node_modules/pnpm'));
+    entry(join(directory, 'node_modules/corepack/dist/pnpm.js'), 'wrong-corepack');
+    writeFileSync(join(bin, 'pnpm.cmd'), `@"${prefix}\\${relativePackage}\\${target}" %*`);
+    const result = runPackageManager('pnpm', argumentsWithSyntax, {
+      encoding: 'utf8', env: { Path: `"${bin}"` }, shell: true,
+    }, { platform: 'win32' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), { marker: 'pnpm-native-wrapper', args: argumentsWithSyntax });
+  }));
+}
+
+test('Windows pnpm native shim refuses unrelated targets and invalid package metadata', () => fixture((directory) => {
+  const bin = join(directory, 'node_modules/.bin'); mkdirSync(bin, { recursive: true });
+  const packageDirectory = join(directory, 'node_modules/pnpm');
+  nativePnpm(packageDirectory);
+  const shim = join(bin, 'pnpm.cmd');
+  const invoke = () => runPackageManager('pnpm', [], { env: { PATH: bin } }, { platform: 'win32' });
+  for (const wrapper of [
+    '@echo unknown-wrapper',
+    '@"%~dp0\\..\\other\\pnpm.exe" %*',
+    '@"%~dp0\\..\\pnpm\\pnpm.exe.untrusted" %*',
+    '@"%~dp0\\..\\pnpm\\..\\other\\pnpm.exe" %*',
+  ]) {
+    writeFileSync(shim, wrapper);
+    assert.throws(invoke, /Cannot safely resolve/, wrapper);
+  }
+  writeFileSync(shim, '@"%~dp0\\..\\pnpm\\pnpm" %*');
+  for (const manifest of [
+    '{not json}',
+    'null',
+    JSON.stringify({ name: 'another-package', bin: { pnpm: 'pnpm' } }),
+    JSON.stringify({ name: 'pnpm', bin: { pnpm: '../../untrusted.exe' } }),
+  ]) {
+    writeFileSync(join(packageDirectory, 'package.json'), manifest);
+    assert.throws(invoke, /Cannot safely resolve/, manifest);
+  }
+  nativePnpm(packageDirectory);
+  rmSync(join(packageDirectory, 'pnpm'));
+  assert.throws(invoke, /Cannot safely resolve/, 'missing native target');
+  nativePnpm(packageDirectory);
+  rmSync(join(packageDirectory, 'bin/pnpm.mjs'));
+  assert.throws(invoke, /Cannot safely resolve/, 'missing compatibility entry');
+}));
+
 test('Windows Corepack shim does not accidentally select another pnpm installation', () => fixture((directory) => {
   writeFileSync(join(directory, 'pnpm.cmd'), '@"%~dp0\\node_modules\\corepack\\dist\\pnpm.js" %*');
   entry(join(directory, 'node_modules/pnpm/bin/pnpm.js'), 'wrong-manager');

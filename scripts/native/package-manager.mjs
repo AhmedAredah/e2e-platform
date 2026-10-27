@@ -13,6 +13,27 @@ function isFile(file) {
   try { return statSync(file).isFile(); } catch { return false; }
 }
 
+/** Uses pnpm 12's supported JS entry when its shim names the native package bin. */
+function nativePnpmScriptBeside(directory, shim) {
+  const normalized = shim.replaceAll('/', '\\').replace(/\\+/g, '\\').toLowerCase();
+  for (const segments of [['node_modules', 'pnpm'], ['..', 'pnpm']]) {
+    const packageDirectory = join(directory, ...segments);
+    // Match complete, quoted, fixed paths. Never evaluate batch syntax or use a
+    // path supplied by the shim or manifest to choose an arbitrary executable.
+    const referencesNativeBin = ['pnpm', 'pnpm.exe'].some((entry) =>
+      ['%~dp0', '%dp0%'].some((prefix) => ['', '\\'].some((separator) =>
+        normalized.includes(`"${prefix}${separator}${[...segments, entry].join('\\')}"`)))
+      && isFile(join(packageDirectory, entry)));
+    if (!referencesNativeBin) continue;
+    let manifest;
+    try { manifest = JSON.parse(readFileSync(join(packageDirectory, 'package.json'), 'utf8')); } catch { continue; }
+    if (manifest?.name !== 'pnpm' || !['pnpm', 'pnpm.exe'].includes(manifest.bin?.pnpm)) continue;
+    const script = join(packageDirectory, 'bin', 'pnpm.mjs');
+    if (isFile(script)) return script;
+  }
+  return undefined;
+}
+
 /** Resolves the JavaScript entry adjacent to npm, pnpm or Corepack's Windows shim. */
 function scriptBeside(directory, name, shim) {
   const packageName = name === 'npx' ? 'npm' : name;
@@ -28,7 +49,8 @@ function scriptBeside(directory, name, shim) {
   );
   return candidates.find((candidate) => isFile(candidate)
     && (shim === undefined || (shim.includes(basename(candidate))
-      && shim.includes('corepack') === candidate.includes(`${join('corepack', 'dist')}`))));
+      && shim.includes('corepack') === candidate.includes(`${join('corepack', 'dist')}`))))
+    ?? (name === 'pnpm' && shim !== undefined ? nativePnpmScriptBeside(directory, shim) : undefined);
 }
 
 /** Finds an executable or a known JS entry; never executes an unknown batch wrapper. */

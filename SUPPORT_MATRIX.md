@@ -210,7 +210,11 @@ Qt example reports are under `examples/with-qt/e2e/.e2e/`.
 The workflow configures Windows, macOS and Linux CLI jobs and a Linux Qt job on
 standard GitHub runners. A workflow definition is not evidence those remote jobs
 have run: retain the actual reports for each OS/architecture/toolchain/Qt kit.
-Native Windows and macOS behavior needs validation on those operating systems.
+The rc.4 [`languages` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40431659168)
+qualified the Python/C#/Rust CLI/HTTP reference scenarios on all three operating
+systems at commit `50e3a377f0299f73a0472a012f85a893f7cb8c5d`. This does not
+qualify native GUI behavior or resolve that checkpoint's Windows/macOS native
+package-test failures; see [RELEASE_STATUS.md](RELEASE_STATUS.md).
 
 For OS accessibility drivers, the rc.3
 [`desktop-contracts` run](https://github.com/AhmedAredah/e2e-platform/actions/runs/40429517430)

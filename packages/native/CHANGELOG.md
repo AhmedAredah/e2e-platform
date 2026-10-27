@@ -1,5 +1,19 @@
 # @e2e-platform/native
 
+## 0.2.0-rc.5
+
+### Patch Changes
+
+- Prepare a coordinated candidate with bounded macOS process-group shutdown
+  retries and safe recognition of the pnpm 12 Windows launcher. Preserve failures
+  for persistent permission denial and invoke package managers without a shell.
+  Identify native cleanup failures by fixed lifecycle stages and recognized
+  system error codes without exposing arbitrary extension error messages or data.
+  Synchronize terminal overflow qualification after the final test operation and
+  record hosted browser/CDP and language evidence separately from unrun GUI gates.
+- Updated dependencies [d160cba]
+  - @e2e-platform/process@0.2.0-rc.5
+
 ## 0.2.0-rc.4
 
 ### Patch Changes

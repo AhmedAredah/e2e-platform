@@ -13,7 +13,7 @@ After building the source repository, pack this optional module with
 Replace the paths below with your local tarballs; the core comes from the release kit.
 
 ```bash
-npm install --save-dev /path/to/e2e-platform-github-0.2.0-rc.4.tgz
+npm install --save-dev /path/to/e2e-platform-github-0.2.0-rc.5.tgz
 ```
 
 ```ts title="e2e.config.ts"

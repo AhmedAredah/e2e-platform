@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "candidate": "0.2.0-rc.4",
+  "candidate": "0.2.0-rc.5",
   "evidenceSourceCommit": "3baeb8d6bd90b799f7784e67e24c9922d5e27b2f",
   "desktopEvidence": {
     "candidate": "0.2.0-rc.3",

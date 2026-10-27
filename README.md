@@ -7,7 +7,7 @@ Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
 
-The current prerelease is **0.2.0-rc.4**. Its source branch is
+The current prerelease is **0.2.0-rc.5**. Its source branch is
 [`mit-main`](https://github.com/AhmedAredah/e2e-platform/tree/mit-main); a prepared
 full-repository archive also includes Git history and a local installation kit.
 Linux GTK3 reference controls have limited live qualification. Windows UIA and

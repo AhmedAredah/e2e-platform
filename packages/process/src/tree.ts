@@ -3,12 +3,19 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ProcessError } from './error.ts';
 
-/** Signals an owned POSIX process group; ESRCH means cleanup has already completed. */
-function signalGroup(pid: number, signal: NodeJS.Signals): boolean {
-  try { process.kill(-pid, signal); return true; }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false;
-    throw error;
+/** Signals only the owned group; success or ESRCH is required to complete. */
+async function signalGroup(pid: number, signal: NodeJS.Signals): Promise<boolean> {
+  for (let retries = 0; ; retries++) {
+    try { process.kill(-pid, signal); return true; }
+    catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'ESRCH') return false;
+      // XNU killpg1 excludes zombies, then returns EPERM if none remain
+      // eligible. Yield for child reaping, but never treat EPERM as success.
+      // Real permission failures remain errors after ten 10 ms retry delays.
+      if (process.platform !== 'darwin' || code !== 'EPERM' || retries >= 10) throw error;
+      await delay(10);
+    }
   }
 }
 
@@ -34,9 +41,9 @@ export async function terminateProcessTree(pid: number, options: { graceMs?: num
       });
       return;
     }
-    if (!signalGroup(pid, 'SIGTERM')) return;
+    if (!(await signalGroup(pid, 'SIGTERM'))) return;
     if (graceMs > 0) await delay(graceMs);
-    signalGroup(pid, 'SIGKILL');
+    await signalGroup(pid, 'SIGKILL');
   } catch (cause) {
     throw new ProcessError('PROCESS_CLEANUP_FAILED', `Could not terminate process tree ${pid}`, { cause });
   }
