@@ -176,8 +176,15 @@ def scenario(args, wrong=False):
         assert late['states']['hidden'], 'scroll fixture did not begin clipped'
         assert request('actionability', dict(ref=late['ref'], action=dict(kind='scrollIntoView'))) is None
         assert find(snapshot(), 'late')['states']['hidden'], 'scroll preflight moved the viewport'
-        perform('late', dict(kind='scrollIntoView'))
+        assert late.get('value') == 'pending', 'fixture scroll callback ran before dispatch'
+        try:
+            perform('late', dict(kind='scrollIntoView'))
+        except RpcError as error:
+            # Only this owned fixture's constant callback state is diagnostic.
+            invoked = find(snapshot(), 'late').get('value') == 'performed'
+            raise AssertionError(f'scroll dispatch failed (callback invoked: {invoked}): {error}') from error
         wait_for(lambda nodes: find(nodes, 'late')['states'].get('visibilityKnown') and not find(nodes, 'late')['states']['hidden'])
+        assert find(snapshot(), 'late').get('value') == 'performed'
         checks.append('advertised AXScrollToVisible changes the real NSScrollView viewport')
 
         assert request('shutdown', {}) is None

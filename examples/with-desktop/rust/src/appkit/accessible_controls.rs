@@ -24,6 +24,7 @@ unsafe extern "C" {
     fn equal(object: Id, selector: Sel, other: Id) -> i8;
     #[link_name = "objc_msgSend"]
     fn scroll(object: Id, selector: Sel, rect: Rect) -> i8;
+    fn NSAccessibilityFrameInView(view: Id, rect: Rect) -> Rect;
 }
 
 static mut ALPHA: Id = std::ptr::null_mut();
@@ -31,6 +32,8 @@ static mut BETA: Id = std::ptr::null_mut();
 static mut SELECTED: Id = std::ptr::null_mut();
 static mut OUTPUT: Id = std::ptr::null_mut();
 static mut SCROLL: Id = std::ptr::null_mut();
+static mut LATE: Id = std::ptr::null_mut();
+static mut SCROLLED: bool = false;
 
 unsafe fn items(values: &[Id]) -> Id {
     unsafe {
@@ -82,10 +85,16 @@ unsafe extern "C" fn action_names(_: Id, _: Sel) -> Id {
 unsafe extern "C" fn not_ignored(_: Id, _: Sel) -> i8 {
     0
 }
+unsafe extern "C" fn frame(_: Id, _: Sel) -> Rect {
+    unsafe { NSAccessibilityFrameInView(LATE, rect(0., 0., 180., 28.)) }
+}
+unsafe extern "C" fn scroll_value(_: Id, _: Sel) -> Id {
+    unsafe { text(if SCROLLED { "performed" } else { "pending" }) }
+}
 unsafe extern "C" fn action_description(_: Id, _: Sel, _: Id) -> Id {
     unsafe { text("Scroll to visible") }
 }
-unsafe extern "C" fn perform_action(object: Id, _: Sel, action: Id) {
+unsafe extern "C" fn perform_action(_: Id, _: Sel, action: Id) {
     unsafe {
         if equal(
             action,
@@ -94,10 +103,11 @@ unsafe extern "C" fn perform_action(object: Id, _: Sel, action: Id) {
         ) != 0
         {
             scroll(
-                object,
+                LATE,
                 selector("scrollRectToVisible:"),
                 rect(0., 0., 180., 28.),
             );
+            SCROLLED = true;
         }
     }
 }
@@ -155,35 +165,48 @@ pub(super) unsafe fn install(content: Id) {
         set_id(OUTPUT, selector("setStringValue:"), text("Alpha selected"));
         set_id(content, selector("addSubview:"), OUTPUT);
 
-        let name = CString::new("E2EScrollableView").unwrap();
-        let button_class = objc_allocateClassPair(class("NSView"), name.as_ptr(), 0);
-        // Keep the legacy action receiver explicitly unignored as required by
-        // the protocol, in addition to exposing its modern metadata below.
+        let name = CString::new("E2EScrollableElement").unwrap();
+        let scroll_class =
+            objc_allocateClassPair(class("NSAccessibilityElement"), name.as_ptr(), 0);
+        // A separate accessible element represents the actual drawn view and
+        // owns its optional semantic action, independent of NSView defaults.
         method(
-            button_class,
+            scroll_class,
             "accessibilityIsIgnored",
             not_ignored as *const c_void,
             "c@:",
         );
         method(
-            button_class,
+            scroll_class,
             "accessibilityActionNames",
             action_names as *const c_void,
             "@@:",
         );
         method(
-            button_class,
+            scroll_class,
             "accessibilityPerformAction:",
             perform_action as *const c_void,
             "v@:@",
         );
         method(
-            button_class,
+            scroll_class,
             "accessibilityActionDescription:",
             action_description as *const c_void,
             "@@:@",
         );
-        objc_registerClassPair(button_class);
+        method(
+            scroll_class,
+            "accessibilityFrame",
+            frame as *const c_void,
+            "{CGRect={CGPoint=dd}{CGSize=dd}}@:",
+        );
+        method(
+            scroll_class,
+            "accessibilityValue",
+            scroll_value as *const c_void,
+            "@@:",
+        );
+        objc_registerClassPair(scroll_class);
         SCROLL = control(
             "NSScrollView",
             rect(480., 15., 240., 110.),
@@ -196,15 +219,13 @@ pub(super) unsafe fn install(content: Id) {
             selector("initWithFrame:"),
             rect(0., 0., 220., 900.),
         );
-        let late = control(
-            "E2EScrollableView",
+        LATE = control(
+            "NSView",
             rect(10., 800., 180., 28.),
             "Late control",
-            "late",
+            "late-view",
         );
-        set_bool(late, selector("setAccessibilityElement:"), 1);
-        set_bool(late, selector("setAccessibilityEnabled:"), 1);
-        set_id(late, selector("setAccessibilityRole:"), text("AXGroup"));
+        set_bool(LATE, selector("setAccessibilityElement:"), 0);
         let caption = control(
             "NSTextField",
             rect(0., 0., 180., 28.),
@@ -213,11 +234,35 @@ pub(super) unsafe fn install(content: Id) {
         );
         set_id(caption, selector("setStringValue:"), text("Late control"));
         set_bool(caption, selector("setEditable:"), 0);
-        set_id(late, selector("addSubview:"), caption);
-        set_id(late, selector("setAccessibilityChildren:"), items(&[]));
-        set_id(document, selector("addSubview:"), late);
+        set_bool(caption, selector("setAccessibilityElement:"), 0);
+        set_id(LATE, selector("addSubview:"), caption);
+        set_id(document, selector("addSubview:"), LATE);
         set_id(SCROLL, selector("setDocumentView:"), document);
         set_id(content, selector("addSubview:"), SCROLL);
+        let accessible = send0(send0(scroll_class, selector("alloc")), selector("init"));
+        set_bool(accessible, selector("setAccessibilityElement:"), 1);
+        set_bool(accessible, selector("setAccessibilityEnabled:"), 1);
+        set_id(
+            accessible,
+            selector("setAccessibilityRole:"),
+            text("AXGroup"),
+        );
+        set_id(
+            accessible,
+            selector("setAccessibilityLabel:"),
+            text("Late control"),
+        );
+        set_id(
+            accessible,
+            selector("setAccessibilityIdentifier:"),
+            text("late"),
+        );
+        set_id(accessible, selector("setAccessibilityParent:"), SCROLL);
+        set_id(
+            document,
+            selector("setAccessibilityChildren:"),
+            items(&[accessible]),
+        );
     }
 }
 
