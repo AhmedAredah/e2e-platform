@@ -2,7 +2,7 @@
 //! The external driver still uses only the public AX protocol across processes.
 use super::{
     Id, Rect, Sel, class, control, init_frame, objc_allocateClassPair, objc_registerClassPair,
-    rect, selector, send0, send1, set_bool, set_id, set_int, text,
+    rect, selector, send0, set_bool, set_id, set_int, text,
 };
 use std::ffi::{CString, c_char, c_void};
 
@@ -77,7 +77,7 @@ unsafe extern "C" fn select(_: Id, _: Sel, children: Id) {
     }
 }
 unsafe extern "C" fn action_names(_: Id, _: Sel) -> Id {
-    unsafe { items(&[text("AXPress"), text("AXScrollToVisible")]) }
+    unsafe { items(&[text("AXScrollToVisible")]) }
 }
 unsafe extern "C" fn perform_action(object: Id, _: Sel, action: Id) {
     unsafe {
@@ -92,13 +92,11 @@ unsafe extern "C" fn perform_action(object: Id, _: Sel, action: Id) {
                 selector("scrollRectToVisible:"),
                 rect(0., 0., 180., 28.),
             );
-        } else if equal(action, selector("isEqualToString:"), text("AXPress")) != 0 {
-            send1(object, selector("performClick:"), std::ptr::null_mut());
         }
     }
 }
 
-/// Build a selectable native radio group and an explicitly scroll-accessible button.
+/// Build a selectable native radio group and an explicitly scroll-accessible view.
 pub(super) unsafe fn install(content: Id) {
     unsafe {
         let name = CString::new("E2ESelectableView").unwrap();
@@ -151,8 +149,8 @@ pub(super) unsafe fn install(content: Id) {
         set_id(OUTPUT, selector("setStringValue:"), text("Alpha selected"));
         set_id(content, selector("addSubview:"), OUTPUT);
 
-        let name = CString::new("E2EScrollableButton").unwrap();
-        let button_class = objc_allocateClassPair(class("NSButton"), name.as_ptr(), 0);
+        let name = CString::new("E2EScrollableView").unwrap();
+        let button_class = objc_allocateClassPair(class("NSView"), name.as_ptr(), 0);
         method(
             button_class,
             "accessibilityActionNames",
@@ -179,19 +177,31 @@ pub(super) unsafe fn install(content: Id) {
             rect(0., 0., 220., 900.),
         );
         let late = control(
-            "E2EScrollableButton",
+            "E2EScrollableView",
             rect(10., 800., 180., 28.),
             "Late control",
             "late",
         );
-        set_id(late, selector("setTitle:"), text("Late control"));
+        set_bool(late, selector("setAccessibilityElement:"), 1);
+        set_bool(late, selector("setAccessibilityEnabled:"), 1);
+        set_id(late, selector("setAccessibilityRole:"), text("AXGroup"));
+        let caption = control(
+            "NSTextField",
+            rect(0., 0., 180., 28.),
+            "Late control",
+            "late-caption",
+        );
+        set_id(caption, selector("setStringValue:"), text("Late control"));
+        set_bool(caption, selector("setEditable:"), 0);
+        set_id(late, selector("addSubview:"), caption);
+        set_id(late, selector("setAccessibilityChildren:"), items(&[]));
         set_id(document, selector("addSubview:"), late);
         set_id(SCROLL, selector("setDocumentView:"), document);
         set_id(content, selector("addSubview:"), SCROLL);
     }
 }
 
-/// Start with the custom button clipped; the acceptance test must scroll the real viewport.
+/// Start with the custom view clipped; the acceptance test must scroll the real viewport.
 pub(super) unsafe fn reset_scroll() {
     unsafe {
         send0(SCROLL, selector("layoutSubtreeIfNeeded"));

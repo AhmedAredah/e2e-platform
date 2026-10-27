@@ -25,7 +25,7 @@ the button's output, and requires the same positive output assertion to reject i
 `src/appkit/accessible_controls.rs` demonstrates application-owned accessibility
 extensions through native AppKit subclasses. A selectable container updates real
 radio controls and an independent result field through `AXSelectedChildren`.
-A scroll-accessible button implements the advertised `AXScrollToVisible` action
+A scroll-accessible view implements the advertised `AXScrollToVisible` action
 by scrolling its enclosing `NSScrollView`. The live verifier checks mutation-free
 preflight, selection by label/index/identifier and an actual clipped-to-visible
 transition. These are explicit application integrations, not a claim that every
