@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "candidate": "0.2.0-rc.7",
-  "evidenceSourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
+  "evidenceSourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
   "desktopEvidence": {
     "candidate": "0.2.0-rc.7",
-    "recordedAt": "2026-10-27",
-    "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250",
+    "recordedAt": "2026-10-28T04:01:32.013148+00:00",
+    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574",
     "conclusion": "success",
     "scope": "Five jobs: real GTK3, WPF and AppKit reference acceptance; clean installed TypeScript and C++ public consumers with independent planted-defect rejection and complete cleanup; Windows Job Object and TypeScript client; Rust portable tests. Does not certify arbitrary frameworks."
   },
@@ -39,8 +39,8 @@
       "qualification": {
         "status": "qualified-limited",
         "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128829",
+        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714",
         "profiles": [
           {
             "os": "Ubuntu 24.04",
@@ -75,7 +75,16 @@
           "No arbitrary canvas or hybrid DOM support",
           "Headless native macOS style is not a qualified configuration",
           "Quick selectOption requires supported non-editable closed-popup ComboBox"
-        ]
+        ],
+        "backgroundApplicationActivation": {
+          "status": "passed-native-cocoa",
+          "regression": "WidgetsControlsTests::fillingReactivatesBackgroundApplication",
+          "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714/job/122620137921",
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714/artifacts/12790961270",
+          "artifactSha256": "9f2148746da434edf0e7de9f72b51825140021051a90729431e996ceee136c18",
+          "installedStaticSharedCases": 8,
+          "allCleanupComplete": true
+        }
       },
       "actionability": true,
       "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
@@ -105,8 +114,8 @@
       "qualification": {
         "status": "qualified-limited",
         "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/job/122439386636",
+        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137772",
         "portableTests": 85,
         "liveStatus": "passed-reference-fixture",
         "os": "Ubuntu 24.04 / D-Bus / Xvfb",
@@ -124,8 +133,8 @@
           "positiveCasesPassed": 2,
           "plantedDefectsRejected": 2,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12766907820",
-          "artifactSha256": "ab0826110facaa6ed04c30d9afc47e7a2cdb7c9728a211092433f92f75828772"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790168207",
+          "artifactSha256": "c38ae7d28c023cc22ff8db0fbfc1fd527e66fb4b77a7b93ffe67046371af02d4"
         }
       },
       "actionability": true,
@@ -151,8 +160,8 @@
       "qualification": {
         "status": "qualified-limited",
         "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/job/122439386556",
+        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137441",
         "portableTests": 81,
         "liveStatus": "passed-reference-fixture",
         "os": "Windows Server 2022 / WPF",
@@ -171,8 +180,8 @@
           "positiveCasesPassed": 2,
           "plantedDefectsRejected": 2,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12765873464",
-          "artifactSha256": "248ff1f51c78f763960cb43ca0259b998d2e3f3b02e5addd2129b732524e738c"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790414109",
+          "artifactSha256": "ed246d70c155caaea356bca9686b2db272c73ecd654f12238a225cc1af5102b6"
         }
       },
       "actionability": true,
@@ -198,8 +207,8 @@
       "qualification": {
         "status": "qualified-limited",
         "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/job/122439386637",
+        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137855",
         "portableTests": 38,
         "liveStatus": "passed-reference-fixture",
         "os": "macOS 15 / AppKit",
@@ -218,8 +227,8 @@
           "positiveCasesPassed": 2,
           "plantedDefectsRejected": 2,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12766234100",
-          "artifactSha256": "111307cb0e2d81160342a9a940337795c098c01e32ec1de1be10c1ab2cb1ab8c"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790198360",
+          "artifactSha256": "7866a11c6357b51f3fb45d3b83ae2327fb075ed1ac997fc07ee0d9dd28baacef"
         }
       },
       "actionability": true,
@@ -248,14 +257,14 @@
     "rust": "not implemented"
   },
   "nativeEvidence": {
-    "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128829",
+    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714",
     "conclusion": "success",
     "jobs": 9
   },
   "specEvidence": {
-    "sourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128536",
+    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827476",
     "conclusion": "success",
     "nodeVersions": [
       "22.22.3",
@@ -272,7 +281,9 @@
       "windows-uia/WPF",
       "macos-ax/AppKit"
     ],
-    "qualifiedSourceCommit": "9c0bf5eb63d85088e318395be6e6010ab88a1d0a",
-    "requiredJobsPassed": 22
+    "qualifiedSourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+    "requiredJobsPassed": 22,
+    "installationKitFailureRegressions": 4,
+    "maintenanceTests": 70
   }
 }

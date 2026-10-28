@@ -80,7 +80,7 @@ at the deadline; new regressions fail before the correction and pass afterward.
 Initial or early backend failures still retain their original classification. Portable
 startup tests cover transient failures, empty trees, cancellation and timeout.
 
-## Qualified code checkpoint
+## Earlier qualified code checkpoint
 
 All 22 required jobs passed at
 [`9c0bf5eb63d85088e318395be6e6010ab88a1d0a`](https://github.com/AhmedAredah/e2e-platform/commit/9c0bf5eb63d85088e318395be6e6010ab88a1d0a) on 2026-10-27.
@@ -152,6 +152,34 @@ a separate owned foreground Qt process, observes the test application becoming
 inactive, fills its field, checks focus/value, and confirms child cleanup. Other
 display backends explicitly skip this Cocoa-specific test. The existing four
 local Linux/offscreen CTest suites pass; they do not establish Cocoa behavior.
+
+## Qualified installation and activation checkpoint
+
+All 22 required jobs across six workflows passed on their first attempt for
+[`c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb`](https://github.com/AhmedAredah/e2e-platform/commit/c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb).
+The optional live-model job was not invoked. This final documentation update
+records the qualified code; it changes no production source.
+
+| Workflow | Required jobs passed | Scope |
+| --- | --- | --- |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827476) | 3 | Quality gate, testbed and Node 22.22.3/24.22.1 suites |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714) | 9 | C++ CLI/HTTP, installed SDK/kit, Qt Widgets/Quick and static/shared consumers |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574) | 5 | GTK3, WPF and AppKit real controls and installed TypeScript/C++ consumers |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827437) | 3 | Python/C#/Rust CLI/HTTP positive and planted-negative cases on three operating systems |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827618) | 1 | Deterministic browser benchmark; optional live-model job not invoked |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827596) | 1 | Local documentation validation |
+
+The native Cocoa artifact explicitly records
+`PASS : WidgetsControlsTests::fillingReactivatesBackgroundApplication()`; the
+regression ran rather than being skipped. All eight installed static/shared
+Widgets/Quick positive and planted-defect cases passed their required oracles
+with complete cleanup. The three OS desktop archives likewise record all twelve
+installed TypeScript/C++ cases with completed cleanup. Their archive bytes,
+SHA-256 digests and exact source commits were verified. Artifact identifiers and
+digests are recorded in [support-profiles.json](support-profiles.json).
+
+The earlier Cocoa failure and unchanged-source rerun above remain recorded. The
+new background-application regression passed with the actual source correction.
 
 ## Dependency and release boundaries
 

@@ -12,8 +12,8 @@ wrong results even when an application exits successfully or displays success.
 Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
 The [follow-up corrections](docs/development/CPP_FOLLOWUP_RESOLUTION.md) address
 numeric parsing, password protection, action readiness, scrolling and shared
-desktop scheduling. All 22 required hosted jobs passed for code checkpoint
-[`9c0bf5e`](https://github.com/AhmedAredah/e2e-platform/commit/9c0bf5eb63d85088e318395be6e6010ab88a1d0a), including installed
+desktop scheduling, installation-kit integrity and Cocoa activation. All 22 required hosted jobs passed for code checkpoint
+[`c0d0bdf`](https://github.com/AhmedAredah/e2e-platform/commit/c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb), including installed
 TypeScript and compiled C++ desktop consumers on Linux, Windows and macOS.
 This remains a prerelease with bounded support; additional controls and toolkits
 require their own real-application qualification.

@@ -12,6 +12,31 @@ tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted eviden
 including the formerly failing macOS Quick profile. Older checkpoints below are
 historical; the following table identifies the source actually tested.
 
+## Current qualified code checkpoint
+
+All 22 required jobs across six workflows passed on their first attempt for
+[`c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb`](https://github.com/AhmedAredah/e2e-platform/commit/c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb).
+The optional live-model job was not invoked. This final documentation update
+records the qualified code; it changes no production source.
+
+| Workflow | Required jobs passed | Scope |
+| --- | --- | --- |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827476) | 3 | Quality gate, testbed and Node 22.22.3/24.22.1 suites |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714) | 9 | C++ CLI/HTTP, installed SDK/kit, Qt Widgets/Quick and static/shared consumers |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574) | 5 | GTK3, WPF and AppKit real controls and installed TypeScript/C++ consumers |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827437) | 3 | Python/C#/Rust CLI/HTTP positive and planted-negative cases on three operating systems |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827618) | 1 | Deterministic browser benchmark; optional live-model job not invoked |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827596) | 1 | Local documentation validation |
+
+The native Cocoa artifact explicitly records
+`PASS : WidgetsControlsTests::fillingReactivatesBackgroundApplication()`; the
+regression ran rather than being skipped. All eight installed static/shared
+Widgets/Quick positive and planted-defect cases passed their required oracles
+with complete cleanup. The three OS desktop archives likewise record all twelve
+installed TypeScript/C++ cases with completed cleanup. Their archive bytes,
+SHA-256 digests and exact source commits were verified. Artifact identifiers and
+digests are recorded in [support-profiles.json](docs/development/support-profiles.json).
+
 ## Installation kit and dependency follow-up
 
 Packing now invalidates the previous manifest and source marker before any build
@@ -39,9 +64,9 @@ The resulting correction raises an inactive Widgets window before requesting
 activation, and adds a Cocoa regression using a separate owned foreground process.
 It retains the refusal to type without observed activation. The original failure
 and follow-up are recorded in the [resolution report](docs/development/CPP_FOLLOWUP_RESOLUTION.md);
-the new native source requires its own exact-commit hosted qualification.
+the corrected native source passed the exact-commit qualification above.
 
-## Current follow-up qualification
+## Previous C++ follow-up qualification
 
 All 22 required jobs across six workflows passed on 2026-10-27 for code checkpoint
 [`9c0bf5eb63d85088e318395be6e6010ab88a1d0a`](https://github.com/AhmedAredah/e2e-platform/commit/9c0bf5eb63d85088e318395be6e6010ab88a1d0a).
