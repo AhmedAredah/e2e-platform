@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "candidate": "0.2.0-rc.8",
-  "evidenceSourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
+  "evidenceSourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
   "desktopEvidence": {
-    "candidate": "0.2.0-rc.7",
-    "recordedAt": "2026-10-28T04:01:32.013148+00:00",
-    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574",
+    "candidate": "0.2.0-rc.8",
+    "recordedAt": "2026-10-28T19:22:21.820359+00:00",
+    "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683",
     "conclusion": "success",
-    "scope": "Five jobs: real GTK3, WPF and AppKit reference acceptance; clean installed TypeScript and C++ public consumers with independent planted-defect rejection and complete cleanup; Windows Job Object and TypeScript client; Rust portable tests. Does not certify arbitrary frameworks."
+    "scope": "Five jobs: real GTK3/WPF/AppKit, installed TypeScript/C++/Python positive and planted-negative consumers; owned cleanup complete."
   },
   "testLanguage": "TypeScript/JavaScript; bounded C++ and Python/pytest authoring bridges",
   "applicationLanguages": [
@@ -38,9 +38,9 @@
       "screenshots": "source-masked Qt helper capture",
       "qualification": {
         "status": "qualified-limited",
-        "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714",
+        "evidenceCandidate": "0.2.0-rc.8",
+        "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128",
         "profiles": [
           {
             "os": "Ubuntu 24.04",
@@ -74,20 +74,21 @@
           "Selected Widgets/Quick reference controls, C++ authored tests and installed static/shared consumers",
           "No arbitrary canvas or hybrid DOM support",
           "Headless native macOS style is not a qualified configuration",
-          "Quick selectOption requires supported non-editable closed-popup ComboBox"
+          "Quick selectOption requires supported non-editable closed-popup ComboBox",
+          "Earlier intermittent Cocoa SIGABRT during Quick cleanup remains an unresolved stability issue despite the passing current checkpoint"
         ],
         "backgroundApplicationActivation": {
           "status": "passed-native-cocoa",
           "regression": "WidgetsControlsTests::fillingReactivatesBackgroundApplication",
-          "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714/job/122620137921",
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714/artifacts/12790961270",
-          "artifactSha256": "9f2148746da434edf0e7de9f72b51825140021051a90729431e996ceee136c18",
+          "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128/job/122944037354",
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128/artifacts/12834975698",
+          "artifactSha256": "499200141a9a98f646cfe95b8816241589b5b299c5f88f320a74c632f2f6c3d5",
           "installedStaticSharedCases": 8,
           "allCleanupComplete": true
         }
       },
       "actionability": true,
-      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
+      "currentCandidateQualification": "passed documented reference profiles at 6494472ac1382a968ca1a4b92241682a323b3b81",
       "windowManagement": "Qt-owned visible windows; modal guards",
       "customControls": "public source-level ControlAdapter; registration disables helper screenshots",
       "configuredWorkflows": [
@@ -113,10 +114,10 @@
       "screenshots": false,
       "qualification": {
         "status": "qualified-limited",
-        "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137772",
-        "portableTests": 85,
+        "evidenceCandidate": "0.2.0-rc.8",
+        "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/job/122944034447",
+        "portableTests": 86,
         "liveStatus": "passed-reference-fixture",
         "os": "Ubuntu 24.04 / D-Bus / Xvfb",
         "limits": [
@@ -128,17 +129,18 @@
         "installedPublicConsumers": {
           "languages": [
             "TypeScript",
-            "C++"
+            "C++",
+            "Python"
           ],
-          "positiveCasesPassed": 2,
-          "plantedDefectsRejected": 2,
+          "positiveCasesPassed": 3,
+          "plantedDefectsRejected": 3,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790168207",
-          "artifactSha256": "c38ae7d28c023cc22ff8db0fbfc1fd527e66fb4b77a7b93ffe67046371af02d4"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/artifacts/12831428427",
+          "artifactSha256": "90d9c8227a5e0885e09c5e911ae573ee70d3f6d20905b78bd127a521d5416d33"
         }
       },
       "actionability": true,
-      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
+      "currentCandidateQualification": "passed documented reference profiles at 6494472ac1382a968ca1a4b92241682a323b3b81",
       "localPortableChecks": 85
     },
     {
@@ -159,9 +161,9 @@
       "screenshots": false,
       "qualification": {
         "status": "qualified-limited",
-        "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137441",
+        "evidenceCandidate": "0.2.0-rc.8",
+        "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/job/122944035130",
         "portableTests": 81,
         "liveStatus": "passed-reference-fixture",
         "os": "Windows Server 2022 / WPF",
@@ -175,17 +177,18 @@
         "installedPublicConsumers": {
           "languages": [
             "TypeScript",
-            "C++"
+            "C++",
+            "Python"
           ],
-          "positiveCasesPassed": 2,
-          "plantedDefectsRejected": 2,
+          "positiveCasesPassed": 3,
+          "plantedDefectsRejected": 3,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790414109",
-          "artifactSha256": "ed246d70c155caaea356bca9686b2db272c73ecd654f12238a225cc1af5102b6"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/artifacts/12832981509",
+          "artifactSha256": "2d7dac72576edc88f2efcc923a124b195153c45493bc6cd0d5c75ff94c0becb3"
         }
       },
       "actionability": true,
-      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
+      "currentCandidateQualification": "passed documented reference profiles at 6494472ac1382a968ca1a4b92241682a323b3b81",
       "localPortableChecks": 81
     },
     {
@@ -206,9 +209,9 @@
       "screenshots": false,
       "qualification": {
         "status": "qualified-limited",
-        "evidenceCandidate": "0.2.0-rc.7",
-        "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/job/122620137855",
+        "evidenceCandidate": "0.2.0-rc.8",
+        "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+        "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/job/122944034951",
         "portableTests": 38,
         "liveStatus": "passed-reference-fixture",
         "os": "macOS 15 / AppKit",
@@ -222,17 +225,18 @@
         "installedPublicConsumers": {
           "languages": [
             "TypeScript",
-            "C++"
+            "C++",
+            "Python"
           ],
-          "positiveCasesPassed": 2,
-          "plantedDefectsRejected": 2,
+          "positiveCasesPassed": 3,
+          "plantedDefectsRejected": 3,
           "allCleanupComplete": true,
-          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827574/artifacts/12790198360",
-          "artifactSha256": "7866a11c6357b51f3fb45d3b83ae2327fb075ed1ac997fc07ee0d9dd28baacef"
+          "artifactUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683/artifacts/12834720049",
+          "artifactSha256": "a062003d4a9f7505e68eb83a67ace4c600f91aad18d5d84b673b4e11ded4c6fe"
         }
       },
       "actionability": true,
-      "currentCandidateQualification": "passed documented reference profile; qualify additional controls, toolkits and environments separately",
+      "currentCandidateQualification": "passed documented reference profiles at 6494472ac1382a968ca1a4b92241682a323b3b81",
       "selection": "writable AXSelectedChildren; unique direct child label/AXIdentifier/index",
       "visibility": "explicit known/unknown flag; unknown cannot prove visible, hidden or absence",
       "localPortableChecks": 38,
@@ -252,19 +256,19 @@
   "testAuthoring": {
     "typescript": "shared runner API",
     "cpp": "bounded native/cpp-sdk and @e2e-platform/cpp bridge; documented operations only",
-    "python": "Implemented: sdks/python typed wheel and @e2e-platform/python registration; Windows/Linux 3.11–3.15 installed CLI/HTTP and Qt reference profiles passed; GTK3/WPF/AppKit Python-authored contracts passed; macOS Python matrix pending",
+    "python": "Implemented and qualified for documented reference profiles: typed wheel and pytest registration; installed Python 3.11–3.15 CLI/HTTP, Qt 6.12.0 and GTK3/WPF/AppKit controls on Windows/Linux/macOS. Bounded API; Node required.",
     "csharp": "not implemented",
     "rust": "not implemented"
   },
   "nativeEvidence": {
-    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827714",
+    "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128",
     "conclusion": "success",
     "jobs": 9
   },
   "specEvidence": {
-    "sourceCommit": "c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40628827476",
+    "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513825",
     "conclusion": "success",
     "nodeVersions": [
       "22.22.3",
@@ -287,7 +291,7 @@
     "maintenanceTests": 70
   },
   "pythonQualification": {
-    "status": "qualified-windows-linux-pending-macos",
+    "status": "qualified-documented-reference-profiles",
     "configuredPythonVersions": [
       "3.11",
       "3.12",
@@ -302,42 +306,50 @@
       "PySide6/PyQt6 Widgets and Quick/AT-SPI,UIA,AX"
     ],
     "record": "PYTHON_REVIEW_RESOLUTION.md",
-    "recordedAt": "2026-10-28T16:16:08.411506+00:00",
-    "sourceCommit": "0e9ae2d50fb66a9dd53d18473c42766c43dfb905",
-    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115852",
-    "passedJobs": 17,
-    "pendingMacosJobs": 8,
-    "scope": "Fresh installed wheel and nine-package consumers; Windows/Linux Python 3.11–3.15, pytest minimum, PySide6/PyQt6 6.12.0 Widgets/Quick through AT-SPI/UIA, and Flask/Django/FastAPI HTTP. Python-authored GTK3/WPF/AppKit contracts passed on all three OS. Real positive and independent planted-negative cases, complete cleanup. No universal toolkit claim; separate macOS Python matrix remains pending.",
+    "recordedAt": "2026-10-28T19:22:21.820359+00:00",
+    "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+    "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513854",
+    "passedJobs": 25,
+    "pendingMacosJobs": 0,
+    "scope": "Fresh installed wheel and nine-package consumers on Windows/Linux/macOS: Python 3.11–3.15, pytest minimum, PySide6/PyQt6 6.12.0 Widgets/Quick through AT-SPI/UIA/AX, and Flask/Django/FastAPI HTTP. Python-authored GTK3/WPF/AppKit contracts also passed. Positive and independent planted-negative cases, complete cleanup. No universal toolkit or stable-release claim.",
     "verifiedArchives": [
       {
-        "artifactId": 12830013753,
-        "artifactName": "python-desktop-ubuntu-24.04-PyQt6",
-        "archiveSha256": "c21ba88fd581a72f208287189366a776fd438edf2a72d3294c0c722f2e94100a",
-        "python": "3.12.15",
+        "artifactId": 12836333192,
+        "artifactName": "python-macos-15-3.15",
+        "archiveSha256": "ef90a60636bb4cdf4d0eecb7342cae6e1355f3b10ba4d64a7163603be23d1ab7",
+        "python": "3.15.2",
         "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "1301beb5763900e7a9f4fe12b8d210b7d640939ae1098d8c47116de8d1d06164",
-        "guiRuntime": {
-          "python": "3.12.15",
-          "binding": "PyQt6",
-          "bindingVersion": "6.12.0",
-          "qt": "6.12.0"
-        },
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "6b8d120bee9a6fa01b49695453d8f3c28c7019de75c86f24491bf7a75a05fc7c",
+        "guiRuntime": null,
         "frameworks": null,
         "scenarios": 4
       },
       {
-        "artifactId": 12829369161,
-        "artifactName": "python-desktop-ubuntu-24.04-PySide6",
-        "archiveSha256": "62b128b4b97448fca07827b1330bd2eee5ff285e2d300743e0ce9ee9ece7e463",
-        "python": "3.12.15",
+        "artifactId": 12835840454,
+        "artifactName": "python-macos-15-3.12",
+        "archiveSha256": "0693ec441aabf880b602e5901397163bd06a495fc1a1df3975e3e0a111ac6ad8",
+        "python": "3.12.10",
         "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "9afcc959003fff87ee1a48bac5160c79390769e81e5e8b93e1294045cd3510c6",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "17f4be425b19860d62e523f9e5c95ee1d384b4996c6e68f04a54efb9cd22f3a4",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12835752699,
+        "artifactName": "python-desktop-macos-15-PySide6",
+        "archiveSha256": "30c36d5c0c0ee628189612da223049c708f3f8f53b3c6b34f9d11a47ac3fb13c",
+        "python": "3.12.10",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "90716381ce464d5591669e8a408f03efd1c3cd875d135f4381cb0396f69c55d0",
         "guiRuntime": {
-          "python": "3.12.15",
+          "python": "3.12.10",
           "binding": "PySide6",
           "bindingVersion": "6.12.0",
           "qt": "6.12.0"
@@ -346,14 +358,102 @@
         "scenarios": 4
       },
       {
-        "artifactId": 12829928575,
+        "artifactId": 12835457040,
+        "artifactName": "python-macos-15-3.14",
+        "archiveSha256": "a8ab2e4b9b0a13779771097697deaa87f30a025b6ecdd9d3ed84b07e489acb15",
+        "python": "3.14.7",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "4675f160e8a5fe8162dcc3e6ee8a636196bd4047447cdd2b8fef65f8c6956983",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12835318921,
+        "artifactName": "python-macos-15-3.11",
+        "archiveSha256": "63453935a9eb9234778f7c46d36d529c95642b93604357296a1657b932dab89d",
+        "python": "3.11.9",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "7ade72f5cfe87e4af0823cf6f5a5ef4edd284af64c8830fb0b2771551499e075",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12834589778,
+        "artifactName": "python-frameworks-macos-15",
+        "archiveSha256": "d84a21b0fec91f0befd57f433a4088813e7b1dfcf9a0f361042f034b0b946525",
+        "python": "3.12.10",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "ecdfa3e955e421b3c9c58eca927ddbe2d44b7b3ed157c91ace4584cace7decad",
+        "guiRuntime": null,
+        "frameworks": {
+          "Flask": "3.1.3",
+          "Django": "5.2.18",
+          "fastapi": "0.162.0",
+          "uvicorn": "0.54.0"
+        },
+        "scenarios": 6
+      },
+      {
+        "artifactId": 12834534901,
+        "artifactName": "python-desktop-macos-15-PyQt6",
+        "archiveSha256": "16b5fe851839c2590cfea2e955387801296adb647b6f89266ddc8ac9e760a695",
+        "python": "3.12.10",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "f70b07e26abd4f5b331b0772484226e68ccc8728c7649a490e0581268b81c6ea",
+        "guiRuntime": {
+          "python": "3.12.10",
+          "binding": "PyQt6",
+          "bindingVersion": "6.12.0",
+          "qt": "6.12.0"
+        },
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12834433547,
+        "artifactName": "python-macos-15-3.13",
+        "archiveSha256": "e201e960dd83865b0675d61fd22390ce3f34871644565a7b6462e9089021d502",
+        "python": "3.13.15",
+        "pytest": "9.2.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "wheelSha256": "0bbebef2c813924c48c5b7c326c73e172e181d1805ea1016816a94c65c3cc9c5",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12832931120,
+        "artifactName": "python-windows-2022-3.14",
+        "archiveSha256": "73c558154dde663714c5b58ab91f01ecca45d1011f4cdc153ed07967f8931dee",
+        "python": "3.14.9",
+        "pytest": "9.2.0",
+        "platform": "win32",
+        "architecture": "x64",
+        "wheelSha256": "ef892ff43258d60ebfb1b2e581fb27a04571008653b12cc28b036a54685cf49f",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12832770670,
         "artifactName": "python-desktop-windows-2022-PyQt6",
-        "archiveSha256": "7bb49f6ade869f5b75bed344e7581788733ddbbe11cf132e119b01edaeebce7c",
+        "archiveSha256": "5c929185b64763cdbf68c3136c1879b3d27e14fe84dbcad1b01a0fcf9fa294fb",
         "python": "3.12.10",
         "pytest": "9.2.0",
         "platform": "win32",
         "architecture": "x64",
-        "wheelSha256": "fcabf50905a365b1f2fe2de9e4101308ceac8d98f9a85af63fd2c88cf5b6ca6b",
+        "wheelSha256": "26324ab0a4c5b4139e17c41832f2e1befbc2450af77ef9effdd0f9b42871a71f",
         "guiRuntime": {
           "python": "3.12.10",
           "binding": "PyQt6",
@@ -364,14 +464,14 @@
         "scenarios": 4
       },
       {
-        "artifactId": 12830387640,
+        "artifactId": 12832636510,
         "artifactName": "python-desktop-windows-2022-PySide6",
-        "archiveSha256": "74397b6c752f41c5397e65d1f0ba2b3ef6f0263a7dc08f460620327076cceaa6",
+        "archiveSha256": "10f2c421aacad6880d7c7c2f88b5f7fd384732d28b0e99dd286aa3829eeec3ab",
         "python": "3.12.10",
         "pytest": "9.2.0",
         "platform": "win32",
         "architecture": "x64",
-        "wheelSha256": "190f5d45d7197f4f1b8500e4a759ddfc1819826bc753d54b757cec44d17806e7",
+        "wheelSha256": "25364433c385e344a684f85818f7178604483b943c840e45787916518e27b157",
         "guiRuntime": {
           "python": "3.12.10",
           "binding": "PySide6",
@@ -382,32 +482,14 @@
         "scenarios": 4
       },
       {
-        "artifactId": 12831176035,
-        "artifactName": "python-frameworks-ubuntu-24.04",
-        "archiveSha256": "fce421dd491fb4086d55ef95e0f6d25a667867f5450dae5c379d421c6d4942f5",
-        "python": "3.12.15",
-        "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "a49c8ae985ac2e8914406e02a00486702c7cb235ab21fd62767c2d409f247b94",
-        "guiRuntime": null,
-        "frameworks": {
-          "Flask": "3.1.3",
-          "Django": "5.2.18",
-          "fastapi": "0.162.0",
-          "uvicorn": "0.54.0"
-        },
-        "scenarios": 6
-      },
-      {
-        "artifactId": 12830307925,
+        "artifactId": 12832591081,
         "artifactName": "python-frameworks-windows-2022",
-        "archiveSha256": "8b2e4f91bd703d3f87f7bf6d6936d291a7fea6739be4f8008b31d99f94532fe3",
+        "archiveSha256": "fbe5aa8230c731aecedc7b2e29f6d87a45795a48b214f06eec9975b67961a280",
         "python": "3.12.10",
         "pytest": "9.2.0",
         "platform": "win32",
         "architecture": "x64",
-        "wheelSha256": "eeb5059096c03ca27b726a9a2d18446f30b85a27b17633c525ac43402b9ccc76",
+        "wheelSha256": "d345dcf6ef0f327204a110db2c1a60fdd0e074571d9b86207ceea0e0bde9ad3d",
         "guiRuntime": null,
         "frameworks": {
           "Flask": "3.1.3",
@@ -418,164 +500,205 @@
         "scenarios": 6
       },
       {
-        "artifactId": 12831130951,
+        "artifactId": 12832466407,
         "artifactName": "python-ubuntu-24.04-3.11",
-        "archiveSha256": "292ad3caa8af84fb6176b28be836ef11e5db4154ee6f331cf289268c22fd5888",
+        "archiveSha256": "b441b08a0ace4b1e232474be16d0c5fe2b34265a1b05d51e2547a66604b8ca10",
         "python": "3.11.17",
         "pytest": "9.2.0",
         "platform": "linux",
         "architecture": "x64",
-        "wheelSha256": "28045b8658c92f0656ded7ac099fd0704e255a5baf607caa5e86926210502638",
+        "wheelSha256": "a0f856ff261a0f910840c082dc35c483845b36dd23c2cb86c70d5461acc4082b",
         "guiRuntime": null,
         "frameworks": null,
         "scenarios": 4
       },
       {
-        "artifactId": 12829734492,
-        "artifactName": "python-ubuntu-24.04-3.12",
-        "archiveSha256": "13431fadf953df3d5317eaf54c5dcfe2984582cbe1cd6fd3060ef4b65b5cbfa6",
-        "python": "3.12.15",
-        "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "94bde943fa620c6a17e888d78c6ad8d3fbab03a7ecda6e9dd07e1528deb5e021",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12831680011,
-        "artifactName": "python-ubuntu-24.04-3.13",
-        "archiveSha256": "db70da031a131b4e78e5cad0a15a6f5bcb4f95a76417e7e1e61cc7d40f4183be",
-        "python": "3.13.17",
-        "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "6566afd67d1df86eb26914bce6119a12e1cd35c9dedc7dea141a25519ce3b938",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830887005,
-        "artifactName": "python-ubuntu-24.04-3.14",
-        "archiveSha256": "864180c98cdd81110b8c091cc774a51882fe0e1855f344c8ebf39077a2b5dee2",
-        "python": "3.14.9",
-        "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "6566afd67d1df86eb26914bce6119a12e1cd35c9dedc7dea141a25519ce3b938",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830482105,
-        "artifactName": "python-ubuntu-24.04-3.15",
-        "archiveSha256": "f5b87e659e02dde447a6bd800c0a213f415a4b49289747dc927824bd63ad30a4",
-        "python": "3.15.2",
-        "pytest": "9.2.0",
-        "platform": "linux",
-        "architecture": "x64",
-        "wheelSha256": "1090d29892a282c243b317976bf7444defe274d75a1651ba558cf2cd5a6bf106",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830996829,
-        "artifactName": "python-windows-2022-3.11",
-        "archiveSha256": "eeb4736aa1c9648314b15683de6865d735eef1fefc5091ffd45af89375504390",
-        "python": "3.11.9",
-        "pytest": "9.2.0",
-        "platform": "win32",
-        "architecture": "x64",
-        "wheelSha256": "d3034591ce89cb46fe4d38eae4eb1f7f4403f3988794f01001f8028bc74a9389",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12831107214,
-        "artifactName": "python-windows-2022-3.12",
-        "archiveSha256": "8476c38b6be7de1679138d65af3d22d3b2dd0d6fb04a129caa025861882ed3d8",
-        "python": "3.12.10",
-        "pytest": "9.2.0",
-        "platform": "win32",
-        "architecture": "x64",
-        "wheelSha256": "6d1c30504c2f42e07573d2c554a2cc44c8266d4317a04c2ad65a7ab50d6eca7e",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830762816,
-        "artifactName": "python-windows-2022-3.13",
-        "archiveSha256": "88ee93688da93806b430c2cf8c6e4af305dcf27ce348bf6457c4884aa3398268",
-        "python": "3.13.17",
-        "pytest": "9.2.0",
-        "platform": "win32",
-        "architecture": "x64",
-        "wheelSha256": "abfb9769db48bb879ba58687dfdaf324ba3d4e65f0e808f659da31b3ae0e667f",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830807384,
-        "artifactName": "python-windows-2022-3.14",
-        "archiveSha256": "6109c48105819cc94d8afc3688b24dac986962ea0f5d0dca8e43835a3917d78c",
-        "python": "3.14.9",
-        "pytest": "9.2.0",
-        "platform": "win32",
-        "architecture": "x64",
-        "wheelSha256": "fc5fc25249746577d48dad70ad86f587654970fc8cd2c0421c153abbeee223a8",
-        "guiRuntime": null,
-        "frameworks": null,
-        "scenarios": 4
-      },
-      {
-        "artifactId": 12830248412,
+        "artifactId": 12832422057,
         "artifactName": "python-windows-2022-3.15",
-        "archiveSha256": "ecd1e975cd6e88dea50cac85bd83c57eba51fb34e3825b315273c3890cbb1106",
+        "archiveSha256": "aab43cd6068e16579cc11db2884a9e46e3f7b695d8f46d09352b1fbeed1431ae",
         "python": "3.15.1",
         "pytest": "9.2.0",
         "platform": "win32",
         "architecture": "x64",
-        "wheelSha256": "befbeed88c13c841605a995dac2f9a4135f25f3a81d88fe74015ae55ca969d39",
+        "wheelSha256": "e7c882731ccb3ee7cee27daeef322d0ca8073a215130730cee0bd1f428ec0c10",
         "guiRuntime": null,
         "frameworks": null,
         "scenarios": 4
+      },
+      {
+        "artifactId": 12832391096,
+        "artifactName": "python-ubuntu-24.04-3.15",
+        "archiveSha256": "1bfaa0e50c81a60f5dc26b22b34a51300594c91e398bbc9ebe88c04635be607f",
+        "python": "3.15.1",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "fc756c59ee86f7f417d5d1c8f4d962ceb7ab33d5563d6954c587a47d376f0326",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12832187581,
+        "artifactName": "python-ubuntu-24.04-3.13",
+        "archiveSha256": "542078c56c68f3d145713e7a287a3dd00a17270d30d4c4b26f2a92a6ca69d968",
+        "python": "3.13.17",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "04d939456f88e602827a3500a4c961b960165eba3a8230c33c2c6e10785f464b",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831952776,
+        "artifactName": "python-ubuntu-24.04-3.14",
+        "archiveSha256": "1ef5b370818a23f4b24e50828ff6d16b0dbd9c7ff168663950c70b39f227ced8",
+        "python": "3.14.9",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "d2cf0291b7b8f7999636c525d487dfe6a2a5abe30491e6e613c3d1562fb7f070",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831813879,
+        "artifactName": "python-windows-2022-3.12",
+        "archiveSha256": "ed837a9ddd25d7e65399aa33696b9b456be9eea844a0204adea112c3c65ec0a2",
+        "python": "3.12.10",
+        "pytest": "9.2.0",
+        "platform": "win32",
+        "architecture": "x64",
+        "wheelSha256": "63a7017687b951fd1241229d326d61689762846e4c62d5fadd76bc935cbee426",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831664915,
+        "artifactName": "python-desktop-ubuntu-24.04-PyQt6",
+        "archiveSha256": "db18d8d3de530dc9902f1a8ed7aa677c307dcdf642bc09e02d6662d5aea8bca7",
+        "python": "3.12.15",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "53db531ac690e3434f06640b7cef92c076c79ae6bec62156c2045b225a492a63",
+        "guiRuntime": {
+          "python": "3.12.15",
+          "binding": "PyQt6",
+          "bindingVersion": "6.12.0",
+          "qt": "6.12.0"
+        },
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831134760,
+        "artifactName": "python-windows-2022-3.11",
+        "archiveSha256": "af24bad70d024d8b99041d1331a5da91c5be55aaf4fa9e9ea2dfaa81a5407c21",
+        "python": "3.11.9",
+        "pytest": "9.2.0",
+        "platform": "win32",
+        "architecture": "x64",
+        "wheelSha256": "4d9bfaa93f1ac6c811f4e31bab51ed051556ff6c916cfb22579082a289da3dba",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831118780,
+        "artifactName": "python-ubuntu-24.04-3.12",
+        "archiveSha256": "6cad7ab8ace8199fff585876cef0ab6eff6401abaf793c6df3ef3743a155ea80",
+        "python": "3.12.15",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "04d939456f88e602827a3500a4c961b960165eba3a8230c33c2c6e10785f464b",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831103866,
+        "artifactName": "python-desktop-ubuntu-24.04-PySide6",
+        "archiveSha256": "4ce045d6d9af06795bc7949cca49da18029016f7282785db09170d6ef4de5f29",
+        "python": "3.12.15",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "4bf0c3619e7a4e44be033af195c43ea60896345e16d20f5791a2aa7ea3c651ff",
+        "guiRuntime": {
+          "python": "3.12.15",
+          "binding": "PySide6",
+          "bindingVersion": "6.12.0",
+          "qt": "6.12.0"
+        },
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831039927,
+        "artifactName": "python-windows-2022-3.13",
+        "archiveSha256": "f8088f73af21f3691f300a61d6ac3b8f77d01b4c39b8b094fd205b638d09af31",
+        "python": "3.13.17",
+        "pytest": "9.2.0",
+        "platform": "win32",
+        "architecture": "x64",
+        "wheelSha256": "05c7fd4b0f0ecc7e9998c4cf7722d7be10d4845dc659647468b6fbb55c5e2191",
+        "guiRuntime": null,
+        "frameworks": null,
+        "scenarios": 4
+      },
+      {
+        "artifactId": 12831013801,
+        "artifactName": "python-frameworks-ubuntu-24.04",
+        "archiveSha256": "fe35f381ae87c50e0a4f40b82197e537f782856d089184410a00fb5ea059ec73",
+        "python": "3.12.15",
+        "pytest": "9.2.0",
+        "platform": "linux",
+        "architecture": "x64",
+        "wheelSha256": "afd96bfa73557e21d8264b2048a67cf61ab82a885c08db9cf8d440029bb35790",
+        "guiRuntime": null,
+        "frameworks": {
+          "Flask": "3.1.3",
+          "Django": "5.2.18",
+          "fastapi": "0.162.0",
+          "uvicorn": "0.54.0"
+        },
+        "scenarios": 6
       }
     ],
     "desktopContracts": {
-      "sourceCommit": "0e9ae2d50fb66a9dd53d18473c42766c43dfb905",
-      "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115873",
+      "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+      "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683",
       "conclusion": "success",
       "jobs": 5,
       "verifiedArchives": [
         {
-          "artifactId": 12831251318,
-          "artifactName": "desktop-consumer-windows",
-          "archiveSha256": "0b526599c765a5817e3ba589bdc7c08027d144b0dba5dcb82c1e203c42bd815b",
-          "backend": "windows-uia",
-          "platform": "win32",
-          "architecture": "x64",
-          "scenarios": 6
-        },
-        {
-          "artifactId": 12831137576,
+          "artifactId": 12834720049,
           "artifactName": "desktop-consumer-macos",
-          "archiveSha256": "feb7acc9daa58551de449635cba0f915e005029d4045cc431d34e46b16461cdc",
+          "archiveSha256": "a062003d4a9f7505e68eb83a67ace4c600f91aad18d5d84b673b4e11ded4c6fe",
           "backend": "macos-ax",
           "platform": "darwin",
           "architecture": "arm64",
           "scenarios": 6
         },
         {
-          "artifactId": 12830456746,
+          "artifactId": 12832981509,
+          "artifactName": "desktop-consumer-windows",
+          "archiveSha256": "2d7dac72576edc88f2efcc923a124b195153c45493bc6cd0d5c75ff94c0becb3",
+          "backend": "windows-uia",
+          "platform": "win32",
+          "architecture": "x64",
+          "scenarios": 6
+        },
+        {
+          "artifactId": 12831428427,
           "artifactName": "desktop-consumer-linux",
-          "archiveSha256": "daa5085fa5a13758f36eecd2e5a6e860aaa98bdb3d2391d7f3d648c772e4bc07",
+          "archiveSha256": "90d9c8227a5e0885e09c5e911ae573ee70d3f6d20905b78bd127a521d5416d33",
           "backend": "linux-atspi",
           "platform": "linux",
           "architecture": "x64",
@@ -583,5 +706,308 @@
         }
       ]
     }
-  }
+  },
+  "currentCheckpoint": {
+    "sourceCommit": "6494472ac1382a968ca1a4b92241682a323b3b81",
+    "requiredJobsPassed": 47,
+    "requiredJobsPending": 0,
+    "recordedAt": "2026-10-28T19:22:21.820359+00:00",
+    "workflows": [
+      {
+        "name": "desktop-contracts",
+        "id": 40724513683,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683",
+        "attempt": 1
+      },
+      {
+        "name": "native",
+        "id": 40724514128,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128",
+        "attempt": 1
+      },
+      {
+        "name": "python",
+        "id": 40724513854,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513854",
+        "attempt": 1
+      },
+      {
+        "name": "benchmark",
+        "id": 40724513787,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513787",
+        "attempt": 1
+      },
+      {
+        "name": "docs",
+        "id": 40724513948,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513948",
+        "attempt": 1
+      },
+      {
+        "name": "spec",
+        "id": 40724513825,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513825",
+        "attempt": 1
+      },
+      {
+        "name": "languages",
+        "id": 40724513585,
+        "url": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513585",
+        "attempt": 1
+      }
+    ],
+    "verifiedArchives": [
+      {
+        "artifactId": 12836333192,
+        "artifactName": "python-macos-15-3.15",
+        "archiveSha256": "ef90a60636bb4cdf4d0eecb7342cae6e1355f3b10ba4d64a7163603be23d1ab7",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12835840454,
+        "artifactName": "python-macos-15-3.12",
+        "archiveSha256": "0693ec441aabf880b602e5901397163bd06a495fc1a1df3975e3e0a111ac6ad8",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12835752699,
+        "artifactName": "python-desktop-macos-15-PySide6",
+        "archiveSha256": "30c36d5c0c0ee628189612da223049c708f3f8f53b3c6b34f9d11a47ac3fb13c",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12835457040,
+        "artifactName": "python-macos-15-3.14",
+        "archiveSha256": "a8ab2e4b9b0a13779771097697deaa87f30a025b6ecdd9d3ed84b07e489acb15",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12835318921,
+        "artifactName": "python-macos-15-3.11",
+        "archiveSha256": "63453935a9eb9234778f7c46d36d529c95642b93604357296a1657b932dab89d",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12834589778,
+        "artifactName": "python-frameworks-macos-15",
+        "archiveSha256": "d84a21b0fec91f0befd57f433a4088813e7b1dfcf9a0f361042f034b0b946525",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12834534901,
+        "artifactName": "python-desktop-macos-15-PyQt6",
+        "archiveSha256": "16b5fe851839c2590cfea2e955387801296adb647b6f89266ddc8ac9e760a695",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12834433547,
+        "artifactName": "python-macos-15-3.13",
+        "archiveSha256": "e201e960dd83865b0675d61fd22390ce3f34871644565a7b6462e9089021d502",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832931120,
+        "artifactName": "python-windows-2022-3.14",
+        "archiveSha256": "73c558154dde663714c5b58ab91f01ecca45d1011f4cdc153ed07967f8931dee",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832770670,
+        "artifactName": "python-desktop-windows-2022-PyQt6",
+        "archiveSha256": "5c929185b64763cdbf68c3136c1879b3d27e14fe84dbcad1b01a0fcf9fa294fb",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832636510,
+        "artifactName": "python-desktop-windows-2022-PySide6",
+        "archiveSha256": "10f2c421aacad6880d7c7c2f88b5f7fd384732d28b0e99dd286aa3829eeec3ab",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832591081,
+        "artifactName": "python-frameworks-windows-2022",
+        "archiveSha256": "fbe5aa8230c731aecedc7b2e29f6d87a45795a48b214f06eec9975b67961a280",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12832466407,
+        "artifactName": "python-ubuntu-24.04-3.11",
+        "archiveSha256": "b441b08a0ace4b1e232474be16d0c5fe2b34265a1b05d51e2547a66604b8ca10",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832422057,
+        "artifactName": "python-windows-2022-3.15",
+        "archiveSha256": "aab43cd6068e16579cc11db2884a9e46e3f7b695d8f46d09352b1fbeed1431ae",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832391096,
+        "artifactName": "python-ubuntu-24.04-3.15",
+        "archiveSha256": "1bfaa0e50c81a60f5dc26b22b34a51300594c91e398bbc9ebe88c04635be607f",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12832187581,
+        "artifactName": "python-ubuntu-24.04-3.13",
+        "archiveSha256": "542078c56c68f3d145713e7a287a3dd00a17270d30d4c4b26f2a92a6ca69d968",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831952776,
+        "artifactName": "python-ubuntu-24.04-3.14",
+        "archiveSha256": "1ef5b370818a23f4b24e50828ff6d16b0dbd9c7ff168663950c70b39f227ced8",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831813879,
+        "artifactName": "python-windows-2022-3.12",
+        "archiveSha256": "ed837a9ddd25d7e65399aa33696b9b456be9eea844a0204adea112c3c65ec0a2",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831664915,
+        "artifactName": "python-desktop-ubuntu-24.04-PyQt6",
+        "archiveSha256": "db18d8d3de530dc9902f1a8ed7aa677c307dcdf642bc09e02d6662d5aea8bca7",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831134760,
+        "artifactName": "python-windows-2022-3.11",
+        "archiveSha256": "af24bad70d024d8b99041d1331a5da91c5be55aaf4fa9e9ea2dfaa81a5407c21",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831118780,
+        "artifactName": "python-ubuntu-24.04-3.12",
+        "archiveSha256": "6cad7ab8ace8199fff585876cef0ab6eff6401abaf793c6df3ef3743a155ea80",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831103866,
+        "artifactName": "python-desktop-ubuntu-24.04-PySide6",
+        "archiveSha256": "4ce045d6d9af06795bc7949cca49da18029016f7282785db09170d6ef4de5f29",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831039927,
+        "artifactName": "python-windows-2022-3.13",
+        "archiveSha256": "f8088f73af21f3691f300a61d6ac3b8f77d01b4c39b8b094fd205b638d09af31",
+        "verifiedReports": 4
+      },
+      {
+        "artifactId": 12831013801,
+        "artifactName": "python-frameworks-ubuntu-24.04",
+        "archiveSha256": "fe35f381ae87c50e0a4f40b82197e537f782856d089184410a00fb5ea059ec73",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12834720049,
+        "artifactName": "desktop-consumer-macos",
+        "archiveSha256": "a062003d4a9f7505e68eb83a67ace4c600f91aad18d5d84b673b4e11ded4c6fe",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12832981509,
+        "artifactName": "desktop-consumer-windows",
+        "archiveSha256": "2d7dac72576edc88f2efcc923a124b195153c45493bc6cd0d5c75ff94c0becb3",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12831428427,
+        "artifactName": "desktop-consumer-linux",
+        "archiveSha256": "90d9c8227a5e0885e09c5e911ae573ee70d3f6d20905b78bd127a521d5416d33",
+        "verifiedReports": 6
+      },
+      {
+        "artifactId": 12834975698,
+        "artifactName": "qt-macos-15-6.8.3-cocoa-macOS",
+        "archiveSha256": "499200141a9a98f646cfe95b8816241589b5b299c5f88f320a74c632f2f6c3d5",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12834120609,
+        "artifactName": "native-command-macos-15",
+        "archiveSha256": "e3fa46c5ef498f9a11c037af2ff1810461d5a837855cbdaedcf1cfc7543dab0a",
+        "verifiedReports": 13
+      },
+      {
+        "artifactId": 12833450752,
+        "artifactName": "qt-windows-2022-6.8.3-windows-Windows",
+        "archiveSha256": "133aba9aec333b87b554fe14a0967894d6c8fc7f021a2e4eda5a450d2c64027f",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12833369394,
+        "artifactName": "qt-macos-15-6.8.3-offscreen-Basic",
+        "archiveSha256": "ac89701a9273b0dd761a8172d57ad99a3d283533bd7956d14110859d7e11801a",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12833071008,
+        "artifactName": "native-command-windows-2022",
+        "archiveSha256": "f099ab58713ce5f17ff0462a04def5af3a9c0910a3da8308b6b614cfbc250830",
+        "verifiedReports": 13
+      },
+      {
+        "artifactId": 12833041421,
+        "artifactName": "qt-windows-2022-6.8.3-offscreen-Windows",
+        "archiveSha256": "ee4174c6fb201a1e864ad7f42c72bb16d2784bd5020f4aeb7149d571a516f28f",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12832675597,
+        "artifactName": "native-command-ubuntu-24.04",
+        "archiveSha256": "7eeb8249b792f53de481fba67666df9634448cbd681b4790bfcdeef701fcf81b",
+        "verifiedReports": 13
+      },
+      {
+        "artifactId": 12832666490,
+        "artifactName": "qt-linux-offscreen",
+        "archiveSha256": "353af836869215122cf5c4cc8240202d7b36e235225a35196bf94ee671376e98",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12831848523,
+        "artifactName": "qt-linux-x11",
+        "archiveSha256": "3e45d173c65c310a138c99a05fd481caf60a97390c0894825e43466ee57f9f6f",
+        "verifiedReports": 25
+      },
+      {
+        "artifactId": 12833500610,
+        "artifactName": "languages-macos-15",
+        "archiveSha256": "5939589c1d629866f8d8a1badc3c2681e67aec9f028dbc4760cf9edd77bdd542",
+        "verifiedReports": 2
+      },
+      {
+        "artifactId": 12832586323,
+        "artifactName": "languages-ubuntu-24.04",
+        "archiveSha256": "760ff894e23186414c52f5f9264c8906da1e6ec1547a4ba3322fd9fdaed40a04",
+        "verifiedReports": 2
+      },
+      {
+        "artifactId": 12831023922,
+        "artifactName": "languages-windows-2022",
+        "archiveSha256": "361efbf4f10e8fc38407a9cfe0af0cac7a0c63729be52a5c3e0f29e83815899c",
+        "verifiedReports": 2
+      }
+    ],
+    "verifiedReportCount": 315,
+    "runtimeSourceChangedByEvidenceUpdate": false,
+    "stableRelease": false
+  },
+  "knownStabilityIssues": [
+    {
+      "id": "cocoa-quick-cleanup-abort",
+      "status": "unresolved-intermittent",
+      "backend": "qt",
+      "profile": "Qt 6.8.3 macOS Cocoa",
+      "sourceCommit": "0e9ae2d50fb66a9dd53d18473c42766c43dfb905",
+      "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115865/job/122931954525",
+      "artifactId": 12831913751,
+      "artifactSha256": "762b152d6a8998bff3ce81d97fb14d74986e63ce4f992b233c6e140884765bdf",
+      "evidence": "Planted calculation assertion failed as intended, followed by SIGABRT and failed cleanup. Later equivalent source passed; original crash stack not retained. No root-cause fix claimed.",
+      "record": "PYTHON_REVIEW_RESOLUTION.md#remaining-cocoa-stability-issue"
+    }
+  ]
 }

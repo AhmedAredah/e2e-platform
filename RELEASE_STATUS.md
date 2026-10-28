@@ -8,37 +8,50 @@ C# and Rust authoring SDKs are not included. The application under test can use 
 another language; GUI support depends on accessible controls and the driver.
 
 The [C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md)
-tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted evidence,
+tracks all 27 findings. Those reviewed C++/Qt blockers have fixes and passing hosted evidence,
 including the formerly failing macOS Quick profile. Older checkpoints below are
-historical; the following table identifies the source actually tested.
+historical; the following table identifies the source actually tested and the
+newly observed Cocoa stability issue that remains open.
 
-## Python implementation checkpoint
+## Current qualified runtime checkpoint
 
-The Python wheel, pytest adapter and shared host are implemented. The nine-package
-kit adds authoring and Python adapters. At the recorded 2026-10-28 checkpoint for
-[`0e9ae2d50fb66a9dd53d18473c42766c43dfb905`](https://github.com/AhmedAredah/e2e-platform/commit/0e9ae2d50fb66a9dd53d18473c42766c43dfb905),
-all 17 Windows/Linux Python jobs passed. All five desktop-contract jobs also
-passed, including Python-authored GTK3, WPF and macOS AppKit acceptance.
-The eight separate macOS Python jobs were still queued. Pending jobs do not
-qualify the full runtime matrix or macOS Python Qt profiles.
+All **47 required jobs across seven workflows passed** on the first attempt for
+[`6494472ac1382a968ca1a4b92241682a323b3b81`](https://github.com/AhmedAredah/e2e-platform/commit/6494472ac1382a968ca1a4b92241682a323b3b81),
+recorded 2026-10-28. This includes every previously pending macOS Python job.
+The Python wheel and nine-package kit are installable from source; no stable
+release or registry publication is declared.
 
-| Workflow | Passed / required | Remaining at checkpoint |
+| Workflow | Required jobs passed | Verified scope |
 | --- | --- | --- |
-| [python](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115852) | 17 / 25 | Eight macOS SDK/installed-consumer, framework HTTP and Qt jobs queued |
-| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115873) | 5 / 5 | None; real GTK3/WPF/AppKit plus installed TypeScript/C++/Python consumers |
-| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115865) | 6 / 9 | Three macOS C++/Qt jobs queued |
-| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115805) | 2 / 3 | macOS CLI/HTTP job queued |
-| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115789) | 3 / 3 | None |
-| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115851) | 1 / 1 | None |
-| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115858) | 1 / 1 | Optional live-model job was not invoked |
+| [python](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513854) | 25 / 25 | Python 3.11–3.15 installed consumers on three OS, minimum pytest, real Flask/Django/FastAPI and PySide6/PyQt6 Widgets/Quick |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513683) | 5 / 5 | Real GTK3/WPF/AppKit plus installed TypeScript/C++/Python consumers |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724514128) | 9 / 9 | C++ CLI/HTTP, Qt Widgets/Quick, installed SDK and static/shared helper consumers |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513585) | 3 / 3 | Python/C#/Rust CLI/HTTP positive and planted-negative cases on three OS |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513825) | 3 / 3 | Quality gate, testbed and Node 22.22.3/24.22.1 suites |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513948) | 1 / 1 | Local documentation validation |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513787) | 1 / 1 | Deterministic browser; optional live-model job not invoked |
 
-Sixteen Python and three desktop-consumer archives were downloaded and their
-SHA-256 digests and exact source commits verified. Positive cases passed;
-deliberately wrong applications failed the independent output assertions with
-complete cleanup. See the [resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md)
-and [machine-readable evidence](docs/development/support-profiles.json) for scope
-and artifact identities. Historical C++ passes below do not replace the pending
-checks for this source. No stable release or registry publication is declared.
+All 39 Python, desktop, native and language evidence archives were downloaded.
+Their SHA-256 digests, source identities, 315 reports and Python wheel checksums
+were verified. The reports contain no retries, incomplete cleanup or secondary
+errors. Positive cases passed; planted defects failed their independent oracles.
+See the [Python resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md)
+and [machine-readable evidence](docs/development/support-profiles.json) for
+runtime versions, artifact identities and support boundaries.
+
+An **intermittent C++ Qt/Cocoa shutdown crash remains open**. In the previous
+`0e9ae2d` run, the planted Quick calculation failed correctly, then the application
+aborted with `SIGABRT` during cleanup. The later successful run does not explain
+or fix that failure. The original diagnostic probed a different executable and
+retained no original crash stack. The follow-up now collects recent macOS crash
+reports for the known Qt fixtures and passes three portable collector regressions
+and all 75 maintenance tests. No speculative runtime change or relaxed negative
+test was made. This is separate from the passed Python Qt/AX profile. Resolve it
+before claiming broader desktop stability; see the [investigation record](docs/development/PYTHON_REVIEW_RESOLUTION.md#remaining-cocoa-stability-issue).
+
+This evidence/diagnostic update does not change production runtime source. The
+exact runtime checkpoint above remains the qualification anchor. Historical
+checkpoints below are retained for traceability.
 
 ## Previously qualified code checkpoint
 

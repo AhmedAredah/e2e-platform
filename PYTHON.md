@@ -5,6 +5,11 @@ It uses the same engines, locator polling, process ownership, retries and report
 as TypeScript and C++. It is a bounded prerelease API. Check
 [release evidence](RELEASE_STATUS.md) before treating a particular OS/toolkit as qualified.
 
+The recorded candidate passes Python 3.11–3.15 installed consumers on Windows,
+Linux and macOS, plus PySide6/PyQt6 6.12.0 Widgets/Quick and Flask/Django/FastAPI
+reference scenarios on all three platforms. This evidence covers the documented
+operations and controls, not every application or framework extension.
+
 ## Install from this repository
 
 Use Python 3.11 or newer and the supported Node version in `INSTALL.md`. Choose an

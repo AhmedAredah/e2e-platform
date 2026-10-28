@@ -10,6 +10,13 @@ inspects Linux accessible controls, C# UI Automation inspects Windows controls,
 and Rust AX inspects macOS controls. The C++ Qt helper provides the cooperative
 Qt Widgets/Quick path.
 
+The documented Python 3.11–3.15 consumers and PySide6/PyQt6 6.12.0 reference
+applications pass their Windows/Linux/macOS matrix at the source recorded in
+the repository's `RELEASE_STATUS.md`. The independent C++ Qt/Cocoa path retains
+an intermittent shutdown-crash investigation. Failed macOS native jobs now
+retain recent system crash reports for the known Qt fixtures before the separate
+LLDB probe; a passing probe does not clear the original failure.
+
 ## Platform profiles
 
 | Profile | Required host | Status |

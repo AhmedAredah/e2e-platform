@@ -10,15 +10,19 @@ GUI coverage depends on the exposed controls and selected driver. Independent ou
 wrong results even when an application exits successfully or displays success.
 
 Python implementation and qualification boundaries are tracked in the
-[Python resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md). New Python
-platform jobs must pass before their profiles are considered qualified.
+[Python resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md). All 25 Python
+jobs pass at the recorded Windows/Linux/macOS checkpoint, including installed
+Python 3.11–3.15 consumers and PySide6/PyQt6 6.12.0 reference controls.
 
 Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
 The [follow-up corrections](docs/development/CPP_FOLLOWUP_RESOLUTION.md) address
 numeric parsing, password protection, action readiness, scrolling and shared
-desktop scheduling, installation-kit integrity and Cocoa activation. All 22 required hosted jobs passed for code checkpoint
-[`c0d0bdf`](https://github.com/AhmedAredah/e2e-platform/commit/c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb), including installed
-TypeScript and compiled C++ desktop consumers on Linux, Windows and macOS.
+desktop scheduling, installation-kit integrity and Cocoa activation. All 47 required hosted jobs passed for code checkpoint
+[`6494472`](https://github.com/AhmedAredah/e2e-platform/commit/6494472ac1382a968ca1a4b92241682a323b3b81), including installed
+TypeScript, C++ and Python desktop consumers on Linux, Windows and macOS.
+An intermittent C++ Qt/Cocoa shutdown crash from an earlier run remains an
+explicit stability issue; the successful checkpoint does not establish its cause
+or resolution. See [release status](RELEASE_STATUS.md).
 This remains a prerelease with bounded support; additional controls and toolkits
 require their own real-application qualification.
 
