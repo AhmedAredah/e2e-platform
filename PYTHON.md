@@ -14,7 +14,7 @@ established; do not install a similarly named public package as a substitute.
 ```sh
 # In the repository, after pnpm install --frozen-lockfile:
 pnpm pack:native
-python -m pip install build==1.3.0
+python -m pip install build==1.6.1
 node scripts/python/package.mjs --python python
 
 # In your own project, after npm init -y and creating/activating a venv:

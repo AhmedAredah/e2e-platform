@@ -16,7 +16,7 @@ def test_framework_http(e2e):
             interpreter,
             arguments,
             ready_text="E2E_FRAMEWORK_READY ",
-            startup_timeout_ms=10_000,
+            startup_timeout_ms=20_000,
         ) as service:
             ready = next(
                 line

@@ -64,6 +64,12 @@ test.skipIf(!interpreter)('a service crash after readiness cannot pass the test'
   expect(JSON.parse(result.report).run.summary.passed).toBe(0);
 });
 
+test.skipIf(!interpreter)('service readiness timeout retains a useful shared failure instead of an incomplete-exit message', async () => {
+  const result = await run(`import sys\ndef test_readiness(e2e):\n    e2e.processes.start_service(sys.executable,['-c','import time;time.sleep(60)'],ready_text='READY',startup_timeout_ms=100)\n`);
+  expect(result.code, result.report).toBe(1);
+  expect(result.report).toContain('Process readiness deadline exceeded');
+});
+
 test.skipIf(!interpreter)('explicit pytest asyncio plugin and async yield fixture use the same runner', async () => {
   const result = await run(`import pytest,pytest_asyncio\n@pytest_asyncio.fixture\nasync def answer():\n    yield 42\n@pytest.mark.asyncio\nasync def test_async(e2e,answer):\n    await e2e.run_async(e2e.expect_equal,answer,42)\n`, ['pytest_asyncio.plugin']);
   expect(result.code, result.report).toBe(0);

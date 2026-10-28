@@ -3,6 +3,7 @@
 import sys
 
 if "--pyqt6" in sys.argv:
+    from PyQt6.QtCore import QTimer
     from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -12,6 +13,7 @@ if "--pyqt6" in sys.argv:
         QWidget,
     )
 else:
+    from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -52,4 +54,6 @@ if __name__ == "__main__":
     application = QApplication(sys.argv)
     window = ReferenceWindow(wrong="--wrong" in sys.argv)
     window.show()
+    if "--probe" in sys.argv:
+        QTimer.singleShot(250, application.quit)
     raise SystemExit(application.exec())

@@ -77,3 +77,17 @@ additional supported profile.
 
 These local results do not substitute for Windows/macOS, Qt accessibility or
 other Python minor-version acceptance. Hosted results are recorded separately.
+
+
+## First hosted findings and follow-up
+
+The first Python matrix exposed a CRLF-sensitive version check on Windows and
+an incompatible build 1.3.0 argument formatter on Python 3.15. The checker now
+accepts CRLF, has a failure-manifest regression, and the frontend is pinned to
+build 1.6.1. Python packaging now invalidates an earlier manifest before version
+validation and publishes the replacement atomically. Linux Qt qualification adds
+the explicit XCB runtime prerequisites and a bounded fixture startup probe, so
+missing host libraries are visible before redacted sidecar diagnostics. Framework
+startup has a bounded probe and a 20-second readiness budget. Readiness failures
+now retain their controlled cause in the shared report. These corrections require
+new hosted results; failed earlier jobs are not counted as passes.

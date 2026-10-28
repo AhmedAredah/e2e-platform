@@ -1,6 +1,6 @@
 /** Builds Python source/wheel distributions with a checksummed completion manifest. */
 import { createHash } from 'node:crypto';
-import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,17 +9,20 @@ import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const { values } = parseArgs({ options: { python: { type: 'string' }, out: { type: 'string' }, 'sync-version': { type: 'boolean' }, 'check-version': { type: 'boolean' } } });
+const packing = !values['check-version'] && !values['sync-version'];
+const output = resolve(values.out ?? join(root, 'release-packages/python'));
+if (packing) {
+  await mkdir(output, { recursive: true });
+  for (const name of ['manifest.json', 'manifest.json.tmp']) await rm(join(output, name), { force: true });
+}
 const npm = JSON.parse(await readFile(join(root, 'packages/python/package.json'), 'utf8'));
 const version = npm.version.replace(/-rc\.(\d+)$/, 'rc$1').replace(/-canary-(\d+)$/, '.dev$1');
 if (!/^\d+\.\d+\.\d+(?:rc\d+|\.dev\d+)?$/.test(version)) throw new Error('Python packaging requires a stable, rc or dated canary version');
 const metadata = join(root, 'sdks/python/pyproject.toml');
 const source = await readFile(metadata, 'utf8');
-if (values['sync-version']) await writeFile(metadata, source.replace(/^version = "[^"]+"$/m, `version = "${version}"`));
-else if (!source.includes(`\nversion = "${version}"\n`)) throw new Error('Python SDK version differs from its runner adapter; run node scripts/python/package.mjs --sync-version');
-if (!values['check-version'] && !values['sync-version']) {
-  const output = resolve(values.out ?? join(root, 'release-packages/python'));
-  await mkdir(output, { recursive: true });
-  await rm(join(output, 'manifest.json'), { force: true });
+if (values['sync-version']) await writeFile(metadata, source.replace(/^version = "[^"]+"(\r?)$/m, `version = "${version}"$1`));
+else if (source.match(/^version = "([^"]+)"\r?$/m)?.[1] !== version) throw new Error('Python SDK version differs from its runner adapter; run node scripts/python/package.mjs --sync-version');
+if (packing) {
   const temporary = await mkdtemp(join(tmpdir(), 'e2e-python-distributions-'));
   try {
     const sdk = join(temporary, 'source');
@@ -35,6 +38,9 @@ if (!values['check-version'] && !values['sync-version']) {
       await writeFile(join(output, name), content);
       files.push({ file: name, sha256: createHash('sha256').update(content).digest('hex'), bytes: content.length });
     }
-    await writeFile(join(output, 'manifest.json'), JSON.stringify({ schemaVersion: 1, name: 'e2e-platform', version, runnerVersion: npm.version, files }, null, 2) + '\n');
+    const stale = (await readdir(output)).filter(name => (name.endsWith('.whl') || name.endsWith('.tar.gz')) && !names.includes(name));
+    if (stale.length) throw new Error(`Remove stale Python distributions before packaging: ${stale.join(', ')}`);
+    await writeFile(join(output, 'manifest.json.tmp'), JSON.stringify({ schemaVersion: 1, name: 'e2e-platform', version, runnerVersion: npm.version, files }, null, 2) + '\n');
+    await rename(join(output, 'manifest.json.tmp'), join(output, 'manifest.json'));
   } finally { await rm(temporary, { recursive: true, force: true }); }
 }

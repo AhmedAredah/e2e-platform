@@ -33,8 +33,9 @@ class ApplicationState:
 
 
 class ReferenceService(ABC):
-    def __init__(self, state: ApplicationState):
+    def __init__(self, state: ApplicationState, *, probe=False):
         self.state = state
+        self.probe = probe
 
     @abstractmethod
     def serve(self):
@@ -52,7 +53,8 @@ class WsgiService(ReferenceService):
     def serve(self):
         with make_server("127.0.0.1", 0, self.application()) as server:
             self.announce(server.server_port)
-            server.serve_forever()
+            if not self.probe:
+                server.serve_forever()
 
 
 class FlaskService(WsgiService):
@@ -141,6 +143,8 @@ class FastApiService(ReferenceService):
                     raise RuntimeError("ASGI server did not become ready")
                 time.sleep(0.01)
             self.announce(listener.getsockname()[1])
+            if self.probe:
+                server.should_exit = True
             worker.join()
 
 
@@ -148,10 +152,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("framework", choices=["flask", "django", "fastapi"])
     parser.add_argument("--wrong", action="store_true")
+    parser.add_argument("--probe", action="store_true")
     arguments = parser.parse_args()
     service = {
         "flask": FlaskService,
         "django": DjangoService,
         "fastapi": FastApiService,
     }[arguments.framework]
-    service(ApplicationState(arguments.wrong)).serve()
+    service(ApplicationState(arguments.wrong), probe=arguments.probe).serve()

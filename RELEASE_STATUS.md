@@ -1,7 +1,7 @@
 # e2e-platform 0.2.0-rc.8
 
-This is a reviewed **prerelease**, not a fully qualified stable release. The thirteen
-public JavaScript packages use `0.2.0-rc.8` and `@e2e-platform/*`; the executable
+This is a reviewed **prerelease**, not a fully qualified stable release. The nine-package local kit uses `0.2.0-rc.8` and `@e2e-platform/*`; four optional
+integrations retain their compatible `0.2.0-rc.7` versions. The executable
 and repository folder are `e2e-platform`. Tests use TypeScript/JavaScript or the
 bounded C++ and Python/pytest authoring bridges connected to the shared runner.
 C# and Rust authoring SDKs are not included. The application under test can use Python, C#/.NET, C++, Rust or

@@ -3,9 +3,11 @@
 import sys
 
 if "--pyqt6" in sys.argv:
+    from PyQt6.QtCore import QTimer
     from PyQt6.QtGui import QGuiApplication
     from PyQt6.QtQml import QQmlApplicationEngine
 else:
+    from PySide6.QtCore import QTimer
     from PySide6.QtGui import QGuiApplication
     from PySide6.QtQml import QQmlApplicationEngine
 
@@ -32,4 +34,6 @@ if __name__ == "__main__":
     engine.loadData(QML)
     if not engine.rootObjects():
         raise SystemExit(2)
+    if "--probe" in sys.argv:
+        QTimer.singleShot(250, application.quit)
     raise SystemExit(application.exec())

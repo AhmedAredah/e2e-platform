@@ -84,8 +84,11 @@ try {
     env.E2E_FRAMEWORK_PYTHON = values['app-python'];
     env.E2E_FRAMEWORK_APP = join(project, 'framework_app.py');
     env.E2E_HTTP_FRAMEWORK = scenario;
+    if (frameworks) await command(values['app-python'], [join(project, 'framework_app.py'), scenario, '--probe'], project);
     if (gui && (!values.driver || !values['gui-python'])) throw new Error('Desktop qualification needs --driver and --gui-python with the chosen Qt binding installed');
     if (gui) await copyFile(join(root, `examples/with-python/apps/${scenario}.py`), join(project, 'app.py'));
+    // Reference fixtures contain no user data; expose missing toolkit/display prerequisites before the sidecar's redacted diagnostics.
+    if (gui) await command(values['gui-python'], [join(project, 'app.py'), '--probe', ...(binding === 'PyQt6' ? ['--pyqt6'] : [])], project);
     for (const wrong of [false, true]) {
       env.E2E_PLANTED_DEFECT = wrong ? '1' : '0';
       const name = `${scenario}-${wrong ? 'negative' : 'positive'}`;

@@ -178,11 +178,15 @@ class OwnedProcess:
             while time.monotonic() < deadline:
                 state = self.read()
                 if state["truncated"] or state["result"] is not None:
+                    self._session.expect_equal(
+                        False, True, message="Process exited or exceeded output budget before readiness"
+                    )
                     raise E2EError("Process exited or exceeded output budget before readiness")
                 output = codecs.getincrementaldecoder("utf-8")(errors="strict").decode(state["stdout"], final=False)
                 if text in output and (not complete_line or "\n" in output[output.index(text) + len(text) :]):
                     return output
                 time.sleep(0.01)
+            self._session.expect_equal(False, True, message="Process readiness deadline exceeded")
             raise E2EError("Process readiness deadline exceeded")
 
         return self._session._decode(wait)
