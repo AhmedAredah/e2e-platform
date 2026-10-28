@@ -14,13 +14,31 @@ historical; the following table identifies the source actually tested.
 
 ## Python implementation checkpoint
 
-The new Python wheel, pytest adapter and shared host are implemented. Local Python
-3.12 checks and fresh installed CLI/HTTP consumers pass, including independently
-identified planted defects. The nine-package kit adds authoring and Python adapters.
-See [PYTHON_REVIEW_RESOLUTION.md](docs/development/PYTHON_REVIEW_RESOLUTION.md).
-The new Python 3.11–3.15 matrix, framework HTTP and PySide/PyQt desktop jobs are qualification gates,
-not evidence until completed. The historical passes below do not qualify this
-new implementation. No stable release or registry publication is declared.
+The Python wheel, pytest adapter and shared host are implemented. The nine-package
+kit adds authoring and Python adapters. At the recorded 2026-10-28 checkpoint for
+[`0e9ae2d50fb66a9dd53d18473c42766c43dfb905`](https://github.com/AhmedAredah/e2e-platform/commit/0e9ae2d50fb66a9dd53d18473c42766c43dfb905),
+all 17 Windows/Linux Python jobs passed. All five desktop-contract jobs also
+passed, including Python-authored GTK3, WPF and macOS AppKit acceptance.
+The eight separate macOS Python jobs were still queued. Pending jobs do not
+qualify the full runtime matrix or macOS Python Qt profiles.
+
+| Workflow | Passed / required | Remaining at checkpoint |
+| --- | --- | --- |
+| [python](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115852) | 17 / 25 | Eight macOS SDK/installed-consumer, framework HTTP and Qt jobs queued |
+| [desktop-contracts](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115873) | 5 / 5 | None; real GTK3/WPF/AppKit plus installed TypeScript/C++/Python consumers |
+| [native](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115865) | 6 / 9 | Three macOS C++/Qt jobs queued |
+| [languages](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115805) | 2 / 3 | macOS CLI/HTTP job queued |
+| [spec](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115789) | 3 / 3 | None |
+| [docs](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115851) | 1 / 1 | None |
+| [benchmark](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115858) | 1 / 1 | Optional live-model job was not invoked |
+
+Sixteen Python and three desktop-consumer archives were downloaded and their
+SHA-256 digests and exact source commits verified. Positive cases passed;
+deliberately wrong applications failed the independent output assertions with
+complete cleanup. See the [resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md)
+and [machine-readable evidence](docs/development/support-profiles.json) for scope
+and artifact identities. Historical C++ passes below do not replace the pending
+checks for this source. No stable release or registry publication is declared.
 
 ## Previously qualified code checkpoint
 
