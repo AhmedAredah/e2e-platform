@@ -66,6 +66,11 @@ On macOS, process-group shutdown retries a transient `EPERM` for up to ten
 10 ms delays per signal so exited children can be reaped. Persistent permission
 errors still fail cleanup; only a successful signal or an absent group completes it.
 
+Qt Widgets fill/focus requests raise an inactive application window before
+requesting activation. This allows Cocoa to reactivate a background application.
+Activation must still be observed within the bounded wait before typing; denied
+activation remains a terminal uncertain action and is never silently replayed.
+
 ## Build the source example
 
 Install the repository's pinned pnpm/Node prerequisites, CMake 3.21 or newer and

@@ -23,6 +23,10 @@
 #include <QWidgetAction>
 #include <QJsonDocument>
 #include <QThread>
+#include <QProcess>
+#include <QScopeGuard>
+#include <QTimer>
+#include <iostream>
 #include <stdexcept>
 
 using namespace e2e::qt::detail;
@@ -96,6 +100,35 @@ public:
 class WidgetsControlsTests final : public QObject {
     Q_OBJECT
 private slots:
+    void fillingReactivatesBackgroundApplication() {
+        if (QGuiApplication::platformName() != "cocoa") QSKIP("Requires a real Cocoa application session");
+        QWidget window; window.resize(300, 160);
+        QLineEdit input(&window); input.setObjectName("reactivated-input");
+        input.setGeometry(20, 20, 240, 30); input.setText("before");
+        expose(window);
+        QProcess foreground;
+        const auto cleanup = qScopeGuard([&] {
+            if (foreground.state() != QProcess::NotRunning) {
+                foreground.kill(); foreground.waitForFinished(5000);
+            }
+        });
+        foreground.start(QCoreApplication::applicationFilePath(), {"--foreground-fixture"});
+        QVERIFY(foreground.waitForStarted(5000));
+        QByteArray output;
+        QTRY_VERIFY_WITH_TIMEOUT((output += foreground.readAllStandardOutput()).contains("ready\n"), 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(QGuiApplication::applicationState() != Qt::ApplicationActive, 5000);
+        QVERIFY(!window.isActiveWindow());
+        QCOMPARE(foreground.state(), QProcess::Running);
+        Surface surface;
+        const auto node = find(surface.snapshot(false).value("root").toObject(), "reactivated-input");
+        QVERIFY(!node.isEmpty());
+        surface.perform(action(node, {{"kind", "fill"}, {"value", "after"}}));
+        QCOMPARE(input.text(), QString("after"));
+        QVERIFY(window.isActiveWindow());
+        QVERIFY(input.hasFocus());
+        foreground.kill();
+        QVERIFY(foreground.waitForFinished(5000));
+    }
     void ordinaryClippingCannotReportSuccessfulScrolling() {
         QWidget window; window.resize(300, 160);
         QWidget clip(&window); clip.setGeometry(0, 0, 100, 80);
@@ -378,5 +411,22 @@ private slots:
         QCOMPARE(fixture.combo.currentIndex(), 0);
     }
 };
-QTEST_MAIN(WidgetsControlsTests)
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
+    app.setAttribute(Qt::AA_Use96Dpi, true);
+    if (app.arguments().contains("--foreground-fixture")) {
+        QWidget window; window.resize(200, 120); window.show(); window.raise(); window.activateWindow();
+        QTimer ready;
+        QObject::connect(&ready, &QTimer::timeout, &app, [&] {
+            if (window.isActiveWindow() && QGuiApplication::applicationState() == Qt::ApplicationActive) {
+                std::cout << "ready\n" << std::flush; ready.stop();
+            }
+        });
+        ready.start(10);
+        QTimer::singleShot(15000, &app, &QApplication::quit);
+        return app.exec();
+    }
+    WidgetsControlsTests tests;
+    return QTest::qExec(&tests, argc, argv);
+}
 #include "widgets_controls_tests.moc"

@@ -33,6 +33,14 @@ binds the audit to the lockfile SHA-256 and records the remaining findings and
 upgrade constraints. The exact hosted runtime checkpoint below remains historical
 evidence; packaging changes require their own CI results.
 
+The first hosted run for `e0b3e186e6cf09cc568aa9121b6701160bb08969` passed 21
+required jobs and failed the Cocoa Qt installed-consumer job on window activation.
+The resulting correction raises an inactive Widgets window before requesting
+activation, and adds a Cocoa regression using a separate owned foreground process.
+It retains the refusal to type without observed activation. The original failure
+and follow-up are recorded in the [resolution report](docs/development/CPP_FOLLOWUP_RESOLUTION.md);
+the new native source requires its own exact-commit hosted qualification.
+
 ## Current follow-up qualification
 
 All 22 required jobs across six workflows passed on 2026-10-27 for code checkpoint

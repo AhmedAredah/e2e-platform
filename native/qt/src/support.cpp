@@ -57,6 +57,9 @@ void activateWidgetWindow(QWidget* widget) {
     if (auto* modal = QApplication::activeModalWidget(); modal && modal != root)
         throw Failure("NOT_ACTIONABLE", "another modal window blocks keyboard focus");
     if (root->isActiveWindow()) return;
+    // Cocoa's key-window request alone does not activate a background application.
+    root->raise();
+    if (!target || !root || !window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during activation");
     root->activateWindow();
     if (!target || !root || !window) throw Failure("ACTION_MAY_HAVE_COMMITTED", "Qt target was destroyed during activation");
     window->requestActivate();

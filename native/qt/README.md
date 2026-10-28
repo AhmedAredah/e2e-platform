@@ -272,7 +272,10 @@ Combobox preflight resolves the requested option and its availability without
 sending input. Secure `QQuickWindow` roots suppress titles and children and mask
 the whole capture. Replacement typing uses the platform's standard Select All
 binding, including macOS control/meta configurations. Widget focus requests
-window activation and checks the outcome within a bounded wait before typing.
+window raising and activation, and checks the outcome within a bounded wait before typing.
+Raising is needed to reactivate a background application on Cocoa; a key-window
+request alone does not establish application activation. A separate owned
+foreground-process regression checks this behavior in the native Cocoa profile.
 This does not bypass operating-system focus restrictions.
 
 Installed CMake packages require the exact build Qt version, compiler family

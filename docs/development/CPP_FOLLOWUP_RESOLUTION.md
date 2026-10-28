@@ -132,6 +132,27 @@ contains Zod 3, decode-uri-component and deepmerge. The
 advisories and remaining upgrade constraints. These optional integration checks
 are not full Mintlify preview or mobile-device qualification.
 
+Hosted qualification of `e0b3e186e6cf09cc568aa9121b6701160bb08969` exposed an
+intermittent Cocoa Widgets activation failure in the installed static consumer.
+The first attempt failed the second quantity fill after approximately one second,
+preserved the previous value, and completed cleanup. The failed action was not
+replayed. All other 21 required jobs passed on that first attempt.
+The [failed Cocoa job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40626804606/job/122613580848)
+was rerun once on the unchanged source and
+[passed](https://github.com/AhmedAredah/e2e-platform/actions/runs/40626804606/job/122617281297).
+That rerun establishes intermittency, not a source-level correction; both outcomes
+remain part of the evidence.
+
+The widget focus path requested a key window without raising its background
+application. Qt 6.8.3's Cocoa backend implements application activation in its
+raise operation. The helper now raises an inactive window before requesting
+activation, matching explicit window activation, while preserving lifetime guards,
+the bounded observation and terminal refusal. A native Cocoa regression launches
+a separate owned foreground Qt process, observes the test application becoming
+inactive, fills its field, checks focus/value, and confirms child cleanup. Other
+display backends explicitly skip this Cocoa-specific test. The existing four
+local Linux/offscreen CTest suites pass; they do not establish Cocoa behavior.
+
 ## Dependency and release boundaries
 
 The original follow-up full-workspace audit reported 11 findings (8 high, 2 moderate, 1 low)
