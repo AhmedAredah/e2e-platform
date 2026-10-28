@@ -60,8 +60,8 @@ build/test invocation invalidated temporary `dist` imports; rerunning the affect
 C++ and maintenance suites after the build completed passed. The installed
 seven-package kit passed clean installation/reinstallation, public types, plain
 Node imports, initializer, deliberate-failure rejection and zero installed
-production dependency findings. The production workspace audit still contains
-three Expo-only findings (2 high, 1 moderate).
+production dependency findings. At this recorded checkpoint, the production workspace audit contained
+three Expo-only findings (2 high, 1 moderate); see the later inventory below.
 
 ## Hosted acceptance follow-up
 
@@ -108,9 +108,33 @@ are subject to GitHub's retention period.
 | [windows-uia](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12765873464) | `248ff1f51c78f763960cb43ca0259b998d2e3f3b02e5addd2129b732524e738c` |
 | [macos-ax](https://github.com/AhmedAredah/e2e-platform/actions/runs/40575128250/artifacts/12766234100) | `111307cb0e2d81160342a9a940337795c098c01e32ec1de1be10c1ab2cb1ab8c` |
 
+## Installation-kit follow-up
+
+A failed rebuild could retain the previous install manifest. The pack command now
+invalidates it and its source marker before building or checking package outputs,
+and publishes a complete manifest through an atomic rename. `pnpm pack:native`
+and `pnpm release` use the same guarded path. Four regressions cover both build
+and package-check failures in default and custom directories; unrelated files
+are preserved. The original stale-manifest regressions failed before the fix.
+
+The local quality gate, all 70 maintenance tests, the actual seven-package build
+and fresh installed-kit verification passed. Installation, npm ci, generated first
+test, public API types, positive/negative assertions, cleanup and npm executables
+passed; the installed dependency audit reported zero findings.
+
+Compatible overrides update node-forge to 1.4.2 and postcss-selector-parser to
+6.1.5. Expo certificate creation/validation/signing and changed-payload rejection
+passed. The actual Tailwind dependency passed nested selector rewriting and CSS
+utility generation. The current workspace audit contains 10 findings (7 high,
+1 moderate, 2 low), all in optional docs/private Expo paths; its production subset
+contains Zod 3, decode-uri-component and deepmerge. The
+[current inventory](dependency-audit-current.json) records the exact lockfile hash,
+advisories and remaining upgrade constraints. These optional integration checks
+are not full Mintlify preview or mobile-device qualification.
+
 ## Dependency and release boundaries
 
-The updated full-workspace audit reports 11 findings (8 high, 2 moderate, 1 low)
+The original follow-up full-workspace audit reported 11 findings (8 high, 2 moderate, 1 low)
 in optional documentation tooling and the private Expo benchmark. This repository
 is not vulnerability-free. The `qs` correction addresses
 [GHSA-6pq8-jhm2-2vcw](https://github.com/ljharb/qs/security/advisories/GHSA-6pq8-jhm2-2vcw);

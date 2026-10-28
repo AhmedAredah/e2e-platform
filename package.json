@@ -33,7 +33,7 @@
     "verify:native": "node scripts/native/verify.mjs",
     "verify:qt:exports": "node scripts/native/qt-export-proof.mjs",
     "verify:qt:install": "node scripts/native/verify-qt-install.mjs",
-    "pack:native": "pnpm run build:native && node scripts/native/pack.mjs",
+    "pack:native": "node scripts/native/pack.mjs --build",
     "check:local": "pnpm run lint && pnpm run check:dead-code && pnpm run typecheck && pnpm run docs:check-errors && pnpm run docs:check",
     "verify:languages": "node scripts/languages/verify.mjs",
     "build:languages": "node scripts/languages/build.mjs",

@@ -28,6 +28,10 @@ node release-packages/install.mjs /absolute/path/to/your-project
 The project must already contain `package.json`. The installer verifies package
 checksums and installs the runner plus six extensions, including `@e2e-platform/cpp`,
 through npm. The C++ SDK and native helpers have separate CMake installation steps.
+Packing invalidates the previous kit manifest before building or checking packages.
+A failed build or pack leaves no installable manifest; rerun `pnpm pack:native`
+successfully before distributing the directory. The new manifest becomes available
+only after all seven packages and installer checksums have been written.
 Third-party dependencies need registry access or a populated local cache.
 Real terminal processes also need the optional `node-pty` peer and native build prerequisites.
 Install `node-pty@1.1.0`, allow its native build scripts, then run

@@ -12,6 +12,27 @@ tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted eviden
 including the formerly failing macOS Quick profile. Older checkpoints below are
 historical; the following table identifies the source actually tested.
 
+## Installation kit and dependency follow-up
+
+Packing now invalidates the previous manifest and source marker before any build
+or package checks. A failed attempt cannot retain a stale installable kit. The
+new manifest is published atomically after all seven tarballs and installer
+checksums exist. This applies to `pnpm pack:native`, `pnpm release` and direct
+packing into a custom output directory.
+
+Four regressions cover build/check failures with default and custom paths. The
+local quality gate, 70 maintenance tests, rebuilt seven-package kit and fresh
+consumer installation/reinstallation passed. The installed dependency audit again
+reported zero findings. The compatible `node-forge` 1.4.2 and
+`postcss-selector-parser` 6.1.5 overrides passed Expo certificate/signature checks
+and Tailwind selector/CSS generation, respectively. These checks do not qualify
+an Expo device or the complete hosted Mintlify preview.
+
+The [current dependency inventory](docs/development/dependency-audit-current.json)
+binds the audit to the lockfile SHA-256 and records the remaining findings and
+upgrade constraints. The exact hosted runtime checkpoint below remains historical
+evidence; packaging changes require their own CI results.
+
 ## Current follow-up qualification
 
 All 22 required jobs across six workflows passed on 2026-10-27 for code checkpoint
@@ -243,21 +264,24 @@ package-manager caches remain external prerequisites.
 
 ## Dependency findings
 
-The current pinned-pnpm full-workspace audit reports 11 findings: 8 high,
-2 moderate, 1 low. The follow-up override updates `qs` to 6.16.1; its
-comma-serialization advisory is no longer present. The dated rc.2 inventory
-below records an earlier dependency review, not the current lockfile. Every remaining path is in optional Mintlify
-preview/online-validation tooling or the private Expo benchmark. The production-only
-workspace audit includes private apps and has 3 findings, all Expo: node-forge,
-Zod 3 and decode-uri-component. No public package/engine production path appears
-in that workspace report; the exact installed consumer kit has its own audit.
-See the [dated advisory inventory](docs/development/dependency-audit-rc2.json).
+The latest pinned-pnpm full-workspace audit reports **10 findings: 7 high,
+1 moderate and 2 low**. The working baseline reported 12 after a newly reported
+`deepmerge` advisory; compatible overrides for `node-forge` 1.4.2 and
+`postcss-selector-parser` 6.1.5 removed two. The earlier `qs` 6.16.1 fix remains.
 
-Some findings have no published fix; others require incompatible dependency-line
-updates that have not been functionally qualified. Four optional docs/Expo peer
-conflicts also remain. Local documentation checks do not run Mintlify. Do not
-represent the whole workspace, docs host or Expo demo as vulnerability-free or
-fully qualified. They require separate remediation and runtime verification.
+Every remaining path is in optional Mintlify preview/online-validation tooling
+or the private Expo benchmark. The production-only workspace audit includes
+private apps and reports 3 findings: Zod 3 (high), decode-uri-component (moderate)
+and deepmerge (low). The fresh installed seven-package kit reports zero findings.
+See the [current inventory](docs/development/dependency-audit-current.json) for
+versions, advisory URLs, affected scopes and the lockfile hash. The
+[rc.2 inventory](docs/development/dependency-audit-rc2.json) remains historical.
+
+Some findings have no published fix; others require dependency-line migrations
+and runtime qualification. No advisory is suppressed to obtain a passing result.
+Four optional docs/Expo peer conflicts also remain. Local documentation checks do
+not run Mintlify. Do not represent the whole workspace, docs host or Expo demo as
+vulnerability-free or fully qualified.
 
 ## Remaining release gates
 

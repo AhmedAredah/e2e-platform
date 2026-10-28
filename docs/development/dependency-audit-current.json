@@ -1,0 +1,176 @@
+{
+  "checkedAtUTC": "2026-10-28T03:26:13.715560+00:00",
+  "baselineCommit": "08b0887b15f078c09e58c6622ee41a9053612a2e",
+  "lockfileSha256": "bbf04702214863484cd47c8aae631c129cdf43d0181404d32191fc317479bea5",
+  "packageManager": "pnpm@12.3.4",
+  "workspace": {
+    "info": 0,
+    "low": 2,
+    "moderate": 1,
+    "high": 7,
+    "critical": 0
+  },
+  "productionIncludingPrivateApps": {
+    "info": 0,
+    "low": 1,
+    "moderate": 1,
+    "high": 1,
+    "critical": 0
+  },
+  "resolved": [
+    {
+      "module": "node-forge",
+      "version": "1.4.2",
+      "advisory": "https://github.com/advisories/GHSA-86w9-cpqp-85rv"
+    },
+    {
+      "module": "postcss-selector-parser",
+      "version": "6.1.5",
+      "advisory": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf"
+    }
+  ],
+  "findings": [
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-f88m-g3jw-g9cj",
+      "vulnerableVersions": "<0.35.0",
+      "patchedVersions": ">=0.35.0",
+      "installedVersions": [
+        "0.33.5"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "The docs dependency still requests 0.33.5. A 0.35.x upgrade needs native image-generation and preview validation."
+    },
+    {
+      "module": "extract-zip",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv",
+      "vulnerableVersions": "<=2.0.1",
+      "patchedVersions": null,
+      "installedVersions": [
+        "2.0.1"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "No patched release is listed. The vulnerable dependency belongs to the optional Mintlify/Puppeteer toolchain."
+    },
+    {
+      "module": "decode-uri-component",
+      "severity": "moderate",
+      "advisory": "https://github.com/advisories/GHSA-vcc3-ghjq-m6fr",
+      "vulnerableVersions": "<=0.4.2",
+      "patchedVersions": ">=0.5.0",
+      "installedVersions": [
+        "0.2.2"
+      ],
+      "scope": [
+        "private Expo benchmark"
+      ],
+      "disposition": "The patched 0.5.0 is ESM; the installed query-string consumer uses a CommonJS callable import. Migrate and validate the navigation dependency chain together."
+    },
+    {
+      "module": "extract-zip",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3",
+      "vulnerableVersions": "<=2.0.1",
+      "patchedVersions": null,
+      "installedVersions": [
+        "2.0.1"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "No patched release is listed. The vulnerable dependency belongs to the optional Mintlify/Puppeteer toolchain."
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+      "vulnerableVersions": "<0.35.4",
+      "patchedVersions": ">=0.35.4",
+      "installedVersions": [
+        "0.33.5"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "The docs dependency still requests 0.33.5. A 0.35.x upgrade needs native image-generation and preview validation."
+    },
+    {
+      "module": "basic-ftp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-c475-qrg2-pj4r",
+      "vulnerableVersions": "<=6.2.0",
+      "patchedVersions": ">=6.2.1",
+      "installedVersions": [
+        "5.3.1"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "The dependency requests the 5.x line; the patched 6.2.1 is a major upgrade requiring proxy/FTP compatibility qualification."
+    },
+    {
+      "module": "katex",
+      "severity": "low",
+      "advisory": "https://github.com/advisories/GHSA-238p-pmpm-9mq7",
+      "vulnerableVersions": ">=0.11.0 <0.18.2",
+      "patchedVersions": ">=0.18.2",
+      "installedVersions": [
+        "0.16.47"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "The patched 0.18.2 is outside the docs dependency line; math rendering needs preview qualification."
+    },
+    {
+      "module": "sharp",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-wq5f-xc86-pv6w",
+      "vulnerableVersions": "<0.35.5",
+      "patchedVersions": ">=0.35.5",
+      "installedVersions": [
+        "0.33.5"
+      ],
+      "scope": [
+        "optional Mintlify tooling"
+      ],
+      "disposition": "The docs dependency still requests 0.33.5. A 0.35.x upgrade needs native image-generation and preview validation."
+    },
+    {
+      "module": "zod",
+      "severity": "high",
+      "advisory": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+      "vulnerableVersions": "<4.6.6",
+      "patchedVersions": ">=4.6.6",
+      "installedVersions": [
+        "3.24.0",
+        "3.25.76"
+      ],
+      "scope": [
+        "optional Mintlify tooling",
+        "private Expo benchmark"
+      ],
+      "disposition": "The affected 3.x consumers cannot be replaced with Zod 4 without schema/API migration and consumer validation."
+    },
+    {
+      "module": "deepmerge",
+      "severity": "low",
+      "advisory": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+      "vulnerableVersions": ">=4.2.0 <=4.3.1",
+      "patchedVersions": null,
+      "installedVersions": [
+        "4.3.1"
+      ],
+      "scope": [
+        "private Expo benchmark"
+      ],
+      "disposition": "No patched release is listed. Expo configuration handling needs a reviewed upstream fix or independently validated replacement."
+    }
+  ]
+}
