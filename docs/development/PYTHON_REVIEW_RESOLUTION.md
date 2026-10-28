@@ -61,10 +61,10 @@ additional supported profile.
   documentation and 51 documentation pages passed.
 - Application-boundary suites: process 79 passed (5 platform-specific skips),
   checks 19, HTTP 20, native 116, terminal 50, shared authoring 5, C++ 17 and Python
-  11 passed. The C++ host extraction preserves the existing regression suite.
+  12 passed. The C++ host extraction preserves the existing regression suite.
 - Python SDK: 24 contract tests, Ruff and mypy passed on Python 3.12.14.
 - AT-SPI: 86 portable tests; calculator HTTP input regression passed.
-- Maintenance/install tooling: all 70 script tests passed.
+- Maintenance/install tooling: all 72 script tests passed.
 - Fresh nine-package kit: checksums, install/reinstall, metadata, direct imports,
   generated CLI test, planted incorrect output and consumer TypeScript passed.
   The installed tool dependency audit reported zero findings.
@@ -91,3 +91,9 @@ missing host libraries are visible before redacted sidecar diagnostics. Framewor
 startup has a bounded probe and a 20-second readiness budget. Readiness failures
 now retain their controlled cause in the shared report. These corrections require
 new hosted results; failed earlier jobs are not counted as passes.
+
+The next hosted run confirmed Windows installed consumers, Qt UIA and Python
+3.15 on Windows/Linux. Linux Qt still failed to load the XCB plugin even after
+the cursor dependencies were installed. Its prerequisites now include OpenGL,
+Xlib/XCB and the remaining plugin libraries explicitly, with `ldd` validation
+before startup so unresolved library names remain visible.

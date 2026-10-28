@@ -59,3 +59,8 @@ Python packaging accepts Windows CRLF checkout metadata. Failed version checks
 or builds invalidate the previous manifest; successful manifests publish atomically.
 Use the documented build frontend for Python 3.15. Service readiness deadline
 failures record their cause in the shared report without copying application output.
+
+Linux Qt wheel installations also require the system OpenGL, X11/XCB and EGL
+libraries; installing a Python binding alone does not provide these libraries.
+The desktop workflow checks `libqxcb.so` with `ldd` before launching its real
+Widgets and Quick cases. A startup probe is diagnostic evidence only.

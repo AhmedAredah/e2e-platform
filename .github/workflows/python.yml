@@ -153,7 +153,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core dbus-x11 xvfb xauth libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-xinerama0 libxcb-xkb1 libegl1 libxkbcommon-x11-0
+          sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core dbus-x11 xvfb xauth libgl1 libegl1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0
+          python -c "import importlib,pathlib,subprocess; q=importlib.import_module('${{ matrix.binding }}.QtCore'); plugin=pathlib.Path(q.QLibraryInfo.path(q.QLibraryInfo.LibraryPath.PluginsPath))/'platforms/libqxcb.so'; result=subprocess.run(['ldd',str(plugin)],check=True,capture_output=True,text=True); print(result.stdout); assert 'not found' not in result.stdout, 'Qt X11 runtime dependencies are missing'"
           dbus-run-session -- xvfb-run -a node scripts/python/verify.mjs --python python --binding ${{ matrix.binding }} --backend linux-atspi --driver /usr/bin/python3 --driver-arg "${{ github.workspace }}/native/linux-atspi/driver.py" --gui-python "$E2E_GUI_PYTHON"
       - name: Windows Python Qt Widgets and Quick through UIA
         if: runner.os == 'Windows'
