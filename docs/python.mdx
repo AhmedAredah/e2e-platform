@@ -64,3 +64,6 @@ Linux Qt wheel installations also require the system OpenGL, X11/XCB and EGL
 libraries; installing a Python binding alone does not provide these libraries.
 The desktop workflow checks `libqxcb.so` with `ldd` before launching its real
 Widgets and Quick cases. A startup probe is diagnostic evidence only.
+The Python GUI reference kits use Qt 6.12.0. Qt 6.8 Quick TextField lacks the
+editable AT-SPI interface/state needed for fill, so it is not covered by the
+Linux Quick profile; no global-key or direct-property fallback hides that limit.

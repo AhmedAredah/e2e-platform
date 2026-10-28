@@ -97,3 +97,12 @@ The next hosted run confirmed Windows installed consumers, Qt UIA and Python
 the cursor dependencies were installed. Its prerequisites now include OpenGL,
 Xlib/XCB and the remaining plugin libraries explicitly, with `ldd` validation
 before startup so unresolved library names remain visible.
+
+The complete X11 runtime made Widgets positive and planted-negative acceptance
+pass. Quick then reached `locator.fill` and correctly refused an unavailable
+editable interface. Local QAccessible probes confirmed that Qt 6.8 TextField
+has no editable interface and reports editable false, whereas Qt 6.12 exposes
+both. The Python reference bindings now pin Qt 6.12.0 and retain the identical
+control workflow and independent output oracle. Qt 6.8 Quick/AT-SPI is not
+included in the support claim. C++ cooperative Qt profiles retain their separate
+previously tested kits.

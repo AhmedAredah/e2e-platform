@@ -120,6 +120,10 @@ unknown state cannot prove a positive or negative state assertion. Mutations are
 not replayed after uncertain transport failures.
 
 PySide/PyQt Widgets/Quick reference applications are in `examples/with-python/apps`.
+The Python desktop matrix uses PySide6/PyQt6 with Qt 6.12.0. Qt 6.8 Quick
+TextField lacks the editable interface/state required by this AT-SPI driver;
+upgrading the toolkit is necessary for that tested Linux Quick profile. A passing
+Widgets case does not qualify Quick or another Qt version.
 They use OS accessibility directly; no C++ helper is injected into Python.
 The C++ Qt cooperative helper remains a separate implementation. Python authoring
 can control any application that a selected driver can actually inspect, but the
