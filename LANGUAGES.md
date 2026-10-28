@@ -7,10 +7,10 @@ C#/.NET console app with an ASP.NET Core endpoint, and a Rust standard-library a
 
 | Surface | Python | C#/.NET | Rust |
 | --- | --- | --- | --- |
-| Direct CLI execution | Explicit interpreter and script | Built assembly through `dotnet` | Compiled executable |
+| Direct CLI execution | Explicit interpreter and script or module | Built assembly through `dotnet` | Compiled executable |
 | Local HTTP example | `http.server` fixture | ASP.NET Core/Kestrel | Bounded standard-library TCP fixture |
-| Test authoring | TypeScript | TypeScript | TypeScript |
-| Dedicated foreign-language test SDK | Not included | Not included | Not included |
+| Test authoring | Python/pytest or TypeScript/C++ | TypeScript | TypeScript |
+| Dedicated foreign-language test SDK | Installable `sdks/python` wheel | Not included | Not included |
 | Desktop accessibility | Linux AT-SPI driver written in Python | Windows UIA driver written in C# | macOS AX driver written in Rust |
 
 HTTP tests operate at the protocol boundary. They do not establish support for
@@ -24,11 +24,12 @@ The existing C++ Qt helper is not a Python binding.
 
 ## Verify all three applications
 
-Install the repository's pinned Node/pnpm dependencies and build the seven core
+Install the repository's pinned Node/pnpm dependencies and build the nine core
 boundary packages, then use installed Python 3.12+, a .NET 10 SDK, and a Rust
 compiler supporting edition 2024. The .NET app uses only the SDK's shared
 framework; the Rust app has no registry dependencies and builds with
-`--offline --locked`. No Python packages are required.
+`--offline --locked`. No Python packages are required for these TypeScript-authored application fixtures.
+Python-authored tests additionally install the SDK wheel and pytest; see [PYTHON.md](PYTHON.md).
 
 ```sh
 pnpm install --frozen-lockfile
@@ -109,7 +110,8 @@ controls. Exact toolkit/OS combinations must still pass their live checks.
 These are application-control backends, not pytest, NUnit/xUnit or Cargo
 implementations of the test runner. The new [C++17 SDK](native/cpp-sdk/README.md)
 supports C++ test bodies with a small TypeScript discovery file and the shared
-runner. Python, C# and Rust test-authoring SDKs remain future work. The runner,
+runner. The [Python SDK](PYTHON.md) now supports supervised pytest test bodies.
+C# and Rust test-authoring SDKs remain future work. The runner,
 locator execution, assertion polling and reports stay shared.
 The existing C++ Qt helper remains the direct cooperative route for Qt; a Python
 Qt binding and hybrid DOM/native coordination are not included.

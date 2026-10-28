@@ -74,6 +74,10 @@ arbitrary custom canvases remain absent. New Windows/macOS/Linux Qt workflow
 definitions do not establish completed qualification. Check `RELEASE_STATUS.md`
 before release.
 
-Tests use TypeScript/JavaScript or the documented C++ authoring bridge connected
-to the shared runner. Python, C# and Rust authoring SDKs are not included;
-applications in those languages use the shared TypeScript test API.
+Tests use TypeScript/JavaScript, the documented C++ authoring bridge or the new
+Python/pytest SDK connected to the shared runner. C# and Rust authoring SDKs are
+not included. See [Python tests](/python) for lifecycle and capability limits.
+
+An AT-SPI snapshot now publishes usable control references only after pruning
+obsolete proxies succeeds. A failed cleanup revokes references until a later
+successful observation; a caller cannot mutate using the failed snapshot.

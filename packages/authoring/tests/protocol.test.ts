@@ -6,8 +6,8 @@ import { assertionValue } from '../src/value.ts';
 describe('C++ protocol framing', () => {
   test('rejects duplicate keys before dispatch, discovery and exact assertions', () => {
     for (const text of ['{"protocol":1,"protocol":2}', '{"tests":[],"te\\u0073ts":["case"]}', '{"nested":{"x":1,"x":2}}']) {
-      expect(() => decodeJson(Buffer.from(text))).toThrow('Invalid C++ test protocol');
-      expect(() => assertionValue(text)).toThrow('Invalid C++ test protocol');
+      expect(() => decodeJson(Buffer.from(text))).toThrow('Invalid authored test protocol');
+      expect(() => assertionValue(text)).toThrow('Invalid authored test protocol');
     }
     expect(() => parseRequest(Buffer.from('{"protocol":1,"protocol":2,"id":1,"method":"case.start","params":{"name":"a"}}'))).toThrow();
   });

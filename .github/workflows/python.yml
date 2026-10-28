@@ -1,0 +1,174 @@
+name: python
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  E2E_TELEMETRY_DISABLED: '1'
+  DO_NOT_TRACK: '1'
+
+jobs:
+  sdk-and-installed-consumer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15]
+        python: ['3.11', '3.12', '3.13', '3.14', '3.15']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - run: python -m pip install build==1.3.0
+      - if: matrix.python == '3.12'
+        run: python -m pip install ruff==0.14.4 mypy==1.18.2
+      - run: python -m build sdks/python --outdir .e2e/python/distributions
+      - run: python -m pip install "./sdks/python[asyncio]" pytest==9.2.0
+      - if: matrix.python == '3.12'
+        run: python -m ruff check sdks/python examples/with-python
+      - if: matrix.python == '3.12'
+        run: python -m mypy --check-untyped-defs sdks/python/src
+      - run: python -m pytest sdks/python/tests -q
+      - name: Select the installed SDK interpreter
+        run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_TEST_PYTHON='+sys.executable+'\n')"
+      - run: pnpm --filter @e2e-platform/python test
+      - run: node scripts/python/verify.mjs --python python
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: python-${{ matrix.os }}-${{ matrix.python }}
+          path: .e2e/python/
+          include-hidden-files: true
+          if-no-files-found: warn
+
+  pytest-minimum:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - run: python -m pip install "./sdks/python[asyncio]" pytest==8.4.2
+      - run: python -m pytest sdks/python/tests -q
+      - run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_TEST_PYTHON='+sys.executable+'\n')"
+      - run: pnpm --filter @e2e-platform/python test
+
+  framework-http:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - run: python -m pip install -r examples/with-python/framework-requirements.txt
+      - run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_FRAMEWORK_PYTHON='+sys.executable+'\n')"
+      - if: runner.os != 'Windows'
+        run: node scripts/python/verify.mjs --python python --http-frameworks --app-python "$E2E_FRAMEWORK_PYTHON"
+      - if: runner.os == 'Windows'
+        run: node scripts/python/verify.mjs --python python --http-frameworks --app-python "$env:E2E_FRAMEWORK_PYTHON"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: python-frameworks-${{ matrix.os }}
+          path: .e2e/python/
+          include-hidden-files: true
+          if-no-files-found: warn
+
+  qt-python-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15]
+        binding: [PySide6, PyQt6]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    env:
+      QT_LINUX_ACCESSIBILITY_ALWAYS_ON: '1'
+      QT_ACCESSIBILITY: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        if: runner.os == 'Windows'
+        with:
+          dotnet-version: '10.0.402'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:native
+      - if: matrix.binding == 'PySide6'
+        run: python -m pip install PySide6==6.8.3
+      - if: matrix.binding == 'PyQt6'
+        run: python -m pip install PyQt6==6.8.1 PyQt6-Qt6==6.8.2
+      - run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_GUI_PYTHON='+sys.executable+'\n')"
+      - name: Linux Python Qt Widgets and Quick through AT-SPI
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core dbus-x11 xvfb xauth libxcb-cursor0 libegl1 libxkbcommon-x11-0
+          dbus-run-session -- xvfb-run -a node scripts/python/verify.mjs --python python --binding ${{ matrix.binding }} --backend linux-atspi --driver /usr/bin/python3 --driver-arg "${{ github.workspace }}/native/linux-atspi/driver.py" --gui-python "$E2E_GUI_PYTHON"
+      - name: Windows Python Qt Widgets and Quick through UIA
+        if: runner.os == 'Windows'
+        run: |
+          dotnet build native/windows-uia/src/Driver/E2E.Platform.WindowsUia.csproj -c Release
+          node scripts/python/verify.mjs --python python --binding ${{ matrix.binding }} --backend windows-uia --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe --gui-python "$env:E2E_GUI_PYTHON"
+      - name: macOS Python Qt Widgets and Quick through AX
+        if: runner.os == 'macOS'
+        run: |
+          cargo build --manifest-path native/macos-ax/Cargo.toml --release --locked
+          node scripts/python/verify.mjs --python python --binding ${{ matrix.binding }} --backend macos-ax --driver native/macos-ax/target/release/e2e-platform-macos-ax --gui-python "$E2E_GUI_PYTHON"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: python-desktop-${{ matrix.os }}-${{ matrix.binding }}
+          path: .e2e/python/
+          include-hidden-files: true
+          if-no-files-found: warn

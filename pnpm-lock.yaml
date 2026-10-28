@@ -418,6 +418,33 @@ importers:
         specifier: 5.0.3
         version: 5.0.3(@types/node@26.4.1)(vite@8.1.6(@types/node@26.4.1)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
 
+  packages/authoring:
+    devDependencies:
+      '@e2e-platform/core':
+        specifier: workspace:*
+        version: link:../e2e
+      '@e2e-platform/native':
+        specifier: workspace:*
+        version: link:../native
+      '@e2e-platform/process':
+        specifier: workspace:*
+        version: link:../process
+      '@e2e-platform/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@e2e-platform/terminal':
+        specifier: workspace:*
+        version: link:../terminal
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@26.4.1)(vite@8.1.6(@types/node@26.4.1)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+
   packages/checks:
     devDependencies:
       '@types/node':
@@ -431,6 +458,10 @@ importers:
         version: 5.0.3(@types/node@26.6.2)(vite@8.1.6(@types/node@26.6.2)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
 
   packages/cpp:
+    dependencies:
+      '@e2e-platform/authoring':
+        specifier: workspace:*
+        version: link:../authoring
     devDependencies:
       '@e2e-platform/core':
         specifier: workspace:*
@@ -438,9 +469,6 @@ importers:
       '@e2e-platform/process':
         specifier: workspace:*
         version: link:../process
-      '@e2e-platform/protocol':
-        specifier: workspace:*
-        version: link:../protocol
       '@types/node':
         specifier: 26.4.1
         version: 26.4.1
@@ -639,6 +667,28 @@ importers:
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@types/node@26.6.2)(vite@8.1.6(@types/node@26.6.2)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
+
+  packages/python:
+    dependencies:
+      '@e2e-platform/authoring':
+        specifier: workspace:*
+        version: link:../authoring
+    devDependencies:
+      '@e2e-platform/core':
+        specifier: workspace:*
+        version: link:../e2e
+      '@e2e-platform/process':
+        specifier: workspace:*
+        version: link:../process
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@26.4.1)(vite@8.1.6(@types/node@26.4.1)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.23.13)(yaml@2.9.0))
 
   packages/terminal:
     dependencies:

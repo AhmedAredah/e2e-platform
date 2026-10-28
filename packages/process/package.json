@@ -1,6 +1,6 @@
 {
   "name": "@e2e-platform/process",
-  "version": "0.2.0-rc.7",
+  "version": "0.2.0-rc.8",
   "description": "Bounded subprocess fixtures and application launch profiles for end-to-end tests",
   "license": "MIT",
   "type": "module",

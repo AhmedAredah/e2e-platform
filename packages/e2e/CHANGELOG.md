@@ -1,5 +1,23 @@
 # @e2e-platform/core
 
+## 0.2.0-rc.8
+
+### Minor Changes
+
+- 3d344d8: Reject lossy C++ HTTP JSON, duplicate host keys and excessive nesting. Add a run-local exclusive resource contract and serialize native desktop targets through cleanup. Retain observed password sensitivity after Linux/macOS reveal changes, validate realized Windows selection options before dispatch, and require Qt scroll visibility postconditions. Install-test TypeScript and compiled C++ desktop consumers against real OS fixtures in hosted CI. Update the qs override to 6.16.1. These changes do not expand the documented framework or input-fidelity support claims.
+
+  Wait for macOS accessibility startup before bridge readiness and recognize assertion deadline errors across installed runner module copies.
+- 3b1fe90: Expose an attempt-scoped context as the third custom fixture argument. Extensions can record operations, attach artifacts, and obtain current cancellation budgets without importing runner internals. Existing two-argument fixtures remain compatible.
+
+### Patch Changes
+
+- fc86297: Harden C++ assertions and completion using authoring protocol 2; rebuild C++ SDK clients with the matching host. Preserve numeric fidelity, reject silent JSON coercion, add locator assertion labels, retain failed-cleanup ownership, bound terminal metadata, and merge Windows environment overrides case-insensitively. Native Qt fixes and stricter installation/qualification checks accompany this prerelease. Platform qualification remains an explicit release gate.
+- edf2e4e: Keep the last locator observation in a failed assertion when its final read exhausts the assertion budget. Preserve initial/early timeouts, cancellation and engine failures, and never let an uncertain read satisfy a negated assertion. Correct native test fault injection, Linux process-observation races and the C++ HTTP example's macOS timeval field types. Run hosted WPF/AppKit acceptance with real permission requirements and retain macOS crash backtraces.
+- e0b3e18: Invalidate an earlier local installation kit before rebuilding or packing. Publish
+  its manifest atomically only after all seven package tarballs and installer
+  checksums are complete, so a failed attempt cannot retain a stale installable kit.
+- 3b1fe90: Preserve unavailable desktop visibility, enabled and focused states with optional semantic flags. Reads, filtered queries, waits and positive or negated assertions no longer treat unknown platform state as proof that a control is hidden, absent, disabled or unfocused.
+
 ## 0.2.0-rc.7
 
 ### Minor Changes

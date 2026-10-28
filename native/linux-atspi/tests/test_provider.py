@@ -269,6 +269,27 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(result.exception.code, "NODE_STALE")
         self.assertEqual(self.entry.edits, 0)
 
+    def test_pruning_failure_revokes_references_at_protocol_boundary(self):
+        from e2e_atspi.protocol import ProtocolSession
+        session = ProtocolSession("a" * 64, self.provider)
+        def request(number, method, params):
+            return session.dispatch(json.dumps({"jsonrpc": "2.0", "id": number,
+                                                "method": method, "params": params}).encode())
+        request(1, "initialize", {"protocolVersion": 1, "token": "a" * 64})
+        request(2, "snapshot", {})
+        identity = self.provider._ids[self.entry]
+        self.app.children.remove(self.check)
+        with patch.object(self.check, "get_state_set", side_effect=RuntimeError("disconnected proxy")):
+            self.assertEqual(request(3, "snapshot", {})["error"]["data"]["code"], "ENGINE_FAILURE")
+            result = request(4, "perform", {"ref": {"id": identity, "revision": ""},
+                                            "action": {"kind": "fill", "value": "forbidden"}})
+            self.assertEqual(result["error"]["data"]["code"], "NODE_STALE")
+            self.assertEqual(self.entry.edits, 0)
+        request(5, "snapshot", {})
+        self.assertIsNone(request(6, "perform", {"ref": {"id": identity, "revision": ""},
+                                                "action": {"kind": "fill", "value": "ready"}})["result"])
+        self.assertEqual(self.entry.edits, 1)
+
     def test_individual_field_omissions_mark_incomplete(self):
         for field in ("name", "value"):
             with self.subTest(field=field):

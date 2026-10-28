@@ -39,13 +39,18 @@ jobs:
       - run: python3 -m unittest discover -s native/linux-atspi/tests -v
       - name: Real GTK accessible controls
         run: dbus-run-session -- xvfb-run -a /usr/bin/python3 native/linux-atspi/tests/live_smoke.py
-      - name: Installed TypeScript and C++ desktop consumers
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ./sdks/python
+      - run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_SDK_PYTHON='+sys.executable+'\n')"
+      - name: Installed TypeScript, C++ and Python desktop consumers
         run: >-
           dbus-run-session -- xvfb-run -a node scripts/native/verify-desktop-consumer.mjs
           --backend linux-atspi --driver /usr/bin/python3
           --driver-arg "${{ github.workspace }}/native/linux-atspi/driver.py"
           --app /usr/bin/python3 --app-arg "${{ github.workspace }}/examples/with-desktop/python/gtk_controls.py"
-          --wrong-arg=--wrong
+          --wrong-arg=--wrong --python "$E2E_SDK_PYTHON"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -76,11 +81,16 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:native
-      - name: Installed TypeScript and C++ desktop consumers
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - run: python -m pip install ./sdks/python
+      - run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_SDK_PYTHON='+sys.executable+'\n')"
+      - name: Installed TypeScript, C++ and Python desktop consumers
         run: >-
           node scripts/native/verify-desktop-consumer.mjs --backend windows-uia
           --driver native/windows-uia/build/bin/E2E.Platform.WindowsUia/Release/net10.0-windows/E2E.Platform.WindowsUia.exe
-          --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe --wrong-arg=--planted-bug
+          --app examples/with-desktop/dotnet/build/bin/Release/net10.0-windows/AccessibleDemo.exe --wrong-arg=--planted-bug --python "$env:E2E_SDK_PYTHON"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -120,12 +130,20 @@ jobs:
         run: pnpm install --frozen-lockfile
       - if: runner.os == 'macOS'
         run: pnpm build:native
-      - name: Installed TypeScript and C++ desktop consumers
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        if: runner.os == 'macOS'
+        with:
+          python-version: '3.12'
+      - if: runner.os == 'macOS'
+        run: python -m pip install ./sdks/python
+      - if: runner.os == 'macOS'
+        run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_SDK_PYTHON='+sys.executable+'\n')"
+      - name: Installed TypeScript, C++ and Python desktop consumers
         if: runner.os == 'macOS'
         run: >-
           node scripts/native/verify-desktop-consumer.mjs --backend macos-ax
           --driver native/macos-ax/target/debug/e2e-platform-macos-ax
-          --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo --wrong-arg=--wrong
+          --app examples/with-desktop/rust/target/debug/e2e-desktop-rust-demo --wrong-arg=--wrong --python "$E2E_SDK_PYTHON"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && runner.os == 'macOS'
         with:

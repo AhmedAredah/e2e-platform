@@ -19,6 +19,7 @@ const { values } = parseArgs({ options: {
   backend: { type: 'string' }, driver: { type: 'string' }, app: { type: 'string' },
   'driver-arg': { type: 'string', multiple: true }, 'app-arg': { type: 'string', multiple: true },
   'wrong-arg': { type: 'string' },
+  python: { type: 'string' },
 }});
 if (!Object.hasOwn(platforms, values.backend) || platforms[values.backend] !== process.platform || !values.driver || !values.app || !values['wrong-arg']) {
   throw new Error('Select the actual host backend and supply --driver, --app and --wrong-arg');
@@ -67,9 +68,13 @@ try {
   await copyFile(join(kit, 'manifest.json'), join(evidence, 'installed-kit-manifest.json'));
   await copyFile(join(root, 'examples/with-desktop/tests/consumer.e2e.ts'), join(project, 'typescript.e2e.ts'));
   await writeFile(join(project, 'cpp.e2e.ts'), `import { registerCppTests } from '@e2e-platform/cpp';\nawait registerCppTests({ executable: ${JSON.stringify(binary)} });\n`);
+  if (values.python) {
+    await copyFile(join(root, 'examples/with-desktop/tests/consumer.py'), join(project, 'test_desktop.py'));
+    await writeFile(join(project, 'python.e2e.ts'), `import { registerPythonTests } from '@e2e-platform/python';\nawait registerPythonTests({ interpreter:${JSON.stringify(resolve(values.python))}, cwd:${JSON.stringify(project)}, tests:['test_desktop.py'], timeoutMs:40000 });\n`);
+  }
   const cli = join(project, 'node_modules/@e2e-platform/core/dist/cli/bin.js');
   const results = [];
-  for (const language of ['typescript', 'cpp']) {
+  for (const language of ['typescript', 'cpp', ...(values.python ? ['python'] : [])]) {
     for (const wrong of [false, true]) {
       const name = `${language}-${wrong ? 'negative' : 'positive'}`;
       const options = { backend: values.backend, executable: resolve(values.driver), args: values['driver-arg'] ?? [], launchTimeout: 30000, requestTimeout: 10000 };
@@ -79,7 +84,7 @@ try {
       await run(process.execPath, [cli, 'run', '--no-model', '--artifacts', join(output, 'artifacts')], project, [wrong ? 1 : 0]);
       const report = validateNativeReport(JSON.parse(await readFile(join(output, 'report.json'), 'utf8')), {
         expected: wrong ? 'failed' : 'passed', minimumResults: 1,
-        failureTitle: language === 'cpp' ? 'installed C++ desktop consumer validates application output' : 'installed desktop consumer validates application output',
+        failureTitle: language === 'python' ? 'test_desktop.py::test_installed_python_desktop_consumer' : language === 'cpp' ? 'installed C++ desktop consumer validates application output' : 'installed desktop consumer validates application output',
         failureOracle: '[oracle:desktop-output]',
       });
       results.push({ language, plantedDefect: wrong, status: report.status, cleanup: 'complete' });

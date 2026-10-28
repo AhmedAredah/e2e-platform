@@ -210,7 +210,6 @@ class AtspiProvider(AccessibilityProvider):
                     root["children"].append(result)
         if not matched:
             raise DriverError("ENGINE_FAILURE", "owned application has not exposed an AT-SPI tree")
-        self._last_seen = seen
         # Retain live identities; drop defunct proxies without ever reusing the numeric IDs.
         for identity, obj in list(self._objects.items()):
             if identity not in seen and self._state(obj, "DEFUNCT"):
@@ -220,6 +219,8 @@ class AtspiProvider(AccessibilityProvider):
                 self._password_ids.discard(identity)
                 self._safe_metadata.pop(identity, None)
                 self._last_metadata.pop(identity, None)
+        # Publish action references only after every fallible snapshot operation.
+        self._last_seen = seen
         return {"root": root, "viewport": viewport, "truncated": truncated}
 
     @staticmethod

@@ -31,7 +31,7 @@ through npm. The C++ SDK and native helpers have separate CMake installation ste
 Packing invalidates the previous kit manifest before building or checking packages.
 A failed build or pack leaves no installable manifest; rerun `pnpm pack:native`
 successfully before distributing the directory. The new manifest becomes available
-only after all seven packages and installer checksums have been written.
+only after all nine packages and installer checksums have been written.
 Third-party dependencies need registry access or a populated local cache.
 Real terminal processes also need the optional `node-pty` peer and native build prerequisites.
 Install `node-pty@1.1.0`, allow its native build scripts, then run
@@ -296,3 +296,7 @@ Assertion deadline handling recognizes errors from separate installed runner mod
 copies. A final read timeout preserves an already observed mismatch and its oracle
 label as an assertion failure. Initial read failures, earlier infrastructure
 failures and cancellation retain their original error classification.
+
+C++ and Python authoring now share the bounded `@e2e-platform/authoring` host.
+The C++ registration API and protocol behavior remain compatible; Python adds
+pytest-specific discovery and case completion without adding a second scheduler.

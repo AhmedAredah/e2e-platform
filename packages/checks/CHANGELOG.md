@@ -1,5 +1,11 @@
 # @e2e-platform/checks
 
+## 0.2.0-rc.8
+
+### Patch Changes
+
+- fc86297: Harden C++ assertions and completion using authoring protocol 2; rebuild C++ SDK clients with the matching host. Preserve numeric fidelity, reject silent JSON coercion, add locator assertion labels, retain failed-cleanup ownership, bound terminal metadata, and merge Windows environment overrides case-insensitively. Native Qt fixes and stricter installation/qualification checks accompany this prerelease. Platform qualification remains an explicit release gate.
+
 ## 0.2.0-rc.7
 
 ### Patch Changes

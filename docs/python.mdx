@@ -1,0 +1,56 @@
+---
+title: Python tests
+description: Author pytest cases using the shared process, HTTP and desktop runner.
+icon: code
+---
+
+The Python SDK adds pytest test bodies to the shared E2E Platform runner. Install
+the matching Python wheel and nine-package local npm kit. Node remains required;
+registry publication is not established. Follow the complete
+[Python installation guide](https://github.com/AhmedAredah/e2e-platform/blob/main/PYTHON.md).
+
+```ts
+import { registerPythonTests } from '@e2e-platform/python';
+await registerPythonTests({
+  interpreter: '/absolute/path/to/venv/bin/python',
+  tests: ['python_tests'],
+});
+```
+
+```python
+def test_submit(e2e):
+    e2e.app.open()
+    e2e.screen.get_by_role('textbox', name='Name').fill('Ada')
+    e2e.screen.get_by_role('button', name='Submit').click()
+    e2e.screen.get_by_role('textbox', name='Result').expect().to_have_value('Hello Ada')
+```
+
+Configure the target in `e2e.config.ts`, then run
+`python -m e2e_platform run --no-model`. The command resolves only the local Node
+runner. Python supports semantic locator/assertion objects, app lifecycle, binary
+process I/O, owned services, HTTP and capability-dependent terminal/window calls.
+`PythonLaunchProfile` accepts exactly one `script` or dotted `module` entry point;
+module launch uses `python -u -m module`. Arguments are literal, not shell source.
+
+Pytest parametrization, yield fixtures and explicit plugins run inside an owned
+process per case. Module/session fixtures therefore do not span cases. Plain
+pytest has no engine session. The shared runner controls scheduling, retries,
+artifacts and cleanup. Autoload and project addopts are disabled. Install the
+asyncio extra and select `pytest_asyncio.plugin` explicitly for async cases;
+`Session.run_async` offloads synchronous SDK calls. Cancellation invalidates the
+session and does not replay the operation.
+
+Failures remain failures if caught in Python. Fixture teardown failures and
+incomplete child exits cannot report success. Ordinary xfail/skip is skipped;
+unexpected passes fail. Readiness requires bounded output and a live service;
+service death before context shutdown fails the test. JSON equality preserves
+large integers and Decimal values. HTTP rejects duplicate keys and nonfinite
+numbers. The standard-library calculator now rejects blank duplicate/unknown
+query fields instead of silently dropping them.
+
+Desktop support still depends on accessible controls and a verified OS profile.
+The Python API does not add OS screenshots, global keys, arbitrary custom canvases,
+drag/drop, visual diffs or hybrid DOM/native switching. Browser/mobile engines
+remain available in the MIT baseline, but their entire engine-specific API is not
+exposed through Python. Framework/runtime workflow definitions require completed
+qualification evidence before a support claim.

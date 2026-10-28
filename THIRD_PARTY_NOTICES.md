@@ -108,3 +108,21 @@ under MIT, retaining its complete header and license notices. Its pinned source
 and SHA-256 are recorded in `native/cpp-sdk/THIRD_PARTY.md`; CMake installs those
 notices with the SDK. The Windows supervisor uses the separately installed .NET
 runtime and Windows system APIs. Their own licenses continue to apply.
+
+
+## Optional Python qualification dependencies
+
+The Python SDK depends on separately installed pytest (MIT); its optional async
+extra uses pytest-asyncio (Apache-2.0). Test fixtures may separately install PySide6
+(Qt's own LGPL/GPL/commercial terms), PyQt6 (GPL/commercial), Flask and Django
+(BSD-3-Clause), FastAPI (MIT) and Uvicorn (BSD-3-Clause). These packages and their
+transitive dependencies are not copied into the SDK wheel or relicensed by the
+repository's MIT declaration. Consult the installed distributions' license files
+for the exact versions used. Framework fixture requirements are not SDK runtime
+dependencies. Python client/registration code in this repository is MIT.
+
+License references: [pytest](https://github.com/pytest-dev/pytest/blob/main/LICENSE),
+[pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio/blob/main/LICENSE),
+[PySide](https://doc.qt.io/qtforpython-6/commercial/index.html),
+[PyQt](https://www.riverbankcomputing.com/software/pyqt/intro),
+[FastAPI](https://github.com/fastapi/fastapi/blob/master/LICENSE).

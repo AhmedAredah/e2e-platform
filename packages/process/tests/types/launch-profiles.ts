@@ -13,3 +13,5 @@ void new ExecutableLaunchProfile({identity: 'app', executable: 'app', shell: tru
 void new PythonLaunchProfile({identity: 'python', script: 'app.py'});
 // @ts-expect-error Argument arrays are readonly strings.
 new CustomRuntime().resolve([1]);
+// @ts-expect-error Script and module entrypoints are mutually exclusive.
+void new PythonLaunchProfile({identity: 'python', interpreter: 'python3', script: 'app.py', module: 'app'});

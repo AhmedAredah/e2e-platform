@@ -30,7 +30,7 @@ class CalculatorHandler(BaseHTTPRequestHandler):
         status, result = 200, {"ok": True}
         if target.path == "/sum":
             try:
-                query = parse_qs(target.query, strict_parsing=True)
+                query = parse_qs(target.query, strict_parsing=True, keep_blank_values=True, max_num_fields=16)
                 if set(query) != {"a", "b"} or any(len(values) != 1 for values in query.values()):
                     raise ValueError("exactly one a and b required")
                 result = self.server.calculator.calculate(query["a"][0], query["b"][0])

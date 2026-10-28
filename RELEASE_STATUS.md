@@ -1,10 +1,10 @@
-# e2e-platform 0.2.0-rc.7
+# e2e-platform 0.2.0-rc.8
 
-This is a reviewed **prerelease**, not a fully qualified stable release. The eleven
-public JavaScript packages use `0.2.0-rc.7` and `@e2e-platform/*`; the executable
+This is a reviewed **prerelease**, not a fully qualified stable release. The thirteen
+public JavaScript packages use `0.2.0-rc.8` and `@e2e-platform/*`; the executable
 and repository folder are `e2e-platform`. Tests use TypeScript/JavaScript or the
-bounded C++ authoring bridge connected to the shared runner. Python, C# and Rust
-authoring SDKs are not included. The application under test can use Python, C#/.NET, C++, Rust or
+bounded C++ and Python/pytest authoring bridges connected to the shared runner.
+C# and Rust authoring SDKs are not included. The application under test can use Python, C#/.NET, C++, Rust or
 another language; GUI support depends on accessible controls and the driver.
 
 The [C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md)
@@ -12,7 +12,17 @@ tracks all 27 findings. The C++/Qt blockers have fixes and passing hosted eviden
 including the formerly failing macOS Quick profile. Older checkpoints below are
 historical; the following table identifies the source actually tested.
 
-## Current qualified code checkpoint
+## Python implementation checkpoint
+
+The new Python wheel, pytest adapter and shared host are implemented. Local Python
+3.12 checks and fresh installed CLI/HTTP consumers pass, including independently
+identified planted defects. The nine-package kit adds authoring and Python adapters.
+See [PYTHON_REVIEW_RESOLUTION.md](docs/development/PYTHON_REVIEW_RESOLUTION.md).
+The new Python 3.11–3.15 matrix, framework HTTP and PySide/PyQt desktop jobs are qualification gates,
+not evidence until completed. The historical passes below do not qualify this
+new implementation. No stable release or registry publication is declared.
+
+## Previously qualified code checkpoint
 
 All 22 required jobs across six workflows passed on their first attempt for
 [`c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb`](https://github.com/AhmedAredah/e2e-platform/commit/c0d0bdfcf85676ec2ec7345bfe250ce12fe185bb).
@@ -327,7 +337,7 @@ quality, native, language and desktop gates before creating an installation kit.
 Mobile simulator/hardware and live model-provider qualification remain outside
 this candidate's verified scope. Generic custom-painted controls, global OS input,
 OS-sidecar screenshots, native video, visual diffs and integrated native/DOM
-switching are not implemented. Python/C#/Rust test-authoring SDKs remain future
+switching are not implemented. C#/Rust test-authoring SDKs remain future
 extensions; these application languages already work through the shared runner.
 
 | Gate | Requirement before publication or a broader support claim |

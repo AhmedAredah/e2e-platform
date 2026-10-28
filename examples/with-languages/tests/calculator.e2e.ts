@@ -24,5 +24,8 @@ test('HTTP returns checked arithmetic and rejects malformed requests', async ({ 
     (await client.get('/sum?a=not-a-number&b=2')).expectStatus(400);
     (await client.get('/sum?a=0.1&b=0.2&garbage')).expectStatus(400);
     (await client.get('/sum?a=0.1&b=0.2&a=3')).expectStatus(400);
+    (await client.get('/sum?a=0.1&b=0.2&a=')).expectStatus(400);
+    (await client.get('/sum?a=0.1&b=0.2&garbage=')).expectStatus(400);
+    (await client.get('/sum?a=&b=0.2')).expectStatus(400);
   });
 });

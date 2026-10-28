@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { ApplicationLaunchProfile, DotnetLaunchProfile, ExecutableLaunchProfile, PythonLaunchProfile, runProcess } from '../../src/index.ts';
 
 describe('application launch profiles', () => {
+  it('supports module launch and refuses ambiguous or replaced entrypoints', () => {
+    const profile = new PythonLaunchProfile({ identity: 'module', interpreter: 'python3', module: 'my_app.cli', interpreterArgs: ['-X', 'utf8'] });
+    expect(profile.resolve(['serve']).process.args).toEqual(['-X', 'utf8', '-u', '-m', 'my_app.cli', 'serve']);
+    for (const entry of [{ script: 'a.py', module: 'a' }, {}, { module: '../a' }, { script: 'a.py', interpreterArgs: ['-m', 'other'] }]) {
+      expect(() => new PythonLaunchProfile({ identity: 'invalid', interpreter: 'python3', ...entry } as never)).toThrow(TypeError);
+    }
+  });
   it('passes spaces and shell metacharacters as literal arguments to a real executable', async () => {
     const values = ['a b', '; echo not-a-command', '$(not-a-command)', ''];
     const profile = new ExecutableLaunchProfile({identity: 'argument-reader', executable: process.execPath, args: ['-e', 'process.stdout.write(JSON.stringify(process.argv.slice(1)))', '--']});

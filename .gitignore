@@ -36,3 +36,9 @@ Thumbs.db
 **/__pycache__/
 **/*.pyc
 **/*.egg-info/
+
+# Python SDK development environments and tool caches.
+**/.venv/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/

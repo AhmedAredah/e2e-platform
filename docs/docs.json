@@ -54,7 +54,8 @@
             "group": "CLI and desktop",
             "icon": "desktop",
             "pages": [
-              "cpp"
+              "cpp",
+              "python"
             ]
           },
           {

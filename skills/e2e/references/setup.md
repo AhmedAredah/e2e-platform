@@ -65,7 +65,7 @@ npm install --save-dev /path/to/e2e-platform-core-0.2.0-rc.7.tgz /path/to/e2e-pl
 
 `ai` (the Vercel AI SDK, v7) is only needed for `agent.*` steps.
 
-The CLI preset works with the seven-package local kit. Qt and OS desktop presets
+The CLI preset works with the nine-package local kit. Qt and OS desktop presets
 require a separately built helper/driver and an explicit application path. The
 OS drivers expose accessibility actions; screenshots and global keyboard input
 are not advertised. Verify a backend on its native OS before claiming support.
@@ -341,3 +341,12 @@ for the Qt engine, and `modelPolicy: 'forbid'` for deterministic suites.
 `model: false` also blocks built-in acting and judgment calls, while allowing
 fixture acquisition. Custom executors remain trusted code. A native
 `app.open()` with no URL calls the engine's restart hook.
+
+### Python test bodies
+
+Install the matching `sdks/python` wheel and local npm kit. Register pytest paths
+with `registerPythonTests` from `@e2e-platform/python` in a small `.e2e.ts` file;
+choose the interpreter explicitly. Run `python -m e2e_platform run --no-model`
+from the consumer project. Cases get independent processes and share the runner
+reports, retries and cleanup. Select plugins explicitly; plain pytest does not
+launch an engine. See the repository PYTHON.md for capability and fixture limits.

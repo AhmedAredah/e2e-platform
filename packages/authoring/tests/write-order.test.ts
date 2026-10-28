@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import type { FixtureContext, TestFixtures } from '@e2e-platform/core';
 import type { ProcessFixture, ProcessOutput, ProcessResult, ProcessSession } from '@e2e-platform/process';
-import { CppTestHost } from '../src/host.ts';
+import { AuthoredTestHost } from '../src/host.ts';
 
 /** Simulates a child receiving its response before the supervisor acknowledges the write. */
 test('serializes response writes when the next request arrives before write acknowledgement', async () => {
@@ -29,6 +29,6 @@ test('serializes response writes when the next request arrives before write ackn
   };
   const fixtures = { processes: { start: async () => child } } as unknown as TestFixtures & { processes: ProcessFixture };
   const context = { signal: new AbortController().signal, fixture: (_name: string, resource: unknown) => resource } as unknown as FixtureContext;
-  await new CppTestHost(fixtures, context).run({ executable: 'fixture' }, 'write ordering');
+  await new AuthoredTestHost(fixtures, context).run({ executable: 'fixture' }, 'write ordering');
   expect(writes).toBe(3);
 });

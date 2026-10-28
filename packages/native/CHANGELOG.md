@@ -1,5 +1,38 @@
 # @e2e-platform/native
 
+## 0.2.0-rc.8
+
+### Minor Changes
+
+- 3b1fe90: Add negotiated read-only actionability waiting, owned-window enumeration and activation, a typed native test fixture, optional attempt-owned profiles and sanitized action timeline attachments. Expand the Qt action profile and expose supported accessibility scrolling without retrying uncertain mutations.
+
+### Patch Changes
+
+- 3d344d8: Reject lossy C++ HTTP JSON, duplicate host keys and excessive nesting. Add a run-local exclusive resource contract and serialize native desktop targets through cleanup. Retain observed password sensitivity after Linux/macOS reveal changes, validate realized Windows selection options before dispatch, and require Qt scroll visibility postconditions. Install-test TypeScript and compiled C++ desktop consumers against real OS fixtures in hosted CI. Update the qs override to 6.16.1. These changes do not expand the documented framework or input-fidelity support claims.
+
+  Wait for macOS accessibility startup before bridge readiness and recognize assertion deadline errors across installed runner module copies.
+- fc86297: Harden C++ assertions and completion using authoring protocol 2; rebuild C++ SDK clients with the matching host. Preserve numeric fidelity, reject silent JSON coercion, add locator assertion labels, retain failed-cleanup ownership, bound terminal metadata, and merge Windows environment overrides case-insensitively. Native Qt fixes and stricter installation/qualification checks accompany this prerelease. Platform qualification remains an explicit release gate.
+- ca98d8c: Confirm explicit Qt window activation before acknowledging success. Separate
+  macOS offscreen/Basic and Cocoa/native-style qualification, and add Windows
+  native-window acceptance. Keep completed UIA subtree aliases from incorrectly
+  marking a complete snapshot truncated while preserving cycle and size limits.
+  Handle transient read-only AX startup failures and Linux process-exit races in
+  the live verification tools.
+- dc9541c: Check Windows UIA controls against current window and scroll-container geometry
+  before acknowledging actionability, preserving unknown visibility explicitly.
+  Exercise actual WPF ScrollItem providers and AppKit selectable/scrollable control
+  extensions. Correct the AX verifier's required fill fields and wait for the
+  asynchronous native Cocoa dialog-close result in the Qt protocol regression.
+- 54e4a44: Recheck the request deadline when a native transport timer fires early. A callback before the declared deadline no longer closes a valid connection or replaces the final observed assertion mismatch with a premature timeout. Read timeouts and uncertain mutation outcomes remain distinct, and mutations are never replayed.
+- Add installed Python/pytest test authoring through a shared bounded host, preserving the C++ API. Expose semantic desktop controls, exact assertions, binary process I/O, owned service readiness, HTTP and optional terminal/window fixtures. Add Python module launch profiles, revoke AT-SPI references when snapshot pruning fails, reject ambiguous blank HTTP parameters, and qualify clean npm/wheel consumers with positive and deliberately defective applications.
+- c0d0bdf: Raise inactive Qt Widgets windows before requesting keyboard activation, including
+  when another application owns foreground focus on Cocoa. Confirm activation before
+  typing and preserve terminal failure when the operating system denies the request.
+- 3b1fe90: Preserve unavailable desktop visibility, enabled and focused states with optional semantic flags. Reads, filtered queries, waits and positive or negated assertions no longer treat unknown platform state as proof that a control is hidden, absent, disabled or unfocused.
+- Updated dependencies [3b1fe90]
+- Updated dependencies
+  - @e2e-platform/process@0.2.0-rc.8
+
 ## 0.2.0-rc.7
 
 ### Minor Changes

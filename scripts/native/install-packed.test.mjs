@@ -19,7 +19,7 @@ export function runPackageManager(name, args, options) {
   return { status: 0 };
 }`);
   const hash = (file) => createHash('sha256').update(readFileSync(join(directory, file))).digest('hex');
-  const packages = ['core', 'process', 'checks', 'protocol', 'native', 'terminal', 'cpp'].map((suffix) => {
+  const packages = ['core', 'process', 'checks', 'protocol', 'native', 'terminal', 'authoring', 'cpp', 'python'].map((suffix) => {
     const name = `@e2e-platform/${suffix}`;
     const version = '0.2.0-rc.1';
     const file = `e2e-platform-${suffix}-${version}.tgz`;
@@ -35,7 +35,7 @@ export function runPackageManager(name, args, options) {
   finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
-test('installer passes the seven checked local package paths to npm without a shell', () => fixture(({ directory, project, manifest, execute }) => {
+test('installer passes the nine checked local package paths to npm without a shell', () => fixture(({ directory, project, manifest, execute }) => {
   const result = execute();
   assert.equal(result.status, 0, result.stderr);
   // Node resolves the installer module through filesystem aliases (macOS

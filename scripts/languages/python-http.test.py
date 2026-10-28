@@ -39,6 +39,11 @@ class LoopbackStartupTests(unittest.TestCase):
                     response = connection.getresponse()
                     self.assertEqual(response.status, 400)
                     response.read()
+                    for query in ("a=0.1&b=0.2&a=", "a=0.1&b=0.2&garbage=", "a=&b=0.2"):
+                        connection.request("GET", "/sum?" + query)
+                        response = connection.getresponse()
+                        self.assertEqual(response.status, 400, query)
+                        response.read()
                 finally:
                     connection.close()
                     server.shutdown()

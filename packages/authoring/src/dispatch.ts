@@ -4,6 +4,7 @@ import type { ProcessFixture } from '@e2e-platform/process';
 import { createHttpClient } from '@e2e-platform/protocol';
 import { invalid, record, string, timeout, type Request } from './protocol.ts';
 import { assertionValue } from './value.ts';
+import { ResourceDispatcher, binaryResult, processOptions } from './resources.ts';
 
 interface RecordedOperations {
   http(params: Record<string, unknown>): Promise<unknown>;
@@ -33,25 +34,27 @@ function locator(screen: Screen, input: unknown): Locator {
   return current as Locator;
 }
 
-/** Provides only explicitly supported operations to the owned C++ child. */
-export class CppDispatcher {
+/** Provides only explicitly supported operations to the owned language client. */
+export class AuthoringDispatcher {
   private source = '';
   /** Accepts the registered case location after the host validates its bounded shape. */
   setSource(source: string): void { this.source = source; }
   private readonly operations: RecordedOperations;
-  constructor(private readonly fixtures: TestFixtures & { processes: ProcessFixture }, private readonly context: FixtureContext) {
-    this.operations = context.fixture<RecordedOperations>('cpp', {
+  private readonly resources: ResourceDispatcher;
+  constructor(private readonly fixtures: TestFixtures & { processes: ProcessFixture }, private readonly context: FixtureContext, private readonly language: 'C++' | 'Python' = 'C++') {
+    this.resources = new ResourceDispatcher(fixtures, context);
+    this.operations = context.fixture<RecordedOperations>(language === 'C++' ? 'cpp' : 'python', {
       http: params => this.http(params),
       equal: async (params) => {
         record(params, ['actual', 'expected', 'message']);
         if (!Object.hasOwn(params, 'actual') || !Object.hasOwn(params, 'expected')) invalid();
-        expect(isDeepStrictEqual(assertionValue(string(params.actual)), assertionValue(string(params.expected))), `${this.source}${params.message === undefined ? 'C++ equality assertion failed' : string(params.message)}`).toBe(true);
+        expect(isDeepStrictEqual(assertionValue(string(params.actual)), assertionValue(string(params.expected))), `${this.source}${params.message === undefined ? `${this.language} equality assertion failed` : string(params.message)}`).toBe(true);
       },
       truth: async (params) => {
         record(params, ['actual']);
-        expect(params.actual === true, `${this.source}C++ truth assertion failed`).toBe(true);
+        expect(params.actual === true, `${this.source}${this.language} truth assertion failed`).toBe(true);
       },
-    }, { http: { kind: 'resource', label: () => 'HTTP request' }, equal: { kind: 'assertion', label: () => 'C++ equality assertion' }, truth: { kind: 'assertion', label: () => 'C++ truth assertion' } });
+    }, { http: { kind: 'resource', label: () => 'HTTP request' }, equal: { kind: 'assertion', label: () => `${this.language} equality assertion` }, truth: { kind: 'assertion', label: () => `${this.language} truth assertion` } });
   }
 
   /** Dispatches from a closed allowlist; values never become source code. */
@@ -71,6 +74,15 @@ export class CppDispatcher {
       case 'http.request': return this.operations.http(p);
       case 'expect.equal': await this.operations.equal(p); return null;
       case 'expect.true': await this.operations.truth(p); return null;
+      case 'expect.fail':
+        record(p, ['file', 'line', 'phase']);
+        if (!['setup', 'call', 'teardown', 'collection'].includes(string(p.phase)) || !Number.isSafeInteger(p.line) || (p.line as number) < 1) invalid();
+        if (/[\\/]/.test(string(p.file, 255)) || [...string(p.file)].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)) invalid();
+        this.source = `${this.language} ${string(p.phase)} ${string(p.file)}:${p.line as number}: `;
+        await this.operations.truth({ actual: false }); return null;
+      case 'process.start': case 'process.read': case 'process.stop': case 'process.write': case 'process.closeInput':
+      case 'terminal.snapshot': case 'terminal.write': case 'terminal.press': case 'terminal.waitFor': case 'terminal.resize':
+      case 'native.windows': case 'native.activateWindow': return this.resources.dispatch(request.method, p);
       default: invalid();
     }
   }
@@ -136,15 +148,16 @@ export class CppDispatcher {
 
   /** Runs finite commands through the attempt-owned process fixture. */
   private async process(p: Record<string, unknown>): Promise<unknown> {
-    record(p, ['executable', 'args', 'stdin', 'expectedExitCodes', 'timeoutMs']);
+    record(p, ['executable', 'args', 'stdin', 'stdinBase64', 'expectedExitCodes', 'timeoutMs', 'cwd', 'env', 'inheritEnv', 'binary']);
+    if (p.binary !== undefined && typeof p.binary !== 'boolean') invalid();
     if (p.args !== undefined && (!Array.isArray(p.args) || p.args.length > 1024)) invalid();
     if (p.expectedExitCodes !== undefined && (!Array.isArray(p.expectedExitCodes) || p.expectedExitCodes.length === 0 || p.expectedExitCodes.length > 256 || p.expectedExitCodes.some(code => typeof code !== 'number' || !Number.isSafeInteger(code) || code < 0 || code > 4_294_967_295))) invalid();
     const result = await this.fixtures.processes.run({
-      executable: string(p.executable), args: (p.args as unknown[] | undefined)?.map(value => string(value)) ?? [],
-      ...(p.stdin === undefined ? {} : { stdin: string(p.stdin) }),
+      ...processOptions(p, this.context),
       ...(p.expectedExitCodes === undefined ? {} : { expectedExitCodes: p.expectedExitCodes as number[] }),
       timeoutMs: timeout(p.timeoutMs, 30_000), maxOutputBytes: 128 * 1024, signal: this.context.signal,
     });
+    if (p.binary === true) return binaryResult(result);
     return { status: result.status, exitCode: result.exitCode, stdout: result.stdout.bytes.toString('utf8'), stderr: result.stderr.bytes.toString('utf8'), truncated: result.stdout.truncated || result.stderr.truncated };
   }
 

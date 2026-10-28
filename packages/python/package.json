@@ -1,0 +1,55 @@
+{
+  "name": "@e2e-platform/python",
+  "version": "0.2.0-rc.8",
+  "description": "Python and pytest case registration for the shared E2E Platform runner",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "tag": "rc"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc --project tsconfig.build.json && node ../../scripts/stamp-dist.ts",
+    "prepublishOnly": "node ../../scripts/check-dist.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@e2e-platform/core": ">=0.2.0-rc.7 <1.0.0",
+    "@e2e-platform/process": ">=0.2.0-rc.7 <1.0.0"
+  },
+  "devDependencies": {
+    "@e2e-platform/core": "workspace:*",
+    "@e2e-platform/process": "workspace:*",
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": "^22.22.3 || >=24.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedAredah/e2e-platform.git",
+    "directory": "packages/python"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedAredah/e2e-platform/issues"
+  },
+  "homepage": "https://github.com/AhmedAredah/e2e-platform/tree/main/packages/python#readme",
+  "dependencies": {
+    "@e2e-platform/authoring": "workspace:*"
+  }
+}

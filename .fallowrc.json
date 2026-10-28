@@ -33,7 +33,9 @@
     "examples/with-cpp-sdk/tests/**/*.ts",
     "scripts/native/verify-cpp-sdk.mjs",
     "examples/with-desktop/tests/**/*.ts",
-    "scripts/native/verify-desktop-consumer.mjs"
+    "scripts/native/verify-desktop-consumer.mjs",
+    "scripts/python/verify.mjs",
+    "scripts/python/package.mjs"
   ],
   "ignorePatterns": [
     "docs/**",

@@ -22,7 +22,7 @@ if (build) {
   if (result.status !== 0) throw new Error('Native package build failed; no installable kit was produced');
 }
 const packages = [];
-for (const directory of ['e2e', 'process', 'checks', 'protocol', 'native', 'terminal', 'cpp']) {
+for (const directory of ['e2e', 'process', 'checks', 'protocol', 'native', 'terminal', 'authoring', 'cpp', 'python']) {
   const cwd = join(root, 'packages', directory);
   const metadata = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8'));
   const check = spawnSync(process.execPath, [join(root, 'scripts/check-dist.ts')], { cwd, stdio: 'inherit' });

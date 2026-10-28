@@ -4,7 +4,7 @@ The C++ review changes use authoring protocol 2: update the host adapter
 and rebuild SDK test binaries together. See [the resolution and release gates](docs/development/CPP_REVIEW_RESOLUTION.md).
 
 Use Node.js 22.22.3 or newer in the 22.x line, or Node.js 24.8.0 or newer.
-A prepared full-repository bundle can include `release-packages/` with seven built
+A prepared full-repository bundle can include `release-packages/` with nine built
 npm tarballs, a checksum manifest and an installer. A Git clone or GitHub source ZIP
 contains source only: run `pnpm install --frozen-lockfile` and `pnpm pack:native`
 first. These are candidate builds; they have not been published to the fork namespace.
@@ -32,7 +32,7 @@ or from your cache. Keep the kit at the same path for lockfile reinstalls, or
 copy it into your project before installation. Registry publication is not required.
 
 To rebuild the kit from source, install the pinned pnpm prerequisites, run
-`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.7. Coordinated versions and changelogs use Changesets prerelease mode.
+`pnpm install --frozen-lockfile`, then `pnpm pack:native`. The kit is version 0.2.0-rc.8. Coordinated versions and changelogs use Changesets prerelease mode.
 Registry names are not reserved or published by creating this kit.
 
 ## First command test
@@ -164,7 +164,7 @@ business results. gRPC and WebSocket clients are not included.
 
 ## Browser and mobile applications
 
-The seven-package kit excludes `@e2e-platform/playwright` and
+The nine-package kit excludes `@e2e-platform/playwright` and
 `@e2e-platform/agent-device`. Their MIT-baseline source remains in the checkout.
 After `pnpm install --frozen-lockfile`, run these commands from the repository
 root to build the optional modules and pack the ones you need. Choose an existing
@@ -182,11 +182,11 @@ candidate). Either engine can be installed independently:
 
 ```sh
 # Browser engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.7.tgz playwright@1.63.0
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-playwright-0.2.0-rc.8.tgz playwright@1.63.0
 npx --no-install playwright install chromium
 
 # Mobile engine:
-npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.7.tgz
+npm install --save-dev /absolute/path/to/tarballs/e2e-platform-agent-device-0.2.0-rc.8.tgz
 npx --no-install agent-device doctor
 ```
 
@@ -219,8 +219,10 @@ See [LANGUAGES.md](LANGUAGES.md) and `examples/with-languages/` for real Python,
 C# and Rust CLI/HTTP applications. `PythonLaunchProfile`, `DotnetLaunchProfile`
 and `ExecutableLaunchProfile` keep executable arguments separate from logical
 application identity. The [C++17 SDK](native/cpp-sdk/README.md) now supports C++ test
-bodies through `@e2e-platform/cpp` and a small TypeScript discovery file. Python,
-C# and Rust test-authoring SDKs and additional toolkit bindings are not included.
+bodies through `@e2e-platform/cpp` and a small TypeScript discovery file.
+[PYTHON.md](PYTHON.md) covers the separately installed Python SDK wheel, pytest
+fixtures and matching npm adapter. C# and Rust test-authoring SDKs and additional
+toolkit bindings are not included.
 
 ## Qualification and publication
 

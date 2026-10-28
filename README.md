@@ -3,11 +3,15 @@
 An extensible MIT-based fork of [TesterArmy e2e](https://github.com/tester-army/e2e)
 for testing command-line programs, terminal applications, HTTP services,
 desktop controls, web and mobile applications with one TypeScript runner.
-Tests can use TypeScript/JavaScript or the bounded C++ authoring bridge; Python,
-C# and Rust applications currently use the shared runner's test API.
+Tests can use TypeScript/JavaScript, the C++ authoring bridge, or the new Python/pytest SDK.
+C# and Rust applications use these shared test APIs.
 Applications may be written in Python, C#/.NET, Rust, C++ or another language.
 GUI coverage depends on the exposed controls and selected driver. Independent output checks catch
 wrong results even when an application exits successfully or displays success.
+
+Python implementation and qualification boundaries are tracked in the
+[Python resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md). New Python
+platform jobs must pass before their profiles are considered qualified.
 
 Review hardening is documented in [the C++ resolution record](docs/development/CPP_REVIEW_RESOLUTION.md).
 The [follow-up corrections](docs/development/CPP_FOLLOWUP_RESOLUTION.md) address
@@ -18,7 +22,7 @@ TypeScript and compiled C++ desktop consumers on Linux, Windows and macOS.
 This remains a prerelease with bounded support; additional controls and toolkits
 require their own real-application qualification.
 
-The current prerelease is **0.2.0-rc.7**. Its source branch is
+The current prerelease is **0.2.0-rc.8**. Its source branch is
 [`main`](https://github.com/AhmedAredah/e2e-platform/tree/main); a prepared
 full-repository archive contains source and may include a local installation kit.
 Git history is available through cloning the repository.
@@ -66,15 +70,16 @@ repository archive with `release-packages/`, use its included kit directly:
 node release-packages/install.mjs /absolute/path/to/your-project
 ```
 
-The kit installs `@e2e-platform/core`, the five boundary packages and
-`@e2e-platform/cpp`. External
+The nine-package kit installs `@e2e-platform/core`, five boundary packages, the
+shared authoring host and C++/Python adapters. Install the Python SDK wheel
+separately; follow [PYTHON.md](PYTHON.md) for a complete first Python test. External
 JavaScript dependencies require network access or a populated npm cache. CMake,
 compilers, Qt and optional terminal native dependencies are separate prerequisites.
 Follow [INSTALL.md](INSTALL.md) for a complete first test, Qt integration
 and consumer installation instructions.
 
 Browser and mobile engines are separate optional packages. A Git clone includes
-their source; the seven-package kit does not include their tarballs. Follow
+their source; the nine-package kit does not include their tarballs. Follow
 [the optional-engine installation steps](INSTALL.md#browser-and-mobile-applications)
 to build and pack them locally, install them beside the kit, and prepare browsers
 or simulators before running tests.
@@ -103,6 +108,8 @@ provider. The fork disables the inherited upstream telemetry transport.
 | `@e2e-platform/core` | Test SDK, engine contract, runner, reports and `e2e-platform` CLI |
 | `@e2e-platform/process` | Bounded subprocess execution, streams, cancellation and cleanup |
 | `@e2e-platform/cpp`, `native/cpp-sdk` | C++ authored test bodies connected to the shared runner; installed CMake SDK |
+| `@e2e-platform/python`, `sdks/python` | Python/pytest authoring, installable typed wheel, owned services and binary I/O |
+| `@e2e-platform/authoring` | Shared bounded language host; one scheduler and report model |
 | `@e2e-platform/checks` | Independent numeric, JSON and keyed CSV comparisons |
 | `@e2e-platform/native` | Native engine, authenticated sidecar profiles, driver and transport abstractions |
 | `native/linux-atspi`, `windows-uia`, `macos-ax` | Separately installed Python, C# and Rust accessibility drivers for their respective operating systems |
