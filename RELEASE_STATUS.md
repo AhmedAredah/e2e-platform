@@ -51,12 +51,12 @@ digests are recorded in [support-profiles.json](docs/development/support-profile
 
 Packing now invalidates the previous manifest and source marker before any build
 or package checks. A failed attempt cannot retain a stale installable kit. The
-new manifest is published atomically after all seven tarballs and installer
+new manifest is published atomically after all nine tarballs and installer
 checksums exist. This applies to `pnpm pack:native`, `pnpm release` and direct
 packing into a custom output directory.
 
 Four regressions cover build/check failures with default and custom paths. The
-local quality gate, 70 maintenance tests, rebuilt seven-package kit and fresh
+local quality gate, 72 maintenance tests, rebuilt nine-package kit and fresh
 consumer installation/reinstallation passed. The installed dependency audit again
 reported zero findings. The compatible `node-forge` 1.4.2 and
 `postcss-selector-parser` 6.1.5 overrides passed Expo certificate/signature checks
@@ -151,17 +151,17 @@ model/view controls, menus/tabs/headers and owned-window enumeration/activation.
 Custom adapters disable screenshots until their masking/capture behavior can be
 qualified. C++ authored test bodies use the separately installed CMake SDK and
 `@e2e-platform/cpp`; the shared runner retains scheduling, lifecycle and reports.
-This bridge does not claim full TypeScript API parity or native pytest/xUnit/Cargo
-authoring support.
+The C++ and Python/pytest bridges do not claim full TypeScript API parity.
+C#/xUnit and Rust/Cargo test-authoring SDKs remain future work.
 
 Process fixtures add tracked asynchronous operations, safe run diagnostics and
 supervised services with explicit readiness. Application state reset remains a
 test fixture responsibility. The optional Windows Job Object supervisor is a
 separate native component, not a silent upgrade to default taskkill behavior.
 
-Local follow-up OS-driver checks pass 85 Python tests, 81 portable UIA checks and
+Local follow-up OS-driver checks pass 86 Python tests, 81 portable UIA checks and
 38 Rust tests. Native hosted results above are separate from portable tests.
-The local seven-package kit passes manifest integrity, clean install/reinstall,
+The local nine-package kit passes manifest integrity, clean install/reinstall,
 plain Node imports, strict public types, initializer/first test, deliberate failure
 rejection, metacharacter paths and conventional npm launch paths. Its installed
 production dependency audit reports zero findings. Default Windows taskkill and
@@ -300,8 +300,9 @@ runs are retained and clearly superseded by the qualified rc.2 reruns.
 
 The historical validation summary links the exact rc.2 consumer-kit and browser
 reports. The prepared rc.2 full-repository bundle contained tracked source and Git history
-plus a checksummed six-package JavaScript install kit. The current kit adds the
-C++ bridge as its seventh package. A normal GitHub source ZIP contains neither
+plus a checksummed six-package JavaScript install kit. The rc.7 kit added the
+C++ bridge; rc.8 adds the shared authoring host and Python adapter for nine
+packages. A normal GitHub source ZIP contains neither
 Git history nor the generated kit. SDKs, Qt, browser binaries, OS libraries and
 package-manager caches remain external prerequisites.
 
@@ -315,7 +316,7 @@ The latest pinned-pnpm full-workspace audit reports **10 findings: 7 high,
 Every remaining path is in optional Mintlify preview/online-validation tooling
 or the private Expo benchmark. The production-only workspace audit includes
 private apps and reports 3 findings: Zod 3 (high), decode-uri-component (moderate)
-and deepmerge (low). The fresh installed seven-package kit reports zero findings.
+and deepmerge (low). The fresh installed nine-package kit reports zero findings.
 See the [current inventory](docs/development/dependency-audit-current.json) for
 versions, advisory URLs, affected scopes and the lockfile hash. The
 [rc.2 inventory](docs/development/dependency-audit-rc2.json) remains historical.
@@ -332,7 +333,7 @@ The documented C++/Qt, Linux GTK3 and Windows WPF reference profiles have the
 hosted evidence listed above. Every additional framework, toolkit version and
 display backend requires its own real-control test. macOS AX/AppKit acceptance
 also passed, including the application-owned optional scroll/selection controls. The manual release workflow reruns the complete
-quality, native, language and desktop gates before creating an installation kit.
+quality, native, language, Python and desktop gates before creating an installation kit.
 
 Mobile simulator/hardware and live model-provider qualification remain outside
 this candidate's verified scope. Generic custom-painted controls, global OS input,

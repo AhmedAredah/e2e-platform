@@ -2,7 +2,7 @@
 
 > Fork installation: these package names are local release identities. Use the
 > core kit in [INSTALL.md](../../INSTALL.md), then build and pack this optional
-> module locally. The seven-package kit excludes this engine. Registry availability
+> module locally. The nine-package kit excludes this engine. Registry availability
 > is not established.
 
 The browser engine for [`@e2e-platform/core`](../e2e/README.md), built on

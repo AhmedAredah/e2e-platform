@@ -1,7 +1,7 @@
 {
-  "checkedAtUTC": "2026-10-28T03:26:13.715560+00:00",
-  "baselineCommit": "08b0887b15f078c09e58c6622ee41a9053612a2e",
-  "lockfileSha256": "bbf04702214863484cd47c8aae631c129cdf43d0181404d32191fc317479bea5",
+  "checkedAtUTC": "2026-10-28T15:53:56.078550+00:00",
+  "baselineCommit": "7987bfddf98d47620857713d4a0a0839a72eb348",
+  "lockfileSha256": "23936322b1dc1613794c4eb35dfc8154f32b0ec49ec20c938c0aa5d359d9d165",
   "packageManager": "pnpm@12.3.4",
   "workspace": {
     "info": 0,

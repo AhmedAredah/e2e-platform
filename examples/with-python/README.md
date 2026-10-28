@@ -18,3 +18,6 @@ for Flask, Django and FastAPI. `tests/test_frameworks.py` sends real network
 requests with explicit cookies, verifies login/logout and fresh process state,
 and rejects independent wrong results. Install the pinned fixture requirements
 separately; no framework dependency is added to the Python SDK.
+The loopback WSGI server avoids reverse DNS during bind. Its real socket
+regression is in `checks/test_http_server.py`. Qt desktop qualification pins
+6.12.0; older Qt Quick editable interfaces are not assumed equivalent.

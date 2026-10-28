@@ -63,8 +63,14 @@ export class JsonRpcTcpTransport extends NativeTransport {
         const error = sent && mutates
           ? new EngineError('ACTION_MAY_HAVE_COMMITTED', `native ${method} was sent but its outcome is unknown`, { retryable: false })
           : abort ? cancelled() : new EngineError('OPERATION_TIMEOUT', `native ${method} timed out`, { retryable: false });
-        cancelPending?.();
-        if (sent) this.close();
+        // A polling assertion can exhaust its budget during a final read.
+        // Drain that read under its original ID before dispatching anything
+        // else; closing here would make the owned sidecar exit during failure
+        // collection. Cancellation and uncertain mutations still close.
+        if (!sent || mutates || abort) {
+          cancelPending?.();
+          if (sent) this.close();
+        }
         finish(error);
       };
       const abort = () => interrupted(true);

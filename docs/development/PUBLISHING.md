@@ -44,8 +44,10 @@ machines with credentials or broad host access.
 
 ## Packages and release files
 
-`pnpm pack:native` builds a checksummed seven-package consumer kit, including the
-C++ authoring bridge. Native SDKs, Qt helpers, OS sidecars and the optional Windows
+`pnpm pack:native` builds a checksummed nine-package consumer kit, including the
+shared authoring host and C++/Python adapters. `pnpm pack:python` separately builds
+the Python SDK wheel and source archive; install the wheel with pip. Native SDKs,
+Qt helpers, OS sidecars and the optional Windows
 Job Object supervisor have separate build/install steps. Run
 `node scripts/native/install-kit-smoke.mjs --kit release-packages` against the
 exact files being distributed. Optional browser and mobile packages have the

@@ -60,7 +60,7 @@ additional supported profile.
 - `pnpm check:local`: lint, dead-code checks, all package builds/typechecks, error
   documentation and 51 documentation pages passed.
 - Application-boundary suites: process 79 passed (5 platform-specific skips),
-  checks 19, HTTP 20, native 116, terminal 50, shared authoring 5, C++ 17 and Python
+  checks 19, HTTP 20, native 119, terminal 50, shared authoring 5, C++ 17 and Python
   12 passed. The C++ host extraction preserves the existing regression suite.
 - Python SDK: 24 contract tests, Ruff and mypy passed on Python 3.12.14.
 - AT-SPI: 86 portable tests; calculator HTTP input regression passed.
@@ -106,3 +106,17 @@ both. The Python reference bindings now pin Qt 6.12.0 and retain the identical
 control workflow and independent output oracle. Qt 6.8 Quick/AT-SPI is not
 included in the support claim. C++ cooperative Qt profiles retain their separate
 previously tested kits.
+
+Live PySide6 failure collection also exposed a readonly deadline edge: closing
+the socket for a final timed-out poll made the orderly sidecar exit appear as
+a secondary application failure. The transport now retains that request ID
+until the late reply is drained, while returning the original timeout on time.
+Three real TCP regressions cover reply isolation, queued deadlines/owned close
+and malformed late responses. Mutation uncertainty and cancellation still close.
+
+The macOS WSGI fixture's startup probe took about 35 seconds before readiness.
+The reference server now binds its literal loopback address without the standard
+HTTP server's reverse-DNS lookup. A real bind regression makes any reverse-DNS
+call fail, and checks the server environment. This does not change the runner's
+readiness deadlines or substitute an in-process HTTP mock for real framework
+requests.

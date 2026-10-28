@@ -67,3 +67,9 @@ Widgets and Quick cases. A startup probe is diagnostic evidence only.
 The Python GUI reference kits use Qt 6.12.0. Qt 6.8 Quick TextField lacks the
 editable AT-SPI interface/state needed for fill, so it is not covered by the
 Linux Quick profile; no global-key or direct-property fallback hides that limit.
+
+A native polling read may finish after its assertion deadline. The transport
+rejects that read on time and drains its original reply before sending another
+request, keeping assertion-failure collection from unexpectedly closing the
+sidecar. Queued calls retain their deadlines. Cancelled requests and uncertain
+mutations still close the transport and are never replayed.

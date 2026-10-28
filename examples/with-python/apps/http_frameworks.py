@@ -5,9 +5,19 @@ import argparse
 import json
 import secrets
 import socket
+from socketserver import TCPServer
 import threading
 import time
-from wsgiref.simple_server import make_server
+from wsgiref.simple_server import WSGIServer, make_server
+
+
+class LoopbackWsgiServer(WSGIServer):
+    """Bind the reference service without consulting external reverse DNS."""
+
+    def server_bind(self):
+        TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+        self.setup_environ()
 
 
 class ApplicationState:
@@ -51,7 +61,7 @@ class WsgiService(ReferenceService):
         """Create a real framework WSGI application."""
 
     def serve(self):
-        with make_server("127.0.0.1", 0, self.application()) as server:
+        with make_server("127.0.0.1", 0, self.application(), server_class=LoopbackWsgiServer) as server:
             self.announce(server.server_port)
             if not self.probe:
                 server.serve_forever()

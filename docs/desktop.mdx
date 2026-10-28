@@ -50,6 +50,12 @@ visibility assertions. These semantic checks do not prove screen occlusion.
 Missing AX enabled/focused state is also explicitly unknown and cannot satisfy
 positive or negated assertions for that state.
 
+When a readonly request times out, its caller fails on time and the transport
+drains that request's original reply before dispatching another operation. This
+keeps a final polling read from closing the sidecar during assertion-failure
+collection. Queued operations keep their own deadlines; cancellation, malformed
+replies and uncertain mutations still close the channel without replay.
+
 Windows selection preflight resolves the requested realized option and rejects
 missing, disabled or ambiguous matches without changing the UI. Open a collapsed
 popup explicitly before selecting an option its provider has not exposed.

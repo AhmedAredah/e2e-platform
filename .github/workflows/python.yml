@@ -47,6 +47,7 @@ jobs:
       - if: matrix.python == '3.12'
         run: python -m mypy --check-untyped-defs sdks/python/src
       - run: python -m pytest sdks/python/tests -q
+      - run: python -m unittest discover -s examples/with-python/checks -v
       - name: Select the installed SDK interpreter
         run: python -c "import os,sys;open(os.environ['GITHUB_ENV'],'a').write('E2E_TEST_PYTHON='+sys.executable+'\n')"
       - run: pnpm --filter @e2e-platform/python test

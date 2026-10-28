@@ -58,6 +58,48 @@ describe('authenticated-bridge transport mechanics', () => {
     await expect(transport.request('snapshot', {}, context(25))).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
   });
 
+  it('drains a timed-out read before sending a later mutation without reusing its reply', async () => {
+    let reply!: () => void;
+    const calls: string[] = [];
+    const transport = await bridge(({ id, method }, socket) => {
+      calls.push(method);
+      if (method === 'snapshot') reply = () => socket.write(JSON.stringify({ jsonrpc: '2.0', id, result: 'old snapshot' }) + '\n');
+      else socket.write(JSON.stringify({ jsonrpc: '2.0', id, result: 'mutation reply' }) + '\n');
+    });
+    await expect(transport.request('snapshot', {}, context(25))).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    const mutation = transport.request('perform', {}, context(), true);
+    await Promise.resolve();
+    expect(calls).toEqual(['snapshot']);
+    reply();
+    await expect(mutation).resolves.toBe('mutation reply');
+    expect(calls).toEqual(['snapshot', 'perform']);
+  });
+
+  it('bounds queued requests while a timed-out read is draining and permits owned close', async () => {
+    let calls = 0;
+    const transport = await bridge(() => { calls++; });
+    await expect(transport.request('snapshot', {}, context(25))).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    await expect(transport.request('perform', {}, context(25), true)).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    expect(calls).toBe(1);
+    const queued = transport.request('shutdown', {}, context(), true);
+    transport.close();
+    await expect(queued).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+    expect(calls).toBe(1);
+  });
+
+  it('still rejects a wrong late reply after a read deadline', async () => {
+    let reply!: () => void;
+    const transport = await bridge(({ id }, socket) => {
+      reply = () => socket.write(JSON.stringify({ jsonrpc: '2.0', id: id + 1, result: null }) + '\n');
+    });
+    const disconnected = vi.fn();
+    transport.onDisconnect(disconnected);
+    await expect(transport.request('snapshot', {}, context(25))).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    reply();
+    await vi.waitFor(() => expect(disconnected).toHaveBeenCalledOnce());
+    await expect(transport.request('snapshot', {}, context())).rejects.toMatchObject({ code: 'ENGINE_FAILURE' });
+  });
+
   it.each([false, true])('does not expire an early timer callback before the request deadline (mutation: %s)', async (mutates) => {
     let received!: () => void;
     const dispatched = new Promise<void>((resolve) => { received = resolve; });
