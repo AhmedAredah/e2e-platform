@@ -18,6 +18,8 @@ class FixtureSession:
         self.directory = directory
         directory.mkdir(parents=True, exist_ok=True)
         self.token = secrets.token_hex(32)
+        self.debugger = debugger
+        self.last_operation = 'startup'
         command = [str(executable), "--bad-calculation"]
         if debugger:
             command = ["lldb", "--batch", "-o", "run", "-k", "thread backtrace all", "--", *command]
@@ -53,13 +55,14 @@ class FixtureSession:
     def connect(self):
         """Use a bounded readiness announcement and the real loopback protocol."""
         port = json.loads(self.ready.get(timeout=10))["port"]
-        self.connection = socket.create_connection(("127.0.0.1", port), timeout=5)
+        self.connection = socket.create_connection(("127.0.0.1", port), timeout=60 if self.debugger else 5)
         self.stream = self.connection.makefile("rb")
         self.rpc("initialize", {"protocolVersion": 1, "token": self.token})
 
     def rpc(self, method, params=None):
         """Require an exact response ID and reject protocol errors."""
         self.sequence += 1
+        self.last_operation = method
         self.connection.sendall(json.dumps({"jsonrpc": "2.0", "id": self.sequence,
                                            "method": method, "params": params or {}}).encode() + b"\n")
         line = self.stream.readline(32 * 1024 * 1024 + 1)
@@ -138,11 +141,12 @@ def main():
             session.rpc("shutdown")
             time.sleep(record["closeDelayMs"] / 1000)
             session.close_connection()
-            session.process.wait(timeout=5)
+            session.process.wait(timeout=60 if args.lldb else 5)
         except Exception as error:
             record["error"] = f"{type(error).__name__}: {error}"
         finally:
             record.update(session.finish())
+            record['lastOperation'] = session.last_operation
         if args.lldb and b"stop reason = signal" in session.output["stdout"]:
             record["error"] = "debugger observed a fatal signal; inspect retained stack"
         records.append(record)
