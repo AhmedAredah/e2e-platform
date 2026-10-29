@@ -98,6 +98,7 @@ jobs:
           path: |
             .e2e/cpp/
             examples/with-qt/build/ctest-results.xml
+            examples/with-qt/build/native-bridge/qt-bridge-protocol*.xml
             examples/with-qt/e2e/.e2e/
           include-hidden-files: true
           if-no-files-found: warn
@@ -171,6 +172,7 @@ jobs:
           path: |
             .e2e/cpp/
             examples/with-qt/build/ctest-results.xml
+            examples/with-qt/build/native-bridge/qt-bridge-protocol*.xml
             examples/with-qt/e2e/.e2e/
           include-hidden-files: true
           if-no-files-found: warn
