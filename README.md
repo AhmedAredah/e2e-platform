@@ -20,9 +20,12 @@ numeric parsing, password protection, action readiness, scrolling and shared
 desktop scheduling, installation-kit integrity and Cocoa activation. All 47 required hosted jobs passed for code checkpoint
 [`6494472`](https://github.com/AhmedAredah/e2e-platform/commit/6494472ac1382a968ca1a4b92241682a323b3b81), including installed
 TypeScript, C++ and Python desktop consumers on Linux, Windows and macOS.
-An intermittent C++ Qt/Cocoa shutdown crash from an earlier run remains an
-explicit stability issue; the successful checkpoint does not establish its cause
-or resolution. See [release status](RELEASE_STATUS.md).
+The subsequent C++ Qt/Cocoa shutdown corruption is corrected by closing owned
+sockets before bridge state destruction and draining the shutdown reply before
+quitting. The focused macOS gate passes all 60
+shutdown cycles; see the [fix and reproduction evidence](docs/development/QT_COCOA_SHUTDOWN_RESOLUTION.md)
+and [release status](RELEASE_STATUS.md). All 48 required pull-request jobs pass for
+the completed correction, including every native and Python platform job.
 This remains a prerelease with bounded support; additional controls and toolkits
 require their own real-application qualification.
 

@@ -74,8 +74,7 @@
           "Selected Widgets/Quick reference controls, C++ authored tests and installed static/shared consumers",
           "No arbitrary canvas or hybrid DOM support",
           "Headless native macOS style is not a qualified configuration",
-          "Quick selectOption requires supported non-editable closed-popup ComboBox",
-          "Earlier intermittent Cocoa SIGABRT during Quick cleanup remains an unresolved stability issue despite the passing current checkpoint"
+          "Quick selectOption requires supported non-editable closed-popup ComboBox"
         ],
         "backgroundApplicationActivation": {
           "status": "passed-native-cocoa",
@@ -85,6 +84,95 @@
           "artifactSha256": "499200141a9a98f646cfe95b8816241589b5b299c5f88f320a74c632f2f6c3d5",
           "installedStaticSharedCases": 8,
           "allCleanupComplete": true
+        },
+        "shutdownCorrection": {
+          "status": "resolved-and-regression-tested",
+          "sourceCommit": "06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05",
+          "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40886089024/job/123490069932",
+          "artifactId": 12901654841,
+          "artifactSha256": "4e0d18ce7e40be32e7d6406713f315e5e7fdf3e184870982f4ed95e23deb845c",
+          "macOSCocoaCycles": 60,
+          "allCleanExits": true,
+          "forcedCleanupCount": 0,
+          "localLinuxCycles": 60,
+          "localCTestSuitesPassed": 5,
+          "record": "QT_COCOA_SHUTDOWN_RESOLUTION.md",
+          "localLifetimeOnlyCycles": 100,
+          "protocolCases": 28,
+          "applicationExitWithoutShutdownRpc": true,
+          "destructorRemovalMutant": "failed application-exit regression on first attempt",
+          "completeQualification": {
+            "sourceHead": "06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05",
+            "testedMergeCommit": "6b96b6b79a08be53367f0be109533873a2b86b4a",
+            "sourceTree": "0031e3a5f015cbe3f4e0fd2b5e2e4986a1671bbb",
+            "requiredJobsPassed": 48,
+            "workflows": [
+              {
+                "workflow": "benchmark",
+                "runId": 40886097564,
+                "requiredJobsPassed": 1,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "docs",
+                "runId": 40886097743,
+                "requiredJobsPassed": 1,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "spec",
+                "runId": 40886097816,
+                "requiredJobsPassed": 3,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "desktop-contracts",
+                "runId": 40886097733,
+                "requiredJobsPassed": 5,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "languages",
+                "runId": 40886097652,
+                "requiredJobsPassed": 3,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "qt-lifecycle",
+                "runId": 40886097518,
+                "requiredJobsPassed": 1,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "python",
+                "runId": 40886097516,
+                "requiredJobsPassed": 25,
+                "conclusion": "success"
+              },
+              {
+                "workflow": "native",
+                "runId": 40886097677,
+                "requiredJobsPassed": 9,
+                "conclusion": "success"
+              }
+            ],
+            "nativeCocoa": {
+              "artifactId": 12904686022,
+              "archiveSha256": "07a18958bc83f1c17294e45aa3d0c483d9c0067272fb1dff5d0501fec84bdfb6",
+              "cleanCycles": 60,
+              "protocolCasesPerMode": 28,
+              "installedStaticSharedCases": 8,
+              "verifiedReports": 25,
+              "allCleanupComplete": true
+            },
+            "nativeWindows": {
+              "artifactId": 12902029797,
+              "archiveSha256": "ce43e3508a1dc3e8b9a8e0fd1c7713244e15d751e21bec6e5960c969aa3be567",
+              "protocolCases": 28,
+              "installedStaticSharedCases": 8,
+              "allCleanupComplete": true
+            }
+          }
         }
       },
       "actionability": true,
@@ -256,7 +344,7 @@
   "testAuthoring": {
     "typescript": "shared runner API",
     "cpp": "bounded native/cpp-sdk and @e2e-platform/cpp bridge; documented operations only",
-    "python": "Implemented and qualified for documented reference profiles: typed wheel and pytest registration; installed Python 3.11–3.15 CLI/HTTP, Qt 6.12.0 and GTK3/WPF/AppKit controls on Windows/Linux/macOS. Bounded API; Node required.",
+    "python": "Implemented and qualified for documented reference profiles: typed wheel and pytest registration; installed Python 3.11\u20133.15 CLI/HTTP, Qt 6.12.0 and GTK3/WPF/AppKit controls on Windows/Linux/macOS. Bounded API; Node required.",
     "csharp": "not implemented",
     "rust": "not implemented"
   },
@@ -311,7 +399,7 @@
     "runUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40724513854",
     "passedJobs": 25,
     "pendingMacosJobs": 0,
-    "scope": "Fresh installed wheel and nine-package consumers on Windows/Linux/macOS: Python 3.11–3.15, pytest minimum, PySide6/PyQt6 6.12.0 Widgets/Quick through AT-SPI/UIA/AX, and Flask/Django/FastAPI HTTP. Python-authored GTK3/WPF/AppKit contracts also passed. Positive and independent planted-negative cases, complete cleanup. No universal toolkit or stable-release claim.",
+    "scope": "Fresh installed wheel and nine-package consumers on Windows/Linux/macOS: Python 3.11\u20133.15, pytest minimum, PySide6/PyQt6 6.12.0 Widgets/Quick through AT-SPI/UIA/AX, and Flask/Django/FastAPI HTTP. Python-authored GTK3/WPF/AppKit contracts also passed. Positive and independent planted-negative cases, complete cleanup. No universal toolkit or stable-release claim.",
     "verifiedArchives": [
       {
         "artifactId": 12836333192,
@@ -999,15 +1087,20 @@
   "knownStabilityIssues": [
     {
       "id": "cocoa-quick-cleanup-abort",
-      "status": "unresolved-intermittent",
+      "status": "resolved",
       "backend": "qt",
       "profile": "Qt 6.8.3 macOS Cocoa",
       "sourceCommit": "0e9ae2d50fb66a9dd53d18473c42766c43dfb905",
       "jobUrl": "https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115865/job/122931954525",
       "artifactId": 12831913751,
       "artifactSha256": "762b152d6a8998bff3ce81d97fb14d74986e63ce4f992b233c6e140884765bdf",
-      "evidence": "Planted calculation assertion failed as intended, followed by SIGABRT and failed cleanup. Later equivalent source passed; original crash stack not retained. No root-cause fix claimed.",
-      "record": "PYTHON_REVIEW_RESOLUTION.md#remaining-cocoa-stability-issue"
+      "evidence": "Original planted calculation assertion failed as intended, followed by SIGABRT. Later reproduced in the actual fixture under LLDB; socket callbacks could access destroyed bridge members. Explicit socket cleanup before member destruction corrects the lifetime defect.",
+      "record": "QT_COCOA_SHUTDOWN_RESOLUTION.md",
+      "resolution": {
+        "sourceCommit": "06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05",
+        "evidencePointer": "/profiles/0/qualification/shutdownCorrection",
+        "record": "QT_COCOA_SHUTDOWN_RESOLUTION.md"
+      }
     }
   ]
 }

@@ -152,7 +152,14 @@ workflows, with zero failures or pending jobs. The optional live-model benchmark
 was not invoked. This checkpoint does not turn an earlier intermittent crash
 into a resolved defect; the remaining issue below is recorded separately.
 
-## Remaining Cocoa stability issue
+## Cocoa stability issue: resolved in a later correction
+
+The historical investigation below is superseded by the
+[Qt shutdown resolution record](QT_COCOA_SHUTDOWN_RESOLUTION.md). The actual
+fixture's heap corruption was reproduced and captured under LLDB; the bridge
+now closes its sockets before member destruction. The corrected source passes
+60 Cocoa shutdown cycles and the protocol/Quick control suites. Python
+qualification below remains bound to its original tested source.
 
 At source `0e9ae2d50fb66a9dd53d18473c42766c43dfb905`, the earlier
 [Cocoa job](https://github.com/AhmedAredah/e2e-platform/actions/runs/40721115865/job/122931954525)
@@ -166,23 +173,24 @@ The existing diagnostic launched `e2e_qt_quick_controls_tests`, which exited
 successfully; it did not capture the original `e2e_qt_quick_demo` crash stack.
 A focused Linux Qt 6.4.2 AddressSanitizer test of 20 connected bridge destruction
 cycles did not reproduce a suspected socket teardown issue. No root cause or
-runtime fix is claimed. The later full Cocoa job passed, including eight
-installed static/shared positive/negative cases, but stability remains open.
+runtime fix was claimed at that checkpoint. The later full Cocoa job passed,
+including eight installed static/shared positive/negative cases, but that alone
+did not resolve the issue.
 
 Diagnostics now retain recent macOS `.ips`/`.crash` reports only for the known
 Qt reference executables before running the separate LLDB probe. A dedicated
 collector enforces file-name, age, regular-file, count and byte limits. Three
 portable regressions pass; the maintenance suite now passes 75 tests. This
-diagnostic improvement preserves the original failing verdict. A reproduced
-original crash with its actual stack and a verified correction remain necessary
-before claiming the Cocoa stability issue is resolved. This issue concerns the
+diagnostic improvement preserves the original failing verdict. At that stage,
+a reproduced original crash with its actual stack and a verified correction
+were still required; the linked follow-up now supplies that evidence. This issue concerns the
 C++ cooperative Qt helper; it is not a failure of the passed Python Qt/AX profile.
 
 ## Remaining release boundaries
 
-- Resolve the intermittent C++ Qt/Cocoa cleanup crash before declaring the
-  broader desktop product stable. The Python platform qualification is complete
-  for its named reference profiles; it does not certify every GUI toolkit.
+- The Qt shutdown defect has a separate reproduced correction and regression
+  gate. Python platform qualification covers its named reference profiles;
+  it does not certify every GUI toolkit or establish a stable product release.
 - This is an installable source-built release candidate. Package registries and
   a stable release have not been published; follow PYTHON.md for installation.
 - Toolkit/control coverage remains explicit. Tkinter, wxPython, Kivy, packaged

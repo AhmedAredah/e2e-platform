@@ -10,10 +10,36 @@ another language; GUI support depends on accessible controls and the driver.
 The [C++ review resolution record](docs/development/CPP_REVIEW_RESOLUTION.md)
 tracks all 27 findings. Those reviewed C++/Qt blockers have fixes and passing hosted evidence,
 including the formerly failing macOS Quick profile. Older checkpoints below are
-historical; the following table identifies the source actually tested and the
-newly observed Cocoa stability issue that remains open.
+historical; each qualification below identifies its exact tested source.
 
-## Current qualified runtime checkpoint
+## Qt/Cocoa shutdown correction
+
+The shutdown heap corruption is corrected at
+[`5fc0c237fe7182e89ada43a171ab477ed8fa5d75`](https://github.com/AhmedAredah/e2e-platform/commit/5fc0c237fe7182e89ada43a171ab477ed8fa5d75),
+with orderly acknowledgement draining added at
+[`06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05`](https://github.com/AhmedAredah/e2e-platform/commit/06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05).
+The bridge now disconnects and closes its sockets before destroying connection
+state. The actual Quick fixture reproduced SIGABRT in three unchanged-runtime
+Cocoa probes, including an LLDB capture. The completed correction passes 60/60
+macOS Cocoa shutdown cycles, both protocol variants and Quick controls in
+[run 40886089024](https://github.com/AhmedAredah/e2e-platform/actions/runs/40886089024).
+Local Linux validation passed 100/100 cycles for the lifetime correction, then
+60/60 cycles and all five CTest suites for the completed correction.
+The native Cocoa release gate now includes this repeated lifecycle regression.
+See the [resolution record](docs/development/QT_COCOA_SHUTDOWN_RESOLUTION.md)
+for the ownership defect, verified artifact digests and rebuild instructions.
+
+All **48 required pull-request jobs across eight workflows passed** for the
+completed correction, including all nine native jobs and all 25 Python jobs.
+The PR checkout `6b96b6b79a08be53367f0be109533873a2b86b4a` has the same tree as
+the final source head `06ea9f8b69d605a8e9b679cee8e51b0c7bfb1a05`.
+The [native matrix](https://github.com/AhmedAredah/e2e-platform/actions/runs/40886097677)
+passes Windows native/offscreen, Linux X11/offscreen and macOS Cocoa/offscreen,
+including installed SDKs and static/shared Qt consumers. The optional live-model
+benchmark was not invoked. The linked resolution record lists every workflow
+and the exact downloaded Cocoa and Windows evidence digests.
+
+## Comprehensive qualification before the shutdown correction
 
 All **47 required jobs across seven workflows passed** on the first attempt for
 [`6494472ac1382a968ca1a4b92241682a323b3b81`](https://github.com/AhmedAredah/e2e-platform/commit/6494472ac1382a968ca1a4b92241682a323b3b81),
@@ -39,19 +65,18 @@ See the [Python resolution record](docs/development/PYTHON_REVIEW_RESOLUTION.md)
 and [machine-readable evidence](docs/development/support-profiles.json) for
 runtime versions, artifact identities and support boundaries.
 
-An **intermittent C++ Qt/Cocoa shutdown crash remains open**. In the previous
+An intermittent C++ Qt/Cocoa shutdown crash was discovered separately. In the previous
 `0e9ae2d` run, the planted Quick calculation failed correctly, then the application
 aborted with `SIGABRT` during cleanup. The later successful run does not explain
 or fix that failure. The original diagnostic probed a different executable and
 retained no original crash stack. The follow-up now collects recent macOS crash
 reports for the known Qt fixtures and passes three portable collector regressions
-and all 75 maintenance tests. No speculative runtime change or relaxed negative
-test was made. This is separate from the passed Python Qt/AX profile. Resolve it
-before claiming broader desktop stability; see the [investigation record](docs/development/PYTHON_REVIEW_RESOLUTION.md#remaining-cocoa-stability-issue).
+and all 75 maintenance tests. That diagnostic-only checkpoint did not change
+runtime behavior or relax negative tests. The later correction and reproduced
+crash evidence are recorded above. This is separate from the passed Python Qt/AX profile.
 
-This evidence/diagnostic update does not change production runtime source. The
-exact runtime checkpoint above remains the qualification anchor. Historical
-checkpoints below are retained for traceability.
+The 47-job checkpoint above predates the runtime correction; it is retained
+as exact historical evidence, not relabeled as a run of the corrected source.
 
 ## Previously qualified code checkpoint
 
