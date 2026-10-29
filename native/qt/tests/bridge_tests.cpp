@@ -125,8 +125,15 @@ class BridgeTests : public QObject {
         socket.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n');
         socket.waitForBytesWritten(3000);
         while (!buffer.contains('\n')) {
-            if (!socket.waitForReadyRead(5000)) return {};
             buffer += socket.readAll();
+            if (buffer.contains('\n')) break;
+            // A reply can arrive while waitForBytesWritten processes events,
+            // or together with EOF. Consume buffered bytes before waiting for
+            // a new readyRead signal and again after a disconnect.
+            if (!socket.waitForReadyRead(5000)) {
+                buffer += socket.readAll();
+                if (!buffer.contains('\n')) return {};
+            }
         }
         const qsizetype end = buffer.indexOf('\n');
         const QByteArray line = buffer.left(end);
