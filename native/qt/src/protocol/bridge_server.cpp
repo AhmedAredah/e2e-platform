@@ -35,6 +35,7 @@ bool BridgeServer::addControlAdapter(std::shared_ptr<ControlAdapter> adapter) {
     catch (...) { error = "control adapter registration failed"; return false; }
 }
 bool BridgeServer::start() {
+        if (shuttingDown) { error = "bridge is shutting down"; return false; }
         if (server.isListening()) return true;
         token = qgetenv("E2E_NATIVE_TOKEN");
         if (token.isEmpty()) { error = "E2E_NATIVE_TOKEN is not set; bridge disabled"; return false; }
@@ -53,14 +54,14 @@ bool BridgeServer::start() {
 void BridgeServer::accept() {
         while (server.hasPendingConnections()) {
             QTcpSocket* socket = server.nextPendingConnection();
-            if (client) { socket->disconnectFromHost(); socket->deleteLater(); continue; }
+            if (client || shuttingDown) { socket->disconnectFromHost(); socket->deleteLater(); continue; }
             client = socket;
             ++generation;
             authenticated = false;
             pending.clear();
             socket->setReadBufferSize(MaxMessage + 1);
             QObject::connect(socket, &QTcpSocket::readyRead, this, [this, socket] {
-                if (client != socket) return;
+                if (client != socket || shuttingDown) return;
                 pending += socket->readAll();
                 if (pending.size() > MaxMessage) { socket->abort(); return; }
                 // readyRead is not emitted recursively. Leave its stack before
@@ -79,17 +80,17 @@ void BridgeServer::accept() {
     }
 
 void BridgeServer::drain() {
-        if (dispatching || !client) return;
+        if (dispatching || !client || shuttingDown) return;
         dispatching = true;
         int handled = 0;
-        while (client && pending.contains('\n') && handled++ < 32) {
+        while (client && !shuttingDown && pending.contains('\n') && handled++ < 32) {
             const qsizetype end = pending.indexOf('\n');
             const QByteArray line = pending.left(end);
             pending.remove(0, end + 1);
             dispatch(line, {client, generation});
         }
         dispatching = false;
-        if (client && pending.contains('\n')) QTimer::singleShot(0, this, [this] { drain(); });
+        if (client && !shuttingDown && pending.contains('\n')) QTimer::singleShot(0, this, [this] { drain(); });
     }
 
 bool BridgeServer::current(const ConnectionTarget& target) const {
@@ -109,6 +110,25 @@ void BridgeServer::reply(const ConnectionTarget& target, QJsonValue id, const QJ
         bytes.append('\n');
         target.socket->write(bytes);
     }
+
+void BridgeServer::shutdown(const ConnectionTarget& target, const QJsonValue& id) {
+    shuttingDown = true;
+    reply(target, id, QJsonValue::Null);
+    QTcpSocket* socket = target.socket.data();
+    if (socket && socket->state() != QAbstractSocket::UnconnectedState) {
+        // Qt drains queued output before completing an orderly disconnect.
+        // Quitting immediately can discard the shutdown reply on Windows.
+        QObject::connect(socket, &QTcpSocket::disconnected, this, [] { QCoreApplication::quit(); });
+        socket->disconnectFromHost();
+        if (socket->state() != QAbstractSocket::UnconnectedState) {
+            // A blocked peer must not leave the application alive indefinitely
+            // or turn an undelivered shutdown acknowledgement into success.
+            QTimer::singleShot(2000, this, [] { QCoreApplication::exit(3); });
+            return;
+        }
+    }
+    QTimer::singleShot(0, this, [] { QCoreApplication::quit(); });
+}
 
 /**
  * Complete ordinary input synchronously. If application code enters a nested
@@ -213,7 +233,7 @@ void BridgeServer::dispatch(const QByteArray& line, const ConnectionTarget& targ
                 mutation(target, id, [this, &key] { surface.pressFocused(key); });
             }
             else if (method == "screenshot") reply(target, id, surface.screenshot());
-            else if (method == "shutdown") { reply(target, id, QJsonValue::Null); QTimer::singleShot(0, this, [] { QCoreApplication::quit(); }); }
+            else if (method == "shutdown") shutdown(target, id);
             else throw Failure("UNSUPPORTED_CAPABILITY", "method is not supported");
         } catch (const Failure& failure) { reply(target, id, QJsonValue::Null, &failure); }
         catch (const std::exception&) { Failure failure("ENGINE_FAILURE", "Qt bridge operation failed"); reply(target, id, QJsonValue::Null, &failure); }

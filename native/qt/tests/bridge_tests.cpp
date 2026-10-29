@@ -99,6 +99,8 @@ int fixture(QApplication& app) {
     QObject::connect(&count, &QPushButton::clicked, &window, [&] { clicks.setText(QString::number(++clickCount)); });
     QPushButton arm("Arm capture"); arm.setObjectName("arm-capture"); layout.addWidget(&arm);
     QObject::connect(&arm, &QPushButton::clicked, &window, [&] { window.armed = true; });
+    QPushButton quit("Quit application"); quit.setObjectName("quit-application"); layout.addWidget(&quit);
+    QObject::connect(&quit, &QPushButton::clicked, &app, &QCoreApplication::quit);
 #ifdef E2E_QT_HAS_QUICK
     QQuickWindow quick;
     quick.setObjectName("quick-modal"); quick.resize(300, 200); quick.setModality(Qt::ApplicationModal);
@@ -195,6 +197,17 @@ private slots:
             if (closeDelayMs > 0) QTest::qWait(closeDelayMs);
             socket.abort();
         }
+        QVERIFY2(process.state() == QProcess::NotRunning || process.waitForFinished(5000), process.readAllStandardError().constData());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QCOMPARE(process.exitCode(), 0);
+    }
+    void applicationExitWithConnectedClient() {
+        QVERIFY(login());
+        const QJsonObject target = find(capture().value("root").toObject(), "quit-application");
+        QVERIFY(!target.isEmpty());
+        // The application exits from its own button, without the bridge's
+        // orderly shutdown RPC. Keep the controller open through destruction.
+        action(target, {{"kind", "tap"}});
         QVERIFY2(process.state() == QProcess::NotRunning || process.waitForFinished(5000), process.readAllStandardError().constData());
         QCOMPARE(process.exitStatus(), QProcess::NormalExit);
         QCOMPARE(process.exitCode(), 0);

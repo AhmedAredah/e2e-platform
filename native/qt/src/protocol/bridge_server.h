@@ -27,6 +27,7 @@ private:
     QByteArray pending;
     bool authenticated = false;
     bool dispatching = false;
+    bool shuttingDown = false;
     quint64 generation = 0;
     int activeMutations = 0;
     bool acceptedMutationFailed = false;
@@ -34,6 +35,7 @@ private:
     void drain();
     bool current(const ConnectionTarget& target) const;
     void reply(const ConnectionTarget& target, QJsonValue id, const QJsonValue& result, const Failure* failure = nullptr);
+    void shutdown(const ConnectionTarget& target, const QJsonValue& id);
     void mutation(const ConnectionTarget& target, const QJsonValue& id, const std::function<void()>& operation);
     void dispatch(const QByteArray& line, const ConnectionTarget& target);
 };
