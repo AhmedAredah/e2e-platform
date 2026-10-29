@@ -81,10 +81,14 @@ if(BUILD_TESTING)
   if(E2E_QT_CONFIG_QUICK)
     target_link_libraries(e2e_qt_bridge_tests PRIVATE Qt6::Quick)
   endif()
-  add_test(NAME qt-bridge-protocol COMMAND e2e_qt_bridge_tests)
+  # Explicit file logging retains assertion details even on Windows GUI kits
+  # whose Qt Test default output is not attached to the CTest console.
+  add_test(NAME qt-bridge-protocol COMMAND e2e_qt_bridge_tests
+    -o -,txt -o ${CMAKE_CURRENT_BINARY_DIR}/qt-bridge-protocol.xml,junitxml)
   set_tests_properties(qt-bridge-protocol PROPERTIES TIMEOUT 45 ENVIRONMENT "${E2E_QT_TEST_ENV}")
   if(APPLE)
-    add_test(NAME qt-bridge-protocol-no-swap COMMAND e2e_qt_bridge_tests)
+    add_test(NAME qt-bridge-protocol-no-swap COMMAND e2e_qt_bridge_tests
+      -o -,txt -o ${CMAKE_CURRENT_BINARY_DIR}/qt-bridge-protocol-no-swap.xml,junitxml)
     set_tests_properties(qt-bridge-protocol-no-swap PROPERTIES TIMEOUT 45
       ENVIRONMENT "${E2E_QT_TEST_ENV};E2E_QT_TEST_NO_SWAP=1")
   endif()

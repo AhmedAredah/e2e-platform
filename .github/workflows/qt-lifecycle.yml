@@ -1,0 +1,50 @@
+name: qt-lifecycle
+on:
+  push:
+    branches: [main, fix/cocoa-shutdown]
+    paths: ['native/qt/**', 'examples/with-qt/**', 'scripts/native/verify-qt-shutdown.py', '.github/workflows/qt-lifecycle.yml']
+  pull_request:
+    paths: ['native/qt/**', 'examples/with-qt/**', 'scripts/native/verify-qt-shutdown.py', '.github/workflows/qt-lifecycle.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cocoa-shutdown:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: cocoa
+      QT_QUICK_BACKEND: software
+      QT_QUICK_CONTROLS_STYLE: macOS
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730
+        with:
+          version: '6.8.3'
+          host: mac
+          target: desktop
+          arch: clang_64
+          cache: true
+      - name: Build the actual Quick reference application
+        run: |
+          mkdir -p examples/with-qt/build/.cmake/api/v1/query
+          touch examples/with-qt/build/.cmake/api/v1/query/codemodel-v2
+          cmake -S examples/with-qt -B examples/with-qt/build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+          cmake --build examples/with-qt/build --target e2e_qt_quick_demo e2e_qt_quick_controls_tests e2e_qt_bridge_tests --parallel 2
+      - name: Verify connected-client shutdown and Quick controls
+        run: ctest --test-dir examples/with-qt/build --output-on-failure -R 'qt-bridge-protocol|qt-quick-controls'
+      - name: Repeat capture and authenticated shutdown with a live client
+        run: python3 scripts/native/verify-qt-shutdown.py --executable examples/with-qt/build/e2e_qt_quick_demo --cycles 60
+      - name: Retain original crash evidence
+        if: failure()
+        run: |
+          node scripts/native/qt-crash-diagnostics.mjs
+          python3 scripts/native/verify-qt-shutdown.py --executable examples/with-qt/build/e2e_qt_quick_demo --cycles 10 --lldb --output .e2e/cpp/qt-shutdown-lldb
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: cocoa-shutdown
+          path: .e2e/cpp/
+          include-hidden-files: true

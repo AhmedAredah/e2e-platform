@@ -99,6 +99,8 @@ int fixture(QApplication& app) {
     QObject::connect(&count, &QPushButton::clicked, &window, [&] { clicks.setText(QString::number(++clickCount)); });
     QPushButton arm("Arm capture"); arm.setObjectName("arm-capture"); layout.addWidget(&arm);
     QObject::connect(&arm, &QPushButton::clicked, &window, [&] { window.armed = true; });
+    QPushButton quit("Quit application"); quit.setObjectName("quit-application"); layout.addWidget(&quit);
+    QObject::connect(&quit, &QPushButton::clicked, &app, &QCoreApplication::quit);
 #ifdef E2E_QT_HAS_QUICK
     QQuickWindow quick;
     quick.setObjectName("quick-modal"); quick.resize(300, 200); quick.setModality(Qt::ApplicationModal);
@@ -125,8 +127,15 @@ class BridgeTests : public QObject {
         socket.write(QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n');
         socket.waitForBytesWritten(3000);
         while (!buffer.contains('\n')) {
-            if (!socket.waitForReadyRead(5000)) return {};
             buffer += socket.readAll();
+            if (buffer.contains('\n')) break;
+            // A reply can arrive while waitForBytesWritten processes events,
+            // or together with EOF. Consume buffered bytes before waiting for
+            // a new readyRead signal and again after a disconnect.
+            if (!socket.waitForReadyRead(5000)) {
+                buffer += socket.readAll();
+                if (!buffer.contains('\n')) return {};
+            }
         }
         const qsizetype end = buffer.indexOf('\n');
         const QByteArray line = buffer.left(end);
@@ -171,6 +180,37 @@ private slots:
     void requiresAuthentication() {
         QCOMPARE(rpc("snapshot").value("error").toObject().value("data").toObject().value("code").toString(), QString("POLICY_DENIED"));
         QVERIFY(login());
+    }
+    void gracefulShutdownWithConnectedClient_data() {
+        QTest::addColumn<int>("closeDelayMs");
+        QTest::newRow("held-open") << -1;
+        QTest::newRow("immediate-close") << 0;
+        QTest::newRow("close-after-5ms") << 5;
+        QTest::newRow("close-after-50ms") << 50;
+    }
+    void gracefulShutdownWithConnectedClient() {
+        QFETCH(int, closeDelayMs);
+        QVERIFY(login());
+        QVERIFY(rpc("snapshot", {{"pixels", true}}).contains("result"));
+        QVERIFY(rpc("shutdown").contains("result"));
+        if (closeDelayMs >= 0) {
+            if (closeDelayMs > 0) QTest::qWait(closeDelayMs);
+            socket.abort();
+        }
+        QVERIFY2(process.state() == QProcess::NotRunning || process.waitForFinished(5000), process.readAllStandardError().constData());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QCOMPARE(process.exitCode(), 0);
+    }
+    void applicationExitWithConnectedClient() {
+        QVERIFY(login());
+        const QJsonObject target = find(capture().value("root").toObject(), "quit-application");
+        QVERIFY(!target.isEmpty());
+        // The application exits from its own button, without the bridge's
+        // orderly shutdown RPC. Keep the controller open through destruction.
+        action(target, {{"kind", "tap"}});
+        QVERIFY2(process.state() == QProcess::NotRunning || process.waitForFinished(5000), process.readAllStandardError().constData());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QCOMPARE(process.exitCode(), 0);
     }
     void rejectsWrongToken() {
         QCOMPARE(rpc("initialize", {{"protocolVersion", 1}, {"token", "wrong"}}).value("error").toObject().value("data").toObject().value("code").toString(), QString("POLICY_DENIED"));
