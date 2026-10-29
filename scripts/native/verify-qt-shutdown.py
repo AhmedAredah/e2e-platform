@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import queue
 import secrets
+import signal
 import socket
 import subprocess
 import threading
@@ -25,8 +26,8 @@ class FixtureSession:
             command = ["lldb", "--batch", "-o", "run", "-k", "thread backtrace all", "--", *command]
         self.process = subprocess.Popen(
             command, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, env={**os.environ, "E2E_NATIVE_TOKEN": self.token,
-                                         "E2E_NATIVE_PORT": "0"})
+            stderr=subprocess.PIPE, start_new_session=os.name == "posix",
+            env={**os.environ, "E2E_NATIVE_TOKEN": self.token, "E2E_NATIVE_PORT": "0"})
         self.ready = queue.Queue(maxsize=1)
         self.output = {"stdout": bytearray(), "stderr": bytearray()}
         self.threads = [threading.Thread(target=self._drain, args=(name, pipe), daemon=True)
@@ -54,7 +55,7 @@ class FixtureSession:
 
     def connect(self):
         """Use a bounded readiness announcement and the real loopback protocol."""
-        port = json.loads(self.ready.get(timeout=10))["port"]
+        port = json.loads(self.ready.get(timeout=60 if self.debugger else 10))["port"]
         self.connection = socket.create_connection(("127.0.0.1", port), timeout=60 if self.debugger else 5)
         self.stream = self.connection.makefile("rb")
         self.rpc("initialize", {"protocolVersion": 1, "token": self.token})
@@ -87,7 +88,13 @@ class FixtureSession:
         self.close_connection()
         forced = self.process.poll() is None
         if forced:
-            self.process.kill()
+            try:
+                if os.name == "posix":
+                    os.killpg(self.process.pid, signal.SIGKILL)
+                else:
+                    self.process.kill()
+            except ProcessLookupError:
+                pass  # The child exited between poll() and kill().
         self.process.wait(timeout=5)
         for thread in self.threads:
             thread.join(timeout=5)

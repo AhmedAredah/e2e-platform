@@ -9,6 +9,7 @@ namespace e2e::qt::detail {
 class BridgeServer final : public QObject {
 public:
     explicit BridgeServer(QObject* parent);
+    ~BridgeServer() override;
     bool start();
     QString errorString() const { return error; }
     bool addControlAdapter(std::shared_ptr<ControlAdapter> adapter);

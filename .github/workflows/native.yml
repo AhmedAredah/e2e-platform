@@ -155,6 +155,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:native
       - run: node scripts/native/verify.mjs --qt-only --require-quick
+      - name: Repeat Cocoa capture and graceful shutdown
+        if: matrix.platform == 'cocoa'
+        run: python3 scripts/native/verify-qt-shutdown.py --executable examples/with-qt/build/e2e_qt_quick_demo --cycles 60
       - run: node scripts/native/verify-cpp-sdk.mjs --qt
       - run: node scripts/native/verify-qt-install.mjs
       - run: node scripts/native/qt-export-proof.mjs

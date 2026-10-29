@@ -172,6 +172,26 @@ private slots:
         QCOMPARE(rpc("snapshot").value("error").toObject().value("data").toObject().value("code").toString(), QString("POLICY_DENIED"));
         QVERIFY(login());
     }
+    void gracefulShutdownWithConnectedClient_data() {
+        QTest::addColumn<int>("closeDelayMs");
+        QTest::newRow("held-open") << -1;
+        QTest::newRow("immediate-close") << 0;
+        QTest::newRow("close-after-5ms") << 5;
+        QTest::newRow("close-after-50ms") << 50;
+    }
+    void gracefulShutdownWithConnectedClient() {
+        QFETCH(int, closeDelayMs);
+        QVERIFY(login());
+        QVERIFY(rpc("snapshot", {{"pixels", true}}).contains("result"));
+        QVERIFY(rpc("shutdown").contains("result"));
+        if (closeDelayMs >= 0) {
+            if (closeDelayMs > 0) QTest::qWait(closeDelayMs);
+            socket.abort();
+        }
+        QVERIFY2(process.state() == QProcess::NotRunning || process.waitForFinished(5000), process.readAllStandardError().constData());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QCOMPARE(process.exitCode(), 0);
+    }
     void rejectsWrongToken() {
         QCOMPARE(rpc("initialize", {{"protocolVersion", 1}, {"token", "wrong"}}).value("error").toObject().value("data").toObject().value("code").toString(), QString("POLICY_DENIED"));
     }

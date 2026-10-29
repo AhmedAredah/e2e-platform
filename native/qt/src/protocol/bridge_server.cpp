@@ -14,6 +14,21 @@ namespace e2e::qt::detail {
 BridgeServer::BridgeServer(QObject* parent) : QObject(parent), server(this) {
     QObject::connect(&server, &QTcpServer::newConnection, this, [this] { accept(); });
 }
+BridgeServer::~BridgeServer() {
+    // Socket destruction can emit disconnected before QObject disconnects this
+    // receiver. Quiesce owned sockets while client/pending and all other members
+    // are still alive, rather than during QTcpServer's later member destruction.
+    QObject::disconnect(&server, nullptr, this, nullptr);
+    for (QTcpSocket* socket : server.findChildren<QTcpSocket*>())
+        QObject::disconnect(socket, nullptr, this, nullptr);
+    // close() owns unaccepted pending connections. Enumerate the remaining
+    // accepted sockets afterwards so a pending socket cannot be deleted twice.
+    server.close();
+    for (QTcpSocket* socket : server.findChildren<QTcpSocket*>()) {
+        socket->abort();
+        delete socket;
+    }
+}
 bool BridgeServer::addControlAdapter(std::shared_ptr<ControlAdapter> adapter) {
     if (server.isListening()) { error = "control adapters must be registered before the bridge starts"; return false; }
     try { return surface.addControlAdapter(std::move(adapter), error); }
