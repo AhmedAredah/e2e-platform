@@ -14,12 +14,15 @@ import time
 class FixtureSession:
     """Own one fixture process, bounded diagnostics and authenticated connection."""
 
-    def __init__(self, executable, directory):
+    def __init__(self, executable, directory, debugger=False):
         self.directory = directory
         directory.mkdir(parents=True, exist_ok=True)
         self.token = secrets.token_hex(32)
+        command = [str(executable), "--bad-calculation"]
+        if debugger:
+            command = ["lldb", "--batch", "-o", "run", "-k", "thread backtrace all", "--", *command]
         self.process = subprocess.Popen(
-            [str(executable), "--bad-calculation"], stdout=subprocess.PIPE,
+            command, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, env={**os.environ, "E2E_NATIVE_TOKEN": self.token,
                                          "E2E_NATIVE_PORT": "0"})
         self.ready = queue.Queue(maxsize=1)
@@ -35,14 +38,17 @@ class FixtureSession:
     def _drain(self, name, pipe):
         """Drain both pipes continuously; retain at most one MiB per stream."""
         pending = bytearray()
+        announced = False
         while chunk := pipe.read1(4096):
             self.output[name].extend(chunk[:max(0, 1024 * 1024 - len(self.output[name]))])
-            if name == "stdout" and len(pending) < 65536:
+            if name == "stdout" and not announced and len(pending) < 65536:
                 pending.extend(chunk)
-                if b"\n" in pending:
-                    line = bytes(pending).split(b"\n", 1)[0]
-                    if line.startswith(b"E2E_NATIVE_READY ") and self.ready.empty():
+                while b"\n" in pending:
+                    line, _, remaining = pending.partition(b"\n")
+                    pending = bytearray(remaining)
+                    if line.startswith(b"E2E_NATIVE_READY ") and not announced:
                         self.ready.put_nowait(line[17:])
+                        announced = True
 
     def connect(self):
         """Use a bounded readiness announcement and the real loopback protocol."""
@@ -102,13 +108,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--cycles", type=int, default=60)
+    parser.add_argument("--lldb", action="store_true")
     parser.add_argument("--output", type=Path, default=Path(".e2e/cpp/qt-shutdown"))
     args = parser.parse_args()
     if not 1 <= args.cycles <= 200:
         parser.error("cycles must be between 1 and 200")
     records = []
     for index in range(args.cycles):
-        session = FixtureSession(args.executable.resolve(), args.output / f"cycle-{index:03d}")
+        session = FixtureSession(args.executable.resolve(), args.output / f"cycle-{index:03d}", args.lldb)
         record = {"cycle": index, "closeDelayMs": [0, 5, 50][index % 3]}
         try:
             session.connect()
@@ -136,6 +143,8 @@ def main():
             record["error"] = f"{type(error).__name__}: {error}"
         finally:
             record.update(session.finish())
+        if args.lldb and b"stop reason = signal" in session.output["stdout"]:
+            record["error"] = "debugger observed a fatal signal; inspect retained stack"
         records.append(record)
         args.output.mkdir(parents=True, exist_ok=True)
         (args.output / "qualification.json").write_text(json.dumps({

@@ -37,7 +37,9 @@ jobs:
         run: python3 scripts/native/verify-qt-shutdown.py --executable examples/with-qt/build/e2e_qt_quick_demo --cycles 60
       - name: Retain original crash evidence
         if: failure()
-        run: node scripts/native/qt-crash-diagnostics.mjs
+        run: |
+          node scripts/native/qt-crash-diagnostics.mjs
+          python3 scripts/native/verify-qt-shutdown.py --executable examples/with-qt/build/e2e_qt_quick_demo --cycles 10 --lldb --output .e2e/cpp/qt-shutdown-lldb
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
